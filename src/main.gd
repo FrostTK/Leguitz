@@ -66,7 +66,22 @@ func _server_stats() -> PackedStringArray:
 		server.player_count(),
 		tr("DEBUG_PLAYERS"),
 	]
-	return PackedStringArray(["%s: %d chunks  |  tick %d  |  %d %s" % args])
+	var lines := PackedStringArray(["%s: %d chunks  |  tick %d  |  %d %s" % args])
+	var session := server.first_session()
+	if session != null and session.layer == WorldGenerator.SURFACE_LAYER:
+		var tile := Coords.world_to_tile(session.position)
+		var column := server.world.generator.sample_column(tile.x, tile.y)
+		var climate := [
+			column.continentalness,
+			column.erosion,
+			column.weirdness,
+			TerrainShaper.peaks_valleys(column.weirdness),
+			column.temperature,
+			column.humidity,
+			column.height,
+		]
+		lines.append("C %.2f  E %.2f  W %.2f  PV %.2f  T %.2f  H %.2f  |  %.1f m" % climate)
+	return lines
 
 
 func _apply_dev_preferences() -> void:
@@ -87,6 +102,11 @@ func _start_dev_actions() -> void:
 		)
 	if dev.autowalk.y != 0:
 		Input.action_press(InputBindings.MOVE_DOWN if dev.autowalk.y > 0 else InputBindings.MOVE_UP)
+	if dev.layer != 0:
+		client.transport.send(Msg.debug_change_layer(dev.layer))
+	client.local_player.noclip = dev.noclip
+	if dev.open_map:
+		client.debug_map.cycle(client.local_player.current_tile(), client.world.layer + dev.layer)
 	if dev.open_pause_menu:
 		client.pause()
 
@@ -110,3 +130,8 @@ func _update_screenshot() -> void:
 
 func _quit() -> void:
 	get_tree().quit()
+
+
+func _exit_tree() -> void:
+	# Let worker threads finish before the engine shuts down.
+	server.shutdown()

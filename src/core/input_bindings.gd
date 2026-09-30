@@ -3,8 +3,9 @@ extends RefCounted
 ## Default controls, registered in code so they can be rebound and saved
 ## later from the settings menu.
 ##
-## Keyboard bindings use *physical* key positions: WASD on a QWERTY
-## keyboard is automatically ZQSD on a French AZERTY keyboard.
+## Movement keys use *physical* key positions: WASD on a QWERTY keyboard
+## is automatically ZQSD on a French AZERTY keyboard. Letter shortcuts
+## (M for the map...) use the letter printed on the key instead.
 
 const MOVE_UP := &"move_up"
 const MOVE_DOWN := &"move_down"
@@ -15,6 +16,11 @@ const PAUSE := &"pause"
 const TOGGLE_DEBUG := &"toggle_debug"
 const ZOOM_IN := &"zoom_in"
 const ZOOM_OUT := &"zoom_out"
+const TOGGLE_MAP := &"toggle_map"
+# Debug (creative-only later).
+const LAYER_UP := &"layer_up"
+const LAYER_DOWN := &"layer_down"
+const TOGGLE_NOCLIP := &"toggle_noclip"
 
 const STICK_DEADZONE := 0.25
 
@@ -46,6 +52,10 @@ static func register_defaults() -> void:
 	_bind(TOGGLE_DEBUG, [_key(KEY_F3), _button(JOY_BUTTON_BACK)])
 	_bind(ZOOM_IN, [_key(KEY_EQUAL), _key(KEY_KP_ADD), _button(JOY_BUTTON_RIGHT_SHOULDER)])
 	_bind(ZOOM_OUT, [_key(KEY_MINUS), _key(KEY_KP_SUBTRACT), _button(JOY_BUTTON_LEFT_SHOULDER)])
+	_bind(TOGGLE_MAP, [_letter(KEY_M), _button(JOY_BUTTON_Y)])
+	_bind(LAYER_UP, [_key(KEY_PAGEUP)])
+	_bind(LAYER_DOWN, [_key(KEY_PAGEDOWN)])
+	_bind(TOGGLE_NOCLIP, [_key(KEY_F4)])
 
 
 static func _bind(action: StringName, events: Array[InputEvent]) -> void:
@@ -59,6 +69,12 @@ static func _bind(action: StringName, events: Array[InputEvent]) -> void:
 static func _key(physical_key: Key) -> InputEventKey:
 	var event := InputEventKey.new()
 	event.physical_keycode = physical_key
+	return event
+
+
+static func _letter(key: Key) -> InputEventKey:
+	var event := InputEventKey.new()
+	event.keycode = key
 	return event
 
 

@@ -44,3 +44,48 @@ DEBUG_MOON,Moon,Lune
 DEBUG_CHUNKS,Visible chunks,Chunks affichés
 DEBUG_SERVER,Server,Serveur
 DEBUG_PLAYERS,player(s),joueur(s)
+DEBUG_LAYER,Layer,Couche
+DEBUG_BIOME,Biome,Biome
+DEBUG_LEVEL,Level,Niveau
+DEBUG_NOCLIP,Ghost mode (F4),Mode fantôme (F4)
+LAYER_SURFACE,Surface,Surface
+LAYER_UNDERGROUND,Underground %d,Souterrain %d
+MAP_TITLE,Map (debug) - %s,Carte (debug) - %s
+MAP_LOADING,Drawing the map...,Dessin de la carte...
+MAP_SCALE,1 px = %d tiles  -  %d tiles across  -  M: zoom out / close,1 px = %d tuiles  -  %d tuiles de large  -  M : dézoomer / fermer
+BIOME_NONE,Unknown,Inconnu
+BIOME_OCEAN,Ocean,Océan
+BIOME_DEEP_OCEAN,Deep ocean,Océan profond
+BIOME_WARM_OCEAN,Warm ocean,Océan tropical
+BIOME_COLD_OCEAN,Cold ocean,Océan froid
+BIOME_FROZEN_OCEAN,Frozen ocean,Océan gelé
+BIOME_RIVER,River,Rivière
+BIOME_FROZEN_RIVER,Frozen river,Rivière gelée
+BIOME_BEACH,Beach,Plage
+BIOME_SNOWY_BEACH,Snowy beach,Plage enneigée
+BIOME_STONY_SHORE,Stony shore,Côte rocheuse
+BIOME_PLAINS,Plains,Plaines
+BIOME_SNOWY_PLAINS,Snowy plains,Plaines enneigées
+BIOME_DESERT,Desert,Désert
+BIOME_SWAMP,Swamp,Marais
+BIOME_FOREST,Forest,Forêt
+BIOME_FLOWER_FOREST,Flower forest,Forêt fleurie
+BIOME_BIRCH_FOREST,Birch forest,Forêt de bouleaux
+BIOME_DARK_FOREST,Dark forest,Forêt sombre
+BIOME_TAIGA,Taiga,Taïga
+BIOME_SNOWY_TAIGA,Snowy taiga,Taïga enneigée
+BIOME_OLD_GROWTH_TAIGA,Old growth taiga,Taïga ancienne
+BIOME_SAVANNA,Savanna,Savane
+BIOME_SAVANNA_PLATEAU,Savanna plateau,Plateau de savane
+BIOME_JUNGLE,Jungle,Jungle
+BIOME_SPARSE_JUNGLE,Sparse jungle,Jungle clairsemée
+BIOME_BADLANDS,Badlands,Terres arides
+BIOME_MEADOW,Meadow,Prairie
+BIOME_GROVE,Grove,Bosquet enneigé
+BIOME_SNOWY_SLOPES,Snowy slopes,Pentes enneigées
+BIOME_JAGGED_PEAKS,Jagged peaks,Pics escarpés
+BIOME_FROZEN_PEAKS,Frozen peaks,Pics gelés
+BIOME_STONY_PEAKS,Stony peaks,Pics rocheux
+BIOME_MUSHROOM_FIELDS,Mushroom fields,Champs de champignons
+BIOME_CAVES,Caves,Grottes
+BIOME_DEEP_CAVES,Deep caves,Grottes profondes

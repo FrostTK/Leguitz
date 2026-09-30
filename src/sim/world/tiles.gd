@@ -1,11 +1,11 @@
 class_name Tiles
 extends RefCounted
-## Tile registry (Phase 0 placeholder set).
+## Tile registry.
 ##
 ## Each world cell has a GROUND tile (what you walk on) and a BLOCK tile
-## (what stands on it: trees, rocks, placed blocks). Ids are stored in
-## chunks, so never renumber existing entries: only append.
-## Phase 3 replaces this with a data-driven block/item registry.
+## (what stands on it: trees, rocks, walls, ores, plants). Ids are stored in
+## chunks: never renumber existing entries, only append.
+## Phase 3 turns blocks into a data-driven block/item registry.
 
 enum Ground {
 	NONE,
@@ -16,37 +16,135 @@ enum Ground {
 	FOREST_GRASS,
 	STONE_FLOOR,
 	SNOW,
+	DIRT,
+	PODZOL,
+	DRY_GRASS,
+	JUNGLE_GRASS,
+	SWAMP_GRASS,
+	MEADOW_GRASS,
+	TAIGA_GRASS,
+	RED_SAND,
+	TERRACOTTA,
+	TERRACOTTA_LIGHT,
+	GRAVEL,
+	ICE,
+	MUD,
+	MYCELIUM,
+	DEEPSLATE_FLOOR,
+	LAVA,
+	SWAMP_WATER,
+	WARM_WATER,
 }
 
 enum Block {
 	AIR,
-	TREE,
+	OAK,
 	ROCK,
 	BUSH,
-	PINE,
+	SPRUCE,
+	STONE,
+	DEEPSLATE,
+	COAL_ORE,
+	COPPER_ORE,
+	IRON_ORE,
+	GOLD_ORE,
+	LAPIS_ORE,
+	RUBY_ORE,
+	DIAMOND_ORE,
+	EMERALD_ORE,
+	BIRCH,
+	DARK_OAK,
+	JUNGLE_TREE,
+	ACACIA,
+	SNOWY_SPRUCE,
+	CACTUS,
+	DEAD_BUSH,
+	TALL_GRASS,
+	FERN,
+	FLOWER_RED,
+	FLOWER_YELLOW,
+	FLOWER_BLUE,
+	FLOWER_WHITE,
+	FLOWER_PINK,
+	MUSHROOM_RED,
+	MUSHROOM_BROWN,
+	BIG_MUSHROOM,
+	SUGAR_CANE,
+	LILY_PAD,
+	MOSSY_ROCK,
+	SANDSTONE,
+	BERRY_BUSH,
+	PACKED_ICE,
+	SWAMP_OAK,
 }
 
-## Movement speed multiplier per ground type (swimming is slower).
+const FLOWERS: Array[Block] = [
+	Block.FLOWER_RED,
+	Block.FLOWER_YELLOW,
+	Block.FLOWER_BLUE,
+	Block.FLOWER_WHITE,
+	Block.FLOWER_PINK,
+]
+
+const ORES: Array[Block] = [
+	Block.COAL_ORE,
+	Block.COPPER_ORE,
+	Block.IRON_ORE,
+	Block.GOLD_ORE,
+	Block.LAPIS_ORE,
+	Block.RUBY_ORE,
+	Block.DIAMOND_ORE,
+	Block.EMERALD_ORE,
+]
+
+## Movement speed multiplier per ground type (swimming, snow, mud...).
 const GROUND_SPEED := {
-	Ground.NONE: 1.0,
 	Ground.DEEP_WATER: 0.45,
 	Ground.WATER: 0.6,
-	Ground.SAND: 0.9,
-	Ground.GRASS: 1.0,
-	Ground.FOREST_GRASS: 1.0,
-	Ground.STONE_FLOOR: 1.0,
+	Ground.SWAMP_WATER: 0.6,
+	Ground.WARM_WATER: 0.6,
+	Ground.SAND: 0.92,
+	Ground.RED_SAND: 0.92,
 	Ground.SNOW: 0.85,
+	Ground.MUD: 0.75,
+	Ground.GRAVEL: 0.95,
 }
 
-const SOLID_BLOCKS := {
-	Block.TREE: true,
-	Block.ROCK: true,
-	Block.PINE: true,
+const WATER_GROUNDS := {
+	Ground.DEEP_WATER: true,
+	Ground.WATER: true,
+	Ground.SWAMP_WATER: true,
+	Ground.WARM_WATER: true,
+}
+
+## Grounds you cannot walk on (for now: lava).
+const SOLID_GROUNDS := {Ground.LAVA: true, Ground.NONE: true}
+
+const NON_SOLID_BLOCKS := {
+	Block.AIR: true,
+	Block.BUSH: true,
+	Block.DEAD_BUSH: true,
+	Block.TALL_GRASS: true,
+	Block.FERN: true,
+	Block.FLOWER_RED: true,
+	Block.FLOWER_YELLOW: true,
+	Block.FLOWER_BLUE: true,
+	Block.FLOWER_WHITE: true,
+	Block.FLOWER_PINK: true,
+	Block.MUSHROOM_RED: true,
+	Block.MUSHROOM_BROWN: true,
+	Block.SUGAR_CANE: true,
+	Block.LILY_PAD: true,
+	Block.BERRY_BUSH: true,
 }
 
 
 static func is_block_solid(block: int) -> bool:
-	return SOLID_BLOCKS.has(block)
+	return not NON_SOLID_BLOCKS.has(block)
+
+
+static func is_ground_solid(ground: int) -> bool:
+	return SOLID_GROUNDS.has(ground)
 
 
 static func ground_speed(ground: int) -> float:
@@ -54,4 +152,8 @@ static func ground_speed(ground: int) -> float:
 
 
 static func is_water(ground: int) -> bool:
-	return ground == Ground.WATER or ground == Ground.DEEP_WATER
+	return WATER_GROUNDS.has(ground)
+
+
+static func is_ore(block: int) -> bool:
+	return block >= Block.COAL_ORE and block <= Block.EMERALD_ORE

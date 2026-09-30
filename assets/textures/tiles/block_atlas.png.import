@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b76r3b84ylxc8"
-path="res://.godot/imported/terrain_atlas.png-bee91cced1992b7302e14cd4a3857882.ctex"
+uid="uid://b2i30xftyee2k"
+path="res://.godot/imported/block_atlas.png-8726bb0d65ef36badd933ebcdbe4cb65.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/textures/tiles/terrain_atlas.png"
-dest_files=["res://.godot/imported/terrain_atlas.png-bee91cced1992b7302e14cd4a3857882.ctex"]
+source_file="res://assets/textures/tiles/block_atlas.png"
+dest_files=["res://.godot/imported/block_atlas.png-8726bb0d65ef36badd933ebcdbe4cb65.ctex"]
 
 [params]
 

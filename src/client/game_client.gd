@@ -14,6 +14,7 @@ var player_id := -1
 var joined := false
 
 var debug_overlay := DebugOverlay.new()
+var debug_map := DebugMap.new()
 var hud_clock := HudClock.new()
 var pause_menu := PauseMenu.new()
 var _loading_label := Label.new()
@@ -43,11 +44,13 @@ func _ready() -> void:
 	_ui_root.add_child(_loading_label)
 	_ui_root.add_child(hud_clock)
 	_ui_root.add_child(debug_overlay)
+	_ui_root.add_child(debug_map)
 	_ui_root.add_child(pause_menu)
 
 	pause_menu.resume_requested.connect(resume)
 	pause_menu.quit_requested.connect(quit_requested.emit)
 	pause_menu.time_settings_requested.connect(_on_time_settings_requested)
+	debug_map.map_requested.connect(_on_map_requested)
 
 
 func connect_to_server(server_transport: Transport, view_distance: int) -> void:
@@ -68,10 +71,11 @@ func _process(delta: float) -> void:
 
 ## True once the player has spawned and the ground under them is loaded.
 func is_ready_to_play() -> bool:
-	return joined and world.has_chunk(Coords.tile_to_chunk(local_player.current_tile()))
+	return joined and world.has_tile_chunk(local_player.current_tile())
 
 
 func pause() -> void:
+	debug_map.close()
 	get_tree().paused = true
 	pause_menu.open()
 
@@ -82,9 +86,22 @@ func resume() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed(InputBindings.PAUSE) and joined and not get_tree().paused:
-		pause()
-		get_viewport().set_input_as_handled()
+	if not joined or get_tree().paused:
+		return
+	if event.is_action_pressed(InputBindings.PAUSE):
+		if debug_map.visible:
+			debug_map.close()
+		else:
+			pause()
+	elif event.is_action_pressed(InputBindings.TOGGLE_MAP):
+		debug_map.cycle(local_player.current_tile(), world.layer)
+	elif event.is_action_pressed(InputBindings.LAYER_UP):
+		transport.send(Msg.debug_change_layer(1))
+	elif event.is_action_pressed(InputBindings.LAYER_DOWN):
+		transport.send(Msg.debug_change_layer(-1))
+	else:
+		return
+	get_viewport().set_input_as_handled()
 
 
 func _handle_message(message: Dictionary) -> void:
@@ -92,25 +109,45 @@ func _handle_message(message: Dictionary) -> void:
 		Msg.WELCOME:
 			player_id = message["player_id"]
 			world_info = message["world"]
+			world.layer = message["layer"]
 			local_player.spawn_at(message["spawn"])
 			camera.snap_to_target()
 			joined = true
 		Msg.CHUNK_DATA:
 			var chunk := ChunkData.from_dict(message["chunk"])
-			world.store(chunk)
-			world_view.show_chunk(chunk)
+			if chunk.layer == world.layer:
+				world.store(chunk)
+				world_view.show_chunk(chunk)
 		Msg.CHUNK_UNLOAD:
-			world.remove(message["coord"])
-			world_view.remove_chunk(message["coord"])
+			world.remove(message["key"])
+			world_view.remove_chunk(message["key"])
 		Msg.TIME_STATE:
 			clock.load_dict(message["clock"])
 			if pause_menu.visible:
 				pause_menu.refresh_from_state()
 		Msg.PLAYER_CORRECTION:
 			local_player.apply_correction(message["pos"])
+		Msg.PLAYER_TELEPORT:
+			_teleport(message["pos"], message["layer"])
+		Msg.MAP_DATA:
+			debug_map.show_map(message["png"], message["scale"])
 		var unknown:
 			push_warning("Client: unknown message type %s" % unknown)
 
 
+func _teleport(position: Vector2, layer: int) -> void:
+	if layer != world.layer:
+		world.clear()
+		world_view.clear()
+		world.layer = layer
+		debug_map.close()
+	local_player.apply_correction(position)
+	camera.snap_to_target()
+
+
 func _on_time_settings_requested(mode: int, value: float) -> void:
 	transport.send(Msg.set_time(mode, value))
+
+
+func _on_map_requested(center: Vector2i, layer: int, size_px: int, scale: int) -> void:
+	transport.send(Msg.map_request(center, layer, size_px, scale))

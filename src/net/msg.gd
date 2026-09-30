@@ -8,6 +8,8 @@ extends RefCounted
 const HELLO := "hello"
 const PLAYER_MOVE := "player_move"
 const SET_TIME := "set_time"
+const DEBUG_CHANGE_LAYER := "debug_change_layer"
+const MAP_REQUEST := "map_request"
 
 # Server -> client
 const WELCOME := "welcome"
@@ -15,6 +17,8 @@ const CHUNK_DATA := "chunk_data"
 const CHUNK_UNLOAD := "chunk_unload"
 const TIME_STATE := "time_state"
 const PLAYER_CORRECTION := "player_correction"
+const PLAYER_TELEPORT := "player_teleport"
+const MAP_DATA := "map_data"
 
 
 static func hello(player_name: String, view_distance: int) -> Dictionary:
@@ -31,8 +35,18 @@ static func set_time(mode: int, value: float) -> Dictionary:
 	return {"t": SET_TIME, "mode": mode, "value": value}
 
 
-static func welcome(player_id: int, spawn: Vector2, world: Dictionary) -> Dictionary:
-	return {"t": WELCOME, "player_id": player_id, "spawn": spawn, "world": world}
+## Debug/creative: move up (+1) or down (-1) one layer.
+static func debug_change_layer(delta: int) -> Dictionary:
+	return {"t": DEBUG_CHANGE_LAYER, "delta": delta}
+
+
+## Asks for a map image centered on a tile (debug map).
+static func map_request(center: Vector2i, layer: int, size_px: int, scale: int) -> Dictionary:
+	return {"t": MAP_REQUEST, "center": center, "layer": layer, "size": size_px, "scale": scale}
+
+
+static func welcome(player_id: int, spawn: Vector2, layer: int, world: Dictionary) -> Dictionary:
+	return {"t": WELCOME, "player_id": player_id, "spawn": spawn, "layer": layer, "world": world}
 
 
 ## Sends a snapshot: the client must never share memory with the server.
@@ -40,8 +54,8 @@ static func chunk_data(chunk: ChunkData) -> Dictionary:
 	return {"t": CHUNK_DATA, "chunk": chunk.duplicate_chunk().to_dict()}
 
 
-static func chunk_unload(coord: Vector2i) -> Dictionary:
-	return {"t": CHUNK_UNLOAD, "coord": coord}
+static func chunk_unload(key: Vector3i) -> Dictionary:
+	return {"t": CHUNK_UNLOAD, "key": key}
 
 
 static func time_state(clock: WorldClock) -> Dictionary:
@@ -50,3 +64,12 @@ static func time_state(clock: WorldClock) -> Dictionary:
 
 static func player_correction(position: Vector2) -> Dictionary:
 	return {"t": PLAYER_CORRECTION, "pos": position}
+
+
+static func player_teleport(position: Vector2, layer: int) -> Dictionary:
+	return {"t": PLAYER_TELEPORT, "pos": position, "layer": layer}
+
+
+## `png` is a PNG-encoded image.
+static func map_data(png: PackedByteArray, center: Vector2i, layer: int, scale: int) -> Dictionary:
+	return {"t": MAP_DATA, "png": png, "center": center, "layer": layer, "scale": scale}

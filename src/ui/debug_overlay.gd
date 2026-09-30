@@ -53,6 +53,8 @@ func _lines() -> PackedStringArray:
 	var gpu := RenderingServer.get_video_adapter_name()
 	var renderer := RenderingServer.get_current_rendering_method()
 	var ground: String = Tiles.Ground.find_key(client.world.ground_at(tile))
+	var layer := client.world.layer
+	var layer_name := tr("LAYER_SURFACE") if layer >= 0 else tr("LAYER_UNDERGROUND") % -layer
 
 	var world_args := [
 		tr("DEBUG_WORLD"),
@@ -71,7 +73,16 @@ func _lines() -> PackedStringArray:
 		chunk.x,
 		chunk.y,
 	]
-	var ground_args := [tr("DEBUG_GROUND"), ground, tr("DEBUG_FACING"), player.facing]
+	var ground_args := [
+		tr("DEBUG_LAYER"),
+		layer_name,
+		tr("DEBUG_BIOME"),
+		tr(Biomes.name_key(client.world.biome_at(tile))),
+		tr("DEBUG_LEVEL"),
+		client.world.level_at(tile),
+		tr("DEBUG_GROUND"),
+		ground,
+	]
 	var time_args := [
 		tr("DEBUG_DAY"),
 		clock.day_index() + 1,
@@ -94,7 +105,9 @@ func _lines() -> PackedStringArray:
 	lines.append("GPU: %s  |  %s" % [gpu, renderer])
 	lines.append("%s: %s  |  %s: %s  |  %s" % world_args)
 	lines.append("%s: %.1f, %.1f  |  %s: %d, %d  |  Chunk: %d, %d" % position_args)
-	lines.append("%s: %s  |  %s: %s" % ground_args)
+	lines.append("%s: %s  |  %s: %s  |  %s %d  |  %s: %s" % ground_args)
+	if player.noclip:
+		lines.append(tr("DEBUG_NOCLIP"))
 	lines.append("%s %d  %s  |  %s  |  %s x%.2f  |  %s %d/8" % time_args)
 	lines.append("%s: %d  |  Zoom x%d  |  UI x%d" % view_args)
 	if server_stats.is_valid():

@@ -16,6 +16,9 @@ extends RefCounted
 ## --screenshot-delay=N extra frames to wait before the screenshot (default 10)
 ## --autowalk=DX,DY     hold a movement direction once the world is ready
 ## --pause-menu         open the pause menu once the world is ready
+## --layer=N            go to layer N (0 = surface, -1 to -6 underground)
+## --noclip             start in debug ghost mode
+## --map                open the debug map once the world is ready
 
 var seed_text := ""
 var spawn_override := Vector2i.ZERO
@@ -31,6 +34,9 @@ var screenshot_path := ""
 var screenshot_delay := 10
 var autowalk := Vector2i.ZERO
 var open_pause_menu := false
+var layer := 0
+var noclip := false
+var open_map := false
 
 
 static func parse(args: PackedStringArray) -> DevOptions:
@@ -75,6 +81,12 @@ static func parse(args: PackedStringArray) -> DevOptions:
 					options.autowalk = Vector2i(dxy[0].to_int(), dxy[1].to_int())
 			"pause-menu":
 				options.open_pause_menu = true
+			"layer":
+				options.layer = value.to_int()
+			"noclip":
+				options.noclip = true
+			"map":
+				options.open_map = true
 	return options
 
 

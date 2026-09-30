@@ -27,4 +27,11 @@ xvfb-run -a godot --path . --audio-driver Dummy --resolution 1280x720 -- --seed=
   `WorldClock.scale_duration()` (pace = clamp((day_minutes/20)^0.25, 0.7, 2.5); synced = 24 h day).
   Only SYNCED worlds catch up offline, capped to one game day.
 - Pixel art: 16 px tiles, integer world zoom, UI scaled via the window content scale factor.
+  Sprites come from `tools/gen_placeholder_art.py`; its GROUNDS/BLOCKS lists must match the enums.
+- World generation (`src/sim/world/generation/`): ClimateSampler (5 Minecraft climate noises,
+  sampled every 4 tiles by ClimateGrid) -> TerrainShaper (splines, rivers, terrace levels) ->
+  Biomes.select -> SurfaceBuilder (ground + vegetation) ; CaveGenerator for layers -1..-6.
+  Chunks are keyed Vector3i(x, y, layer). Tune with `tools/render_world_map.gd` (map PNG + stats).
+- generate_chunk() must stay thread-safe (read-only shared state): the server runs it on the
+  WorkerThreadPool via ChunkGenerationQueue. Tests use `GameServer.new(settings, null, false)`.
 - Add tests in `tests/unit/test_*.gd` (extend `TestCase`, methods named `test_*`).

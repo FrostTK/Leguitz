@@ -13,12 +13,15 @@ script = ExtResource("1_client")
 [node name="DayNight" type="CanvasModulate" parent="."]
 script = ExtResource("2_daynight")
 
-[node name="WorldView" type="Node2D" parent="." node_paths=PackedStringArray("ground_root", "entity_root")]
+[node name="WorldView" type="Node2D" parent="." node_paths=PackedStringArray("ground_root", "overlay_root", "entity_root")]
 script = ExtResource("3_worldview")
 ground_root = NodePath("Ground")
+overlay_root = NodePath("Overlay")
 entity_root = NodePath("Entities")
 
 [node name="Ground" type="Node2D" parent="WorldView"]
+
+[node name="Overlay" type="Node2D" parent="WorldView"]
 
 [node name="Entities" type="Node2D" parent="WorldView"]
 y_sort_enabled = true

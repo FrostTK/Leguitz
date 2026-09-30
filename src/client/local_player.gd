@@ -6,6 +6,8 @@ extends Node2D
 ## Walking speed in tiles per second (Stardew-like pace).
 const WALK_SPEED := 5.0 * GameConst.TILE_SIZE
 const SPRINT_MULTIPLIER := 1.45
+## Debug "ghost" mode: flies through everything (creative flight later).
+const NOCLIP_MULTIPLIER := 2.5
 ## Collision box (width, height) at the feet, in world pixels.
 const BOX := Vector2(10.0, 6.0)
 const SEND_INTERVAL := GameConst.TICK_DELTA
@@ -20,6 +22,7 @@ const FRAME_BY_FACING := {
 var client_world: ClientWorld
 var transport: Transport
 var active := false
+var noclip := false
 var facing := Vector2i.DOWN
 
 var _send_timer := 0.0
@@ -39,6 +42,12 @@ func apply_correction(world_position: Vector2) -> void:
 	_last_sent_position = world_position
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed(InputBindings.TOGGLE_NOCLIP):
+		noclip = not noclip
+		get_viewport().set_input_as_handled()
+
+
 func _process(delta: float) -> void:
 	if not active:
 		return
@@ -55,7 +64,10 @@ func _process(delta: float) -> void:
 			speed *= SPRINT_MULTIPLIER
 		# Cap the step so a frame hitch never tunnels through a tile.
 		var motion := input * speed * minf(delta, 0.1)
-		position = TileCollider.move(position, motion, BOX, client_world.is_solid)
+		if noclip:
+			position += motion * NOCLIP_MULTIPLIER
+		else:
+			position = TileCollider.move(position, motion, BOX, client_world.is_solid)
 	_sprite.frame = FRAME_BY_FACING.get(facing, 0)
 	_send_timer += delta
 	if _send_timer >= SEND_INTERVAL:
