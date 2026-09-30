@@ -1,0 +1,85 @@
+name: Build
+
+on:
+  push:
+    branches: ["main", "claude/**"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: "4.7.2"
+
+jobs:
+  build:
+    name: Lint, test and export
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Lint GDScript
+        run: |
+          pip install --quiet "gdtoolkit==4.*"
+          gdlint src tests
+          gdformat --check src tests
+
+      - name: Cache Godot and export templates
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/godot
+            ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable
+          key: godot-${{ env.GODOT_VERSION }}-stable-desktop
+
+      - name: Install Godot
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: bash tools/install_godot.sh --templates desktop
+
+      - name: Add Godot to PATH
+        run: echo "$HOME/godot" >> "$GITHUB_PATH"
+
+      - name: Import project
+        run: godot --headless --path . --import
+
+      - name: Unit tests
+        run: godot --headless --path . -s res://tests/run_tests.gd
+
+      - name: Export Windows, Linux and macOS
+        run: |
+          mkdir -p build/windows build/linux build/macos
+          godot --headless --path . --export-release "Windows" build/windows/Leguitz.exe
+          godot --headless --path . --export-release "Linux" build/linux/Leguitz.x86_64
+          godot --headless --path . --export-release "macOS" build/macos/Leguitz.zip
+          test -s build/windows/Leguitz.exe
+          test -s build/linux/Leguitz.x86_64
+          test -s build/macos/Leguitz.zip
+          # Artifacts are zipped by GitHub and lose the executable bit.
+          tar -czf build/Leguitz-linux.tar.gz -C build/linux Leguitz.x86_64
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Leguitz-windows
+          path: build/windows/Leguitz.exe
+          retention-days: 30
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Leguitz-linux
+          path: build/Leguitz-linux.tar.gz
+          retention-days: 30
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Leguitz-macos
+          path: build/macos/Leguitz.zip
+          retention-days: 30

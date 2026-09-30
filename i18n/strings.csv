@@ -1,0 +1,46 @@
+keys,en,fr
+GAME_TITLE,Leguitz,Leguitz
+WORLD_DEFAULT_NAME,New world,Nouveau monde
+LOADING_WORLD,Generating the world...,Génération du monde...
+GAME_MODE_CREATIVE,Creative,Créatif
+GAME_MODE_SURVIVAL,Survival,Survie
+GAME_MODE_HARDCORE,Hardcore,Hardcore
+MENU_PAUSE_TITLE,Paused,Pause
+MENU_RESUME,Resume,Reprendre
+MENU_QUIT,Quit game,Quitter le jeu
+MENU_WORLD_SETTINGS,World,Monde
+MENU_GAME_SETTINGS,Settings,Paramètres
+SETTING_TIME_MODE,Time,Temps
+TIME_MODE_NORMAL,Normal,Normal
+TIME_MODE_SYNCED,Sync with device,Synchroniser avec l'appareil
+TIME_MODE_FROZEN,Frozen,Figé
+SETTING_DAY_LENGTH,Day length,Durée d'une journée
+DAY_LENGTH_VALUE,%d min,%d min
+SETTING_FROZEN_AT,Freeze at,Figer à
+FROZEN_SUNRISE,Sunrise,Lever du soleil
+FROZEN_NOON,Noon,Midi
+FROZEN_SUNSET,Sunset,Coucher du soleil
+FROZEN_MIDNIGHT,Midnight,Minuit
+TIME_PACE_INFO,"Hunger, cooking and crops pace: x%s","Rythme de la faim, de la cuisson et des cultures : x%s"
+TIME_SYNCED_INFO,"1 day = 24 h, using the device's clock.","1 journée = 24 h, à l'heure de l'appareil."
+SETTING_LANGUAGE,Language,Langue
+LANGUAGE_AUTO,Automatic,Automatique
+LANGUAGE_FR,Français,Français
+LANGUAGE_EN,English,English
+SETTING_ZOOM,Zoom,Zoom
+ZOOM_AUTO,Automatic,Automatique
+HUD_DAY_TIME,Day %d - %s,Jour %d - %s
+HUD_FROZEN,(frozen),(figé)
+HUD_SYNCED,(synced),(synchro)
+DEBUG_WORLD,World,Monde
+DEBUG_SEED,Seed,Graine
+DEBUG_POSITION,Position,Position
+DEBUG_TILE,Tile,Tuile
+DEBUG_GROUND,Ground,Sol
+DEBUG_FACING,Facing,Direction
+DEBUG_DAY,Day,Jour
+DEBUG_PACE,Pace,Rythme
+DEBUG_MOON,Moon,Lune
+DEBUG_CHUNKS,Visible chunks,Chunks affichés
+DEBUG_SERVER,Server,Serveur
+DEBUG_PLAYERS,player(s),joueur(s)

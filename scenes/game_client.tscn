@@ -1,0 +1,49 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://src/client/game_client.gd" id="1_client"]
+[ext_resource type="Script" path="res://src/client/day_night_tint.gd" id="2_daynight"]
+[ext_resource type="Script" path="res://src/client/world_view.gd" id="3_worldview"]
+[ext_resource type="Script" path="res://src/client/local_player.gd" id="4_player"]
+[ext_resource type="Texture2D" path="res://assets/textures/entities/player_placeholder.png" id="5_player_tex"]
+[ext_resource type="Script" path="res://src/client/camera_rig.gd" id="6_camera"]
+
+[node name="GameClient" type="Node2D"]
+script = ExtResource("1_client")
+
+[node name="DayNight" type="CanvasModulate" parent="."]
+script = ExtResource("2_daynight")
+
+[node name="WorldView" type="Node2D" parent="." node_paths=PackedStringArray("ground_root", "entity_root")]
+script = ExtResource("3_worldview")
+ground_root = NodePath("Ground")
+entity_root = NodePath("Entities")
+
+[node name="Ground" type="Node2D" parent="WorldView"]
+
+[node name="Entities" type="Node2D" parent="WorldView"]
+y_sort_enabled = true
+
+[node name="LocalPlayer" type="Node2D" parent="WorldView/Entities"]
+script = ExtResource("4_player")
+
+[node name="Sprite" type="Sprite2D" parent="WorldView/Entities/LocalPlayer"]
+texture = ExtResource("5_player_tex")
+centered = false
+offset = Vector2(-8, -22)
+hframes = 4
+
+[node name="Camera" type="Camera2D" parent="." node_paths=PackedStringArray("target")]
+script = ExtResource("6_camera")
+target = NodePath("../WorldView/Entities/LocalPlayer")
+
+[node name="UI" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="Root" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
