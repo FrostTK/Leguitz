@@ -21,6 +21,7 @@ const TOGGLE_MAP := &"toggle_map"
 const LAYER_UP := &"layer_up"
 const LAYER_DOWN := &"layer_down"
 const TOGGLE_NOCLIP := &"toggle_noclip"
+const CYCLE_WEATHER := &"cycle_weather"
 
 const STICK_DEADZONE := 0.25
 
@@ -56,6 +57,7 @@ static func register_defaults() -> void:
 	_bind(LAYER_UP, [_key(KEY_PAGEUP)])
 	_bind(LAYER_DOWN, [_key(KEY_PAGEDOWN)])
 	_bind(TOGGLE_NOCLIP, [_key(KEY_F4)])
+	_bind(CYCLE_WEATHER, [_key(KEY_F6)])
 
 
 static func _bind(action: StringName, events: Array[InputEvent]) -> void:

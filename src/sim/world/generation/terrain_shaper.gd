@@ -9,7 +9,9 @@ extends RefCounted
 ## Heights are in meters (1 tile = 1 m), sea level = 0.
 
 ## Height difference between two terrace levels (one cliff step).
-const LEVEL_STEP := 8.0
+const LEVEL_STEP := 10.0
+const HIGH_LEVEL_STEP := 16.0
+const HIGH_LEVELS_FROM := 40.0
 const MAX_LEVEL := 31
 
 ## Continentalness bands (Minecraft 1.18 values).
@@ -116,7 +118,12 @@ func height(continentalness: float, erosion: float, weirdness: float) -> float:
 	return h
 
 
+## Terrace level of a height: one step every LEVEL_STEP m in the lowlands,
+## wider steps (HIGH_LEVEL_STEP) in the mountains so slopes stay readable.
 static func level_for_height(h: float) -> int:
 	if h <= 0.0:
 		return 0
-	return mini(floori(h / LEVEL_STEP), MAX_LEVEL)
+	if h < HIGH_LEVELS_FROM:
+		return floori(h / LEVEL_STEP)
+	var low_levels := floori(HIGH_LEVELS_FROM / LEVEL_STEP)
+	return mini(low_levels + floori((h - HIGH_LEVELS_FROM) / HIGH_LEVEL_STEP), MAX_LEVEL)

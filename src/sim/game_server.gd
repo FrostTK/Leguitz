@@ -46,6 +46,7 @@ class MapJob:
 
 var settings: WorldSettings
 var clock: WorldClock
+var weather: Weather
 var world: WorldState
 var generation: ChunkGenerationQueue
 var spawn_tile := Vector2i.ZERO
@@ -62,6 +63,7 @@ var _map_jobs: Array[MapJob] = []
 func _init(world_settings: WorldSettings, world_clock: WorldClock = null, threaded := true) -> void:
 	settings = world_settings
 	clock = world_clock if world_clock != null else WorldClock.new()
+	weather = Weather.new(settings.world_seed)
 	var generator := WorldGenerator.new(settings.world_seed)
 	world = WorldState.new(generator)
 	generation = ChunkGenerationQueue.new(generator, threaded)
@@ -107,12 +109,15 @@ func tick() -> void:
 	tick_count += 1
 	clock.advance(GameConst.TICK_DELTA)
 	clock.sync_to_device()
+	if weather.tick(GameConst.TICK_DELTA, clock):
+		_broadcast(Msg.weather_state(weather))
 	_collect_generated()
 	for session in _sessions:
 		if session.joined:
 			_stream_chunks(session, CHUNKS_SENT_PER_TICK)
 	if tick_count % TIME_BROADCAST_TICKS == 0:
 		_broadcast(Msg.time_state(clock))
+		_broadcast(Msg.weather_state(weather))
 	if tick_count % UNLOAD_CHECK_TICKS == 0:
 		_unload_unused_chunks()
 
@@ -129,6 +134,8 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 			_on_debug_change_layer(session, message)
 		Msg.MAP_REQUEST:
 			_on_map_request(session, message)
+		Msg.DEBUG_SET_WEATHER:
+			_on_debug_set_weather(session, message)
 		var unknown:
 			push_warning("Server: unknown message type %s" % unknown)
 
@@ -151,6 +158,7 @@ func _on_hello(session: PlayerSession, message: Dictionary) -> void:
 		Msg.welcome(session.id, session.position, session.layer, settings.to_dict())
 	)
 	session.transport.send(Msg.time_state(clock))
+	session.transport.send(Msg.weather_state(weather))
 	# Start generating the whole initial view right away.
 	_stream_chunks(session, CHUNKS_SENT_PER_TICK)
 	_collect_generated()
@@ -195,6 +203,14 @@ func _on_debug_change_layer(session: PlayerSession, message: Dictionary) -> void
 	session.position = Coords.tile_to_world_center(target) + Vector2(0, 4)
 	session.transport.send(Msg.player_teleport(session.position, layer))
 	_stream_chunks(session, CHUNKS_SENT_PER_TICK)
+
+
+func _on_debug_set_weather(session: PlayerSession, message: Dictionary) -> void:
+	if not allow_debug_commands or not session.joined:
+		return
+	var kind := clampi(int(message.get("kind", 0)), 0, Weather.Kind.size() - 1)
+	weather.set_kind(kind as Weather.Kind, clock)
+	_broadcast(Msg.weather_state(weather))
 
 
 func _on_map_request(session: PlayerSession, message: Dictionary) -> void:

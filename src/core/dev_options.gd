@@ -19,6 +19,8 @@ extends RefCounted
 ## --layer=N            go to layer N (0 = surface, -1 to -6 underground)
 ## --noclip             start in debug ghost mode
 ## --map                open the debug map once the world is ready
+## --weather=KIND       clear | rain | thunder
+## --quality=N          graphics quality 0 (low) to 3 (ultra)
 
 var seed_text := ""
 var spawn_override := Vector2i.ZERO
@@ -37,6 +39,8 @@ var open_pause_menu := false
 var layer := 0
 var noclip := false
 var open_map := false
+var weather := -1
+var quality := -1
 
 
 static func parse(args: PackedStringArray) -> DevOptions:
@@ -87,6 +91,10 @@ static func parse(args: PackedStringArray) -> DevOptions:
 				options.noclip = true
 			"map":
 				options.open_map = true
+			"weather":
+				options.weather = ["clear", "rain", "thunder"].find(value)
+			"quality":
+				options.quality = value.to_int()
 	return options
 
 

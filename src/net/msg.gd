@@ -10,6 +10,7 @@ const PLAYER_MOVE := "player_move"
 const SET_TIME := "set_time"
 const DEBUG_CHANGE_LAYER := "debug_change_layer"
 const MAP_REQUEST := "map_request"
+const DEBUG_SET_WEATHER := "debug_set_weather"
 
 # Server -> client
 const WELCOME := "welcome"
@@ -19,6 +20,7 @@ const TIME_STATE := "time_state"
 const PLAYER_CORRECTION := "player_correction"
 const PLAYER_TELEPORT := "player_teleport"
 const MAP_DATA := "map_data"
+const WEATHER_STATE := "weather_state"
 
 
 static func hello(player_name: String, view_distance: int) -> Dictionary:
@@ -43,6 +45,15 @@ static func debug_change_layer(delta: int) -> Dictionary:
 ## Asks for a map image centered on a tile (debug map).
 static func map_request(center: Vector2i, layer: int, size_px: int, scale: int) -> Dictionary:
 	return {"t": MAP_REQUEST, "center": center, "layer": layer, "size": size_px, "scale": scale}
+
+
+## Debug/creative: force a weather (Weather.Kind).
+static func debug_set_weather(kind: int) -> Dictionary:
+	return {"t": DEBUG_SET_WEATHER, "kind": kind}
+
+
+static func weather_state(weather: Weather) -> Dictionary:
+	return {"t": WEATHER_STATE, "weather": weather.to_dict()}
 
 
 static func welcome(player_id: int, spawn: Vector2, layer: int, world: Dictionary) -> Dictionary:

@@ -159,7 +159,7 @@ var _flower_patches: FastNoiseLite
 func _init(world_seed: int) -> void:
 	_decoration_seed = HashUtil.derive_seed(world_seed, SALT_DECORATION)
 	_flower_color_seed = HashUtil.derive_seed(world_seed, SALT_FLOWER_COLORS)
-	_outcrops = ClimateSampler.make_fbm(world_seed, SALT_OUTCROPS, 1.0 / 14.0, 2, 0.0)
+	_outcrops = ClimateSampler.make_fbm(world_seed, SALT_OUTCROPS, 1.0 / 22.0, 1, 0.0)
 	_flower_patches = ClimateSampler.make_fbm(world_seed, SALT_FLOWER_PATCHES, 1.0 / 28.0, 2, 0.0)
 
 
@@ -221,7 +221,7 @@ func _outcrop_block(biome: int, h: float, erosion: float, tx: int, ty: int) -> i
 		return Tiles.Block.AIR
 	if erosion > 0.1 and not mountain:
 		return Tiles.Block.AIR
-	var threshold := lerpf(0.5, 0.0, smoothstep(OUTCROP_HEIGHT, 120.0, h))
+	var threshold := lerpf(0.42, 0.12, smoothstep(OUTCROP_HEIGHT, 110.0, h))
 	if _outcrops.get_noise_2d(tx, ty) < threshold:
 		return Tiles.Block.AIR
 	var roll := HashUtil.unit2(_decoration_seed ^ 0x1234567, tx, ty)

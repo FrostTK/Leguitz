@@ -93,6 +93,8 @@ func _apply_dev_preferences() -> void:
 		Settings.world_zoom = dev.zoom
 	if dev.show_debug:
 		Settings.show_debug = true
+	if dev.quality >= 0:
+		Settings.graphics_quality = clampi(dev.quality, 0, 3)
 
 
 func _start_dev_actions() -> void:
@@ -105,6 +107,8 @@ func _start_dev_actions() -> void:
 	if dev.layer != 0:
 		client.transport.send(Msg.debug_change_layer(dev.layer))
 	client.local_player.noclip = dev.noclip
+	if dev.weather >= 0:
+		client.transport.send(Msg.debug_set_weather(dev.weather))
 	if dev.open_map:
 		client.debug_map.cycle(client.local_player.current_tile(), client.world.layer + dev.layer)
 	if dev.open_pause_menu:
@@ -120,6 +124,10 @@ func _update_screenshot() -> void:
 	_screenshot_taken = true
 	await RenderingServer.frame_post_draw
 	var image := get_viewport().get_texture().get_image()
+	# With HDR 2D the viewport holds linear colors; the screen shows sRGB.
+	if get_viewport().use_hdr_2d:
+		image.convert(Image.FORMAT_RGBA8)
+		image.linear_to_srgb()
 	var error := image.save_png(dev.screenshot_path)
 	if error != OK:
 		push_error("Screenshot failed: %s" % error_string(error))

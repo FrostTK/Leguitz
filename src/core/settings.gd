@@ -19,6 +19,8 @@ var ui_scale := 0
 var world_zoom := 0
 var view_distance := GameConst.DEFAULT_VIEW_DISTANCE
 var show_debug := false
+## 0 low, 1 medium, 2 high, 3 ultra (see LightingController.Quality).
+var graphics_quality := 2
 
 
 func _ready() -> void:
@@ -61,6 +63,12 @@ func set_world_zoom(value: int) -> void:
 	changed.emit(&"world_zoom")
 
 
+func set_graphics_quality(value: int) -> void:
+	graphics_quality = clampi(value, 0, 3)
+	save_settings()
+	changed.emit(&"graphics_quality")
+
+
 func set_show_debug(value: bool) -> void:
 	show_debug = value
 	save_settings()
@@ -90,6 +98,7 @@ func load_settings() -> void:
 	ui_scale = file.get_value("display", "ui_scale", ui_scale)
 	world_zoom = file.get_value("display", "world_zoom", world_zoom)
 	view_distance = file.get_value("display", "view_distance", view_distance)
+	graphics_quality = file.get_value("display", "graphics_quality", graphics_quality)
 	show_debug = file.get_value("debug", "show_debug", show_debug)
 
 
@@ -99,6 +108,7 @@ func save_settings() -> void:
 	file.set_value("display", "ui_scale", ui_scale)
 	file.set_value("display", "world_zoom", world_zoom)
 	file.set_value("display", "view_distance", view_distance)
+	file.set_value("display", "graphics_quality", graphics_quality)
 	file.set_value("debug", "show_debug", show_debug)
 	var error := file.save(PATH)
 	if error != OK:
