@@ -10,6 +10,8 @@ const SALT_FLOWER_PATCHES := 32
 const SALT_FLOWER_COLORS := 33
 
 const SNOW_LINE := 78.0
+## Voxels of filler (dirt under grass...) between the surface and the rock.
+const FILLER_DEPTH := 3
 ## Mountains above this height get rock outcrops (solid stone and ores).
 const OUTCROP_HEIGHT := 42.0
 
@@ -137,6 +139,23 @@ const PATCHY_GROUND := {
 	Biomes.Id.FROZEN_RIVER: [Tiles.Ground.SAND, Tiles.Ground.GRAVEL, 0.2, true],
 }
 
+## Filler under each surface ground (dirt by default).
+const FILLERS := {
+	Tiles.Ground.SAND: Tiles.Ground.SAND,
+	Tiles.Ground.STONE_FLOOR: Tiles.Ground.STONE_FLOOR,
+	Tiles.Ground.GRAVEL: Tiles.Ground.GRAVEL,
+	Tiles.Ground.DEEPSLATE_FLOOR: Tiles.Ground.DEEPSLATE_FLOOR,
+	Tiles.Ground.MUD: Tiles.Ground.MUD,
+	Tiles.Ground.SWAMP_WATER: Tiles.Ground.MUD,
+	Tiles.Ground.ICE: Tiles.Ground.ICE,
+}
+## Badlands grounds: their filler shows the colored strata of their rows.
+const STRATA := {
+	Tiles.Ground.RED_SAND: true,
+	Tiles.Ground.TERRACOTTA: true,
+	Tiles.Ground.TERRACOTTA_LIGHT: true,
+}
+
 ## Biomes where sugar cane grows next to water.
 const SUGAR_CANE_BIOMES := {
 	Biomes.Id.PLAINS: true,
@@ -185,6 +204,25 @@ func ground_for(biome: int, h: float, level: int, detail: float, water: bool) ->
 	if h > OUTCROP_HEIGHT + 10.0 and detail < -0.4:
 		return Tiles.Ground.STONE_FLOOR
 	return Tiles.Ground.GRASS
+
+
+## Voxel of filler at a row under a surface ground (`h`: terrain height).
+func filler_for(ground: int, h: float, row: int) -> int:
+	if STRATA.has(ground):
+		return Voxels.of_ground(_badlands_ground(h, row - GameConst.SEA_LEVEL + 1))
+	return Voxels.of_ground(FILLERS.get(ground, Tiles.Ground.DIRT))
+
+
+## Voxel of the bed under water.
+func bed_for(biome: int, detail: float) -> int:
+	match biome:
+		Biomes.Id.SWAMP:
+			return Voxels.of_ground(Tiles.Ground.MUD)
+		Biomes.Id.RIVER, Biomes.Id.FROZEN_RIVER, Biomes.Id.STONY_SHORE:
+			return Voxels.of_ground(Tiles.Ground.GRAVEL if detail > 0.2 else Tiles.Ground.SAND)
+		Biomes.Id.DEEP_OCEAN:
+			return Voxels.of_ground(Tiles.Ground.GRAVEL)
+	return Voxels.of_ground(Tiles.Ground.SAND)
 
 
 ## Block standing on a surface tile (air, plant, tree, rock, ore...).

@@ -1,121 +1,102 @@
 class_name ChunkData
 extends RefCounted
-## Raw content of a 16x16 chunk of one layer (0 = surface, < 0 underground).
+## One 16 x 16 column of the world, WORLD_HEIGHT voxels tall (see Voxels).
 ##
-## Per tile: ground id, block id, terrace level (surface height step),
-## shape flags (cliff edges) and biome id.
-##
-## Heights are in levels: a tile's ground is at its level (water a little
-## lower), a cube block adds one level. Players climb one level by jumping.
+## Voxels are stored column by column: index = (z * 16 + x) * HEIGHT + y,
+## y being the row (SEA_LEVEL = level 0). Per column it also keeps the
+## biome and the top of its terrain (highest cube or liquid voxel), which
+## physics, rendering and spawning read without scanning.
 
-const FORMAT_VERSION := 2
-
-## Shape flags: which 4-neighbors are on a lower terrace level (a cliff
-## edge). Flag 16 is free (it marked generated ramps, now gone).
-const SHAPE_LOWER_N := 1
-const SHAPE_LOWER_E := 2
-const SHAPE_LOWER_S := 4
-const SHAPE_LOWER_W := 8
-const SHAPE_EDGE_MASK := 15
-## The tile right under a south-facing cliff face (drawn in its shadow).
-const SHAPE_SHADOW := 32
-## Water surfaces sit this far (levels) below the ground of their level.
+const FORMAT_VERSION := 3
+const SIZE := GameConst.CHUNK_SIZE
+const HEIGHT := GameConst.WORLD_HEIGHT
+## Water surfaces sit this far (levels) below the top of their voxel.
 const WATER_DROP := 0.15
-## Height of a cube block (levels).
-const CUBE_HEIGHT := 1.0
 
 var coord := Vector2i.ZERO
-var layer := 0
-var ground := PackedByteArray()
-var blocks := PackedByteArray()
-var levels := PackedByteArray()
-var shapes := PackedByteArray()
+var voxels := PackedByteArray()
 var biome := PackedByteArray()
+## Per column: 1 + row of the highest cube or liquid voxel (0 = none).
+var tops := PackedByteArray()
 ## Set when a player changed the chunk (it must be saved, not regenerated).
 var modified := false
 
 
-func _init(chunk_coord := Vector2i.ZERO, chunk_layer := 0) -> void:
+func _init(chunk_coord := Vector2i.ZERO) -> void:
 	coord = chunk_coord
-	layer = chunk_layer
 	# Packed arrays are values: resize each member directly.
-	ground.resize(GameConst.CHUNK_AREA)
-	blocks.resize(GameConst.CHUNK_AREA)
-	levels.resize(GameConst.CHUNK_AREA)
-	shapes.resize(GameConst.CHUNK_AREA)
+	voxels.resize(GameConst.CHUNK_AREA * HEIGHT)
 	biome.resize(GameConst.CHUNK_AREA)
+	tops.resize(GameConst.CHUNK_AREA)
 
 
-func key() -> Vector3i:
-	return Vector3i(coord.x, coord.y, layer)
+static func voxel_index(lx: int, y: int, lz: int) -> int:
+	return (lz * SIZE + lx) * HEIGHT + y
 
 
-func get_ground(local: Vector2i) -> int:
-	return ground[Coords.local_index(local)]
+func get_voxel(local: Vector3i) -> int:
+	return voxels[voxel_index(local.x, local.y, local.z)]
 
 
-func get_block(local: Vector2i) -> int:
-	return blocks[Coords.local_index(local)]
+func set_voxel(local: Vector3i, voxel: int) -> void:
+	voxels[voxel_index(local.x, local.y, local.z)] = voxel
+	var column := local.z * SIZE + local.x
+	if Voxels.is_cube(voxel) or Voxels.is_liquid(voxel):
+		tops[column] = maxi(tops[column], local.y + 1)
+	elif local.y + 1 == tops[column]:
+		tops[column] = _scan_top(local.x, local.z, local.y)
 
 
-func get_level(local: Vector2i) -> int:
-	return levels[Coords.local_index(local)]
+## Row just above the terrain of a column (0 if the column is empty).
+func top_row(local: Vector2i) -> int:
+	return tops[local.y * SIZE + local.x]
 
 
-func get_shape(local: Vector2i) -> int:
-	return shapes[Coords.local_index(local)]
-
-
-func get_biome(local: Vector2i) -> int:
-	return biome[Coords.local_index(local)]
-
-
-func set_ground(local: Vector2i, id: int) -> void:
-	ground[Coords.local_index(local)] = id
-
-
-func set_block(local: Vector2i, id: int) -> void:
-	blocks[Coords.local_index(local)] = id
-
-
-## True if something stands on the tile's ground (solid block or ground):
-## nobody can stand there at ground level.
-func is_solid(local: Vector2i) -> bool:
-	var index := Coords.local_index(local)
-	return Tiles.is_block_solid(blocks[index]) or Tiles.is_ground_solid(ground[index])
-
-
-## Height (levels) of the ground surface of a tile.
-func ground_height(local: Vector2i) -> float:
-	var index := Coords.local_index(local)
-	var height := float(levels[index])
-	if Tiles.is_water(ground[index]):
+## Height (levels) of the terrain surface of a column (water: a little
+## lower than its voxel).
+func surface_height(local: Vector2i) -> float:
+	var row := top_row(local)
+	var height := float(row - GameConst.SEA_LEVEL)
+	if row > 0 and Voxels.is_liquid(voxels[voxel_index(local.x, row - 1, local.y)]):
 		height -= WATER_DROP
 	return height
 
 
-## Height (levels) a body stands at on a tile: its ground, or the top of a
-## cube block. INF where nobody can stand: obstacles (trees, boulders...),
-## lava, and underground the rock mass (cube blocks fill the layer there).
-func top_height(local: Vector2i) -> float:
-	var index := Coords.local_index(local)
-	var block := blocks[index]
-	if Tiles.is_ground_solid(ground[index]):
-		return INF
-	if Tiles.is_cube(block):
-		return INF if layer < WorldGenerator.SURFACE_LAYER else ground_height(local) + CUBE_HEIGHT
-	if Tiles.is_block_solid(block):
-		return INF
-	return ground_height(local)
+## The voxel at the top of a column's terrain (grass, sand, water...).
+func surface_voxel(local: Vector2i) -> int:
+	var row := top_row(local)
+	return voxels[voxel_index(local.x, row - 1, local.y)] if row > 0 else Voxels.AIR
+
+
+## The voxel standing on a column's terrain (tree, plant...) or air.
+func object_on_surface(local: Vector2i) -> int:
+	var row := top_row(local)
+	return voxels[voxel_index(local.x, row, local.y)] if row < HEIGHT else Voxels.AIR
+
+
+func get_biome(local: Vector2i) -> int:
+	return biome[local.y * SIZE + local.x]
+
+
+## Recomputes every column top (after filling the voxels directly).
+func recompute_tops() -> void:
+	var flags := Voxels.flag_table()
+	var terrain := Voxels.FLAG_CUBE | Voxels.FLAG_LIQUID
+	for column in GameConst.CHUNK_AREA:
+		var base := column * HEIGHT
+		var top := 0
+		for y in range(HEIGHT - 1, -1, -1):
+			if flags[voxels[base + y]] & terrain != 0:
+				top = y + 1
+				break
+		tops[column] = top
 
 
 func duplicate_chunk() -> ChunkData:
-	var copy := ChunkData.new(coord, layer)
-	copy.ground = ground.duplicate()
-	copy.blocks = blocks.duplicate()
-	copy.levels = levels.duplicate()
-	copy.shapes = shapes.duplicate()
+	var copy := ChunkData.new(coord)
+	copy.voxels = voxels.duplicate()
 	copy.biome = biome.duplicate()
+	copy.tops = tops.duplicate()
 	copy.modified = modified
 	return copy
 
@@ -125,19 +106,33 @@ func to_dict() -> Dictionary:
 		"v": FORMAT_VERSION,
 		"x": coord.x,
 		"y": coord.y,
-		"layer": layer,
-		"ground": ground,
-		"blocks": blocks,
-		"levels": levels,
-		"shapes": shapes,
+		"voxels": voxels,
 		"biome": biome,
+		"tops": tops,
 	}
 
 
 static func from_dict(data: Dictionary) -> ChunkData:
-	var chunk := ChunkData.new(Vector2i(data.get("x", 0), data.get("y", 0)), data.get("layer", 0))
-	for field in ["ground", "blocks", "levels", "shapes", "biome"]:
-		var array: PackedByteArray = data.get(field, PackedByteArray())
-		if array.size() == GameConst.CHUNK_AREA:
-			chunk.set(field, array)
+	var chunk := ChunkData.new(Vector2i(data.get("x", 0), data.get("y", 0)))
+	var voxels: PackedByteArray = data.get("voxels", PackedByteArray())
+	if voxels.size() == chunk.voxels.size():
+		chunk.voxels = voxels
+	var biome: PackedByteArray = data.get("biome", PackedByteArray())
+	if biome.size() == GameConst.CHUNK_AREA:
+		chunk.biome = biome
+	var tops: PackedByteArray = data.get("tops", PackedByteArray())
+	if tops.size() == GameConst.CHUNK_AREA:
+		chunk.tops = tops
+	else:
+		chunk.recompute_tops()
 	return chunk
+
+
+## 1 + the highest cube or liquid row below `below` in a column (0 = none).
+func _scan_top(lx: int, lz: int, below: int) -> int:
+	var base := (lz * SIZE + lx) * HEIGHT
+	for y in range(below - 1, -1, -1):
+		var voxel := voxels[base + y]
+		if Voxels.is_cube(voxel) or Voxels.is_liquid(voxel):
+			return y + 1
+	return 0

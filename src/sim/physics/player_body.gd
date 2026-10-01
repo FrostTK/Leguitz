@@ -1,23 +1,28 @@
 class_name PlayerBody
 extends RefCounted
-## A player's body: feet position on the map (world pixels), height
-## (levels) and vertical speed. Like in Minecraft it walks onto tiles up
-## to STEP_UP above its feet, falls off edges, and jumps 1.25 levels, so
-## it can climb one level (a terrace or a cube block) at a time.
+## A player's body among the voxels: feet position on the map (world
+## pixels), height (levels) and vertical speed. Like in Minecraft it walks
+## up rises of STEP_UP, falls off edges, bumps its head on ceilings and
+## jumps 1.25 levels, so it climbs one voxel at a time.
 ## Shared by the client (prediction) and the server (validation).
 ##
-## `top_at` is a Callable(tile: Vector2i) -> float: the height a body
-## stands at on that tile, INF where it cannot go (see
-## ChunkData.top_height).
+## `voxel_at` is a Callable(cell: Vector3i) -> int giving the voxel at
+## (tile x, row, tile y), Voxels.UNKNOWN where the world is not loaded.
 
 ## Collision box (width, depth) at the feet, in world pixels.
 const BOX := Vector2(10.0, 6.0)
+## Height of the body (levels): it fits through two-voxel gaps.
+const BODY_HEIGHT := 1.7
 ## Small rises (a water bank) are walked up without jumping.
 const STEP_UP := 0.2
+## Solid objects (trees, rocks, cacti...) stand this tall for bodies: their
+## models rise far above their voxel, nobody jumps over them.
+const OBJECT_HEIGHT := 3
 ## Minecraft's numbers, in levels: gravity 32 /s^2, jumps 1.25 high.
 const GRAVITY := 32.0
 const JUMP_HEIGHT := 1.25
 const MAX_FALL_SPEED := 60.0
+const EPSILON := 0.001
 
 var feet := Vector2.ZERO
 var height := 0.0
@@ -32,50 +37,94 @@ static func jump_speed() -> float:
 	return sqrt(2.0 * GRAVITY * JUMP_HEIGHT)
 
 
-## Highest place to stand under a box (-INF when nothing is known there).
-static func support(at: Vector2, top_at: Callable) -> float:
+## Highest place to stand at or below `limit` (levels) under a box: the
+## top of a cube, or the surface of water. -INF while unknown voxels are
+## in the way (or nothing at all is below).
+static func support(at: Vector2, limit: float, voxel_at: Callable) -> float:
 	var best := -INF
 	var area := TileCollider.covered_tiles(at, BOX)
 	for ty in range(area.position.y, area.end.y):
 		for tx in range(area.position.x, area.end.x):
-			var top: float = top_at.call(Vector2i(tx, ty))
-			if top != INF:
-				best = maxf(best, top)
+			best = maxf(best, _ground_below(Vector2i(tx, ty), limit, voxel_at))
 	return best
 
 
+## True if a body standing at `height` cannot enter a tile: something
+## solid between its knees (above STEP_UP) and the top of its head, a solid
+## object standing a little lower, or lava right under its feet.
+static func is_blocked(tile: Vector2i, height: float, voxel_at: Callable) -> bool:
+	var low := floori(height + STEP_UP + EPSILON) + GameConst.SEA_LEVEL
+	var high := ceili(height + BODY_HEIGHT - EPSILON) + GameConst.SEA_LEVEL
+	var under: int = voxel_at.call(Vector3i(tile.x, low - 1, tile.y))
+	if Voxels.is_liquid(under) and Voxels.is_solid(under):
+		return true
+	for row in range(low - OBJECT_HEIGHT + 1, low):
+		var below: int = voxel_at.call(Vector3i(tile.x, row, tile.y))
+		if Voxels.is_object(below) and Voxels.is_solid(below):
+			return true
+	for row in range(low, high):
+		if Voxels.is_solid(voxel_at.call(Vector3i(tile.x, row, tile.y))):
+			return true
+	return false
+
+
+## Height of the first voxel to stand on below `limit` in a column.
+static func _ground_below(tile: Vector2i, limit: float, voxel_at: Callable) -> float:
+	var row := mini(floori(limit) + GameConst.SEA_LEVEL, GameConst.WORLD_HEIGHT) - 1
+	var above := Voxels.AIR
+	while row >= 0:
+		var voxel: int = voxel_at.call(Vector3i(tile.x, row, tile.y))
+		if voxel == Voxels.UNKNOWN:
+			return -INF
+		if Voxels.is_cube(voxel):
+			return float(row + 1 - GameConst.SEA_LEVEL)
+		if Voxels.is_liquid(voxel) and not Voxels.is_liquid(above):
+			# Water is walked on for now (wading); swimming comes later.
+			return float(row + 1 - GameConst.SEA_LEVEL) - ChunkData.WATER_DROP
+		above = voxel
+		row -= 1
+	return -INF
+
+
 ## Puts the body somewhere new (spawn, teleport, server correction).
-func place(at: Vector2) -> void:
+func place(at: Vector2, at_height: float) -> void:
 	feet = at
+	height = at_height
 	vertical_speed = 0.0
 	needs_landing = true
 
 
 ## One frame of movement: `motion` on the map (world pixels), `jump` held.
-func step(motion: Vector2, jump: bool, delta: float, top_at: Callable) -> void:
+func step(motion: Vector2, jump: bool, delta: float, voxel_at: Callable) -> void:
 	if needs_landing:
-		var ground := support(feet, top_at)
+		var ground := support(feet, height + STEP_UP, voxel_at)
 		if ground == -INF:
 			return
 		height = ground
 		on_ground = true
 		needs_landing = false
 	if motion != Vector2.ZERO:
-		var limit := height + STEP_UP
-		var blocked := func(tile: Vector2i) -> bool: return top_at.call(tile) > limit
+		var current := height
+		var blocked := func(tile: Vector2i) -> bool: return is_blocked(tile, current, voxel_at)
 		feet = TileCollider.move(feet, motion, BOX, blocked)
-	var below := support(feet, top_at)
+	var below := support(feet, height + STEP_UP, voxel_at)
 	if below == -INF:
 		return
 	if on_ground and jump:
 		vertical_speed = jump_speed()
 		on_ground = false
-	if not on_ground or height > below + 0.001:
+	if not on_ground or height > below + EPSILON:
 		on_ground = false
 		# Exact under constant gravity: same jump whatever the frame rate.
 		var next_speed := maxf(vertical_speed - GRAVITY * delta, -MAX_FALL_SPEED)
-		height += (vertical_speed + next_speed) * 0.5 * delta
+		var next_height := height + (vertical_speed + next_speed) * 0.5 * delta
 		vertical_speed = next_speed
+		if vertical_speed > 0.0:
+			var ceiling := _ceiling_above(next_height, voxel_at)
+			if next_height > ceiling:
+				next_height = ceiling
+				vertical_speed = 0.0
+		height = next_height
 		if height <= below:
 			height = below
 			vertical_speed = 0.0
@@ -85,12 +134,23 @@ func step(motion: Vector2, jump: bool, delta: float, top_at: Callable) -> void:
 		height = below
 
 
-## Ghost movement (debug): through everything, keeping to the ground.
-func glide(motion: Vector2, top_at: Callable) -> void:
+## Ghost movement (debug): through everything, onto the highest ground.
+func glide(motion: Vector2, voxel_at: Callable) -> void:
 	feet += motion
-	var below := support(feet, top_at)
-	if below != -INF:
-		height = below
+	var ground := support(feet, GameConst.WORLD_HEIGHT, voxel_at)
+	if ground != -INF:
+		height = ground
 	vertical_speed = 0.0
 	on_ground = true
 	needs_landing = false
+
+
+## Highest feet height under the voxels above the head (INF if clear).
+func _ceiling_above(next_height: float, voxel_at: Callable) -> float:
+	var row := floori(next_height + BODY_HEIGHT) + GameConst.SEA_LEVEL
+	var area := TileCollider.covered_tiles(feet, BOX)
+	for ty in range(area.position.y, area.end.y):
+		for tx in range(area.position.x, area.end.x):
+			if Voxels.is_solid(voxel_at.call(Vector3i(tx, row, ty))):
+				return float(row - GameConst.SEA_LEVEL) - BODY_HEIGHT
+	return INF

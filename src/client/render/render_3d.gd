@@ -3,7 +3,8 @@ extends RefCounted
 ## How the tile world maps to the 3D scene.
 ##
 ## Terrain, voxel models and clouds are built in *local* units: one tile is one
-## unit in X (east) and Z (south), one terrace level is one unit in Y (up).
+## unit in X (east) and Z (south), one level (voxel row) is one unit in Y
+## (up), level 0 being sea level.
 ## They live under a world root whose basis (root_basis) stretches that
 ## space for the camera. At DEFAULT_PITCH:
 ## - depth is stretched by 1 / sin(pitch) along the camera's horizontal
@@ -21,11 +22,8 @@ const DEFAULT_PITCH := 60.0
 const MIN_PITCH := 15.0
 const MAX_PITCH := 78.0
 const PIXELS_PER_UNIT := 16.0
-## Local height of one terrace level, of rock walls and placed blocks.
+## Local height of one level (one voxel).
 const LEVEL_HEIGHT := 1.0
-const WALL_HEIGHT := ChunkData.CUBE_HEIGHT
-## Water surface sits a little below the ground of its level.
-const WATER_DEPTH := ChunkData.WATER_DROP
 
 static var _default_vertical := 1.0 / cos(deg_to_rad(DEFAULT_PITCH))
 static var _default_depth := 1.0 / sin(deg_to_rad(DEFAULT_PITCH))
@@ -63,14 +61,6 @@ static func world_px_to_local(world_px: Vector2, height: float) -> Vector3:
 ## Local position of a tile's center at a height.
 static func tile_center_local(tile: Vector2i, height: float) -> Vector3:
 	return Vector3(tile.x + 0.5, height, tile.y + 0.5)
-
-
-## Local height of the walkable surface of a tile (water: just below).
-static func surface_height(ground: int, level: int) -> float:
-	var height := level * LEVEL_HEIGHT
-	if Tiles.is_water(ground):
-		height -= WATER_DEPTH
-	return height
 
 
 ## Ground direction (tiles) of a screen direction (x right, y down) for a

@@ -1,10 +1,12 @@
 shader_type spatial;
-// Top faces of the 3D terrain (ground of every tile, tops of rock walls).
+// Top faces of the 3D terrain: the top of every voxel open to the air.
 //
-// The chunk mesh UVs are chunk pixels / 256. `chunk_data` is an 18x18
-// float texture (the chunk plus a 1-tile border):
-//   r = ground id, g = wall kind + 1 (0 = none), b = terrace level,
-//   a = shape flags. Everything is computed per art pixel.
+// The chunk mesh UVs are chunk pixels / 256, UV2 = (material code: ground
+// id or WALL_CODE + wall kind, level of the top). `chunk_data` is an 18x18
+// float texture (the chunk plus a 1-tile border, see
+// ChunkMesher.surface_map): r = ground id, g = wall kind + 1 (0 = none),
+// b = level of the visible top of the column. Tops at that level blend
+// with their neighbors. Everything is computed per art pixel.
 
 render_mode cull_disabled;
 
@@ -22,6 +24,9 @@ uniform int ground_kind[32];
 uniform vec4 water_colors[32] : source_color;
 uniform float emission_strength = 2.2;
 
+varying flat vec2 top_info;
+
+const int WALL_CODE = 64;
 const int KIND_WATER = 1;
 const int KIND_LAVA = 2;
 const int KIND_ICE = 3;
@@ -51,11 +56,19 @@ float edge_shade(ivec4 n[9], ivec2 tx) {
 	return shade;
 }
 
+void vertex() {
+	top_info = UV2;
+}
+
 void fragment() {
-	if (!IN_SHADOW_PASS
-			&& hides_player(VERTEX, VIEW_MATRIX, INV_VIEW_MATRIX, see_through_size, 0.0, FRAGCOORD.xy)) {
-		discard;
+	if (!IN_SHADOW_PASS) {
+		if (above_cut(VERTEX, INV_VIEW_MATRIX)
+				|| hides_player(VERTEX, VIEW_MATRIX, INV_VIEW_MATRIX, see_through_size, 0.0, FRAGCOORD.xy)) {
+			discard;
+		}
 	}
+	// Seen from behind (through the view cut): the section of the rock.
+	bool section = !IN_SHADOW_PASS && !FRONT_FACING;
 	vec2 local = UV * 256.0;
 	ivec2 lp = clamp(ivec2(floor(local)), ivec2(0), ivec2(255));
 	ivec2 tile = lp / 16;
@@ -66,6 +79,17 @@ void fragment() {
 	for (int i = 0; i < 9; i++) {
 		ivec2 offset = ivec2(i % 3 - 1, i / 3 - 1);
 		n[i] = ivec4(round(texelFetch(chunk_data, tile + offset + ivec2(1), 0)));
+	}
+	int face_code = int(top_info.x + 0.5);
+	int face_level = int(round(top_info.y));
+	if (n[4].b != face_level) {
+		// A top under the visible surface of its column (a ledge under an
+		// overhang): drawn plainly, as if all its neighbors were alike.
+		int wall_kind = face_code >= WALL_CODE ? face_code - WALL_CODE + 1 : 0;
+		ivec4 alone = ivec4(wall_kind > 0 ? 0 : face_code, wall_kind, face_level, 0);
+		for (int i = 0; i < 9; i++) {
+			n[i] = alone;
+		}
 	}
 	ivec4 c = n[4];
 	int ground = c.r;
@@ -211,4 +235,11 @@ void fragment() {
 	EMISSION = emission * emission_strength;
 	ROUGHNESS = roughness;
 	SPECULAR = specular;
+	if (section) {
+		ALBEDO = vec3(0.0);
+		NORMAL_MAP = vec3(0.5, 0.5, 1.0);
+		EMISSION = SECTION_COLOR;
+		ROUGHNESS = 1.0;
+		SPECULAR = 0.0;
+	}
 }

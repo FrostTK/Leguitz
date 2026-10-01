@@ -1,8 +1,8 @@
 class_name TerrainRenderer
 extends RefCounted
 ## Terrain tables shared by the terrain shaders (ground priorities, kinds,
-## water colors, cliff materials) and the chunk data textures they read
-## (see terrain3d_top.gdshader).
+## water colors, cliff materials). The chunk data textures they read come
+## from ChunkMesher.surface_map.
 
 enum Kind { LAND, WATER, LAVA, ICE }
 enum CliffMaterial { DIRT, STONE, SAND, SNOW }
@@ -80,53 +80,6 @@ static func cliff_material(ground: int) -> int:
 	if SNOW_GROUNDS.has(ground):
 		return CliffMaterial.SNOW
 	return CliffMaterial.DIRT
-
-
-## Builds the 18x18 RGBA float data of a chunk (floats, because 8-bit
-## textures get gamma-converted in HDR 2D and would lose exact ids). `neighbor` is a
-## Callable(coord: Vector2i) -> ChunkData (null if not loaded); missing
-## neighbors repeat the chunk's own edge so no false edges appear.
-static func build_data(chunk: ChunkData, neighbor: Callable) -> PackedFloat32Array:
-	var values := PackedFloat32Array()
-	values.resize(DATA_SIZE * DATA_SIZE * 4)
-	var size := GameConst.CHUNK_SIZE
-	var lookup := TileAtlas.wall_lookup
-	var neighbors := {}
-	var out := 0
-	for gy in DATA_SIZE:
-		for gx in DATA_SIZE:
-			var lx := gx - 1
-			var ly := gy - 1
-			var source := chunk
-			if lx < 0 or ly < 0 or lx >= size or ly >= size:
-				var offset := Vector2i(floori(lx / float(size)), floori(ly / float(size)))
-				if not neighbors.has(offset):
-					neighbors[offset] = neighbor.call(chunk.coord + offset)
-				var other: ChunkData = neighbors[offset]
-				if other != null:
-					source = other
-					lx = posmod(lx, size)
-					ly = posmod(ly, size)
-				else:
-					lx = clampi(lx, 0, size - 1)
-					ly = clampi(ly, 0, size - 1)
-			var index := ly * size + lx
-			values[out] = source.ground[index]
-			values[out + 1] = lookup[source.blocks[index]]
-			values[out + 2] = source.levels[index]
-			values[out + 3] = source.shapes[index]
-			out += 4
-	return values
-
-
-## True if the chunk has something that glows (lava, gem ores).
-static func has_emission(chunk: ChunkData) -> bool:
-	for index in GameConst.CHUNK_AREA:
-		if chunk.ground[index] == Tiles.Ground.LAVA:
-			return true
-		if TileAtlas.GLOWING_WALLS.has(chunk.blocks[index]):
-			return true
-	return false
 
 
 ## Sets the atlases and ground tables of a terrain top material.

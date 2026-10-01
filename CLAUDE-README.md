@@ -47,13 +47,19 @@ Les questions de goût ou les choix lourds de conséquences sont posés avant de
 | Temps | Durée d'une journée réglable **par monde** (5 à 120 min), réglage « **Synchroniser avec l'appareil** » (1 journée = 24 h, heure du jeu = heure de l'appareil), et temps figé. La faim, la cuisson, les cultures… s'adaptent **légèrement** : rythme = clamp((durée/20 min)^0,25 ; 0,7 ; 2,5), synchronisé = ×2,5. Rattrapage hors-ligne **seulement en mode synchronisé, limité à 1 journée de jeu**. |
 | Caméra | Vue de dessus inclinée façon Stardew par défaut (60°, « pixel parfaite »), **orbite à la souris** autour du joueur (clic droit ou molette enfoncée), zoom à la molette. On peut **baisser la caméra jusqu'à 15°** sans que les objets s'étirent : les hauteurs gardent leur taille à l'écran, le sol se resserre, et près de l'horizon on retrouve les vraies proportions (un cube est un cube). |
 | Déplacements | **Pas d'escaliers générés** : le joueur **saute d'un bloc** (1,25 niveau, comme Minecraft), tombe des bords. |
+| Monde | **Vrais voxels 3D** comme Minecraft (choix de la phase 3) : chunks de 16×16 colonnes sur **128 blocs de haut** (64 sous le niveau de la mer, le relief jusqu'à +32, de la place pour construire au-dessus). Grottes 3D sous la surface, plus de « couches » séparées. **L'eau ne coule pas encore** (on y marche ; coulées en phase 6, nage en phase 5). |
+| Sous terre | **Vue en coupe** : dès qu'il y a un plafond au-dessus du joueur (grotte, galerie, toit), tout ce qui dépasse sa tête est coupé, la roche coupée s'affiche en sombre. |
+| Arbres, plantes | Restent des **modèles voxel détaillés** posés dans une case (pas des troncs en blocs) : miner le pied abattra l'arbre entier. |
+| Sauvegardes | **Dès la phase 3** : chunks modifiés + joueur, sauvegarde auto toutes les 2 min et à la fermeture ; un seul monde en attendant l'écran titre. |
+| Contrôles (phase 3) | Clic gauche maintenu = miner, clic droit court = poser, clic droit glissé = tourner la caméra ; **molette = objet en main** (zoom sur Ctrl+molette et +/-), touches 1 à 9 ; manette : gâchettes miner/poser, LB/RB changer d'objet. |
+| Outils avant le craft | **Tout se mine à la main** (lentement, chaque bloc donne quelque chose) ; une touche de debug donne des outils pour tester, en attendant le craft (phase 4). |
 | Chargement | Tout ce qui est visible doit être chargé, même dézoomé au maximum sur l'écran ultra-large du propriétaire (3440×1440, fenêtré). Carte graphique du propriétaire : NVIDIA GeForce RTX 5050 (8 Go). |
 
 ---
 
 ## 3. État actuel : ce qui est fait
 
-Godot **4.7.2** (GDScript), rendu Forward+. 69 tests unitaires, lint propre, compilation GitHub verte.
+Godot **4.7.2** (GDScript), rendu Forward+. 73 tests unitaires, lint propre.
 
 | Phase | Contenu | Commits |
 |---|---|---|
@@ -65,11 +71,12 @@ Godot **4.7.2** (GDScript), rendu Forward+. 69 tests unitaires, lint propre, com
 | 2+ Full 3D | Modèles voxel procéduraux (8 arbres, buissons, herbes, fougères, 5 fleurs, champignons, cactus, canne à sucre, nénuphars, rochers) + joueur animé ; feuillage transparent autour du joueur | `89563c1`, `2cfa843` |
 | 2+ Chargement | Rayon de chunks calculé d'après la vue (zoom, fenêtre, angle) | `96b5b52` |
 | 2+ Carte graphique | Modèles simplifiés de loin (3 niveaux de détail), limite d'images par seconde (60 par défaut, 15 en arrière-plan), rendu suspendu en pause | `09261cf` |
-| 2+ Caméra basse | Caméra jusqu'à 15° sans étirer les objets (étirement selon l'inclinaison), trou transparent aussi dans les falaises, ombres et pluie qui suivent la vue, reflets du soleil adoucis sur l'eau, options de dev jamais enregistrées dans les réglages | « Lower camera without stretching » |
+| 2+ Caméra basse | Caméra jusqu'à 15° sans étirer les objets (étirement selon l'inclinaison), trou transparent aussi dans les falaises, ombres et pluie qui suivent la vue, reflets du soleil adoucis sur l'eau, options de dev jamais enregistrées dans les réglages | `8e1ed5d` |
+| 3.1 Monde en voxels | Chunks 16×16×128 (ids : sols < 64, blocs 64+), génération remplissant les colonnes + grottes 3D (salles, tunnels, lacs, lave, filons de minerai), physique 3D (plafonds, objets hauts de 3), maillage sur les cœurs (faces fusionnées, grottes à part), vue en coupe sous terre, Page ↓/↑ = grotte suivante (`--descend=N`), carte de debug en coupe, chargement aussi rapide qu'avant | « Voxel world » |
 
-**Pas encore fait** (prévu) : interactions avec les blocs, objets et inventaire, craft,
-survie/combat, créatures, structures, agriculture, sauvegardes, menus de départ, sons, mode Arcade,
-mobile.
+**Pas encore fait** (prévu) : le reste de la phase 3 (sauvegardes, miner/poser, objets et
+inventaire, outils), craft, survie/combat, créatures, structures, agriculture, menus de départ, sons,
+mode Arcade, mobile.
 
 ---
 
@@ -81,13 +88,13 @@ mobile.
 |---|---|
 | Point d'entrée | `src/main.gd` (crée le serveur, le client, options de développement, captures) |
 | Serveur | `src/sim/game_server.gd` (sessions, envoi des chunks, messages, météo, temps) |
-| Monde | `src/sim/world/` (`chunk_data.gd` : sol, bloc, niveau, forme, biome par tuile ; `top_height()` pour la physique), `generation/` (climat, relief, biomes, surface, grottes) |
-| Physique | `src/sim/physics/player_body.gd` (marche, saut, chute), `tile_collider.gd` |
+| Monde | `src/sim/world/` (`voxels.gd` : ids et propriétés des voxels ; `chunk_data.gd` : 16×16×128 voxels, biome et sommet du terrain par colonne ; `world_state.gd` : chunks du serveur, recherche d'un sol pour les déplacements de debug), `generation/` (climat, relief, biomes, surface → colonnes, `cave_generator.gd` : grottes 3D et minerais) |
+| Physique | `src/sim/physics/player_body.gd` (marche, saut, chute, plafonds, parmi les voxels), `tile_collider.gd` |
 | Messages | `src/net/msg.gd` (tous les échanges client ⇄ serveur) |
 | Client | `src/client/game_client.gd` (assemble la scène 3D, entrées, caméra), `local_player.gd` |
-| Rendu 3D | `src/client/render/` : `world_viewport.gd` (SubViewport pixel parfait, caméra orbitale), `render_3d.gd` (repères, étirement de la racine du monde), `chunk_mesher.gd` (maillage du terrain), `chunk_view_3d.gd` / `world_view_3d.gd` (chunks, objets 3D, niveaux de détail), `player_model.gd`, `prop_library.gd` |
+| Rendu 3D | `src/client/render/` : `world_viewport.gd` (SubViewport pixel parfait, caméra orbitale), `render_3d.gd` (repères, étirement de la racine du monde), `chunk_mesher.gd` (maillage des voxels sur les fils de travail, carte de surface du shader), `chunk_view_3d.gd` (terrain, grottes, objets 3D, lave d'un chunk) / `world_view_3d.gd` (tâches de maillage, coupe sous terre, niveaux de détail), `player_model.gd`, `prop_library.gd` |
 | Modèles voxel | `src/client/models/` : `voxel_grid.gd`, `voxel_mesher.gd` (faces fusionnées + occlusion), `voxel_models.gd` (tous les modèles procéduraux) |
-| Shaders | `src/client/shaders/` : `terrain3d_top`, `terrain3d_faces`, `voxel`, `cloud_shadows` |
+| Shaders | `src/client/shaders/` : `terrain3d_top`, `terrain3d_faces`, `voxel`, `cloud_shadows`, `see_through.gdshaderinc` (trou transparent, coupe sous terre, roche en coupe) |
 | Lumière, météo | `src/client/effects/lighting_controller.gd`, `weather_effects.gd`, `cloud_shadows_3d.gd` |
 | Interface | `src/ui/` (menu pause, F3, horloge, carte) ; textes dans `i18n/strings.csv` |
 
@@ -101,8 +108,9 @@ godot --headless --path . -s res://tools/render_world_map.gd -- --seed=42 --size
 
 Options de développement (après `--`) : `--seed`, `--spawn=X,Y`, `--time`, `--time-mode`,
 `--day-minutes`, `--game-mode`, `--debug`, `--lang`, `--zoom`, `--screenshot=chemin`,
-`--screenshot-delay`, `--autowalk=DX,DY`, `--jump`, `--pause-menu`, `--layer`, `--noclip`,
-`--map`, `--weather`, `--quality`, `--hd`, `--camera=LACET,INCLINAISON` (voir `src/core/dev_options.gd`).
+`--screenshot-delay`, `--autowalk=DX,DY`, `--jump`, `--pause-menu`, `--descend=N`, `--noclip`,
+`--map`, `--weather`, `--quality`, `--hd`, `--camera=LACET,INCLINAISON`, `--hide-debug` (voir
+`src/core/dev_options.gd`).
 
 Lieux utiles avec la graine 42 : rivière `4,-6` ; plaine `-12,21` ; montagnes `76,123` ;
 forêt sombre `-123,261` ; désert `338,-228` ; badlands `474,-232` ; jungle `-334,-498` ;
@@ -114,8 +122,10 @@ Godot 4.7.2 est dans `C:\Users\guill\godot\` (utiliser la version `_console` pou
 sortie), gdtoolkit/Pillow/numpy sont installés pour `py` (Python 3.14 ; `python` est un autre
 Python, celui de Laragon). Commandes depuis Git Bash : voir `CLAUDE.md`. Les captures utilisent la
 vraie carte graphique (pas de xvfb) et ouvrent brièvement une fenêtre ; elles lisent les réglages du
-propriétaire (HD, qualité Ultra). Une fenêtre en arrière-plan tourne à 15 images/s : le compteur
-d'images de l'écran F3 n'y veut rien dire.
+propriétaire (HD, qualité Ultra, écran F3 affiché : `--hide-debug` pour des captures propres). Une
+fenêtre en arrière-plan tourne à 15 images/s : le compteur d'images de l'écran F3 n'y veut rien
+dire. Mesurer le chargement : graine 42 en 1920×1080, monde affiché vers 3,5 s (zoom 3) et 4,3 s
+(zoom 1), démarrage de Godot compris (~1,7 s).
 
 ### Captures d'écran dans le conteneur cloud
 
@@ -143,58 +153,44 @@ xvfb-run -a -s "-screen 0 960x540x24" godot --path . --audio-driver Dummy --reso
   `Settings` (sinon la prochaine sauvegarde les écrit dans les réglages du joueur).
 - Caméra orthographique : la direction de vue est la même partout, un reflet du soleil couvre
   donc toute l'eau d'un coup (d'où la rugosité de l'eau qui augmente à angle rasant).
+- `return` est interdit dans `fragment()` : écraser les sorties à la fin (voir la roche en coupe).
+- Fils de travail : le GDScript pur passe à l'échelle, mais les appels aux objets natifs (bruits
+  `FastNoiseLite`…) et les allocations presque pas (×1,6 sur 12 fils) : bruits en bloc avec
+  `get_image_3d`, pas d'allocation ni d'appel dans les boucles chaudes, tables statiques copiées
+  en local. Les tâches « basse priorité » n'ont que 30 % des fils par défaut (porté à 75 % dans
+  `project.godot`) ; la priorité haute affame le moteur (compilation des shaders).
 
 ---
 
-## 5. Prochaine étape au « go » : Phase 3 — Joueur et interactions
+## 5. Prochaine étape au « go » : suite de la Phase 3 — Joueur et interactions
 
-But : miner, construire, ramasser et gérer des objets, comme dans Minecraft, dans le monde 3D.
+But : miner, construire, ramasser et gérer des objets, comme dans Minecraft, dans le monde voxel.
+Les décisions sont prises (section 2). Découpage, une étape par « go », chacune avec tests,
+captures, commit et retour du propriétaire :
 
-### 3.0 Décisions à valider avec le propriétaire avant de coder
-
-1. **Construire en hauteur.** Aujourd'hui une tuile = un sol + un niveau + un seul bloc. Pour
-   empiler des blocs (murs, maisons à étages), il faut soit des **piles de blocs par tuile**
-   (2,5D, simple, garde toute la génération), soit des **chunks en vrais voxels 3D** (16×16×H,
-   plus proche de Minecraft, plus lourd). Recommandation : piles de blocs par tuile (hauteur
-   limitée, par ex. 32 niveaux) avec maillage en cubes, compatible avec le terrain actuel.
-2. **Sauvegardes dès la phase 3** (prévues en phase 9) : construire sans pouvoir sauvegarder est
-   frustrant. Recommandation : sauvegarde des chunks modifiés + joueur dans `user://` dès maintenant.
-3. Contrôles : clic gauche = miner/frapper, clic droit = poser/utiliser (le clic droit sert aussi
-   à tourner la caméra : distinguer clic court et glisser), molette = changer d'objet en main
-   (le zoom passerait alors sur Ctrl+molette ou +/-) — à confirmer.
-
-### 3.1 Viser un bloc
-- Rayon depuis la souris dans la vue 3D (caméra orthographique) jusqu'au terrain et aux objets ;
-  à la manette, la tuile devant le joueur.
-- Portée limitée (≈ 4-5 tuiles), contour 3D du bloc visé, curseur.
-
-### 3.2 Modifier le monde (serveur autoritaire)
-- Messages `BLOCK_BREAK` / `BLOCK_PLACE` (client → serveur), validation (portée, mode de jeu,
-  bloc présent), mise à jour du `ChunkData` (`modified = true`), diffusion `BLOCK_CHANGED`.
-- Client : mise à jour du chunk et reconstruction **incrémentale** du maillage (terrain + objets
-  du chunk et des voisins en bordure), prédiction locale annulée si le serveur refuse.
-- Miner un arbre donne du bois ; creuser le sol abaisse la tuile ou retire la couche (selon 3.0) ;
-  poser un bloc plein monte la colonne.
-
-### 3.3 Objets et inventaire
-- Registre des objets (id, nom traduit, pile max, type : bloc, outil, nourriture…), données plutôt
-  que code.
-- **Objets en 3D voxel** : petits modèles générés (réutiliser `VoxelModels`/`VoxelMesher`), icônes
-  d'inventaire rendues depuis ces modèles (rendu hors écran mis en cache).
-- Objets lâchés au sol : petits modèles qui tournent et flottent, ramassés en passant à côté.
-- Inventaire : barre d'action de 9 cases + sac de 27 cases, glisser-déposer, séparer les piles,
-  manette et souris ; synchronisé par messages (le serveur fait foi).
-
-### 3.4 Outils et minage
-- Dureté des blocs, temps de minage selon l'outil (main, hache, pioche, pelle), fissures qui
-  apparaissent sur le bloc, petits débris voxel.
-- Les durées passent par `WorldClock.scale_duration()` quand elles dépendent du temps de jeu.
-
-### 3.5 Vérifications
-- Tests : messages bloc, validation de portée, inventaire (empilement, déplacement), sauvegarde.
-- Captures : miner un arbre, construire un petit mur, inventaire ouvert, sous plusieurs angles.
-
----
+1. ✅ **Monde en voxels** (voir section 3).
+2. **Sauvegardes** (prochaine étape) : dossier `user://worlds/<nom>/` avec les réglages du monde,
+   l'horloge, le joueur (position, hauteur ; inventaire à l'étape 4) et les chunks modifiés
+   (`ChunkData.modified`, voxels compressés, par régions pour éviter des milliers de fichiers).
+   Le serveur charge un chunk sauvegardé au lieu de le générer ; sauvegarde automatique toutes les
+   2 minutes et à la fermeture. Un seul monde (« Nouveau monde ») tant qu'il n'y a pas d'écran
+   titre ; option de dev pour repartir d'un monde neuf. Tests : aller-retour d'un chunk modifié et
+   du joueur.
+3. **Viser, miner, poser** : rayon depuis la souris dans la vue 3D (caméra orthographique, monde
+   étiré : repasser en unités locales) parcouru voxel par voxel (DDA) jusqu'au premier bloc ou objet,
+   portée ≈ 5 ; à la manette, la case devant le joueur. Contour 3D du bloc visé. Messages
+   `BLOCK_BREAK` / `BLOCK_PLACE` (client → serveur), validés (portée, bloc présent, place libre,
+   pas dans le joueur), `BLOCK_CHANGED` diffusé ; le client met à jour le chunk et remaille le
+   chunk et ses voisins touchés (prédiction locale annulée si le serveur refuse). Miner prend du
+   temps (fissures dessinées sur le bloc, petits débris voxel) ; miner le pied d'un arbre l'abat.
+   Contrôles : clic gauche maintenu, clic droit court (le glissé tourne toujours la caméra).
+4. **Objets et inventaire** : registre des objets en données (id, nom traduit, pile max, type),
+   modèles voxel des objets et icônes rendues hors écran ; objets lâchés qui flottent, tournent et se
+   ramassent ; barre de 9 cases + sac de 27 (E), glisser-déposer, séparer les piles, molette et
+   1-9 pour l'objet en main (zoom sur Ctrl+molette), Q pour lâcher ; le serveur fait foi.
+5. **Outils et dureté** : temps de minage selon le bloc et l'outil (main, hache, pioche, pelle),
+   durées passées par `WorldClock.scale_duration()` si elles dépendent du temps de jeu ; touche de
+   debug donnant des outils en attendant le craft.
 
 ## 6. Feuille de route détaillée (phases restantes)
 
@@ -286,7 +282,11 @@ pousse) : c'est pourquoi elle vient juste après.
 - **Carte graphique** : après la limite à 60 images/s et les modèles simplifiés, vérifier chez le
   propriétaire l'utilisation de la RTX 5050 (zoom normal et dézoom maximum).
 - **Menu pause** trop haut sur petites fenêtres (960×540) : le rendre défilant.
-- **Maillage des chunks** sur le fil principal (budget de 6 ms par image) : à paralléliser.
+- **Grottes** : réglages à affiner en jouant (taille des salles, fréquence des tunnels, lacs ;
+  aucune entrée vers la surface pour l'instant : on descend en creusant ou avec Page ↓). La roche
+  coupée montre encore de légères variations de gris (faces vues de dos à diverses profondeurs).
+- **Ressenti sous terre** : grottes assez sombres (lanterne et lumière ambiante des grottes) ; à
+  rééclairer si le propriétaire trouve que c'est trop.
 - **Le serveur ne vérifie pas encore les collisions** des déplacements (seulement la distance) :
   utiliser `PlayerBody` côté serveur avant le multijoueur.
 - **Carrés plus sombres dans l'herbe**, de la taille d'une tuile, visibles en montagne (déjà là

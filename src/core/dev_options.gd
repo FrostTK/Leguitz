@@ -10,6 +10,7 @@ extends RefCounted
 ## --day-minutes=N      day length for normal mode
 ## --game-mode=MODE     creative | survival | hardcore
 ## --debug              show the F3 overlay
+## --hide-debug         hide it (screenshots, whatever the settings say)
 ## --lang=CODE          fr | en
 ## --zoom=N             world zoom
 ## --screenshot=PATH    save a screenshot once the world is ready, then quit
@@ -17,7 +18,7 @@ extends RefCounted
 ## --autowalk=DX,DY     hold a movement direction once the world is ready
 ## --jump               hold the jump key once the world is ready
 ## --pause-menu         open the pause menu once the world is ready
-## --layer=N            go to layer N (0 = surface, -1 to -6 underground)
+## --descend=N          go down N caves (negative: up), like Page Down
 ## --noclip             start in debug ghost mode
 ## --map                open the debug map once the world is ready
 ## --weather=KIND       clear | rain | thunder
@@ -33,6 +34,7 @@ var time_mode := ""
 var day_minutes := 0.0
 var game_mode := WorldSettings.GameMode.SURVIVAL
 var show_debug := false
+var hide_debug := false
 var language := ""
 var zoom := 0
 var screenshot_path := ""
@@ -40,7 +42,7 @@ var screenshot_delay := 10
 var autowalk := Vector2i.ZERO
 var hold_jump := false
 var open_pause_menu := false
-var layer := 0
+var descend := 0
 var noclip := false
 var open_map := false
 var weather := -1
@@ -77,6 +79,8 @@ static func parse(args: PackedStringArray) -> DevOptions:
 						options.game_mode = WorldSettings.GameMode.HARDCORE
 			"debug":
 				options.show_debug = true
+			"hide-debug":
+				options.hide_debug = true
 			"lang":
 				options.language = value
 			"zoom":
@@ -93,8 +97,8 @@ static func parse(args: PackedStringArray) -> DevOptions:
 				options.hold_jump = true
 			"pause-menu":
 				options.open_pause_menu = true
-			"layer":
-				options.layer = value.to_int()
+			"descend":
+				options.descend = value.to_int()
 			"noclip":
 				options.noclip = true
 			"map":

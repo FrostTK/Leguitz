@@ -43,13 +43,15 @@ var _last_sent_facing := Vector2i.ZERO
 var _last_sent_height := INF
 
 
-func spawn_at(world_position: Vector2) -> void:
-	body.place(world_position)
+func spawn_at(world_position: Vector2, at_height: float) -> void:
+	body.place(world_position, at_height)
+	view_height = at_height
 	active = true
 
 
-func apply_correction(world_position: Vector2) -> void:
-	body.place(world_position)
+func apply_correction(world_position: Vector2, at_height: float) -> void:
+	body.place(world_position, at_height)
+	view_height = at_height
 	_last_sent_position = world_position
 
 
@@ -68,17 +70,18 @@ func step(delta: float) -> void:
 		input = Render3D.screen_to_ground(input, camera_yaw)
 		heading = input.normalized()
 		_update_facing(input)
-		var speed := WALK_SPEED * Tiles.ground_speed(client_world.ground_at(current_tile()))
+		var ground := client_world.ground_under(current_tile(), body.height)
+		var speed := WALK_SPEED * Tiles.ground_speed(ground)
 		if Input.is_action_pressed(InputBindings.SPRINT):
 			speed *= SPRINT_MULTIPLIER
 		# Cap the step so a frame hitch never tunnels through a tile.
 		motion = input * speed * minf(delta, 0.1)
 	var before := body.feet
 	if noclip:
-		body.glide(motion * NOCLIP_MULTIPLIER, client_world.top_at)
+		body.glide(motion * NOCLIP_MULTIPLIER, client_world.voxel_at)
 	else:
 		var jump := Input.is_action_pressed(InputBindings.JUMP)
-		body.step(motion, jump, minf(delta, 0.1), client_world.top_at)
+		body.step(motion, jump, minf(delta, 0.1), client_world.voxel_at)
 	speed = before.distance_to(body.feet) / maxf(delta, 0.001) / GameConst.TILE_SIZE
 	if body.on_ground or body.height < view_height:
 		view_height = body.height

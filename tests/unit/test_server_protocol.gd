@@ -39,7 +39,8 @@ func test_hello_sends_welcome_time_and_the_initial_view() -> void:
 	var client: LocalTransport = setup[1]
 	var messages := client.poll()
 	assert_eq(messages[0]["t"], Msg.WELCOME)
-	assert_eq(messages[0]["layer"], 0)
+	var spawn_tile := Coords.world_to_tile(messages[0]["spawn"])
+	assert_eq(messages[0]["h"], server.world.surface_height(spawn_tile), "on the ground")
 	assert_eq(messages[1]["t"], Msg.TIME_STATE)
 	server.tick()
 	messages.append_array(client.poll())
@@ -68,7 +69,7 @@ func test_chunks_stream_and_unload_as_the_player_moves() -> void:
 	assert_true(_messages_of_type(messages, Msg.CHUNK_DATA).size() > 0, "new chunks sent")
 	var unloads := _messages_of_type(messages, Msg.CHUNK_UNLOAD)
 	assert_true(unloads.size() > 0, "old chunks dropped")
-	assert_true(unloads[0]["key"] is Vector3i)
+	assert_true(unloads[0]["coord"] is Vector2i)
 	assert_eq(_messages_of_type(messages, Msg.PLAYER_CORRECTION).size(), 0)
 
 
@@ -82,6 +83,7 @@ func test_teleport_attempts_are_corrected() -> void:
 	var corrections := _messages_of_type(client.poll(), Msg.PLAYER_CORRECTION)
 	assert_eq(corrections.size(), 1)
 	assert_eq(corrections[0]["pos"], spawn)
+	assert_true(corrections[0]["h"] is float)
 
 
 func test_time_settings_are_applied_and_broadcast() -> void:
@@ -103,27 +105,26 @@ func test_time_settings_are_applied_and_broadcast() -> void:
 	assert_almost(server.clock.time_of_day(), 0.0)
 
 
-func test_changing_layer_teleports_to_an_open_tile() -> void:
+func test_debug_depth_moves_go_down_to_a_cave_and_back() -> void:
 	var setup := _joined_server()
 	var server: GameServer = setup[0]
 	var client: LocalTransport = setup[1]
+	var surface: float = client.poll()[0]["h"]
 	server.tick()
 	client.poll()
-	client.send(Msg.debug_change_layer(-2))
+	client.send(Msg.debug_move_depth(-1))
 	server.process_messages()
-	server.tick()
-	var messages := client.poll()
-	var teleports := _messages_of_type(messages, Msg.PLAYER_TELEPORT)
+	var teleports := _messages_of_type(client.poll(), Msg.PLAYER_TELEPORT)
 	assert_eq(teleports.size(), 1)
-	assert_eq(teleports[0]["layer"], -2)
+	var height: float = teleports[0]["h"]
+	assert_true(height < surface - 2.0, "down in a cave")
 	var tile := Coords.world_to_tile(teleports[0]["pos"])
-	assert_false(server.world.is_solid(tile, -2), "lands in a cave, not in rock")
-	assert_eq(_messages_of_type(messages, Msg.CHUNK_UNLOAD).size(), 25, "surface unloaded")
-	for chunk in _messages_of_type(messages, Msg.CHUNK_DATA):
-		assert_eq(chunk["chunk"]["layer"], -2)
-	client.send(Msg.debug_change_layer(-10))
+	assert_true(server.world.can_stand(tile, int(height) + GameConst.SEA_LEVEL), "on a floor")
+	client.send(Msg.debug_move_depth(1))
 	server.process_messages()
-	assert_eq(server.first_session().layer, WorldGenerator.MIN_LAYER, "clamped")
+	teleports = _messages_of_type(client.poll(), Msg.PLAYER_TELEPORT)
+	assert_eq(teleports.size(), 1)
+	assert_true(teleports[0]["h"] > height, "back up")
 
 
 func test_map_request_returns_an_image() -> void:
@@ -131,7 +132,7 @@ func test_map_request_returns_an_image() -> void:
 	var server: GameServer = setup[0]
 	var client: LocalTransport = setup[1]
 	client.poll()
-	client.send(Msg.map_request(Vector2i.ZERO, 0, 64, 4))
+	client.send(Msg.map_request(Vector2i.ZERO, Msg.MAP_SURFACE, 64, 4))
 	server.process_messages()
 	var maps := _messages_of_type(client.poll(), Msg.MAP_DATA)
 	assert_eq(maps.size(), 1)
@@ -146,11 +147,12 @@ func test_debug_commands_can_be_disabled() -> void:
 	var client: LocalTransport = setup[1]
 	client.poll()
 	server.allow_debug_commands = false
-	client.send(Msg.debug_change_layer(-1))
-	client.send(Msg.map_request(Vector2i.ZERO, 0, 64, 4))
+	var height := server.first_session().height
+	client.send(Msg.debug_move_depth(-1))
+	client.send(Msg.map_request(Vector2i.ZERO, Msg.MAP_SURFACE, 64, 4))
 	server.process_messages()
 	assert_eq(client.poll().size(), 0)
-	assert_eq(server.first_session().layer, 0)
+	assert_eq(server.first_session().height, height)
 
 
 func test_view_distance_follows_the_client() -> void:

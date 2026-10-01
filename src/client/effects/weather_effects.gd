@@ -53,6 +53,8 @@ const MAX_SPREAD := 3.0
 var weather := Weather.new()
 var client_world: ClientWorld
 var local_player: LocalPlayer
+## Deep under the rock: no rain, no leaves, dust motes instead.
+var underground := false
 ## The point the camera looks at (world space), and the visible size
 ## (units) around it.
 var target := Vector3.ZERO
@@ -112,7 +114,6 @@ func flash() -> float:
 func _process(delta: float) -> void:
 	if client_world == null or local_player == null:
 		return
-	var underground := client_world.layer < WorldGenerator.SURFACE_LAYER
 	var biome := client_world.biome_at(local_player.current_tile())
 	var goal: float = RAIN_BY_KIND.get(weather.kind, 0.0)
 	if underground or DRY_BIOMES.has(biome):

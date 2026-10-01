@@ -11,7 +11,7 @@ const MAX_IN_FLIGHT := 64
 var threaded := true
 var _generator: WorldGenerator
 var _mutex := Mutex.new()
-var _tasks: Dictionary[Vector3i, int] = {}
+var _tasks: Dictionary[Vector2i, int] = {}
 var _done: Array[ChunkData] = []
 
 
@@ -20,7 +20,7 @@ func _init(generator: WorldGenerator, use_threads := true) -> void:
 	threaded = use_threads
 
 
-func is_pending(key: Vector3i) -> bool:
+func is_pending(key: Vector2i) -> bool:
 	return _tasks.has(key)
 
 
@@ -29,12 +29,12 @@ func pending_count() -> int:
 
 
 ## Returns false if the queue is full (try again next tick).
-func request(key: Vector3i) -> bool:
+func request(key: Vector2i) -> bool:
 	if _tasks.has(key):
 		return true
 	if not threaded:
 		_tasks[key] = -1
-		_finish(_generator.generate_chunk(Vector2i(key.x, key.y), key.z))
+		_finish(_generator.generate_chunk(key))
 		return true
 	if _tasks.size() >= MAX_IN_FLIGHT:
 		return false
@@ -48,24 +48,24 @@ func collect() -> Array[ChunkData]:
 	_done = []
 	_mutex.unlock()
 	for chunk in finished:
-		var task: int = _tasks.get(chunk.key(), -1)
+		var task: int = _tasks.get(chunk.coord, -1)
 		if task >= 0:
 			WorkerThreadPool.wait_for_task_completion(task)
-		_tasks.erase(chunk.key())
+		_tasks.erase(chunk.coord)
 	return finished
 
 
 ## Blocks until every scheduled chunk is generated (shutdown, tests).
 func wait_all() -> void:
-	for key: Vector3i in _tasks:
+	for key: Vector2i in _tasks:
 		var task: int = _tasks[key]
 		if task >= 0:
 			WorkerThreadPool.wait_for_task_completion(task)
 			_tasks[key] = -1
 
 
-func _generate(key: Vector3i) -> void:
-	_finish(_generator.generate_chunk(Vector2i(key.x, key.y), key.z))
+func _generate(key: Vector2i) -> void:
+	_finish(_generator.generate_chunk(key))
 
 
 func _finish(chunk: ChunkData) -> void:

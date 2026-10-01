@@ -10,6 +10,11 @@ const CHUNK_SHIFT := 4
 const CHUNK_MASK := CHUNK_SIZE - 1
 const CHUNK_AREA := CHUNK_SIZE * CHUNK_SIZE
 const CHUNK_PIXELS := CHUNK_SIZE * TILE_SIZE
+## World height in voxels. A voxel is one tile wide and one level tall.
+const WORLD_HEIGHT := 128
+## Voxel row of sea level: terrain at level L is solid up to row
+## SEA_LEVEL + L - 1, so heights in levels are rows minus SEA_LEVEL.
+const SEA_LEVEL := 64
 
 ## Simulation ticks per second (same as Minecraft).
 const TICKS_PER_SECOND := 20

@@ -1,57 +1,56 @@
 class_name ClientWorld
 extends RefCounted
-## The client's copy of the chunks the server sent for the player's current
-## layer. Used for rendering and for movement prediction. Missing chunks
-## are treated as solid so the player can never walk into terrain that is
-## not loaded yet.
+## The client's copy of the chunks the server sent. Used for rendering and
+## for movement prediction. Missing chunks read as Voxels.UNKNOWN (solid)
+## so the player can never walk into terrain that is not loaded yet.
 
-var layer := WorldGenerator.SURFACE_LAYER
-var chunks: Dictionary[Vector3i, ChunkData] = {}
+## Above this much terrain over its head, the player is underground (or
+## under a roof): the view cuts the world above them.
+const COVER_ABOVE := 2.5
+
+var chunks: Dictionary[Vector2i, ChunkData] = {}
 
 
 func store(chunk: ChunkData) -> void:
-	chunks[chunk.key()] = chunk
+	chunks[chunk.coord] = chunk
 
 
-func remove(key: Vector3i) -> void:
-	chunks.erase(key)
+func remove(coord: Vector2i) -> void:
+	chunks.erase(coord)
 
 
 func clear() -> void:
 	chunks.clear()
 
 
-func has_tile_chunk(tile: Vector2i) -> bool:
-	return chunks.has(WorldState.key_of(tile, layer))
-
-
 func chunk_at(tile: Vector2i) -> ChunkData:
-	return chunks.get(WorldState.key_of(tile, layer))
+	return chunks.get(Coords.tile_to_chunk(tile))
 
 
-func is_solid(tile: Vector2i) -> bool:
+## Voxel at a cell (tile x, row, tile y); see PlayerBody.
+func voxel_at(cell: Vector3i) -> int:
+	if cell.y < 0:
+		return Voxels.UNKNOWN
+	if cell.y >= GameConst.WORLD_HEIGHT:
+		return Voxels.AIR
+	var tile := Vector2i(cell.x, cell.z)
 	var chunk := chunk_at(tile)
 	if chunk == null:
-		return true
-	return chunk.is_solid(Coords.tile_to_local(tile))
+		return Voxels.UNKNOWN
+	var local := Coords.tile_to_local(tile)
+	return chunk.get_voxel(Vector3i(local.x, cell.y, local.y))
 
 
-## Height a body stands at on a tile (INF: cannot go there, or unknown).
-func top_at(tile: Vector2i) -> float:
+## Height (levels) of the terrain surface of a column (-INF if unknown).
+func surface_height(tile: Vector2i) -> float:
 	var chunk := chunk_at(tile)
-	if chunk == null:
-		return INF
-	return chunk.top_height(Coords.tile_to_local(tile))
+	return -INF if chunk == null else chunk.surface_height(Coords.tile_to_local(tile))
 
 
-func ground_at(tile: Vector2i) -> int:
-	var chunk := chunk_at(tile)
-	return Tiles.Ground.NONE if chunk == null else chunk.get_ground(Coords.tile_to_local(tile))
-
-
-func block_at(tile: Vector2i) -> int:
-	var chunk := chunk_at(tile)
-	return Tiles.Block.AIR if chunk == null else chunk.get_block(Coords.tile_to_local(tile))
+## Ground under feet standing at `height` (Tiles.Ground.NONE on blocks).
+func ground_under(tile: Vector2i, height: float) -> int:
+	var row := floori(height + ChunkData.WATER_DROP + 0.01) + GameConst.SEA_LEVEL - 1
+	return Voxels.ground_of(voxel_at(Vector3i(tile.x, row, tile.y)))
 
 
 func biome_at(tile: Vector2i) -> int:
@@ -59,6 +58,11 @@ func biome_at(tile: Vector2i) -> int:
 	return Biomes.Id.NONE if chunk == null else chunk.get_biome(Coords.tile_to_local(tile))
 
 
-func level_at(tile: Vector2i) -> int:
+## True when terrain covers a body standing at `height`: in a cave, a dug
+## tunnel, or under a roof.
+func is_covered(tile: Vector2i, height: float) -> bool:
 	var chunk := chunk_at(tile)
-	return 0 if chunk == null else chunk.get_level(Coords.tile_to_local(tile))
+	if chunk == null:
+		return false
+	var top := chunk.top_row(Coords.tile_to_local(tile)) - GameConst.SEA_LEVEL
+	return top > height + COVER_ABOVE

@@ -44,6 +44,10 @@ locale/fallback="en"
 
 common/physics_ticks_per_second=60
 
+[threading]
+
+worker_pool/low_priority_thread_ratio=0.75
+
 [rendering]
 
 renderer/rendering_method="forward_plus"
@@ -70,6 +74,10 @@ player_position={
 player_feet={
 "type": "vec3",
 "value": Vector3(0, 0, 0)
+}
+cut_height={
+"type": "float",
+"value": 100000.0
 }
 weather_wind={
 "type": "vec2",

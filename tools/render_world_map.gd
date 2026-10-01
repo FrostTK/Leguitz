@@ -2,9 +2,11 @@ extends SceneTree
 ## Renders the map of a world seed to a PNG and prints biome statistics.
 ##
 ##   godot --headless --path . -s res://tools/render_world_map.gd -- \
-##       --seed=42 --size=512 --scale=4 --layer=0 --out=/tmp/map.png
+##       --seed=42 --size=512 --scale=4 --out=/tmp/map.png
 ##
 ## --center=X,Y centers the map (default: the world spawn).
+## --row=Y draws a horizontal cut through the voxels at row Y (caves)
+## instead of the surface (sea level is row 64).
 ## --bench also measures chunk generation speed.
 
 
@@ -15,7 +17,7 @@ func _initialize() -> void:
 	var generator := WorldGenerator.new(world_seed)
 	var size := int(options.get("size", "512"))
 	var scale := int(options.get("scale", "4"))
-	var layer := int(options.get("layer", "0"))
+	var row := int(options.get("row", str(Msg.MAP_SURFACE)))
 	var out: String = options.get("out", "user://map.png")
 
 	var started := Time.get_ticks_msec()
@@ -27,12 +29,12 @@ func _initialize() -> void:
 		center = Vector2i(xy[0].to_int(), xy[1].to_int())
 
 	started = Time.get_ticks_msec()
-	var image := WorldMapRenderer.render(generator, layer, center, size, scale)
+	var image := WorldMapRenderer.render(generator, row, center, size, scale)
 	_mark(image, (spawn - center) / scale + Vector2i(size / 2, size / 2))
 	image.save_png(out)
 	print("Map %dx%d px, %d tiles/px -> %s (%d ms)" % [size, size, scale, out, _since(started)])
 
-	if layer == 0:
+	if row == Msg.MAP_SURFACE:
 		_print_biome_stats(generator, center, size * scale)
 	if options.has("bench"):
 		_bench(generator, spawn)
@@ -56,15 +58,14 @@ func _print_biome_stats(generator: WorldGenerator, center: Vector2i, span: int) 
 
 func _bench(generator: WorldGenerator, spawn: Vector2i) -> void:
 	var base := Coords.tile_to_chunk(spawn)
-	for layer in [0, -1, -5]:
-		var started := Time.get_ticks_usec()
-		var count := 0
-		for dy in 5:
-			for dx in 5:
-				generator.generate_chunk(base + Vector2i(dx, dy), layer)
-				count += 1
-		var per_chunk := (Time.get_ticks_usec() - started) / 1000.0 / count
-		print("  layer %d: %.2f ms per chunk" % [layer, per_chunk])
+	var started := Time.get_ticks_usec()
+	var count := 0
+	for dy in 5:
+		for dx in 5:
+			generator.generate_chunk(base + Vector2i(dx, dy))
+			count += 1
+	var per_chunk := (Time.get_ticks_usec() - started) / 1000.0 / count
+	print("  generation: %.2f ms per chunk" % per_chunk)
 
 
 func _mark(image: Image, at: Vector2i) -> void:

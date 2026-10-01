@@ -1,10 +1,20 @@
-// See-through hole around the player: whatever stands between the camera
-// and the player (trees, cliffs, walls) is dithered away inside a window
-// around them, so the player always stays visible.
+// Keeping the player in view:
+// - the see-through hole: whatever stands between the camera and the player
+//   (trees, cliffs, walls) is dithered away inside a window around them,
+// - the view cut: under cover (a cave, a tunnel, a roof) everything above
+//   their head is cut away; the rock cut through shows as a dark section
+//   (the back of the faces closing it, see ChunkMesher).
 
 // The player's chest and feet (world space).
 global uniform vec3 player_position;
 global uniform vec3 player_feet;
+
+// Height (world units) above which the view cuts the world; very high when
+// the player is in the open.
+global uniform float cut_height;
+// Color of rock seen in section through the view cut (emitted: the same
+// in the dark, so the shape of the caves always reads).
+const vec3 SECTION_COLOR = vec3(0.022, 0.02, 0.027);
 
 // Only what is at least this far (world units) in front of the player's
 // vertical plane counts as being in the way.
@@ -41,4 +51,10 @@ bool hides_player(
 	float keep = soft_bottom > 0.0 ? smoothstep(0.0, soft_bottom, below) : step(0.0, below);
 	keep = max(keep, smoothstep(0.6, 1.0, d));
 	return see_through_dither(fragcoord) > keep;
+}
+
+
+// True when the fragment at `vertex` (view space) lies above the view cut.
+bool above_cut(vec3 vertex, mat4 inv_view) {
+	return (inv_view * vec4(vertex, 1.0)).y > cut_height;
 }

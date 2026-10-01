@@ -72,7 +72,7 @@ func _server_stats() -> PackedStringArray:
 	]
 	var lines := PackedStringArray(["%s: %d chunks  |  tick %d  |  %d %s" % args])
 	var session := server.first_session()
-	if session != null and session.layer == WorldGenerator.SURFACE_LAYER:
+	if session != null:
 		var tile := Coords.world_to_tile(session.position)
 		var column := server.world.generator.sample_column(tile.x, tile.y)
 		var climate := [
@@ -95,8 +95,8 @@ func _apply_dev_preferences() -> void:
 		Settings.apply_language()
 	if dev.zoom > 0:
 		Settings.override(&"world_zoom", dev.zoom)
-	if dev.show_debug:
-		Settings.override(&"show_debug", true)
+	if dev.show_debug or dev.hide_debug:
+		Settings.override(&"show_debug", not dev.hide_debug)
 	if dev.quality >= 0:
 		Settings.override(&"graphics_quality", clampi(dev.quality, 0, 3))
 	if dev.hd:
@@ -112,11 +112,11 @@ func _start_dev_actions() -> void:
 		Input.action_press(InputBindings.MOVE_DOWN if dev.autowalk.y > 0 else InputBindings.MOVE_UP)
 	if dev.hold_jump:
 		Input.action_press(InputBindings.JUMP)
-	if dev.layer != 0:
-		client.transport.send(Msg.debug_change_layer(dev.layer))
+	for i in absi(dev.descend):
+		client.transport.send(Msg.debug_move_depth(-signi(dev.descend)))
 	client.local_player.noclip = dev.noclip
 	if dev.open_map:
-		client.debug_map.cycle(client.local_player.current_tile(), client.world.layer + dev.layer)
+		client.debug_map.cycle(client.local_player.current_tile(), client.map_row())
 	if dev.open_pause_menu:
 		client.pause()
 

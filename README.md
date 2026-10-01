@@ -38,6 +38,18 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 
 ![Leguitz : même montagne vue de haut (60°) puis caméra baissée (15°), joueur visible derrière un rocher, forêt sombre à 25°](docs/screenshots/phase2-camera-basse.png)
 
+### Phase 3 : joueur et interactions (en cours)
+
+| Fonction | État |
+|---|---|
+| Monde en vrais voxels 3D comme Minecraft : 128 blocs de haut, grottes 3D sous la surface (salles, tunnels, lacs, lave, filons de minerai) | ✅ |
+| Vue en coupe sous terre : tout ce qui dépasse la tête du joueur est coupé, la roche coupée en sombre | ✅ |
+| Sauvegarde du monde et du joueur | à venir |
+| Viser, miner, poser des blocs | à venir |
+| Objets, inventaire, outils | à venir |
+
+![Leguitz : le monde en voxels en surface, une grotte vue en coupe, un lac souterrain](docs/screenshots/phase3-voxels-grottes.png)
+
 ![Biomes de Leguitz (phase 1, carte)](docs/screenshots/phase1-biomes.png)
 
 ### Phase 1 : un monde généré comme Minecraft
@@ -50,10 +62,10 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Paliers de hauteur avec falaises, qu'on gravit en sautant d'un niveau à la fois | ✅ |
 | Végétation par biome : 8 sortes d'arbres, fleurs en massifs, cactus, champignons géants, cannes à sucre… | ✅ |
 | Affleurements rocheux en montagne, avec charbon, fer, cuivre et émeraudes visibles | ✅ |
-| 6 niveaux souterrains : grandes salles, tunnels, lacs, lave, pierre puis ardoise profonde | ✅ |
+| Sous-sol : grandes salles, tunnels, lacs, lave, pierre puis ardoise profonde (en vraies grottes 3D depuis la phase 3) | ✅ |
 | 7 minerais répartis par profondeur (charbon, cuivre, fer, or, lapis, rubis, diamant) | ✅ |
 | Génération en parallèle sur tous les cœurs du processeur | ✅ |
-| Carte de debug (M), changement de niveau (Page ↑ / Page ↓), mode fantôme (F4) | ✅ (outils de debug) |
+| Carte de debug (M), descente dans la grotte suivante (Page ↓ / Page ↑), mode fantôme (F4) | ✅ (outils de debug) |
 
 ![Carte d'un monde](docs/screenshots/phase1-carte-monde.png)
 
@@ -95,7 +107,7 @@ du projet, puis appuyer sur F5.
 | Zoom | Molette, + / - | RB / LB |
 | Carte (debug) : ouvrir, dézoomer, fermer | M | Y |
 | Écran de debug | F3 | Select |
-| Descendre / monter d'un niveau (debug) | Page ↓ / Page ↑ | |
+| Descendre dans la grotte suivante / remonter (debug) | Page ↓ / Page ↑ | |
 | Mode fantôme, traverse tout (debug) | F4 | |
 | Changer la météo (debug) | F6 | |
 
@@ -122,7 +134,7 @@ voir `src/core/dev_options.gd`. Exemple :
 
 ```bash
 godot --path . -- --seed=42 --time=21 --debug --lang=fr
-godot --path . -- --seed=42 --layer=-3 --noclip       # directement dans les grottes
+godot --path . -- --seed=42 --descend=1               # directement dans une grotte
 godot --path . -- --seed=42 --weather=thunder --camera=30,45 --quality=3   # orage, vue tournée
 ```
 

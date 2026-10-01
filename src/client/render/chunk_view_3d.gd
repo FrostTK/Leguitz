@@ -1,36 +1,22 @@
 class_name ChunkView3D
 extends Node3D
 ## One chunk in the 3D world (local units, under the stretched world root):
-## the terrain mesh (tops + faces), its 3D props (trees, plants, rocks...:
-## one MultiMesh per model) and the warm lights of its lava pools.
+## its terrain as seen from the sky, its caves (shown when the view cuts
+## the world above the player), its 3D props (trees, plants, rocks...: one
+## MultiMesh per model) and the warm lights of its lava pools. Built from
+## a ChunkMesher.Result.
 
 const LAVA_LIGHT_COLOR := Color(1.0, 0.45, 0.15)
 const LAVA_LIGHT_RANGE := 7.0
-## Small plants stand anywhere in their tile (whole voxels), not centered.
-const WANDERING := {
-	Tiles.Block.TALL_GRASS: true,
-	Tiles.Block.FERN: true,
-	Tiles.Block.DEAD_BUSH: true,
-	Tiles.Block.FLOWER_RED: true,
-	Tiles.Block.FLOWER_YELLOW: true,
-	Tiles.Block.FLOWER_BLUE: true,
-	Tiles.Block.FLOWER_WHITE: true,
-	Tiles.Block.FLOWER_PINK: true,
-	Tiles.Block.MUSHROOM_RED: true,
-	Tiles.Block.MUSHROOM_BROWN: true,
-	Tiles.Block.LILY_PAD: true,
-	Tiles.Block.ROCK: true,
-	Tiles.Block.MOSSY_ROCK: true,
-}
 ## Flat on the water: no shadow worth drawing.
 const NO_SHADOW := {Tiles.Block.LILY_PAD: true}
-## Lava lights are placed per 8x8 quarter of the chunk.
-const LAVA_QUARTER := 8
 
 var coord := Vector2i.ZERO
 var terrain := MeshInstance3D.new()
+var caves := MeshInstance3D.new()
 var top_material: ShaderMaterial
 var face_material: ShaderMaterial
+var caves_shown := false
 
 var _data_image := Image.create(
 	TerrainRenderer.DATA_SIZE, TerrainRenderer.DATA_SIZE, false, Image.FORMAT_RGBAF
@@ -41,8 +27,10 @@ var _props: Array[MultiMeshInstance3D] = []
 var _prop_keys: Array[Vector2i] = []
 var _lava_lights: Array[OmniLight3D] = []
 ## Local positions of the lava lights in use (lights do not support the
-## root's stretch, so they are placed in world space).
+## root's stretch, so they are placed in world space), and which are in
+## caves.
 var _lava_spots: Array[Vector3] = []
+var _lava_deep: Array[bool] = []
 
 
 func _init(base_top_material: ShaderMaterial, faces: ShaderMaterial) -> void:
@@ -50,18 +38,33 @@ func _init(base_top_material: ShaderMaterial, faces: ShaderMaterial) -> void:
 	top_material.set_shader_parameter("chunk_data", _data_texture)
 	face_material = faces
 	add_child(terrain)
+	add_child(caves)
+	caves.visible = false
 
 
-## Rebuilds the terrain (mesh + transition data). Cheap enough to redo when
-## a neighbor arrives (borders change).
-func build_terrain(chunk: ChunkData, neighbor: Callable) -> void:
-	coord = chunk.coord
+## Shows a finished build: terrain, caves, props and lava lights.
+func apply(result: ChunkMesher.Result, library: PropLibrary, lod: int) -> void:
+	coord = result.coord
 	position = Render3D.world_px_to_local(Coords.chunk_to_world(coord), 0.0)
-	var mesh := ChunkMesher.build(chunk, neighbor)
-	mesh.surface_set_material(0, top_material)
-	mesh.surface_set_material(1, face_material)
-	terrain.mesh = mesh
-	var values := TerrainRenderer.build_data(chunk, neighbor)
+	top_material.set_shader_parameter("chunk_origin_px", Coords.chunk_to_world(coord))
+	apply_surface_map(result.surface_map)
+	var parts := result.parts
+	terrain.mesh = _mesh(parts[ChunkMesher.Part.TOPS], parts[ChunkMesher.Part.FACES])
+	caves.mesh = _mesh(parts[ChunkMesher.Part.DEEP_TOPS], parts[ChunkMesher.Part.DEEP_FACES])
+	_apply_props(result.props, library, lod)
+	_lava_spots = result.lava_spots
+	_lava_deep = result.lava_deep
+	for i in _lava_spots.size():
+		var light := _lava_light(i)
+		light.light_energy = result.lava_strength[i]
+	for i in range(_lava_spots.size(), _lava_lights.size()):
+		_lava_lights[i].visible = false
+	show_caves(caves_shown)
+	place_lights()
+
+
+## New data for the top shader (the view cut moved).
+func apply_surface_map(values: PackedFloat32Array) -> void:
 	_data_image.set_data(
 		TerrainRenderer.DATA_SIZE,
 		TerrainRenderer.DATA_SIZE,
@@ -70,37 +73,46 @@ func build_terrain(chunk: ChunkData, neighbor: Callable) -> void:
 		values.to_byte_array()
 	)
 	_data_texture.update(_data_image)
-	top_material.set_shader_parameter("chunk_origin_px", Coords.chunk_to_world(coord))
 
 
-## Places the 3D props (trees, plants, rocks...) of the chunk, grouped by
-## model. Each gets a variant, a quarter turn and a slight tint from its
-## tile, so the same seed always grows the same forest.
-func build_props(chunk: ChunkData, library: PropLibrary, lod: int) -> void:
-	var groups: Dictionary[Vector2i, Array] = {}
-	var origin := Coords.chunk_origin_tile(coord)
-	for index in GameConst.CHUNK_AREA:
-		var block := chunk.blocks[index]
-		var variants := library.variant_count(block)
-		if variants == 0:
-			continue
-		var local := Vector2i(index % GameConst.CHUNK_SIZE, index / GameConst.CHUNK_SIZE)
-		var tile := origin + local
-		var h := HashUtil.hash2(0x9A0B, tile.x, tile.y)
-		var foot := Render3D.tile_center_local(
-			local, Render3D.surface_height(chunk.ground[index], chunk.levels[index])
-		)
-		if WANDERING.has(block):
-			foot.x += ((h >> 8) % 7 - 3) / 16.0
-			foot.z += ((h >> 12) % 7 - 3) / 16.0
-		var turn := Basis(Vector3.UP, ((h >> 4) & 3) * PI * 0.5)
-		var shade := 0.93 + ((h >> 16) & 15) / 15.0 * 0.14
-		var warmth := 0.97 + ((h >> 20) & 7) / 7.0 * 0.06
-		var custom := Color(shade * warmth, shade, shade / warmth, ((h >> 24) & 255) / 255.0)
-		var key := Vector2i(block, h % variants)
-		if not groups.has(key):
-			groups[key] = []
-		groups[key].append([Transform3D(turn, foot), custom])
+## Caves (and their lava lights) only show when the view cuts the world
+## above the player: from the sky they are hidden under the terrain.
+func show_caves(shown: bool) -> void:
+	caves_shown = shown
+	caves.visible = shown
+	for i in _lava_spots.size():
+		_lava_lights[i].visible = shown or not _lava_deep[i]
+
+
+## Swaps the props for their finer or coarser copies (zoom changed).
+func set_props_lod(library: PropLibrary, lod: int) -> void:
+	for i in _prop_keys.size():
+		var key := _prop_keys[i]
+		_props[i].multimesh.mesh = library.mesh(key.x, key.y, lod)
+
+
+## Puts the lava lights at their place in the world (call again when the
+## world root turns).
+func place_lights() -> void:
+	if not is_inside_tree():
+		return
+	for i in _lava_spots.size():
+		_lava_lights[i].global_position = global_transform * _lava_spots[i]
+
+
+func _mesh(tops: ChunkMesher.Surface, faces: ChunkMesher.Surface) -> ArrayMesh:
+	var mesh := ArrayMesh.new()
+	if not tops.is_empty():
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, tops.arrays())
+		mesh.surface_set_material(mesh.get_surface_count() - 1, top_material)
+	if not faces.is_empty():
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, faces.arrays())
+		mesh.surface_set_material(mesh.get_surface_count() - 1, face_material)
+	return mesh
+
+
+## Places the props, grouped by model.
+func _apply_props(groups: Dictionary[Vector2i, Array], library: PropLibrary, lod: int) -> void:
 	var used := 0
 	_prop_keys.clear()
 	for key: Vector2i in groups:
@@ -124,14 +136,6 @@ func build_props(chunk: ChunkData, library: PropLibrary, lod: int) -> void:
 	for i in range(used, _props.size()):
 		_props[i].visible = false
 		_props[i].multimesh.instance_count = 0
-	_place_lava_lights(chunk)
-
-
-## Swaps the props for their finer or coarser copies (zoom changed).
-func set_props_lod(library: PropLibrary, lod: int) -> void:
-	for i in _prop_keys.size():
-		var key := _prop_keys[i]
-		_props[i].multimesh.mesh = library.mesh(key.x, key.y, lod)
 
 
 func _prop_node(index: int, library: PropLibrary) -> MultiMeshInstance3D:
@@ -145,40 +149,6 @@ func _prop_node(index: int, library: PropLibrary) -> MultiMeshInstance3D:
 		add_child(node)
 		_props.append(node)
 	return _props[index]
-
-
-## Lava lights up its surroundings: one warm light per lava-rich quarter.
-func _place_lava_lights(chunk: ChunkData) -> void:
-	_lava_spots.clear()
-	for qy in 2:
-		for qx in 2:
-			var sum := Vector2.ZERO
-			var count := 0
-			for ly in range(qy * LAVA_QUARTER, (qy + 1) * LAVA_QUARTER):
-				for lx in range(qx * LAVA_QUARTER, (qx + 1) * LAVA_QUARTER):
-					if chunk.ground[ly * GameConst.CHUNK_SIZE + lx] == Tiles.Ground.LAVA:
-						sum += Vector2(lx + 0.5, ly + 0.5)
-						count += 1
-			if count < 3:
-				continue
-			var light := _lava_light(_lava_spots.size())
-			var center := sum / count
-			var level: int = chunk.levels[int(center.y) * GameConst.CHUNK_SIZE + int(center.x)]
-			_lava_spots.append(Vector3(center.x, level + 1.0, center.y))
-			light.light_energy = clampf(0.8 + count * 0.05, 0.8, 2.2)
-			light.visible = true
-	for i in range(_lava_spots.size(), _lava_lights.size()):
-		_lava_lights[i].visible = false
-	place_lights()
-
-
-## Puts the lava lights at their place in the world (call again when the
-## world root turns).
-func place_lights() -> void:
-	if not is_inside_tree():
-		return
-	for i in _lava_spots.size():
-		_lava_lights[i].global_position = global_transform * _lava_spots[i]
 
 
 func _lava_light(index: int) -> OmniLight3D:

@@ -48,6 +48,8 @@ const SHADOW_MARGIN := 20.0
 
 var clock: WorldClock
 var client_world: ClientWorld
+## Deep under the rock: cave light, no sun, the lantern lit.
+var underground := false
 var weather: WeatherEffects
 var environment: Environment
 var sun: DirectionalLight3D
@@ -138,7 +140,6 @@ static func sky_direction(angle: float) -> Vector3:
 func _process(_delta: float) -> void:
 	if clock == null or client_world == null:
 		return
-	var underground := client_world.layer < WorldGenerator.SURFACE_LAYER
 	var hours := clock.time_of_day() / 3600.0
 	var angle := sun_angle(hours)
 	var sun_height := sin(angle)

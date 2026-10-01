@@ -1,6 +1,6 @@
 shader_type spatial;
-// Vertical faces of the 3D terrain: cliffs between terrace levels and the
-// sides of rock walls. Mesh data:
+// Vertical faces of the 3D terrain (sides of the voxels open to the air)
+// and the undersides closing the rock. Mesh data:
 //   UV   = (pixels along the face, pixels down from the top of the face)
 //   UV2  = (face kind: 0-3 cliff materials, 4+ wall kinds; lip ground + 1)
 //   COLOR.r = variant (0 or 1), COLOR.g = lip ground variant / 3
@@ -22,10 +22,14 @@ void vertex() {
 }
 
 void fragment() {
-	if (!IN_SHADOW_PASS
-			&& hides_player(VERTEX, VIEW_MATRIX, INV_VIEW_MATRIX, see_through_size, 0.0, FRAGCOORD.xy)) {
-		discard;
+	if (!IN_SHADOW_PASS) {
+		if (above_cut(VERTEX, INV_VIEW_MATRIX)
+				|| hides_player(VERTEX, VIEW_MATRIX, INV_VIEW_MATRIX, see_through_size, 0.0, FRAGCOORD.xy)) {
+			discard;
+		}
 	}
+	// Seen from behind (through the view cut): the section of the rock.
+	bool section = !IN_SHADOW_PASS && !FRONT_FACING;
 	int u = clamp(int(floor(UV.x)), 0, 15);
 	int v = max(int(floor(UV.y)), 0);
 	int kind = int(face_data.x + 0.5);
@@ -57,4 +61,11 @@ void fragment() {
 	NORMAL_MAP = normal * 0.5 + 0.5;
 	EMISSION = emission * emission_strength;
 	ROUGHNESS = mix(0.95, 0.4, weather_wetness);
+	if (section) {
+		ALBEDO = vec3(0.0);
+		NORMAL_MAP = vec3(0.5, 0.5, 1.0);
+		EMISSION = SECTION_COLOR;
+		ROUGHNESS = 1.0;
+		SPECULAR = 0.0;
+	}
 }

@@ -1,17 +1,40 @@
 extends TestCase
 ## The 3D view: tile to 3D mapping, chunk meshes and the sky light.
 
+const SEA := GameConst.SEA_LEVEL
 
+
+## Grass at `level` on stone, as a mesher job with no neighbors.
 func _flat_chunk(level: int) -> ChunkData:
 	var chunk := ChunkData.new(Vector2i.ZERO)
-	for i in GameConst.CHUNK_AREA:
-		chunk.ground[i] = Tiles.Ground.GRASS
-		chunk.levels[i] = level
+	var stone := Voxels.of_block(Tiles.Block.STONE)
+	var grass := Voxels.of_ground(Tiles.Ground.GRASS)
+	for lz in GameConst.CHUNK_SIZE:
+		for lx in GameConst.CHUNK_SIZE:
+			for y in SEA + level:
+				chunk.set_voxel(Vector3i(lx, y, lz), grass if y == SEA + level - 1 else stone)
 	return chunk
 
 
 func _no_neighbor(_coord: Vector2i) -> ChunkData:
 	return null
+
+
+## Ground area (tiles) covered by the horizontal quads of a surface.
+static func _area(surface: ChunkMesher.Surface) -> float:
+	var area := 0.0
+	for quad in surface.quad_count():
+		var a := surface.vertices[quad * 4]
+		var c := surface.vertices[quad * 4 + 2]
+		area += absf((c.x - a.x) * (c.z - a.z))
+	return area
+
+
+func _build(chunk: ChunkData, cut_row := ChunkData.HEIGHT) -> ChunkMesher.Result:
+	var job := ChunkMesher.Job.of_chunk(chunk, _no_neighbor)
+	job.variants.resize(256)
+	job.cut_row = cut_row
+	return ChunkMesher.build(job)
 
 
 func test_local_mapping_and_root_stretch() -> void:
@@ -65,10 +88,15 @@ func test_screen_directions_follow_the_camera() -> void:
 
 
 func test_flat_chunk_has_only_tops() -> void:
-	var surfaces := ChunkMesher.build_surfaces(_flat_chunk(2), _no_neighbor)
-	assert_eq(surfaces[0].vertices.size(), GameConst.CHUNK_AREA * 4, "one quad per tile")
-	assert_true(surfaces[1].is_empty(), "no faces on flat ground")
-	assert_almost(surfaces[0].vertices[0].y, 2.0 * Render3D.LEVEL_HEIGHT)
+	var result := _build(_flat_chunk(2))
+	var tops := result.parts[ChunkMesher.Part.TOPS]
+	assert_eq(tops.quad_count(), 1, "the same ground merges into one quad")
+	assert_almost(_area(tops), GameConst.CHUNK_AREA, 0.001, "covering every column")
+	assert_true(result.parts[ChunkMesher.Part.FACES].is_empty(), "no faces on flat ground")
+	assert_true(result.parts[ChunkMesher.Part.DEEP_TOPS].is_empty(), "no caves")
+	var bottom := result.parts[ChunkMesher.Part.DEEP_FACES]
+	assert_almost(_area(bottom), GameConst.CHUNK_AREA, 0.001, "the bottom closes the rock")
+	assert_almost(tops.vertices[0].y, 2.0 * Render3D.LEVEL_HEIGHT)
 
 
 func test_ground_variant_matches_shader_hash() -> void:
@@ -86,15 +114,42 @@ func test_ground_variant_matches_shader_hash() -> void:
 		assert_true(count > 300, "variants are spread evenly")
 
 
-func test_step_makes_faces() -> void:
+func test_step_makes_merged_faces_with_a_lip() -> void:
 	var chunk := _flat_chunk(0)
-	# Raise the northern half by one level: one east-west cliff line.
-	for i in GameConst.CHUNK_AREA / 2:
-		chunk.levels[i] = 1
-	var surfaces := ChunkMesher.build_surfaces(chunk, _no_neighbor)
-	assert_eq(surfaces[1].vertices.size(), GameConst.CHUNK_SIZE * 4, "one face per edge tile")
-	for normal in surfaces[1].normals:
+	# Raise the northern half by three levels: one east-west cliff line.
+	var dirt := Voxels.of_ground(Tiles.Ground.DIRT)
+	var grass := Voxels.of_ground(Tiles.Ground.GRASS)
+	for lz in GameConst.CHUNK_SIZE / 2:
+		for lx in GameConst.CHUNK_SIZE:
+			chunk.set_voxel(Vector3i(lx, SEA - 1, lz), dirt)
+			chunk.set_voxel(Vector3i(lx, SEA, lz), dirt)
+			chunk.set_voxel(Vector3i(lx, SEA + 1, lz), dirt)
+			chunk.set_voxel(Vector3i(lx, SEA + 2, lz), grass)
+	var faces := _build(chunk).parts[ChunkMesher.Part.FACES]
+	assert_eq(faces.quad_count(), GameConst.CHUNK_SIZE, "one merged face per edge tile")
+	for normal in faces.normals:
 		assert_eq(normal, Vector3.BACK, "the cliff faces south, towards the camera")
+	assert_almost(faces.vertices[0].y - faces.vertices[3].y, 3.0, 0.001, "three levels tall")
+	assert_eq(int(faces.uv2s[0].y), Tiles.Ground.GRASS + 1, "grass hangs over it")
+
+
+func test_caves_are_meshed_apart_and_the_map_follows_the_cut() -> void:
+	var chunk := _flat_chunk(4)
+	# A room three levels tall under the middle of the chunk.
+	for lz in range(5, 10):
+		for lx in range(5, 10):
+			for y in range(SEA - 6, SEA - 3):
+				chunk.set_voxel(Vector3i(lx, y, lz), Voxels.AIR)
+	var result := _build(chunk)
+	assert_almost(_area(result.parts[ChunkMesher.Part.TOPS]), GameConst.CHUNK_AREA, 0.001)
+	assert_true(result.parts[ChunkMesher.Part.FACES].is_empty(), "nothing shows from the sky")
+	assert_almost(_area(result.parts[ChunkMesher.Part.DEEP_TOPS]), 25.0, 0.001, "the floor")
+	# Walls (5 per side, each three levels tall), ceiling and world bottom.
+	assert_eq(result.parts[ChunkMesher.Part.DEEP_FACES].quad_count(), 20 + 1 + 1)
+	var column := (7 + 1) * ChunkMesher.SPAN + (7 + 1)
+	assert_almost(result.surface_map[column * 4 + 2], 4.0, 0.001, "from the sky: the grass")
+	var cut := _build(chunk, SEA - 4)
+	assert_almost(cut.surface_map[column * 4 + 2], -6.0, 0.001, "under the cut: the floor")
 
 
 func test_sky_light_path() -> void:

@@ -14,10 +14,11 @@ extends Node
 
 ## Extra texels rendered around the screen (room for the sub-texel slide).
 const MARGIN := 2
-## Depth drawn above and below the ground around the target (terrain far
-## above or below the player is out of view anyway).
+## Depth drawn above and below the ground around the target: terrain far
+## above the player is out of view anyway; below, the view reaches the
+## bottom of the world (it closes the rock seen through the view cut).
 const DEPTH_ABOVE := 50.0
-const DEPTH_BELOW := 70.0
+const DEPTH_BELOW := 240.0
 ## How fast the view catches up with orbit changes.
 const ORBIT_SHARPNESS := 18.0
 

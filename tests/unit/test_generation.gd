@@ -70,45 +70,45 @@ func test_surface_chunks_are_coherent() -> void:
 	var spawn_chunk := Coords.tile_to_chunk(generator.find_spawn_tile())
 	for offset in [Vector2i.ZERO, Vector2i(3, -2), Vector2i(-5, 4), Vector2i(20, 20)]:
 		var chunk := generator.generate_chunk(spawn_chunk + offset)
-		for i in GameConst.CHUNK_AREA:
-			var ground := chunk.ground[i]
-			var block := chunk.blocks[i]
-			var shape := chunk.shapes[i]
-			if Tiles.is_water(ground):
-				assert_eq(chunk.levels[i], 0, "water is at sea level")
-				assert_eq(shape & ChunkData.SHAPE_EDGE_MASK, 0, "water is never a cliff")
-				assert_true(block == Tiles.Block.AIR or block == Tiles.Block.LILY_PAD)
-			if shape & ChunkData.SHAPE_EDGE_MASK != 0:
-				assert_eq(block, Tiles.Block.AIR, "nothing grows on cliff edges")
+		for lz in GameConst.CHUNK_SIZE:
+			for lx in GameConst.CHUNK_SIZE:
+				var local := Vector2i(lx, lz)
+				var top := chunk.top_row(local)
+				var surface := chunk.surface_voxel(local)
+				assert_true(top > GameConst.SEA_LEVEL - 2, "terrain near or above sea level")
+				if Voxels.is_liquid(surface):
+					var swamp := Voxels.ground_of(surface) == Tiles.Ground.SWAMP_WATER
+					assert_true(swamp or top == GameConst.SEA_LEVEL, "the sea at sea level")
+				var thing := chunk.object_on_surface(local)
+				if thing == Voxels.of_block(Tiles.Block.LILY_PAD):
+					assert_true(Voxels.is_liquid(surface), "lily pads float")
+				elif thing != Voxels.AIR and not Voxels.is_cube(thing):
+					assert_true(Voxels.is_cube(surface), "plants grow on ground")
 
 
-func test_cliff_edges_match_across_chunk_borders() -> void:
+func test_terrain_heights_match_the_columns() -> void:
 	var generator := WorldGenerator.new(SEED)
-	# Look for a hilly area so there are cliffs to compare.
+	# A hilly area, across a chunk border.
 	var base := Coords.tile_to_chunk(Vector2i(76, 123))
-	var left := generator.generate_chunk(base)
-	var right := generator.generate_chunk(base + Vector2i.RIGHT)
-	for ly in GameConst.CHUNK_SIZE:
-		var a := Vector2i(15, ly)
-		var b := Vector2i(0, ly)
-		var lower_east := left.get_shape(a) & ChunkData.SHAPE_LOWER_E != 0
-		var expected := (
-			right.get_level(b) < left.get_level(a) and not Tiles.is_water(left.get_ground(a))
-		)
-		if not Tiles.is_water(left.get_ground(a)):
-			assert_eq(lower_east, expected, "row %d" % ly)
-		var lower_west := right.get_shape(b) & ChunkData.SHAPE_LOWER_W != 0
-		if not Tiles.is_water(right.get_ground(b)):
-			assert_eq(lower_west, left.get_level(a) < right.get_level(b), "row %d" % ly)
+	for coord in [base, base + Vector2i.RIGHT]:
+		var chunk := generator.generate_chunk(coord)
+		var origin := Coords.chunk_origin_tile(coord)
+		for lz in range(0, GameConst.CHUNK_SIZE, 5):
+			for lx in [0, 15]:
+				var column := generator.sample_column(origin.x + lx, origin.y + lz)
+				var row := GameConst.SEA_LEVEL + column.level - 1
+				var voxel := chunk.get_voxel(Vector3i(lx, row, lz))
+				assert_true(Voxels.is_cube(voxel) or Voxels.is_liquid(voxel), "surface voxel")
+				assert_false(
+					Voxels.is_cube(chunk.get_voxel(Vector3i(lx, row + 2, lz))), "air above it"
+				)
 
 
 func test_generation_is_deterministic() -> void:
-	for layer in [0, -2, -6]:
-		var a := WorldGenerator.new(12345).generate_chunk(Vector2i(-3, 7), layer)
-		var b := WorldGenerator.new(12345).generate_chunk(Vector2i(-3, 7), layer)
-		assert_eq(a.ground, b.ground, "layer %d" % layer)
-		assert_eq(a.blocks, b.blocks, "layer %d" % layer)
-		assert_eq(a.shapes, b.shapes, "layer %d" % layer)
+	var a := WorldGenerator.new(12345).generate_chunk(Vector2i(-3, 7))
+	var b := WorldGenerator.new(12345).generate_chunk(Vector2i(-3, 7))
+	assert_eq(a.voxels, b.voxels)
+	assert_eq(a.biome, b.biome)
 
 
 func test_different_seeds_give_different_worlds() -> void:
@@ -117,7 +117,7 @@ func test_different_seeds_give_different_worlds() -> void:
 		var coord := Vector2i(i * 5, -i * 3)
 		var a := WorldGenerator.new(1).generate_chunk(coord)
 		var b := WorldGenerator.new(2).generate_chunk(coord)
-		if a.ground != b.ground or a.blocks != b.blocks:
+		if a.voxels != b.voxels:
 			differences += 1
 	assert_true(differences > 0)
 
@@ -128,58 +128,65 @@ func test_spawn_is_safe() -> void:
 		var spawn := generator.find_spawn_tile()
 		var chunk := generator.generate_chunk(Coords.tile_to_chunk(spawn))
 		var local := Coords.tile_to_local(spawn)
-		assert_false(chunk.is_solid(local), "seed %d" % world_seed)
-		assert_false(Tiles.is_water(chunk.get_ground(local)), "seed %d" % world_seed)
+		assert_true(WorldGenerator.is_free_ground(chunk, local), "seed %d" % world_seed)
 		assert_true(WorldGenerator.SPAWN_BIOMES.has(chunk.get_biome(local)), "seed %d" % world_seed)
 
 
-func test_underground_layers() -> void:
+func test_caves_and_ores_underground() -> void:
 	var generator := WorldGenerator.new(SEED)
-	for layer in range(-1, WorldGenerator.MIN_LAYER - 1, -1):
-		var depth := -layer
-		var open := 0
-		var total := 0
-		for cy in 4:
-			for cx in 4:
-				var chunk := generator.generate_chunk(Vector2i(cx * 3, cy * 3), layer)
-				for i in GameConst.CHUNK_AREA:
-					total += 1
-					var block := chunk.blocks[i]
-					var ground := chunk.ground[i]
-					if not Tiles.is_block_solid(block):
-						open += 1
-					if ground == Tiles.Ground.LAVA:
-						assert_true(depth >= 5, "lava only deep down")
-					if Tiles.is_water(ground):
-						assert_true(depth <= 3, "lakes only near the surface")
-					if depth < CaveGenerator.DEEPSLATE_DEPTH:
-						assert_ne(block, Tiles.Block.DEEPSLATE)
-					else:
-						assert_ne(block, Tiles.Block.STONE)
-					_check_ore_depth(block, depth)
-		var ratio := float(open) / total
-		assert_true(ratio > 0.1 and ratio < 0.5, "layer %d open ratio %.2f" % [layer, ratio])
+	var stone := Voxels.of_block(Tiles.Block.STONE)
+	var deepslate := Voxels.of_block(Tiles.Block.DEEPSLATE)
+	var water := Voxels.of_ground(Tiles.Ground.WATER)
+	var lava := Voxels.of_ground(Tiles.Ground.LAVA)
+	var open := 0
+	var total := 0
+	for cz in 3:
+		for cx in 3:
+			var chunk := generator.generate_chunk(Vector2i(cx * 3, cz * 3))
+			for column in GameConst.CHUNK_AREA:
+				var base := column * GameConst.WORLD_HEIGHT
+				var top: int = chunk.tops[column]
+				for y in top - 1:
+					var voxel := chunk.voxels[base + y]
+					if y < CaveGenerator.MIN_ROW:
+						assert_true(Voxels.is_cube(voxel), "the bottom of the world is solid")
+					if y >= top - 4 and y < top:
+						assert_ne(voxel, Voxels.AIR, "caves never break through the terrain")
+					if y >= CaveGenerator.MIN_ROW and y < GameConst.SEA_LEVEL - 8:
+						total += 1
+						if voxel == Voxels.AIR:
+							open += 1
+					if voxel == lava:
+						assert_true(y < CaveGenerator.LAVA_BELOW_ROW, "lava only deep down")
+					if voxel == water and y < GameConst.SEA_LEVEL - 14:
+						assert_true(y >= CaveGenerator.LAKES_FROM_ROW, "lakes near the top")
+					if voxel == deepslate:
+						assert_true(y < CaveGenerator.DEEPSLATE_ROW, "deepslate deep down")
+					if voxel == stone:
+						assert_true(y >= CaveGenerator.DEEPSLATE_ROW, "stone above it")
+					_check_ore_row(voxel, y)
+	var ratio := float(open) / total
+	assert_true(ratio > 0.03 and ratio < 0.35, "open ratio %.2f" % ratio)
 
 
-func _check_ore_depth(block: int, depth: int) -> void:
+func _check_ore_row(voxel: int, y: int) -> void:
 	for ore: Array in CaveGenerator.ORES:
-		if block == ore[0]:
-			assert_true(depth >= ore[1] and depth <= ore[2], "%s at depth %d" % [block, depth])
-	assert_ne(block, Tiles.Block.EMERALD_ORE, "emeralds only in mountains")
+		if voxel == Voxels.of_block(ore[0]):
+			assert_true(y >= ore[1] - 1 and y <= ore[2] + 1, "%s at row %d" % [ore[0], y])
 
 
 func test_map_renderer_sizes() -> void:
 	var generator := WorldGenerator.new(SEED)
-	var surface := WorldMapRenderer.render(generator, 0, Vector2i.ZERO, 32, 4)
-	var underground := WorldMapRenderer.render(generator, -4, Vector2i.ZERO, 32, 1)
+	var surface := WorldMapRenderer.render(generator, Msg.MAP_SURFACE, Vector2i.ZERO, 32, 4)
+	var cut := WorldMapRenderer.render(generator, 30, Vector2i.ZERO, 32, 1)
 	assert_eq(surface.get_size(), Vector2i(32, 32))
-	assert_eq(underground.get_size(), Vector2i(32, 32))
+	assert_eq(cut.get_size(), Vector2i(32, 32))
 
 
 func test_threaded_generation_matches_sync() -> void:
 	var generator := WorldGenerator.new(SEED)
 	var queue := ChunkGenerationQueue.new(generator, true)
-	var keys: Array[Vector3i] = [Vector3i(0, 0, 0), Vector3i(1, 0, 0), Vector3i(0, 1, -2)]
+	var keys: Array[Vector2i] = [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1)]
 	for key in keys:
 		assert_true(queue.request(key))
 	queue.wait_all()
@@ -187,9 +194,8 @@ func test_threaded_generation_matches_sync() -> void:
 	assert_eq(chunks.size(), keys.size())
 	assert_eq(queue.pending_count(), 0)
 	for chunk in chunks:
-		var expected := generator.generate_chunk(chunk.coord, chunk.layer)
-		assert_eq(chunk.blocks, expected.blocks)
-		assert_eq(chunk.ground, expected.ground)
+		var expected := generator.generate_chunk(chunk.coord)
+		assert_eq(chunk.voxels, expected.voxels)
 
 
 func test_every_tile_has_an_atlas_cell() -> void:

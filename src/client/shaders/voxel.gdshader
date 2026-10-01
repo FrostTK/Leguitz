@@ -55,7 +55,8 @@ void vertex() {
 
 void fragment() {
 	if (cut_out && !IN_SHADOW_PASS
-			&& hides_player(VERTEX, VIEW_MATRIX, INV_VIEW_MATRIX, cut_size, 0.6, FRAGCOORD.xy)) {
+			&& (above_cut(VERTEX, INV_VIEW_MATRIX)
+			|| hides_player(VERTEX, VIEW_MATRIX, INV_VIEW_MATRIX, cut_size, 0.6, FRAGCOORD.xy))) {
 		discard;
 	}
 	vec3 albedo = srgb_to_linear(COLOR.rgb) * tint;

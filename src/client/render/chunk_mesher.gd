@@ -1,54 +1,115 @@
 class_name ChunkMesher
 extends RefCounted
-## Builds the 3D terrain mesh of a chunk, in local units (see Render3D):
-## - surface 0: top faces (the ground of every tile, tops of rock walls),
-##   UV = chunk pixels / 256 for the top shader,
-## - surface 1: vertical faces wherever a neighbor is lower (cliffs between
-##   terrace levels, sides of rock walls, banks of water), on every side,
-##   since the camera can turn around.
-## Neighbor chunks give correct faces on chunk borders; a missing neighbor
-## is treated as level with this chunk (the mesh is rebuilt when it comes).
-## No stairs: players jump up one level at a time.
+## Builds the 3D terrain of a chunk from its voxels, in local units (see
+## Render3D), on a worker thread. Everything it reads is in its Job.
+##
+## Surfaces (see Part):
+## - tops: the top of every cube or liquid voxel open to the air above,
+##   drawn by the top shader (organic ground transitions, water...),
+## - faces: the sides of cubes open to the air (vertical runs of the same
+##   material share one quad), and their undersides,
+## each split into what can be seen from the sky and what lies deeper
+## (caves), shown only when the view cuts the world above the player.
+## Undersides are never seen from the camera (it always looks down) but
+## close the rock: seen from behind through the cut, they draw its section.
+## Also gathers the props (trees, plants... in object voxels), the lava
+## spots that light their surroundings, and the surface map of the top
+## shader (see surface_map).
 
+enum Part { TOPS, FACES, DEEP_TOPS, DEEP_FACES }
 enum Side { NORTH, EAST, SOUTH, WEST }
 
 const SIZE := GameConst.CHUNK_SIZE
 const SPAN := SIZE + 2
-const EPSILON := 0.01
+const HEIGHT := GameConst.WORLD_HEIGHT
+const SEA := GameConst.SEA_LEVEL
+## Strides in the padded voxels (see pad).
+const STRIDE_X := HEIGHT
+const STRIDE_Z := SPAN * HEIGHT
 ## Face texture pixels per local unit of height (one level = 16 px).
 const FACE_PX_PER_UNIT := 16.0 / Render3D.LEVEL_HEIGHT
 ## Face kinds: cliff materials first, then wall kinds.
 const WALL_KIND_OFFSET := 4
+## Top material codes: grounds, then WALL_CODE + wall kind.
+const WALL_CODE := 64
+## Surface map level of a column with nothing below the cut.
+const NO_LEVEL := -1000.0
+## Lava lights are placed per 8x8 quarter of the chunk.
+const LAVA_QUARTER := 8
 
-const SIDE_OFFSETS := {
-	Side.NORTH: Vector2i(0, -1),
-	Side.EAST: Vector2i(1, 0),
-	Side.SOUTH: Vector2i(0, 1),
-	Side.WEST: Vector2i(-1, 0),
+const CUBE := Voxels.FLAG_CUBE
+const LIQUID := Voxels.FLAG_LIQUID
+const TERRAIN := CUBE | LIQUID
+
+## Horizontal faces are gathered per row of the chunk before being merged
+## into rectangles: tops, or undersides (see _record_flat).
+const FLAT_UNDERSIDE := 1
+
+## Small plants stand anywhere in their tile (whole voxels), not centered.
+const WANDERING := {
+	Tiles.Block.TALL_GRASS: true,
+	Tiles.Block.FERN: true,
+	Tiles.Block.DEAD_BUSH: true,
+	Tiles.Block.FLOWER_RED: true,
+	Tiles.Block.FLOWER_YELLOW: true,
+	Tiles.Block.FLOWER_BLUE: true,
+	Tiles.Block.FLOWER_WHITE: true,
+	Tiles.Block.FLOWER_PINK: true,
+	Tiles.Block.MUSHROOM_RED: true,
+	Tiles.Block.MUSHROOM_BROWN: true,
+	Tiles.Block.LILY_PAD: true,
+	Tiles.Block.ROCK: true,
+	Tiles.Block.MOSSY_ROCK: true,
 }
-const SIDE_NORMALS := {
-	Side.NORTH: Vector3.FORWARD,
-	Side.EAST: Vector3.RIGHT,
-	Side.SOUTH: Vector3.BACK,
-	Side.WEST: Vector3.LEFT,
-}
+
+## Face kind and top material code of every voxel id (see face_kind).
+static var _face_kinds := _build_face_kinds()
+static var _top_codes := _build_top_codes()
 
 
-## Terrain columns of the chunk plus a 1-tile border.
-class Columns:
+## What a build reads: the voxels and column tops of the chunk and of its
+## 8 neighbors (3 x 3, row by row; empty arrays where not loaded).
+class Job:
 	extends RefCounted
-	var ground := PackedInt32Array()
-	var block := PackedInt32Array()
-	## Height of the ground (without walls) and of the top (with walls).
-	var base := PackedFloat32Array()
-	var top := PackedFloat32Array()
+	var coord := Vector2i.ZERO
+	var voxels: Array[PackedByteArray] = []
+	var tops: Array[PackedByteArray] = []
+	## Model variants per block (0 = not a prop), see PropLibrary.
+	var variants := PackedByteArray()
+	## Row the view cuts the world at (HEIGHT: no cut), for the surface map.
+	var cut_row := HEIGHT
+	## Surface map only (the cut moved): no geometry.
+	var map_only := false
+	## Bumped by every new build of the chunk: older results are dropped.
+	var serial := 0
 
-	func _init() -> void:
-		# Packed arrays are values: resize each member directly.
-		ground.resize(SPAN * SPAN)
-		block.resize(SPAN * SPAN)
-		base.resize(SPAN * SPAN)
-		top.resize(SPAN * SPAN)
+	static func of_chunk(chunk: ChunkData, neighbor: Callable) -> Job:
+		var job := Job.new()
+		job.coord = chunk.coord
+		for dz in range(-1, 2):
+			for dx in range(-1, 2):
+				var other: ChunkData = (
+					chunk if dx == 0 and dz == 0 else neighbor.call(chunk.coord + Vector2i(dx, dz))
+				)
+				job.voxels.append(other.voxels if other != null else PackedByteArray())
+				job.tops.append(other.tops if other != null else PackedByteArray())
+		return job
+
+
+## What a build produces.
+class Result:
+	extends RefCounted
+	var coord := Vector2i.ZERO
+	var serial := 0
+	var map_only := false
+	var parts: Array[Surface] = []
+	## (block, variant) -> [[Transform3D, Color], ...]
+	var props: Dictionary[Vector2i, Array] = {}
+	## Lava lights: local position and whether they are in a cave.
+	var lava_spots: Array[Vector3] = []
+	var lava_deep: Array[bool] = []
+	var lava_strength: Array[float] = []
+	var surface_map := PackedFloat32Array()
 
 
 class Surface:
@@ -74,11 +135,22 @@ class Surface:
 		for i in 4:
 			vertices.append(corners[i])
 			normals.append(normal)
-			tangents.append_array([tangent.x, tangent.y, tangent.z, 1.0])
+			tangents.append(tangent.x)
+			tangents.append(tangent.y)
+			tangents.append(tangent.z)
+			tangents.append(1.0)
 			uvs.append(quad_uvs[i])
 			uv2s.append(uv2)
 			colors.append(color)
-		indices.append_array([start, start + 1, start + 2, start, start + 2, start + 3])
+		indices.append(start)
+		indices.append(start + 1)
+		indices.append(start + 2)
+		indices.append(start)
+		indices.append(start + 2)
+		indices.append(start + 3)
+
+	func quad_count() -> int:
+		return vertices.size() / 4
 
 	func is_empty() -> bool:
 		return vertices.is_empty()
@@ -96,85 +168,130 @@ class Surface:
 		return result
 
 
-## Material of a vertical face: atlas kind, the ground hanging over its top
-## (lip, 0 = none) and texture variants.
-class FaceStyle:
-	extends RefCounted
-	var kind := 0
-	var lip := 0
-	var lip_variant := 0
-	var variant := 0.0
-	## Height where the face texture starts (its top row).
-	var texture_top := 0.0
-
-	func _init(face_kind: int, face_variant: float, top: float) -> void:
-		kind = face_kind
-		variant = face_variant
-		texture_top = top
-
-
-## Returns an ArrayMesh with the top surface (0) and the face surface (1).
-## `neighbor` is a Callable(coord: Vector2i) -> ChunkData (or null).
-static func build(chunk: ChunkData, neighbor: Callable) -> ArrayMesh:
-	var mesh := ArrayMesh.new()
-	# Keep both surfaces (even empty) so surface indices stay stable.
-	for surface in build_surfaces(chunk, neighbor):
-		if surface.is_empty():
-			_add_degenerate(surface)
-		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface.arrays())
-	return mesh
-
-
-## The geometry of a chunk: [tops, faces].
-static func build_surfaces(chunk: ChunkData, neighbor: Callable) -> Array[Surface]:
-	var columns := gather(chunk, neighbor)
-	var tops := Surface.new()
-	var faces := Surface.new()
-	var origin_tile := Coords.chunk_origin_tile(chunk.coord)
-	for ly in SIZE:
+## Builds a chunk (thread-safe: only reads the job).
+static func build(job: Job) -> Result:
+	var result := Result.new()
+	result.coord = job.coord
+	result.serial = job.serial
+	result.map_only = job.map_only
+	var voxels := pad(job.voxels, HEIGHT)
+	var tops := pad(job.tops, 1)
+	result.surface_map = surface_map(voxels, tops, job.cut_row)
+	if job.map_only:
+		return result
+	for part in Part.size():
+		result.parts.append(Surface.new())
+	var origin := Coords.chunk_origin_tile(job.coord)
+	var lava_sums: Array[Vector3] = []
+	var lava_counts := PackedInt32Array()
+	lava_sums.resize(8)
+	lava_counts.resize(8)
+	# Local copies of the tables: shared statics are slow in tight loops,
+	# more so on several threads.
+	var flags := Voxels.flag_table()
+	var kinds := _face_kinds.duplicate()
+	var codes := _top_codes.duplicate()
+	var tables := [flags, kinds, codes]
+	# Horizontal faces of the chunk, merged at the end: see _record_flat.
+	var flats := {}
+	for lz in SIZE:
 		for lx in SIZE:
-			var i := (ly + 1) * SPAN + (lx + 1)
-			_add_top(tops, lx, ly, columns.top[i])
-			for side: int in SIDE_OFFSETS:
-				var offset: Vector2i = SIDE_OFFSETS[side]
-				var j := i + offset.y * SPAN + offset.x
-				if columns.top[j] < columns.top[i] - EPSILON:
-					_add_side(faces, columns, i, j, lx, ly, side, origin_tile)
-	return [tops, faces]
-
-
-## Heights and materials of the chunk and its border.
-static func gather(chunk: ChunkData, neighbor: Callable) -> Columns:
-	var columns := Columns.new()
-	var neighbors := {}
-	for gy in SPAN:
-		for gx in SPAN:
-			var lx := gx - 1
-			var ly := gy - 1
-			var source := chunk
-			if lx < 0 or ly < 0 or lx >= SIZE or ly >= SIZE:
-				var offset := Vector2i(floori(lx / float(SIZE)), floori(ly / float(SIZE)))
-				if not neighbors.has(offset):
-					neighbors[offset] = neighbor.call(chunk.coord + offset)
-				var other: ChunkData = neighbors[offset]
-				if other != null:
-					source = other
-					lx = posmod(lx, SIZE)
-					ly = posmod(ly, SIZE)
+			var column := (lz + 1) * SPAN + (lx + 1)
+			var base := column * HEIGHT
+			var last := mini(tops[column] + 1, HEIGHT)
+			for y in last:
+				var index := base + y
+				var voxel := voxels[index]
+				if voxel == Voxels.AIR:
+					continue
+				var flag := flags[voxel]
+				if flag & CUBE != 0:
+					# Most cubes are buried: cubes all around, nothing to draw.
+					if (
+						y > 0
+						and y + 1 < HEIGHT
+						and flags[voxels[index + 1]] & CUBE != 0
+						and flags[voxels[index - 1]] & CUBE != 0
+						and flags[voxels[index + STRIDE_X]] & CUBE != 0
+						and flags[voxels[index - STRIDE_X]] & CUBE != 0
+						and flags[voxels[index + STRIDE_Z]] & CUBE != 0
+						and flags[voxels[index - STRIDE_Z]] & CUBE != 0
+					):
+						continue
+					_add_cube(result, flats, voxels, tops, tables, column, lx, y, lz, origin)
+				elif flag & LIQUID != 0:
+					var above := voxels[base + y + 1] if y + 1 < HEIGHT else Voxels.AIR
+					if flags[above] & TERRAIN != 0:
+						continue
+					var deep := y + 1 < tops[column]
+					var part := Part.DEEP_TOPS if deep else Part.TOPS
+					_record_flat(flats, y, voxel, part, 0, lx, lz)
+					if voxel == Voxels.of_ground(Tiles.Ground.LAVA):
+						var quarter := (
+							(lz / LAVA_QUARTER) * 2 + lx / LAVA_QUARTER + (4 if deep else 0)
+						)
+						lava_sums[quarter] += Vector3(lx + 0.5, y + 2 - SEA, lz + 0.5)
+						lava_counts[quarter] += 1
 				else:
-					lx = clampi(lx, 0, SIZE - 1)
-					ly = clampi(ly, 0, SIZE - 1)
-			var index := ly * SIZE + lx
-			var i := gy * SPAN + gx
-			var ground := source.ground[index]
-			var block := source.blocks[index]
-			columns.ground[i] = ground
-			columns.block[i] = block
-			columns.base[i] = Render3D.surface_height(ground, source.levels[index])
-			columns.top[i] = (
-				columns.base[i] + (Render3D.WALL_HEIGHT if TileAtlas.is_wall(block) else 0.0)
-			)
-	return columns
+					_add_prop(result, job.variants, voxel, voxels, base, lx, y, lz, origin)
+	_add_flats(result, flats)
+	_add_world_bottom(result.parts[Part.DEEP_FACES])
+	for quarter in 8:
+		if lava_counts[quarter] >= 3:
+			result.lava_spots.append(lava_sums[quarter] / lava_counts[quarter])
+			result.lava_deep.append(quarter >= 4)
+			result.lava_strength.append(clampf(0.8 + lava_counts[quarter] * 0.05, 0.8, 2.2))
+	return result
+
+
+## The chunk's arrays (`stride` bytes per column) plus a one-column border
+## taken from its neighbors; missing neighbors repeat the chunk's own edge,
+## so no false faces appear (the chunk is rebuilt when they come).
+static func pad(arrays: Array[PackedByteArray], stride: int) -> PackedByteArray:
+	var padded := PackedByteArray()
+	var center := arrays[4]
+	for pz in SPAN:
+		for px in SPAN:
+			var lx := px - 1
+			var lz := pz - 1
+			var ox := -1 if lx < 0 else (1 if lx >= SIZE else 0)
+			var oz := -1 if lz < 0 else (1 if lz >= SIZE else 0)
+			var source := arrays[(oz + 1) * 3 + ox + 1]
+			if source.is_empty():
+				source = center
+				lx = clampi(lx, 0, SIZE - 1)
+				lz = clampi(lz, 0, SIZE - 1)
+			else:
+				lx = posmod(lx, SIZE)
+				lz = posmod(lz, SIZE)
+			var start := (lz * SIZE + lx) * stride
+			padded.append_array(source.slice(start, start + stride))
+	return padded
+
+
+## The 18 x 18 data of the top shader (RGBA floats per column, chunk plus
+## border): ground id, wall kind + 1, level of the highest top below the
+## cut (NO_LEVEL if none), 0. Tops at that level blend with their
+## neighbors; other tops (hidden ledges) are drawn plainly.
+static func surface_map(
+	voxels: PackedByteArray, tops: PackedByteArray, cut_row: int
+) -> PackedFloat32Array:
+	var values := PackedFloat32Array()
+	values.resize(SPAN * SPAN * 4)
+	for column in SPAN * SPAN:
+		var base := column * HEIGHT
+		var out := column * 4
+		values[out + 2] = NO_LEVEL
+		var start := mini(cut_row, tops[column]) - 1
+		for y in range(start, -1, -1):
+			var voxel := voxels[base + y]
+			if not Voxels.is_cube(voxel) and not Voxels.is_liquid(voxel):
+				continue
+			values[out] = Voxels.ground_of(voxel)
+			values[out + 1] = TileAtlas.wall_lookup[Voxels.block_of(voxel)]
+			values[out + 2] = y + 1 - SEA
+			break
+	return values
 
 
 ## Ground texture variant of a tile, as the top shader picks it
@@ -188,65 +305,284 @@ static func ground_variant(tile: Vector2i) -> int:
 	return h & 3
 
 
-static func _add_top(tops: Surface, lx: int, ly: int, height: float) -> void:
+## Face kind of a cube voxel's sides (see the face atlas).
+static func face_kind(voxel: int) -> int:
+	return _face_kinds[voxel]
+
+
+## Top material code of a cube or liquid voxel (see the top shader).
+static func top_code(voxel: int) -> int:
+	return _top_codes[voxel]
+
+
+static func _build_face_kinds() -> PackedInt32Array:
+	var kinds := PackedInt32Array()
+	kinds.resize(256)
+	for voxel in 256:
+		var block := Voxels.block_of(voxel)
+		if TileAtlas.is_wall(block):
+			kinds[voxel] = WALL_KIND_OFFSET + TileAtlas.WALL_KINDS[block]
+		else:
+			kinds[voxel] = TerrainRenderer.cliff_material(Voxels.ground_of(voxel))
+	return kinds
+
+
+static func _build_top_codes() -> PackedInt32Array:
+	var codes := PackedInt32Array()
+	codes.resize(256)
+	for voxel in 256:
+		var block := Voxels.block_of(voxel)
+		if TileAtlas.is_wall(block):
+			codes[voxel] = WALL_CODE + TileAtlas.WALL_KINDS[block]
+		else:
+			codes[voxel] = Voxels.ground_of(voxel)
+	return codes
+
+
+## Top, sides (merged with the voxels below when they match) and underside
+## of a cube voxel. `tables` holds the local [flags, face kinds, top codes].
+static func _add_cube(
+	result: Result,
+	flats: Dictionary,
+	voxels: PackedByteArray,
+	tops: PackedByteArray,
+	tables: Array,
+	column: int,
+	lx: int,
+	y: int,
+	lz: int,
+	origin: Vector2i
+) -> void:
+	var flags: PackedByteArray = tables[0]
+	var kinds: PackedInt32Array = tables[1]
+	var codes: PackedInt32Array = tables[2]
+	var index := column * HEIGHT + y
+	var voxel := voxels[index]
+	var above := voxels[index + 1] if y + 1 < HEIGHT else Voxels.AIR
+	if flags[above] & TERRAIN == 0:
+		var top_part := Part.DEEP_TOPS if y + 1 < tops[column] else Part.TOPS
+		_record_flat(flats, y, codes[voxel], top_part, 0, lx, lz)
+	if y > 0 and flags[voxels[index - 1]] & CUBE == 0:
+		_record_flat(flats, y, kinds[voxel], Part.DEEP_FACES, FLAT_UNDERSIDE, lx, lz)
+	var kind := kinds[voxel]
+	for side in 4:
+		var dx := 0
+		var dz := 0
+		match side:
+			Side.NORTH:
+				dz = -1
+			Side.EAST:
+				dx = 1
+			Side.SOUTH:
+				dz = 1
+			_:
+				dx = -1
+		var step := dx * STRIDE_X + dz * STRIDE_Z
+		var other := column + dx + dz * SPAN
+		var deep := _side_deep(voxels, tops, flags, index, step, other, y)
+		if deep < 0:
+			continue
+		# The run below took this voxel already: same material, open too.
+		if (
+			y > 0
+			and _continues_run(voxels, tops, tables, index - 1, step, other, y - 1, kind, deep)
+		):
+			continue
+		var bottom := y
+		var top := y + 1
+		while (
+			top < HEIGHT
+			and _continues_run(voxels, tops, tables, index + top - y, step, other, top, kind, deep)
+		):
+			top += 1
+		var top_voxel := voxels[column * HEIGHT + top - 1]
+		var top_above := voxels[column * HEIGHT + top] if top < HEIGHT else Voxels.AIR
+		var ground := Voxels.ground_of(top_voxel)
+		var lip := 0
+		if ground != Tiles.Ground.NONE and flags[top_above] & TERRAIN == 0:
+			lip = ground + 1
+		var tile := origin + Vector2i(lx, lz)
+		var variant := float(HashUtil.hash2(0xFACE, tile.x * 4 + side, tile.y + bottom * 131) & 1)
+		var part := Part.DEEP_FACES if deep == 1 else Part.FACES
+		_add_side(
+			result.parts[part],
+			lx,
+			lz,
+			side,
+			bottom - SEA,
+			top - SEA,
+			Vector2(kind, lip),
+			Color(variant, ground_variant(tile) / 3.0, 0.0)
+		)
+
+
+## Whether a cube's side shows: -1 hidden, 0 seen from the sky, 1 in a
+## cave. Sides facing liquid only show at the surface (the bank above it).
+## `other` is the neighbor column (padded index).
+static func _side_deep(
+	voxels: PackedByteArray,
+	tops: PackedByteArray,
+	flags: PackedByteArray,
+	index: int,
+	step: int,
+	other: int,
+	y: int
+) -> int:
+	var neighbor := voxels[index + step]
+	var flag := flags[neighbor]
+	if flag & CUBE != 0:
+		return -1
+	if flag & LIQUID != 0:
+		var above := voxels[index + step + 1] if y + 1 < HEIGHT else Voxels.AIR
+		if flags[above] & TERRAIN != 0:
+			return -1
+		return 0 if y + 1 >= tops[other] else 1
+	return 1 if y < tops[other] else 0
+
+
+## True if the cube at `index` (row `y`) continues a run of side faces of
+## `kind` open the `deep` way: same material, side open the same way. A run
+## ends at the first voxel open to the sky, whose ground may hang over it
+## as a lip.
+static func _continues_run(
+	voxels: PackedByteArray,
+	tops: PackedByteArray,
+	tables: Array,
+	index: int,
+	step: int,
+	other: int,
+	y: int,
+	kind: int,
+	deep: int
+) -> bool:
+	var flags: PackedByteArray = tables[0]
+	var kinds: PackedInt32Array = tables[1]
+	var voxel := voxels[index]
+	if flags[voxel] & CUBE == 0 or kinds[voxel] != kind:
+		return false
+	return _side_deep(voxels, tops, flags, index, step, other, y) == deep
+
+
+## Notes a horizontal face of voxel row `y` at (lx, lz): a top (`code`:
+## its material) or an underside (`code`: its face kind). Faces of the same
+## row, material and part are merged into rectangles by _add_flats.
+static func _record_flat(
+	flats: Dictionary, y: int, code: int, part: int, underside: int, lx: int, lz: int
+) -> void:
+	var key := Vector4i(y, code, part * 2 + underside, lz)
+	flats[key] = flats.get(key, 0) | (1 << lx)
+
+
+## Merges the recorded horizontal faces into rectangles: runs along x,
+## stacked along z while the same run continues.
+static func _add_flats(result: Result, flats: Dictionary) -> void:
+	var groups := {}
+	for key: Vector4i in flats:
+		var group := Vector3i(key.x, key.y, key.z)
+		if not groups.has(group):
+			var masks := []
+			masks.resize(SIZE + 1)
+			masks.fill(0)
+			groups[group] = masks
+		groups[group][key.w] = flats[key]
+	for group: Vector3i in groups:
+		var masks: Array = groups[group]
+		var open := {}
+		for lz in SIZE + 1:
+			var runs := _runs(masks[lz])
+			for run: Vector2i in open.keys():
+				if not runs.has(run):
+					_add_flat(result, group, run, open[run], lz)
+					open.erase(run)
+			for run in runs:
+				if not open.has(run):
+					open[run] = lz
+
+
+## Runs of consecutive set bits of a 16-bit mask: [first, last] pairs.
+static func _runs(mask: int) -> Array[Vector2i]:
+	var runs: Array[Vector2i] = []
+	var x := 0
+	while x < SIZE:
+		if mask & (1 << x) == 0:
+			x += 1
+			continue
+		var first := x
+		while x < SIZE and mask & (1 << x) != 0:
+			x += 1
+		runs.append(Vector2i(first, x - 1))
+	return runs
+
+
+## A merged rectangle of tops or undersides: tiles run.x..run.y along x,
+## z0 to z1 (excluded) along z.
+static func _add_flat(result: Result, group: Vector3i, run: Vector2i, z0: int, z1: int) -> void:
+	var y := group.x
+	var code := group.y
+	var surface := result.parts[group.z >> 1]
+	var x0 := float(run.x)
+	var x1 := float(run.y + 1)
+	if group.z & FLAT_UNDERSIDE != 0:
+		var bottom := float(y - SEA)
+		var below: Array[Vector3] = [
+			Vector3(x0, bottom, z1),
+			Vector3(x1, bottom, z1),
+			Vector3(x1, bottom, z0),
+			Vector3(x0, bottom, z0),
+		]
+		surface.quad(below, _texels(), Vector3.DOWN, Vector3.RIGHT, Vector2(code, 0))
+		return
+	var level := y + 1 - SEA
+	var height := float(level)
+	if Voxels.is_liquid(code):
+		height -= ChunkData.WATER_DROP
 	var corners: Array[Vector3] = [
-		Vector3(lx, height, ly),
-		Vector3(lx + 1, height, ly),
-		Vector3(lx + 1, height, ly + 1),
-		Vector3(lx, height, ly + 1),
+		Vector3(x0, height, z0),
+		Vector3(x1, height, z0),
+		Vector3(x1, height, z1),
+		Vector3(x0, height, z1),
 	]
 	# UVs in chunk pixels / 256 (the top shader works per art pixel).
-	var scale := 1.0 / GameConst.CHUNK_SIZE
-	var uvs: Array[Vector2] = [
-		Vector2(lx, ly) * scale,
-		Vector2(lx + 1, ly) * scale,
-		Vector2(lx + 1, ly + 1) * scale,
-		Vector2(lx, ly + 1) * scale,
+	var uvs: Array[Vector2] = []
+	for corner in corners:
+		uvs.append(Vector2(corner.x, corner.z) / SIZE)
+	surface.quad(corners, uvs, Vector3.UP, Vector3.RIGHT, Vector2(code, level))
+
+
+## One underside under the whole chunk: the bottom of the world closes the
+## rock (see the view cut).
+static func _add_world_bottom(surface: Surface) -> void:
+	var bottom := float(-SEA)
+	var corners: Array[Vector3] = [
+		Vector3(0, bottom, SIZE),
+		Vector3(SIZE, bottom, SIZE),
+		Vector3(SIZE, bottom, 0),
+		Vector3(0, bottom, 0),
 	]
-	tops.quad(corners, uvs, Vector3.UP, Vector3.RIGHT)
+	surface.quad(corners, _texels(), Vector3.DOWN, Vector3.RIGHT, Vector2(WALL_KIND_OFFSET, 0))
 
 
-## Vertical face on `side` of tile i, down to the top of neighbor j. A wall
-## standing on a cliff gets two segments: wall above its base, cliff below.
+## Face texture coordinates of an underside (only ever seen from behind).
+static func _texels() -> Array[Vector2]:
+	return [Vector2(0, 0), Vector2(16, 0), Vector2(16, 16), Vector2(0, 16)]
+
+
+## Vertical quad on `side` of tile (lx, lz), facing out, from `bottom` to
+## `top` (levels). Texture u runs left to right as seen from the front, v
+## counts pixels down from the top.
 static func _add_side(
-	faces: Surface,
-	columns: Columns,
-	i: int,
-	j: int,
+	surface: Surface,
 	lx: int,
-	ly: int,
+	lz: int,
 	side: int,
-	origin_tile: Vector2i
-) -> void:
-	var low := columns.top[j]
-	var base := columns.base[i]
-	var top := columns.top[i]
-	var world_tile := origin_tile + Vector2i(lx, ly)
-	var variant := float(HashUtil.hash2(0xFACE, world_tile.x * 4 + side, world_tile.y) & 1)
-	var ground := columns.ground[i]
-	var block := columns.block[i]
-	var cliff := FaceStyle.new(TerrainRenderer.cliff_material(ground), variant, base)
-	if not Tiles.is_water(ground):
-		cliff.lip = ground + 1
-		cliff.lip_variant = ground_variant(world_tile)
-	if TileAtlas.is_wall(block):
-		var wall_kind: int = WALL_KIND_OFFSET + TileAtlas.WALL_KINDS[block]
-		var wall := FaceStyle.new(wall_kind, variant, top)
-		_wall(faces, lx, ly, side, maxf(low, base), top, wall)
-		if low < base - EPSILON:
-			_wall(faces, lx, ly, side, low, base, cliff)
-	else:
-		_wall(faces, lx, ly, side, low, top, cliff)
-
-
-## Vertical quad on `side` of tile (lx, ly), facing out, from `bottom` to
-## `top`. Texture u runs left to right as seen from the front.
-static func _wall(
-	faces: Surface, lx: int, ly: int, side: int, bottom: float, top: float, style: FaceStyle
+	bottom: float,
+	top: float,
+	uv2: Vector2,
+	color: Color
 ) -> void:
 	var x0 := float(lx)
 	var x1 := x0 + 1.0
-	var z0 := float(ly)
+	var z0 := float(lz)
 	var z1 := z0 + 1.0
 	var a: Vector2
 	var b: Vector2
@@ -263,8 +599,7 @@ static func _wall(
 		_:
 			a = Vector2(x0, z0)
 			b = Vector2(x0, z1)
-	var v_top := (style.texture_top - top) * FACE_PX_PER_UNIT
-	var v_bottom := (style.texture_top - bottom) * FACE_PX_PER_UNIT
+	var v_bottom := (top - bottom) * FACE_PX_PER_UNIT
 	var corners: Array[Vector3] = [
 		Vector3(a.x, top, a.y),
 		Vector3(b.x, top, b.y),
@@ -272,15 +607,46 @@ static func _wall(
 		Vector3(a.x, bottom, a.y),
 	]
 	var uvs: Array[Vector2] = [
-		Vector2(0.0, v_top), Vector2(16.0, v_top), Vector2(16.0, v_bottom), Vector2(0.0, v_bottom)
+		Vector2(0.0, 0.0), Vector2(16.0, 0.0), Vector2(16.0, v_bottom), Vector2(0.0, v_bottom)
 	]
 	var along := b - a
 	var tangent := Vector3(along.x, 0.0, along.y).normalized()
-	var color := Color(style.variant, style.lip_variant / 3.0, 0.0)
-	faces.quad(corners, uvs, SIDE_NORMALS[side], tangent, Vector2(style.kind, style.lip), color)
+	var normal := Vector3(-tangent.z, 0.0, tangent.x)
+	surface.quad(corners, uvs, normal, tangent, uv2, color)
 
 
-static func _add_degenerate(surface: Surface) -> void:
-	var corners: Array[Vector3] = [Vector3.ZERO, Vector3.ZERO, Vector3.ZERO, Vector3.ZERO]
-	var uvs: Array[Vector2] = [Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO]
-	surface.quad(corners, uvs, Vector3.UP, Vector3.RIGHT)
+## A prop (tree, plant, rock...) standing in its voxel. Each gets a
+## variant, a quarter turn and a slight tint from its tile, so the same
+## seed always grows the same forest.
+static func _add_prop(
+	result: Result,
+	variants: PackedByteArray,
+	voxel: int,
+	voxels: PackedByteArray,
+	base: int,
+	lx: int,
+	y: int,
+	lz: int,
+	origin: Vector2i
+) -> void:
+	var block := Voxels.block_of(voxel)
+	var count := variants[block]
+	if count == 0:
+		return
+	var tile := origin + Vector2i(lx, lz)
+	var h := HashUtil.hash2(0x9A0B, tile.x, tile.y)
+	var height := float(y - SEA)
+	if y > 0 and Voxels.is_liquid(voxels[base + y - 1]):
+		height -= ChunkData.WATER_DROP
+	var foot := Vector3(lx + 0.5, height, lz + 0.5)
+	if WANDERING.has(block):
+		foot.x += ((h >> 8) % 7 - 3) / 16.0
+		foot.z += ((h >> 12) % 7 - 3) / 16.0
+	var turn := Basis(Vector3.UP, ((h >> 4) & 3) * PI * 0.5)
+	var shade := 0.93 + ((h >> 16) & 15) / 15.0 * 0.14
+	var warmth := 0.97 + ((h >> 20) & 7) / 7.0 * 0.06
+	var custom := Color(shade * warmth, shade, shade / warmth, ((h >> 24) & 255) / 255.0)
+	var key := Vector2i(block, h % count)
+	if not result.props.has(key):
+		result.props[key] = []
+	result.props[key].append([Transform3D(turn, foot), custom])

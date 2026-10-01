@@ -52,9 +52,9 @@ func _lines() -> PackedStringArray:
 	var mode_key: String = WorldSettings.GAME_MODE_KEYS.get(int(info.get("game_mode", 1)), "")
 	var gpu := RenderingServer.get_video_adapter_name()
 	var renderer := RenderingServer.get_current_rendering_method()
-	var ground: String = Tiles.Ground.find_key(client.world.ground_at(tile))
-	var layer := client.world.layer
-	var layer_name := tr("LAYER_SURFACE") if layer >= 0 else tr("LAYER_UNDERGROUND") % -layer
+	var ground: String = Tiles.Ground.find_key(client.world.ground_under(tile, player.height))
+	var depth := roundi(client.world.surface_height(tile) - player.height)
+	var layer_name := tr("LAYER_UNDERGROUND") % depth if client.covered else tr("LAYER_SURFACE")
 
 	var world_args := [
 		tr("DEBUG_WORLD"),
@@ -80,7 +80,7 @@ func _lines() -> PackedStringArray:
 		tr("DEBUG_BIOME"),
 		tr(Biomes.name_key(client.world.biome_at(tile))),
 		tr("DEBUG_LEVEL"),
-		client.world.level_at(tile),
+		floori(player.height + 0.01),
 		tr("DEBUG_GROUND"),
 		ground,
 	]

@@ -13,6 +13,11 @@ const CAMERA_FOLLOW_SHARPNESS := 10.0
 ## with a gamepad stick.
 const MOUSE_ORBIT_SPEED := Vector2(0.006, 0.004)
 const STICK_ORBIT_SPEED := Vector2(2.4, 1.3)
+## Under cover, the view cuts the world this many levels above the ground
+## the player stands on (just over their head).
+const CUT_ABOVE := 2
+## This much rock over the player means caves: cave light and no weather.
+const UNDERGROUND_COVER := 6.0
 
 var transport: Transport
 var world := ClientWorld.new()
@@ -40,6 +45,10 @@ var debug_overlay := DebugOverlay.new()
 var debug_map := DebugMap.new()
 var hud_clock := HudClock.new()
 var pause_menu := PauseMenu.new()
+## True while the view cuts the world above the player (see CUT_ABOVE).
+var covered := false
+## True deep enough under the rock for caves' light and silence.
+var underground := false
 var _loading_label := Label.new()
 ## Set on spawn and teleport: place the camera without smoothing once the
 ## player has landed on known ground.
@@ -205,6 +214,7 @@ func _update_view(delta: float) -> void:
 	_camera_local = _camera_local.lerp(focus, follow)
 	var target := root * _camera_local
 	world_view.focus = Coords.tile_to_chunk(local_player.current_tile())
+	_update_cut(root)
 	world_viewport.target = target
 	clouds.target = _camera_local
 	weather_effects.target = target
@@ -215,6 +225,26 @@ func _update_view(delta: float) -> void:
 	lighting.view_depth = world_viewport.far_ground_distance()
 	world_view.set_lod(WorldView3D.lod_for_view(world_viewport.ground_size()))
 	_update_view_distance()
+
+
+## Under cover (a cave, a tunnel, a roof), cuts the world above the
+## player's head so the view shows where they are.
+func _update_cut(root: Transform3D) -> void:
+	var tile := local_player.current_tile()
+	var ground := local_player.view_height
+	covered = world.is_covered(tile, ground)
+	var top := world.surface_height(tile)
+	underground = covered and top - ground > UNDERGROUND_COVER
+	var cut_row := ChunkData.HEIGHT
+	var cut_height := 100000.0
+	if covered:
+		var cut_level := floori(ground + 0.01) + CUT_ABOVE
+		cut_row = cut_level + GameConst.SEA_LEVEL
+		cut_height = (root.basis * Vector3(0.0, cut_level, 0.0)).y
+	world_view.set_cut(cut_row)
+	RenderingServer.global_shader_parameter_set(&"cut_height", cut_height)
+	lighting.underground = underground
+	weather_effects.underground = underground
 
 
 ## True once the player has spawned and stands on loaded ground.
@@ -253,11 +283,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		else:
 			pause()
 	elif event.is_action_pressed(InputBindings.TOGGLE_MAP):
-		debug_map.cycle(local_player.current_tile(), world.layer)
-	elif event.is_action_pressed(InputBindings.LAYER_UP):
-		transport.send(Msg.debug_change_layer(1))
-	elif event.is_action_pressed(InputBindings.LAYER_DOWN):
-		transport.send(Msg.debug_change_layer(-1))
+		debug_map.cycle(local_player.current_tile(), map_row())
+	elif event.is_action_pressed(InputBindings.DEPTH_UP):
+		transport.send(Msg.debug_move_depth(1))
+	elif event.is_action_pressed(InputBindings.DEPTH_DOWN):
+		transport.send(Msg.debug_move_depth(-1))
 	elif event.is_action_pressed(InputBindings.CYCLE_WEATHER):
 		var next := (weather_effects.weather.kind + 1) % Weather.Kind.size()
 		transport.send(Msg.debug_set_weather(next))
@@ -299,26 +329,25 @@ func _handle_message(message: Dictionary) -> void:
 		Msg.WELCOME:
 			player_id = message["player_id"]
 			world_info = message["world"]
-			world.layer = message["layer"]
-			local_player.spawn_at(message["spawn"])
+			local_player.spawn_at(message["spawn"], message["h"])
 			joined = true
 			_needs_snap = true
 		Msg.CHUNK_DATA:
 			var chunk := ChunkData.from_dict(message["chunk"])
-			if chunk.layer == world.layer:
-				world.store(chunk)
-				world_view.show_chunk(chunk)
+			world.store(chunk)
+			world_view.show_chunk(chunk)
 		Msg.CHUNK_UNLOAD:
-			world.remove(message["key"])
-			world_view.remove_chunk(message["key"])
+			world.remove(message["coord"])
+			world_view.remove_chunk(message["coord"])
 		Msg.TIME_STATE:
 			clock.load_dict(message["clock"])
 			if pause_menu.visible:
 				pause_menu.refresh_from_state()
 		Msg.PLAYER_CORRECTION:
-			local_player.apply_correction(message["pos"])
+			local_player.apply_correction(message["pos"], message["h"])
 		Msg.PLAYER_TELEPORT:
-			_teleport(message["pos"], message["layer"])
+			local_player.apply_correction(message["pos"], message["h"])
+			_needs_snap = true
 		Msg.MAP_DATA:
 			debug_map.show_map(message["png"], message["scale"])
 		Msg.WEATHER_STATE:
@@ -327,19 +356,17 @@ func _handle_message(message: Dictionary) -> void:
 			push_warning("Client: unknown message type %s" % unknown)
 
 
-func _teleport(position: Vector2, layer: int) -> void:
-	if layer != world.layer:
-		world.clear()
-		world_view.clear()
-		world.layer = layer
-		debug_map.close()
-	local_player.apply_correction(position)
-	_needs_snap = true
-
-
 func _on_time_settings_requested(mode: int, value: float) -> void:
 	transport.send(Msg.set_time(mode, value))
 
 
-func _on_map_requested(center: Vector2i, layer: int, size_px: int, scale: int) -> void:
-	transport.send(Msg.map_request(center, layer, size_px, scale))
+func _on_map_requested(center: Vector2i, row: int, size_px: int, scale: int) -> void:
+	transport.send(Msg.map_request(center, row, size_px, scale))
+
+
+## What the debug map shows: the surface, or a cut at the player's feet
+## when they are under cover.
+func map_row() -> int:
+	if not covered:
+		return Msg.MAP_SURFACE
+	return floori(local_player.view_height + 0.01) + GameConst.SEA_LEVEL

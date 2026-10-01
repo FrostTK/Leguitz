@@ -4,7 +4,7 @@ extends Control
 ## player. Pressing M again zooms out, then closes. A real in-game map
 ## item (revealed as you explore) comes later.
 
-signal map_requested(center: Vector2i, layer: int, size_px: int, scale: int)
+signal map_requested(center: Vector2i, row: int, size_px: int, scale: int)
 
 const SIZE_PX := 256
 const SCALES: Array[int] = [2, 8]
@@ -44,16 +44,17 @@ func _ready() -> void:
 
 
 ## Opens the map, zooms out, or closes it (cycles on each press).
-func cycle(center_tile: Vector2i, layer: int) -> void:
+## `row`: Msg.MAP_SURFACE, or the row of a horizontal cut (underground).
+func cycle(center_tile: Vector2i, row: int) -> void:
 	_scale_index += 1
 	if _scale_index >= SCALES.size():
 		close()
 		return
 	visible = true
-	_title.text = tr("MAP_TITLE") % _layer_name(layer)
+	_title.text = tr("MAP_TITLE") % _row_name(row)
 	_status.text = tr("MAP_LOADING")
 	_texture_rect.texture = null
-	map_requested.emit(center_tile, layer, SIZE_PX, SCALES[_scale_index])
+	map_requested.emit(center_tile, row, SIZE_PX, SCALES[_scale_index])
 
 
 func close() -> void:
@@ -72,10 +73,10 @@ func show_map(png: PackedByteArray, scale: int) -> void:
 	_status.text = tr("MAP_SCALE") % [scale, SIZE_PX * scale]
 
 
-func _layer_name(layer: int) -> String:
-	if layer >= WorldGenerator.SURFACE_LAYER:
+func _row_name(row: int) -> String:
+	if row == Msg.MAP_SURFACE:
 		return tr("LAYER_SURFACE")
-	return tr("LAYER_UNDERGROUND") % -layer
+	return tr("LAYER_UNDERGROUND") % (row - GameConst.SEA_LEVEL)
 
 
 class MapMarker:

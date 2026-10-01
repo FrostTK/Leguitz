@@ -1,19 +1,10 @@
 class_name WorldMapRenderer
 extends RefCounted
 ## Renders a top-down color map of the generated world: biome colors with
-## hill shading, water depth, cliff lines; or caves and ores underground.
+## hill shading, water depth, cliff lines; or a horizontal cut through the
+## voxels at a row, showing caves, lakes and lava.
 ## Used by the debug map (M key) and tools/render_world_map.gd.
 
-const ORE_COLORS := {
-	Tiles.Block.COAL_ORE: Color("26262b"),
-	Tiles.Block.COPPER_ORE: Color("d5824a"),
-	Tiles.Block.IRON_ORE: Color("d8b59a"),
-	Tiles.Block.GOLD_ORE: Color("f2cf3a"),
-	Tiles.Block.LAPIS_ORE: Color("2f56c7"),
-	Tiles.Block.RUBY_ORE: Color("d8283f"),
-	Tiles.Block.DIAMOND_ORE: Color("5fe3e0"),
-	Tiles.Block.EMERALD_ORE: Color("2fcf6a"),
-}
 const ROCK_COLOR := Color("4a4950")
 const DEEP_ROCK_COLOR := Color("34333d")
 const FLOOR_COLOR := Color("9a98a2")
@@ -22,12 +13,13 @@ const WATER_COLOR := Color("3f7fd0")
 const LAVA_COLOR := Color("f2682a")
 
 
-## `tiles_per_pixel` >= 1. The map is centered on `center` (a tile).
+## `tiles_per_pixel` >= 1. The map is centered on `center` (a tile); `row`
+## is Msg.MAP_SURFACE for the surface, or the row of a horizontal cut.
 static func render(
-	generator: WorldGenerator, layer: int, center: Vector2i, size_px: int, tiles_per_pixel: int
+	generator: WorldGenerator, row: int, center: Vector2i, size_px: int, tiles_per_pixel: int
 ) -> Image:
-	if layer < WorldGenerator.SURFACE_LAYER:
-		return _render_underground(generator, layer, center, size_px, tiles_per_pixel)
+	if row != Msg.MAP_SURFACE:
+		return _render_cut(generator, row, center, size_px, tiles_per_pixel)
 	return _render_surface(generator, center, size_px, tiles_per_pixel)
 
 
@@ -69,29 +61,34 @@ static func _render_surface(
 	return image
 
 
-static func _render_underground(
-	generator: WorldGenerator, layer: int, center: Vector2i, size_px: int, step: int
+static func _render_cut(
+	generator: WorldGenerator, row: int, center: Vector2i, size_px: int, step: int
 ) -> Image:
 	var x0 := center.x - size_px * step / 2
 	var y0 := center.y - size_px * step / 2
-	var deep := -layer >= CaveGenerator.DEEPSLATE_DEPTH
+	var deep := row < CaveGenerator.DEEPSLATE_ROW
 	var rock := DEEP_ROCK_COLOR if deep else ROCK_COLOR
 	var floor_color := DEEP_FLOOR_COLOR if deep else FLOOR_COLOR
+	var grid := ClimateGrid.new(
+		generator.climate, Rect2i(x0, y0, size_px * step + 1, size_px * step + 1)
+	)
 	var image := Image.create(size_px, size_px, false, Image.FORMAT_RGB8)
 	for py in size_px:
 		for px in size_px:
 			var tx := x0 + px * step
 			var ty := y0 + py * step
+			var column := generator.column_from_grid(grid, tx, ty)
 			var color := rock
-			if generator.caves.is_open(layer, tx, ty):
-				match generator.caves.chamber_ground_at(layer, tx, ty):
-					Tiles.Ground.WATER:
+			if row >= GameConst.SEA_LEVEL + column.level - 1:
+				# Above the rock: the terrain seen from the cut.
+				color = Biomes.map_color(column.biome).darkened(0.3)
+			elif generator.caves.is_open(tx, row, ty):
+				color = floor_color
+				if not generator.caves.is_open(tx, row - 1, ty):
+					var fluid := generator.caves.fluid_at(tx, row - 1, ty)
+					if fluid == Voxels.of_ground(Tiles.Ground.WATER):
 						color = WATER_COLOR
-					Tiles.Ground.LAVA:
+					elif fluid == Voxels.of_ground(Tiles.Ground.LAVA):
 						color = LAVA_COLOR
-					_:
-						color = floor_color
-			else:
-				color = ORE_COLORS.get(generator.caves.rock_at(layer, tx, ty), rock)
 			image.set_pixel(px, py, color)
 	return image

@@ -25,12 +25,11 @@ class PlayerSession:
 	var player_name := ""
 	var joined := false
 	var position := Vector2.ZERO
-	var layer := WorldGenerator.SURFACE_LAYER
 	var facing := Vector2i.DOWN
 	## Feet height in levels (as reported by the client).
 	var height := 0.0
 	var view_distance := GameConst.DEFAULT_VIEW_DISTANCE
-	var sent_chunks: Dictionary[Vector3i, bool] = {}
+	var sent_chunks: Dictionary[Vector2i, bool] = {}
 
 
 class MapJob:
@@ -38,7 +37,7 @@ class MapJob:
 	var session: PlayerSession
 	var task := -1
 	var center := Vector2i.ZERO
-	var layer := 0
+	var row := Msg.MAP_SURFACE
 	var size := 256
 	var scale := 1
 	var png := PackedByteArray()
@@ -51,8 +50,8 @@ var world: WorldState
 var generation: ChunkGenerationQueue
 var spawn_tile := Vector2i.ZERO
 var tick_count := 0
-## Debug commands (layer switching, world map). Restricted to creative
-## mode and server operators once those exist.
+## Debug commands (moving between caves, world map). Restricted to
+## creative mode and server operators once those exist.
 var allow_debug_commands := true
 
 var _sessions: Array[PlayerSession] = []
@@ -130,8 +129,8 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 			_on_player_move(session, message)
 		Msg.SET_TIME:
 			_on_set_time(message)
-		Msg.DEBUG_CHANGE_LAYER:
-			_on_debug_change_layer(session, message)
+		Msg.DEBUG_MOVE_DEPTH:
+			_on_debug_move_depth(session, message)
 		Msg.MAP_REQUEST:
 			_on_map_request(session, message)
 		Msg.DEBUG_SET_WEATHER:
@@ -152,10 +151,10 @@ func _on_hello(session: PlayerSession, message: Dictionary) -> void:
 		message.get("view_distance", GameConst.DEFAULT_VIEW_DISTANCE)
 	)
 	session.position = Coords.tile_to_world_center(spawn_tile) + Vector2(0, 4)
-	session.layer = WorldGenerator.SURFACE_LAYER
+	session.height = world.surface_height(spawn_tile)
 	session.joined = true
 	session.transport.send(
-		Msg.welcome(session.id, session.position, session.layer, settings.to_dict())
+		Msg.welcome(session.id, session.position, session.height, settings.to_dict())
 	)
 	session.transport.send(Msg.time_state(clock))
 	session.transport.send(Msg.weather_state(weather))
@@ -183,7 +182,7 @@ func _on_player_move(session: PlayerSession, message: Dictionary) -> void:
 		return
 	var new_pos: Vector2 = message.get("pos", session.position)
 	if new_pos.distance_to(session.position) > MAX_MOVE_PER_UPDATE:
-		session.transport.send(Msg.player_correction(session.position))
+		session.transport.send(Msg.player_correction(session.position, session.height))
 		return
 	session.position = new_pos
 	session.facing = message.get("facing", session.facing)
@@ -202,20 +201,21 @@ func _on_set_time(message: Dictionary) -> void:
 	_broadcast(Msg.time_state(clock))
 
 
-func _on_debug_change_layer(session: PlayerSession, message: Dictionary) -> void:
+## Debug: jump down to the next cave (or back up towards the surface),
+## in the player's column or the closest one that has such a place.
+func _on_debug_move_depth(session: PlayerSession, message: Dictionary) -> void:
 	if not allow_debug_commands or not session.joined:
 		return
-	var layer := clampi(
-		session.layer + int(message.get("delta", 0)),
-		WorldGenerator.MIN_LAYER,
-		WorldGenerator.SURFACE_LAYER
-	)
-	if layer == session.layer:
+	var direction := signi(int(message.get("direction", 0)))
+	if direction == 0:
 		return
-	var target := world.find_open_tile(Coords.world_to_tile(session.position), layer)
-	session.layer = layer
-	session.position = Coords.tile_to_world_center(target) + Vector2(0, 4)
-	session.transport.send(Msg.player_teleport(session.position, layer))
+	var tile := Coords.world_to_tile(session.position)
+	var found := world.find_floor(tile, session.height, direction)
+	if found.is_empty():
+		return
+	session.position = Coords.tile_to_world_center(found[0]) + Vector2(0, 4)
+	session.height = found[1]
+	session.transport.send(Msg.player_teleport(session.position, session.height))
 	_stream_chunks(session, CHUNKS_SENT_PER_TICK)
 
 
@@ -233,9 +233,8 @@ func _on_map_request(session: PlayerSession, message: Dictionary) -> void:
 	var job := MapJob.new()
 	job.session = session
 	job.center = message.get("center", Vector2i.ZERO)
-	job.layer = clampi(
-		int(message.get("layer", 0)), WorldGenerator.MIN_LAYER, WorldGenerator.SURFACE_LAYER
-	)
+	var row := int(message.get("row", Msg.MAP_SURFACE))
+	job.row = clampi(row, Msg.MAP_SURFACE, GameConst.WORLD_HEIGHT - 1)
 	job.size = clampi(int(message.get("size", 256)), MAP_MIN_SIZE, MAP_MAX_SIZE)
 	job.scale = clampi(int(message.get("scale", 1)), 1, MAP_MAX_SCALE)
 	if generation.threaded:
@@ -248,9 +247,7 @@ func _on_map_request(session: PlayerSession, message: Dictionary) -> void:
 
 
 func _render_map(job: MapJob) -> void:
-	var image := WorldMapRenderer.render(
-		world.generator, job.layer, job.center, job.size, job.scale
-	)
+	var image := WorldMapRenderer.render(world.generator, job.row, job.center, job.size, job.scale)
 	job.png = image.save_png_to_buffer()
 
 
@@ -261,7 +258,7 @@ func _send_finished_maps() -> void:
 				continue
 			WorkerThreadPool.wait_for_task_completion(job.task)
 		_map_jobs.erase(job)
-		job.session.transport.send(Msg.map_data(job.png, job.center, job.layer, job.scale))
+		job.session.transport.send(Msg.map_data(job.png, job.center, job.row, job.scale))
 
 
 func _collect_generated() -> void:
@@ -272,34 +269,31 @@ func _collect_generated() -> void:
 func _stream_chunks(session: PlayerSession, budget: int) -> void:
 	var center := Coords.world_to_chunk(session.position)
 	var radius := session.view_distance
-	for key: Vector3i in session.sent_chunks.keys():
-		var far := Coords.chunk_distance(Vector2i(key.x, key.y), center) > radius + 1
-		if key.z != session.layer or far:
-			session.sent_chunks.erase(key)
-			session.transport.send(Msg.chunk_unload(key))
-	var missing: Array[Vector3i] = []
+	for coord: Vector2i in session.sent_chunks.keys():
+		if Coords.chunk_distance(coord, center) > radius + 1:
+			session.sent_chunks.erase(coord)
+			session.transport.send(Msg.chunk_unload(coord))
+	var missing: Array[Vector2i] = []
 	for dy in range(-radius, radius + 1):
 		for dx in range(-radius, radius + 1):
-			var key := Vector3i(center.x + dx, center.y + dy, session.layer)
-			if not session.sent_chunks.has(key):
-				missing.append(key)
+			var coord := center + Vector2i(dx, dy)
+			if not session.sent_chunks.has(coord):
+				missing.append(coord)
 	if missing.is_empty():
 		return
 	missing.sort_custom(
-		func(a: Vector3i, b: Vector3i) -> bool:
-			var da := Vector2i(a.x, a.y) - center
-			var db := Vector2i(b.x, b.y) - center
-			return da.length_squared() < db.length_squared()
+		func(a: Vector2i, b: Vector2i) -> bool:
+			return (a - center).length_squared() < (b - center).length_squared()
 	)
 	var sent := 0
-	for key in missing:
-		if world.has_chunk(key):
+	for coord in missing:
+		if world.has_chunk(coord):
 			if sent >= budget:
 				continue
-			session.sent_chunks[key] = true
-			session.transport.send(Msg.chunk_data(world.chunks[key]))
+			session.sent_chunks[coord] = true
+			session.transport.send(Msg.chunk_data(world.chunks[coord]))
 			sent += 1
-		elif not generation.request(key):
+		elif not generation.request(coord):
 			break
 
 
@@ -311,7 +305,7 @@ func _unload_unused_chunks() -> void:
 		var radius := session.view_distance + 1
 		for dy in range(-radius, radius + 1):
 			for dx in range(-radius, radius + 1):
-				needed[Vector3i(center.x + dx, center.y + dy, session.layer)] = true
+				needed[center + Vector2i(dx, dy)] = true
 	world.unload_unused(needed)
 
 

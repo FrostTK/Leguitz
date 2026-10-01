@@ -26,8 +26,8 @@ const CAMERA_UP := &"camera_up"
 const CAMERA_DOWN := &"camera_down"
 const CAMERA_RESET := &"camera_reset"
 # Debug (creative-only later).
-const LAYER_UP := &"layer_up"
-const LAYER_DOWN := &"layer_down"
+const DEPTH_UP := &"depth_up"
+const DEPTH_DOWN := &"depth_down"
 const TOGGLE_NOCLIP := &"toggle_noclip"
 const CYCLE_WEATHER := &"cycle_weather"
 
@@ -84,8 +84,8 @@ static func register_defaults() -> void:
 	_bind(CAMERA_DOWN, [_axis(JOY_AXIS_RIGHT_Y, 1.0)])
 	_bind(CAMERA_RESET, [_key(KEY_HOME), _button(JOY_BUTTON_RIGHT_STICK)])
 	_bind(TOGGLE_MAP, [_letter(KEY_M), _button(JOY_BUTTON_Y)])
-	_bind(LAYER_UP, [_key(KEY_PAGEUP)])
-	_bind(LAYER_DOWN, [_key(KEY_PAGEDOWN)])
+	_bind(DEPTH_UP, [_key(KEY_PAGEUP)])
+	_bind(DEPTH_DOWN, [_key(KEY_PAGEDOWN)])
 	_bind(TOGGLE_NOCLIP, [_key(KEY_F4)])
 	_bind(CYCLE_WEATHER, [_key(KEY_F6)])
 
