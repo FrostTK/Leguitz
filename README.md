@@ -31,6 +31,7 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Météo : pluie, orage avec éclairs, neige selon le biome, sol mouillé, ombres des nuages | ✅ |
 | Ambiance : brume du matin, brume dans les vallées, lucioles, feuilles au vent, poussière des grottes | ✅ |
 | Eau animée (vagues, écume sur les rives, reflets), lave animée | ✅ |
+| Eau transparente : on voit le fond, de moins en moins avec la profondeur (eaux tropicales très claires, marais troubles), le fond ondule sous les vagues, reflets de lumière dans les bas-fonds | ✅ |
 | Qualité graphique Bas / Moyen / Élevé / Ultra, rendu HD et limite d'images par seconde dans le menu pause | ✅ |
 | Modèles simplifiés quand on dézoome très loin, hors de l'écran et au loin (plus tôt en qualité Bas/Moyen), rendu suspendu pendant la pause | ✅ |
 | Saut d'un bloc, chutes, blocs de pierre sur lesquels on peut monter (comme Minecraft) | ✅ |
@@ -57,6 +58,8 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 ![Leguitz : la plongée de la caméra vers la 1re personne, une grotte à la lanterne, la rivière la nuit, la savane au soleil couchant](docs/screenshots/phase3-premiere-personne.png)
 
 ![Leguitz : les nouveaux arbres, en forêt vue de dessus, à la 1re personne, et dans plusieurs biomes](docs/screenshots/phase3-arbres.png)
+
+![Leguitz : l'eau transparente, une rivière à la 1re personne, une mer chaude vue de près et de haut, un marais trouble](docs/screenshots/phase3-eau.png)
 
 ![Biomes de Leguitz (phase 1, carte)](docs/screenshots/phase1-biomes.png)
 

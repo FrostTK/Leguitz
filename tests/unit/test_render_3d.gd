@@ -179,6 +179,72 @@ func test_caves_are_meshed_apart_and_the_map_follows_the_cut() -> void:
 	assert_almost(cut.surface_map[column * 4 + 2], -6.0, 0.001, "under the cut: the floor")
 
 
+## Area (tiles x levels) of the vertical quads of a surface.
+static func _side_area(surface: ChunkMesher.Surface) -> float:
+	var area := 0.0
+	for quad in surface.quad_count():
+		var a := surface.vertices[quad * 4]
+		var c := surface.vertices[quad * 4 + 2]
+		if surface.normals[quad * 4].y == 0.0:
+			area += Vector2(c.x - a.x, c.z - a.z).length() * absf(c.y - a.y)
+	return area
+
+
+func test_water_shows_its_bed_and_drowned_banks() -> void:
+	var chunk := _flat_chunk(0)
+	# A pond three levels deep (4 x 4 tiles) on a sand bed.
+	var water := Voxels.of_ground(Tiles.Ground.WATER)
+	var sand := Voxels.of_ground(Tiles.Ground.SAND)
+	for lz in range(4, 8):
+		for lx in range(4, 8):
+			chunk.set_voxel(Vector3i(lx, SEA - 4, lz), sand)
+			for y in range(SEA - 3, SEA):
+				chunk.set_voxel(Vector3i(lx, y, lz), water)
+	var result := _build(chunk)
+	var surface := result.parts[ChunkMesher.Part.WATER]
+	assert_almost(_area(surface), 16.0, 0.001, "the water's surface")
+	assert_almost(surface.vertices[0].y, -ChunkData.WATER_DROP, 0.001)
+	var tops := result.parts[ChunkMesher.Part.TOPS]
+	assert_almost(_area(tops), GameConst.CHUNK_AREA, 0.001, "the grass and the bed")
+	var lowest := INF
+	for vertex in tops.vertices:
+		lowest = minf(lowest, vertex.y)
+	assert_almost(lowest, -3.0, 0.001, "the bed, seen from the sky through the water")
+	# The banks around, from the bed up to the surface: 4 sides x 4 tiles.
+	assert_almost(_side_area(result.parts[ChunkMesher.Part.FACES]), 48.0, 0.001)
+	assert_true(result.parts[ChunkMesher.Part.DEEP_TOPS].is_empty(), "nothing in caves")
+	assert_true(result.parts[ChunkMesher.Part.DEEP_WATER].is_empty())
+	# The surface map gives the bed under the water to the shaders.
+	var code := result.surface_map[((5 + 1) * ChunkMesher.SPAN + (5 + 1)) * 4 + 3]
+	assert_almost(code, ChunkMesher.bed_code(sand, -3), 0.001)
+	var packed := int(code)
+	assert_eq(packed / 32 / 64 - 256, -3, "bed level")
+	assert_eq(packed / 32 % 64, Tiles.Ground.SAND, "bed ground")
+	assert_eq(packed % 32, 0, "not a wall")
+	var land := result.surface_map[((1 + 1) * ChunkMesher.SPAN + (1 + 1)) * 4 + 3]
+	assert_almost(land, 0.0, 0.001, "no bed out of the water")
+
+
+func test_lava_stays_opaque_and_cave_lakes_stay_in_caves() -> void:
+	var chunk := _flat_chunk(4)
+	var lava := Voxels.of_ground(Tiles.Ground.LAVA)
+	chunk.set_voxel(Vector3i(12, SEA + 3, 12), lava)
+	# A room under the grass, its floor a level deep under water.
+	var water := Voxels.of_ground(Tiles.Ground.WATER)
+	for lz in range(2, 6):
+		for lx in range(2, 6):
+			for y in range(SEA - 6, SEA - 3):
+				chunk.set_voxel(Vector3i(lx, y, lz), water if y == SEA - 6 else Voxels.AIR)
+	var result := _build(chunk)
+	assert_true(result.parts[ChunkMesher.Part.WATER].is_empty(), "no water under the sky")
+	assert_almost(_area(result.parts[ChunkMesher.Part.TOPS]), GameConst.CHUNK_AREA, 0.001)
+	assert_almost(_area(result.parts[ChunkMesher.Part.DEEP_WATER]), 16.0, 0.001, "the lake")
+	var floor_area := _area(result.parts[ChunkMesher.Part.DEEP_TOPS])
+	assert_almost(floor_area, 16.0, 0.001, "its bed shows through it, in the cave")
+	# Only the bank above the lava shows, not what is under its surface.
+	assert_almost(_side_area(result.parts[ChunkMesher.Part.FACES]), 4.0, 0.001)
+
+
 func test_sky_light_path() -> void:
 	var sunrise := LightingController.sky_direction(LightingController.sun_angle(6.0))
 	var noon := LightingController.sky_direction(LightingController.sun_angle(12.75))

@@ -4,19 +4,22 @@ extends RefCounted
 ## Render3D), on a worker thread. Everything it reads is in its Job.
 ##
 ## Surfaces (see Part):
-## - tops: the top of every cube or liquid voxel open to the air above,
-##   drawn by the top shader (organic ground transitions, water...),
-## - faces: the sides of cubes open to the air (vertical runs of the same
-##   material share one quad), and their undersides,
-## each split into what can be seen from the sky and what lies deeper
-## (caves), shown only when the view cuts the world above the player.
+## - tops: the top of every cube or lava voxel open to the air above, or
+##   under clear water (lake beds), drawn by the top shader (organic ground
+##   transitions...),
+## - faces: the sides of cubes open to the air or to clear water (vertical
+##   runs of the same material share one quad), and their undersides,
+## - water: the surface of clear water (the ground under it shows through),
+## each split into what can be seen from the sky (also through water) and
+## what lies deeper (caves), shown only when the view cuts the world above
+## the player.
 ## Undersides are never seen from the camera (it always looks down) but
 ## close the rock: seen from behind through the cut, they draw its section.
 ## Also gathers the props (trees, plants... in object voxels), the lava
 ## spots that light their surroundings, and the surface map of the top
 ## shader (see surface_map).
 
-enum Part { TOPS, FACES, DEEP_TOPS, DEEP_FACES }
+enum Part { TOPS, FACES, DEEP_TOPS, DEEP_FACES, WATER, DEEP_WATER }
 enum Side { NORTH, EAST, SOUTH, WEST }
 
 const SIZE := GameConst.CHUNK_SIZE
@@ -45,9 +48,11 @@ const TERRAIN := CUBE | LIQUID
 ## into rectangles: tops, or undersides (see _record_flat).
 const FLAT_UNDERSIDE := 1
 
-## Face kind and top material code of every voxel id (see face_kind).
+## Face kind and top material code of every voxel id (see face_kind), and
+## 1 for the liquids the eye sees through (water, not lava).
 static var _face_kinds := _build_face_kinds()
 static var _top_codes := _build_top_codes()
+static var _clear := _build_clear()
 
 
 ## What a build reads: the voxels and column tops of the chunk and of its
@@ -159,7 +164,8 @@ static func build(job: Job) -> Result:
 	result.map_only = job.map_only
 	var voxels := pad(job.voxels, HEIGHT)
 	var tops := pad(job.tops, 1)
-	result.surface_map = surface_map(voxels, tops, job.cut_row)
+	var clear := _clear.duplicate()
+	result.surface_map = surface_map(voxels, tops, job.cut_row, clear)
 	if job.map_only:
 		return result
 	for part in Part.size():
@@ -174,7 +180,7 @@ static func build(job: Job) -> Result:
 	var flags := Voxels.flag_table()
 	var kinds := _face_kinds.duplicate()
 	var codes := _top_codes.duplicate()
-	var tables := [flags, kinds, codes]
+	var tables := [flags, kinds, codes, clear]
 	# Horizontal faces of the chunk, merged at the end: see _record_flat.
 	var flats := {}
 	for lz in SIZE:
@@ -208,6 +214,8 @@ static func build(job: Job) -> Result:
 						continue
 					var deep := y + 1 < tops[column]
 					var part := Part.DEEP_TOPS if deep else Part.TOPS
+					if clear[voxel] != 0:
+						part = Part.DEEP_WATER if deep else Part.WATER
 					_record_flat(flats, y, voxel, part, 0, lx, lz)
 					if voxel == Voxels.of_ground(Tiles.Ground.LAVA):
 						var quarter := (
@@ -252,12 +260,14 @@ static func pad(arrays: Array[PackedByteArray], stride: int) -> PackedByteArray:
 	return padded
 
 
-## The 18 x 18 data of the top shader (RGBA floats per column, chunk plus
-## border): ground id, wall kind + 1, level of the highest top below the
-## cut (NO_LEVEL if none), 0. Tops at that level blend with their
-## neighbors; other tops (hidden ledges) are drawn plainly.
+## The 18 x 18 data of the top and water shaders (RGBA floats per column,
+## chunk plus border): ground id, wall kind + 1, level of the highest top
+## below the cut (NO_LEVEL if none), and if that top is clear water, the
+## bed under it (see bed_code), else 0. Tops at that level blend with their
+## neighbors, beds with the beds around; other tops (hidden ledges) are
+## drawn plainly. `clear`: see _build_clear.
 static func surface_map(
-	voxels: PackedByteArray, tops: PackedByteArray, cut_row: int
+	voxels: PackedByteArray, tops: PackedByteArray, cut_row: int, clear: PackedByteArray
 ) -> PackedFloat32Array:
 	var values := PackedFloat32Array()
 	values.resize(SPAN * SPAN * 4)
@@ -273,8 +283,21 @@ static func surface_map(
 			values[out] = Voxels.ground_of(voxel)
 			values[out + 1] = TileAtlas.wall_lookup[Voxels.block_of(voxel)]
 			values[out + 2] = y + 1 - SEA
+			if clear[voxel] != 0:
+				var row := y - 1
+				while row >= 0 and clear[voxels[base + row]] != 0:
+					row -= 1
+				if row >= 0 and Voxels.is_cube(voxels[base + row]):
+					values[out + 3] = bed_code(voxels[base + row], row + 1 - SEA)
 			break
 	return values
+
+
+## A bed under water for the shaders: its ground, wall kind + 1 and level
+## in one exact float (see bed_of in terrain3d_surface.gdshaderinc).
+static func bed_code(voxel: int, level: int) -> float:
+	var wall: int = TileAtlas.wall_lookup[Voxels.block_of(voxel)]
+	return float(((level + 256) * 64 + Voxels.ground_of(voxel)) * 32 + wall)
 
 
 ## Ground texture variant of a tile, as the top shader picks it
@@ -310,6 +333,15 @@ static func _build_face_kinds() -> PackedInt32Array:
 	return kinds
 
 
+static func _build_clear() -> PackedByteArray:
+	var table := PackedByteArray()
+	table.resize(256)
+	for ground: int in Tiles.Ground.values():
+		if Tiles.is_water(ground):
+			table[Voxels.of_ground(ground)] = 1
+	return table
+
+
 static func _build_top_codes() -> PackedInt32Array:
 	var codes := PackedInt32Array()
 	codes.resize(256)
@@ -323,7 +355,8 @@ static func _build_top_codes() -> PackedInt32Array:
 
 
 ## Top, sides (merged with the voxels below when they match) and underside
-## of a cube voxel. `tables` holds the local [flags, face kinds, top codes].
+## of a cube voxel. `tables` holds the local [flags, face kinds, top codes,
+## clear liquids].
 static func _add_cube(
 	result: Result,
 	flats: Dictionary,
@@ -339,12 +372,14 @@ static func _add_cube(
 	var flags: PackedByteArray = tables[0]
 	var kinds: PackedInt32Array = tables[1]
 	var codes: PackedInt32Array = tables[2]
+	var clear: PackedByteArray = tables[3]
 	var index := column * HEIGHT + y
 	var voxel := voxels[index]
 	var above := voxels[index + 1] if y + 1 < HEIGHT else Voxels.AIR
-	if flags[above] & TERRAIN == 0:
-		var top_part := Part.DEEP_TOPS if y + 1 < tops[column] else Part.TOPS
-		_record_flat(flats, y, codes[voxel], top_part, 0, lx, lz)
+	if _open(flags, clear, above):
+		var rows := tops[column] - y
+		var sky := rows <= 1 or _sky_through_water(voxels, clear, index, rows)
+		_record_flat(flats, y, codes[voxel], Part.TOPS if sky else Part.DEEP_TOPS, 0, lx, lz)
 	if y > 0 and flags[voxels[index - 1]] & CUBE == 0:
 		_record_flat(flats, y, kinds[voxel], Part.DEEP_FACES, FLAT_UNDERSIDE, lx, lz)
 	var kind := kinds[voxel]
@@ -362,7 +397,7 @@ static func _add_cube(
 				dx = -1
 		var step := dx * STRIDE_X + dz * STRIDE_Z
 		var other := column + dx + dz * SPAN
-		var deep := _side_deep(voxels, tops, flags, index, step, other, y)
+		var deep := _side_deep(voxels, tops, flags, clear, index, step, other, y)
 		if deep < 0:
 			continue
 		# The run below took this voxel already: same material, open too.
@@ -382,7 +417,7 @@ static func _add_cube(
 		var top_above := voxels[column * HEIGHT + top] if top < HEIGHT else Voxels.AIR
 		var ground := Voxels.ground_of(top_voxel)
 		var lip := 0
-		if ground != Tiles.Ground.NONE and flags[top_above] & TERRAIN == 0:
+		if ground != Tiles.Ground.NONE and _open(flags, clear, top_above):
 			lip = ground + 1
 		var tile := origin + Vector2i(lx, lz)
 		var variant := float(HashUtil.hash2(0xFACE, tile.x * 4 + side, tile.y + bottom * 131) & 1)
@@ -399,13 +434,15 @@ static func _add_cube(
 		)
 
 
-## Whether a cube's side shows: -1 hidden, 0 seen from the sky, 1 in a
-## cave. Sides facing liquid only show at the surface (the bank above it).
-## `other` is the neighbor column (padded index).
+## Whether a cube's side shows: -1 hidden, 0 seen from the sky (also
+## through clear water), 1 in a cave. Sides facing lava only show at its
+## surface (the bank above it). `other` is the neighbor column (padded
+## index).
 static func _side_deep(
 	voxels: PackedByteArray,
 	tops: PackedByteArray,
 	flags: PackedByteArray,
+	clear: PackedByteArray,
 	index: int,
 	step: int,
 	other: int,
@@ -415,6 +452,9 @@ static func _side_deep(
 	var flag := flags[neighbor]
 	if flag & CUBE != 0:
 		return -1
+	if clear[neighbor] != 0:
+		var rows := tops[other] - y
+		return 0 if rows <= 1 or _sky_through_water(voxels, clear, index + step, rows) else 1
 	if flag & LIQUID != 0:
 		var above := voxels[index + step + 1] if y + 1 < HEIGHT else Voxels.AIR
 		if flags[above] & TERRAIN != 0:
@@ -440,10 +480,29 @@ static func _continues_run(
 ) -> bool:
 	var flags: PackedByteArray = tables[0]
 	var kinds: PackedInt32Array = tables[1]
+	var clear: PackedByteArray = tables[3]
 	var voxel := voxels[index]
 	if flags[voxel] & CUBE == 0 or kinds[voxel] != kind:
 		return false
-	return _side_deep(voxels, tops, flags, index, step, other, y) == deep
+	return _side_deep(voxels, tops, flags, clear, index, step, other, y) == deep
+
+
+## Whether the eye sees through a voxel from above: air, plants... or
+## clear water (not cubes, not lava).
+static func _open(flags: PackedByteArray, clear: PackedByteArray, voxel: int) -> bool:
+	return flags[voxel] & TERRAIN == 0 or clear[voxel] != 0
+
+
+## Whether the `rows` - 1 voxels above `index` (padded voxels), up to the
+## column's top, are all clear water: then what is at `index` shows from
+## the sky through the water (a lake bed, a drowned bank).
+static func _sky_through_water(
+	voxels: PackedByteArray, clear: PackedByteArray, index: int, rows: int
+) -> bool:
+	for k in range(1, rows):
+		if clear[voxels[index + k]] == 0:
+			return false
+	return true
 
 
 ## Notes a horizontal face of voxel row `y` at (lx, lz): a top (`code`:

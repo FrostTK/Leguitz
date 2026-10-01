@@ -61,14 +61,23 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   at art resolution (1 texel per art pixel) unless HD. Lights and particles live outside the root
   (no non-uniform scale). Terrain textures come from `tools/gen_art.py`; its GROUNDS list must
   match the enum.
-- Terrain meshes (`ChunkMesher`, on worker threads via WorldView3D): tops of cube/liquid voxels
-  open to the air (merged into rectangles; the top shader blends grounds per pixel from the
-  chunk's surface map, ChunkMesher.surface_map), sides of cubes (vertical runs of one material
-  merged, the ground hangs over as a lip) and undersides (never seen front-on, the camera always
-  looks down). Faces open to the sky and cave faces go to separate meshes; caves show only when
-  the player is under cover (ClientWorld.is_covered): the view then cuts everything above their
-  head (global `cut_height`), the surface maps are rebuilt for the cut, and the back of the faces
-  closing the rock draws its section in dark (`see_through.gdshaderinc`).
+- Terrain meshes (`ChunkMesher`, on worker threads via WorldView3D): tops of cube and lava voxels
+  open to the air or under clear water (merged into rectangles; the top shader blends grounds per
+  pixel from the chunk's surface map, ChunkMesher.surface_map, shared code in
+  `terrain3d_surface.gdshaderinc`), sides of cubes open to the air or to clear water (vertical
+  runs of one material merged, the ground hangs over as a lip) and undersides (never seen
+  front-on, the camera always looks down). Faces open to the sky (also through water) and cave
+  faces go to separate meshes; caves show only when the player is under cover
+  (ClientWorld.is_covered): the view then cuts everything above their head (global
+  `cut_height`), the surface maps are rebuilt for the cut, and the back of the faces closing the
+  rock draws its section in dark (`see_through.gdshaderinc`).
+- Water (the water grounds; lava stays opaque): its surfaces are meshes of their own (Part.WATER,
+  DEEP_WATER in caves) drawn by `water.gdshader`, casting no shadow. It reads the screen and depth
+  textures: what lies behind fades with the thickness of water the eye looks through (local
+  units, per-water clarity and tint in TerrainRenderer), by steps; the ripples bend it by whole
+  art pixels (only what is under the surface), caustics light the shallows; shores, foam and
+  ripples as before. The surface map's 4th channel holds the bed under clear water
+  (ChunkMesher.bed_code / bed_of in the shader) so beds blend like land.
 - First person (`ViewMode`: automatic when entering a cave, setting `cave_first_person`; F5 any
   time): WorldViewport.dive_frame blends the ortho top-down camera into a perspective one at the
   eye (a 1° perspective from far away opening to 70°), the world root stretch fades to identity

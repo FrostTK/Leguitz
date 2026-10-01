@@ -12,6 +12,7 @@ extends Node3D
 
 const TOP_SHADER := preload("res://src/client/shaders/terrain3d_top.gdshader")
 const FACE_SHADER := preload("res://src/client/shaders/terrain3d_faces.gdshader")
+const WATER_SHADER := preload("res://src/client/shaders/water.gdshader")
 const FACE_ATLAS := preload("res://assets/textures/tiles/face_atlas.png")
 const FACE_NORMALS := preload("res://assets/textures/tiles/face_atlas_n.png")
 const FACE_EMISSION := preload("res://assets/textures/tiles/face_atlas_e.png")
@@ -61,6 +62,7 @@ var cut_row := ChunkData.HEIGHT
 var caves_shown := false
 var top_material := ShaderMaterial.new()
 var face_material := ShaderMaterial.new()
+var water_material := ShaderMaterial.new()
 var props := PropLibrary.new()
 
 var _views: Dictionary[Vector2i, ChunkView3D] = {}
@@ -85,6 +87,8 @@ var _lod_area := PackedInt32Array()
 func _ready() -> void:
 	top_material.shader = TOP_SHADER
 	TerrainRenderer.configure_top(top_material)
+	water_material.shader = WATER_SHADER
+	TerrainRenderer.configure_water(water_material)
 	face_material.shader = FACE_SHADER
 	face_material.set_shader_parameter("face_atlas", FACE_ATLAS)
 	face_material.set_shader_parameter("face_normals", FACE_NORMALS)
@@ -378,6 +382,6 @@ func _chunk(coord: Vector2i) -> ChunkData:
 
 
 func _new_view() -> ChunkView3D:
-	var view := ChunkView3D.new(top_material, face_material)
+	var view := ChunkView3D.new(top_material, face_material, water_material)
 	add_child(view)
 	return view

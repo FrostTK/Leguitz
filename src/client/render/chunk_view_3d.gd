@@ -2,9 +2,10 @@ class_name ChunkView3D
 extends Node3D
 ## One chunk in the 3D world (local units, under the stretched world root):
 ## its terrain as seen from the sky, its caves (shown when the view cuts
-## the world above the player), its 3D props (trees, plants, rocks...: one
-## MultiMesh per model) and the warm lights of its lava pools. Built from
-## a ChunkMesher.Result.
+## the world above the player), the surface of its water (the ground under
+## it shows through; it casts no shadow), its 3D props (trees, plants,
+## rocks...: one MultiMesh per model) and the warm lights of its lava pools.
+## Built from a ChunkMesher.Result.
 
 const LAVA_LIGHT_COLOR := Color(1.0, 0.45, 0.15)
 const LAVA_LIGHT_RANGE := 7.0
@@ -14,8 +15,11 @@ const NO_SHADOW := {Tiles.Block.LILY_PAD: true}
 var coord := Vector2i.ZERO
 var terrain := MeshInstance3D.new()
 var caves := MeshInstance3D.new()
+var water := MeshInstance3D.new()
+var cave_water := MeshInstance3D.new()
 var top_material: ShaderMaterial
 var face_material: ShaderMaterial
+var water_material: ShaderMaterial
 var caves_shown := false
 ## Level of detail of the props shown (see WorldView3D.lod_of).
 var props_lod := 0
@@ -35,13 +39,21 @@ var _lava_spots: Array[Vector3] = []
 var _lava_deep: Array[bool] = []
 
 
-func _init(base_top_material: ShaderMaterial, faces: ShaderMaterial) -> void:
+func _init(
+	base_top_material: ShaderMaterial, faces: ShaderMaterial, base_water_material: ShaderMaterial
+) -> void:
 	top_material = base_top_material.duplicate()
 	top_material.set_shader_parameter("chunk_data", _data_texture)
 	face_material = faces
+	water_material = base_water_material.duplicate()
+	water_material.set_shader_parameter("chunk_data", _data_texture)
 	add_child(terrain)
 	add_child(caves)
 	caves.visible = false
+	for node in [water, cave_water]:
+		node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(node)
+	cave_water.visible = false
 
 
 ## Shows a finished build: terrain, caves, props and lava lights.
@@ -49,10 +61,13 @@ func apply(result: ChunkMesher.Result, library: PropLibrary, lod: int) -> void:
 	coord = result.coord
 	position = Render3D.world_px_to_local(Coords.chunk_to_world(coord), 0.0)
 	top_material.set_shader_parameter("chunk_origin_px", Coords.chunk_to_world(coord))
+	water_material.set_shader_parameter("chunk_origin_px", Coords.chunk_to_world(coord))
 	apply_surface_map(result.surface_map)
 	var parts := result.parts
 	terrain.mesh = _mesh(parts[ChunkMesher.Part.TOPS], parts[ChunkMesher.Part.FACES])
 	caves.mesh = _mesh(parts[ChunkMesher.Part.DEEP_TOPS], parts[ChunkMesher.Part.DEEP_FACES])
+	water.mesh = _water_mesh(parts[ChunkMesher.Part.WATER])
+	cave_water.mesh = _water_mesh(parts[ChunkMesher.Part.DEEP_WATER])
 	props_lod = lod
 	_apply_props(result.props, library, lod)
 	_lava_spots = result.lava_spots
@@ -83,6 +98,7 @@ func apply_surface_map(values: PackedFloat32Array) -> void:
 func show_caves(shown: bool) -> void:
 	caves_shown = shown
 	caves.visible = shown
+	cave_water.visible = shown
 	for i in _lava_spots.size():
 		_lava_lights[i].visible = shown or not _lava_deep[i]
 
@@ -114,6 +130,14 @@ func _mesh(tops: ChunkMesher.Surface, faces: ChunkMesher.Surface) -> ArrayMesh:
 	if not faces.is_empty():
 		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, faces.arrays())
 		mesh.surface_set_material(mesh.get_surface_count() - 1, face_material)
+	return mesh
+
+
+func _water_mesh(surface: ChunkMesher.Surface) -> ArrayMesh:
+	var mesh := ArrayMesh.new()
+	if not surface.is_empty():
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface.arrays())
+		mesh.surface_set_material(0, water_material)
 	return mesh
 
 

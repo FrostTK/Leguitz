@@ -1,8 +1,8 @@
 class_name TerrainRenderer
 extends RefCounted
-## Terrain tables shared by the terrain shaders (ground priorities, kinds,
-## water colors, cliff materials). The chunk data textures they read come
-## from ChunkMesher.surface_map.
+## Terrain tables shared by the terrain and water shaders (ground
+## priorities, kinds, water colors and clarity, cliff materials). The chunk
+## data textures they read come from ChunkMesher.surface_map.
 
 enum Kind { LAND, WATER, LAVA, ICE }
 enum CliffMaterial { DIRT, STONE, SAND, SNOW }
@@ -51,11 +51,27 @@ const KINDS := {
 	Tiles.Ground.LAVA: Kind.LAVA,
 	Tiles.Ground.ICE: Kind.ICE,
 }
+## The water's own color: all of it shows over deep water.
 const WATER_COLORS := {
 	Tiles.Ground.DEEP_WATER: Color(0.17, 0.36, 0.66),
 	Tiles.Ground.WATER: Color(0.24, 0.55, 0.84),
 	Tiles.Ground.WARM_WATER: Color(0.2, 0.7, 0.78),
 	Tiles.Ground.SWAMP_WATER: Color(0.3, 0.47, 0.36),
+}
+## How deep (levels) the eye sees into each water: tropical seas are very
+## clear, rivers and lakes clear, the ocean bluer, swamps murky.
+const WATER_CLARITY := {
+	Tiles.Ground.DEEP_WATER: 4.5,
+	Tiles.Ground.WATER: 6.0,
+	Tiles.Ground.WARM_WATER: 10.0,
+	Tiles.Ground.SWAMP_WATER: 1.5,
+}
+## Tint of the light coming up through each water.
+const WATER_TINTS := {
+	Tiles.Ground.DEEP_WATER: Color(0.62, 0.8, 1.0),
+	Tiles.Ground.WATER: Color(0.6, 0.82, 1.0),
+	Tiles.Ground.WARM_WATER: Color(0.72, 0.98, 0.95),
+	Tiles.Ground.SWAMP_WATER: Color(0.78, 0.84, 0.55),
 }
 const STONE_GROUNDS := {
 	Tiles.Ground.STONE_FLOOR: true,
@@ -84,18 +100,34 @@ static func cliff_material(ground: int) -> int:
 
 ## Sets the atlases and ground tables of a terrain top material.
 static func configure_top(material: ShaderMaterial) -> void:
-	material.set_shader_parameter("ground_atlas", GROUND_ATLAS)
-	material.set_shader_parameter("ground_normals", GROUND_NORMALS)
+	_configure_grounds(material)
 	material.set_shader_parameter("wall_atlas", WALL_ATLAS)
 	material.set_shader_parameter("wall_normals", WALL_NORMALS)
 	material.set_shader_parameter("wall_emission", WALL_EMISSION)
+
+
+## Sets the ground and water tables of a water material.
+static func configure_water(material: ShaderMaterial) -> void:
+	_configure_grounds(material)
+	var colors := PackedColorArray()
+	var tints := PackedColorArray()
+	var clarity := PackedFloat32Array()
+	for ground in MAX_GROUNDS:
+		colors.append(WATER_COLORS.get(ground, Color.BLACK))
+		tints.append(WATER_TINTS.get(ground, Color.WHITE))
+		clarity.append(WATER_CLARITY.get(ground, 1.0))
+	material.set_shader_parameter("water_colors", colors)
+	material.set_shader_parameter("water_tints", tints)
+	material.set_shader_parameter("water_clarity", clarity)
+
+
+static func _configure_grounds(material: ShaderMaterial) -> void:
+	material.set_shader_parameter("ground_atlas", GROUND_ATLAS)
+	material.set_shader_parameter("ground_normals", GROUND_NORMALS)
 	var priority := PackedInt32Array()
 	var kind := PackedInt32Array()
-	var water := PackedColorArray()
 	for ground in MAX_GROUNDS:
 		priority.append(PRIORITY.get(ground, 0))
 		kind.append(KINDS.get(ground, Kind.LAND))
-		water.append(WATER_COLORS.get(ground, Color.BLACK))
 	material.set_shader_parameter("ground_priority", priority)
 	material.set_shader_parameter("ground_kind", kind)
-	material.set_shader_parameter("water_colors", water)
