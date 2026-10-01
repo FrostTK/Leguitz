@@ -345,10 +345,14 @@ func _place_player(session: PlayerSession) -> void:
 		session.position = saved["position"]
 		session.height = saved.get("height", 0.0)
 		session.facing = saved.get("facing", Vector2i.DOWN)
-		# Never inside the ground (the world may have changed since).
+		# Never inside the ground (the world may have changed since); on
+		# top of furniture is fine.
 		var tile := Coords.world_to_tile(session.position)
 		var row := floori(session.height + 0.01) + GameConst.SEA_LEVEL
-		if Voxels.is_solid(world.voxel_at(Vector3i(tile.x, row, tile.y))):
+		var there := world.voxel_at(Vector3i(tile.x, row, tile.y))
+		var top := ObjectShapes.stand_height(Voxels.block_of(there))
+		var on_top := top > 0.0 and session.height >= row - GameConst.SEA_LEVEL + top - 0.01
+		if Voxels.is_solid(there) and not on_top:
 			session.height = world.surface_height(tile)
 		return
 	session.position = Coords.tile_to_world_center(spawn_tile) + Vector2(0, 4)

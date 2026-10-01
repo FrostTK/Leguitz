@@ -74,9 +74,10 @@ func step(delta: float, voxel_at: Callable) -> bool:
 		next.z = position.z
 		velocity.x = 0.0
 		velocity.z = 0.0
-	var below := _cell(Vector3(next.x, next.y - RADIUS, next.z))
-	if velocity.y <= 0.0 and Voxels.is_cube(voxel_at.call(below)):
-		next.y = float(below.y + 1 - GameConst.SEA_LEVEL) + RADIUS
+	var under := Vector3(next.x, next.y - RADIUS, next.z)
+	var rest_height := _rest_height(under, voxel_at)
+	if velocity.y <= 0.0 and under.y <= rest_height:
+		next.y = rest_height + RADIUS
 		velocity = Vector3.ZERO
 		resting = true
 	position = next
@@ -110,7 +111,24 @@ func _supported(voxel_at: Callable) -> bool:
 		return false
 	if Voxels.is_liquid(inside):
 		return true
-	return Voxels.is_cube(voxel_at.call(_cell(position - Vector3(0.0, RADIUS + 0.01, 0.0))))
+	var under := position - Vector3(0.0, RADIUS + 0.01, 0.0)
+	return under.y <= _rest_height(under, voxel_at)
+
+
+## What an item touching `at` (local units) would rest on there: the top
+## of a cube, or of furniture under it (levels; -INF: nothing).
+static func _rest_height(at: Vector3, voxel_at: Callable) -> float:
+	var cell := _cell(at)
+	var voxel: int = voxel_at.call(cell)
+	if Voxels.is_cube(voxel):
+		return float(cell.y + 1 - GameConst.SEA_LEVEL)
+	if Voxels.is_object(voxel):
+		var block := Voxels.block_of(voxel)
+		var stand := ObjectShapes.stand_height(block)
+		var foot := ObjectShapes.footprint_rect(block, Vector2i(cell.x, cell.z))
+		if stand > 0.0 and foot.has_point(Vector2(at.x, at.z) * GameConst.TILE_SIZE):
+			return float(cell.y - GameConst.SEA_LEVEL) + stand
+	return -INF
 
 
 static func _cell(at: Vector3) -> Vector3i:

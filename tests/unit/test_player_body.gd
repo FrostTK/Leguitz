@@ -144,3 +144,32 @@ func test_wades_in_water_and_stays_out_of_lava() -> void:
 	var walker := _body_at(0.5)
 	_walk(walker, 5.0 * TS, 1.0)
 	assert_true(walker.feet.x < 2.0 * TS, "lava blocks the way")
+
+
+func test_jumps_onto_furniture_and_stands_on_it() -> void:
+	_extra[Vector3i(2, SEA, 1)] = Voxels.of_block(Tiles.Block.CHEST_EAST)
+	var body := _body_at(1.2)
+	_walk(body, 3.0 * TS, 0.6)
+	assert_true(body.feet.x < 2.0 * TS, "the chest blocks walking")
+	assert_eq(body.height, 0.0, "standing beside it, not on it")
+	body.step(Vector2(1.5 * TS * DT, 0.0), true, DT, _voxel_at)
+	_walk(body, 1.5 * TS, 0.5)
+	assert_true(body.on_ground)
+	assert_almost(body.height, 13.0 / 16.0, 0.0001, "on the chest's lid, not inside it")
+	_walk(body, 2.0 * TS, 1.0)
+	assert_true(body.feet.x > 3.0 * TS, "from the chest up the step without jumping")
+	assert_eq(body.height, 1.0)
+	_extra.clear()
+
+
+func test_furniture_tops_and_items_resting_on_them() -> void:
+	assert_almost(ObjectShapes.stand_height(Tiles.Block.WORKBENCH_END_Z), 15.0 / 16.0)
+	assert_almost(ObjectShapes.stand_height(Tiles.Block.FACTORY_FURNACE_LIT_WEST), 14.0 / 16.0)
+	assert_eq(ObjectShapes.stand_height(Tiles.Block.OAK), 0.0, "no standing on trees")
+	_extra[Vector3i(1, SEA, 1)] = Voxels.of_block(Tiles.Block.FOOD_FURNACE)
+	var item := DroppedItem.create(Items.Id.DIRT, 1, Vector3(1.5, 2.0, 1.5), Vector3.ZERO)
+	for i in 120:
+		item.step(DT, _voxel_at)
+	assert_true(item.resting)
+	assert_almost(item.position.y, 14.0 / 16.0 + DroppedItem.RADIUS, 0.0001, "on the furnace")
+	_extra.clear()

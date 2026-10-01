@@ -99,6 +99,18 @@ const BENCH_ENDS := {
 const BENCH_DEPTH := 14
 ## Chests and furnaces: so many voxels square, a level high.
 const BOX_SIZE := 14
+## Furniture bodies stand on (jumping onto it), by kind: how high its top
+## is (voxels: their models' tops, WorkbenchModel, ChestModel,
+## FurnaceModels). It blocks bodies up to there.
+const TOPS := {
+	Tiles.Block.WORKBENCH: 15,
+	Tiles.Block.CHEST: 13,
+	Tiles.Block.FOOD_FURNACE: 14,
+	Tiles.Block.FOOD_FURNACE_LIT: 14,
+	Tiles.Block.FACTORY_FURNACE: 14,
+	Tiles.Block.FACTORY_FURNACE_LIT: 14,
+	Tiles.Block.BROKEN_FURNACE: 14,
+}
 ## The furnaces (their unlit kind) and their lit kind.
 const LIT := {
 	Tiles.Block.FOOD_FURNACE: Tiles.Block.FOOD_FURNACE_LIT,
@@ -193,6 +205,20 @@ static func facing(kind: int, front: Vector2i) -> int:
 static func turn_of(block: int) -> float:
 	var front := front_of(block)
 	return atan2(front.x, front.y)
+
+
+## How high (levels) the top of a piece of furniture is, to stand on it
+## (0: not something to stand on).
+static func stand_height(block: int) -> float:
+	var kind := Tiles.Block.WORKBENCH if BENCH_ENDS.has(block) else kind_of(block)
+	return TOPS.get(kind, 0) / float(GameConst.TILE_SIZE)
+
+
+## How high (levels) an object blocks bodies from its voxel up: furniture
+## up to its top, the others whole levels (blocking_levels).
+static func blocking_height(block: int, variant: int) -> float:
+	var top := stand_height(block)
+	return top if top > 0.0 else float(blocking_levels(block, variant))
 
 
 ## Where a workbench's right end lies from its left end (on its right,

@@ -112,7 +112,9 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
 - Movement is Minecraft-like (`src/sim/physics/player_body.gd`, shared client/server) among voxels
   (`voxel_at` callable, Voxels.UNKNOWN = not loaded = solid): body 1.7 levels tall, walk up 0.2,
   jump 1.25, bump ceilings, fall off edges; solid objects block their footprint up their height
-  (trees: the trunk, see ObjectShapes); water
+  (trees: the trunk, see ObjectShapes); furniture (workbench, chest, furnaces: ObjectShapes.TOPS,
+  the height of their models' tops) blocks up to its top and is stood on once the feet get there
+  (PlayerBody.support looks for it under the body's box; dropped items rest on it too); water
   is walked on for now (swimming comes with survival), lava blocks. No stairs: terrain levels rise
   one at a time so they can be climbed.
 - World generation (`src/sim/world/generation/`): ClimateSampler (5 Minecraft climate noises,
