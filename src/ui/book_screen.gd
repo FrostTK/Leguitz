@@ -4,8 +4,9 @@ extends Control
 ## between leather covers, chapter tabs along the top, a title page and
 ## the contents first, page numbers and arrows. Pages turn with the arrows,
 ## the wheel, the movement keys or a stick; LB/RB jump between chapters;
-## Esc, E, the book's key (0) or a right click close it. The world goes on
-## behind it. Drawn in UI units.
+## Esc, E, the book's key (0) or a right click close it. The name of an
+## item drawn (recipes, tools, fuels) shows beside the mouse over it. The
+## world goes on behind it. Drawn in UI units.
 
 signal close_requested
 
@@ -48,6 +49,9 @@ var _spread := 0
 ## What can be clicked, found while drawing: [Rect2, action, value].
 var _hits: Array[Array] = []
 var _hover := -1
+## The items drawn, found while drawing: [Rect2, item]; and the mouse.
+var _named: Array[Array] = []
+var _pointer := -Vector2.ONE
 
 
 ## Splits chapters into pages `height` tall, each chapter from a new page;
@@ -177,6 +181,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _gui_input(event: InputEvent) -> void:
 	var motion := event as InputEventMouseMotion
 	if motion != null:
+		_pointer = motion.position
 		var hover := _hit_at(motion.position)
 		if hover != _hover:
 			_hover = hover
@@ -248,6 +253,7 @@ func _text_area(side: int) -> Rect2:
 
 func _draw() -> void:
 	_hits.clear()
+	_named.clear()
 	draw_rect(Rect2(Vector2.ZERO, size), Color(0.0, 0.0, 0.0, 0.45))
 	var font := get_theme_default_font()
 	var book := _book_rect()
@@ -273,6 +279,11 @@ func _draw() -> void:
 		_draw_page(font, 2 * _spread + side, side)
 	_draw_arrows()
 	_draw_close(book)
+	for spot: Array in _named:
+		var rect: Rect2 = spot[0]
+		if rect.has_point(_pointer):
+			ItemSlot.draw_name(self, spot[1], _pointer)
+			break
 
 
 func _draw_tabs(font: Font, book: Rect2) -> void:
@@ -469,6 +480,7 @@ func _draw_entry(font: Font, entry: Dictionary, at: Vector2, width: float) -> vo
 			var icon := library.icon(entry["item"]) if library != null else null
 			if icon != null:
 				draw_texture_rect(icon, Rect2(at, Vector2.ONE * ICON), false)
+				_named.append([Rect2(at, Vector2.ONE * ICON), entry["item"]])
 			var text_width := width - ICON - 4.0
 			var text_height := _text_height(font, text, text_width, BODY_SIZE)
 			var beside := Vector2(ICON + 4.0, maxf(0.0, floorf((ICON - text_height) * 0.5)))
@@ -519,6 +531,7 @@ func _draw_cell(cell: Rect2, item: int) -> void:
 	var icon := library.icon(item) if library != null and item != Items.Id.NONE else null
 	if icon != null:
 		draw_texture_rect(icon, cell.grow(-0.5), false)
+		_named.append([cell, item])
 
 
 ## The cells of a recipe's grid: its pattern, or a row of its ingredients.

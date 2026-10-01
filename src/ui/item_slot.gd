@@ -11,6 +11,11 @@ const ICON := 16.0
 const FRAME := Color(0.36, 0.2, 0.08, 0.95)
 const FILL := Color(0.16, 0.1, 0.06, 0.55)
 const SELECTED := Color(1.0, 0.92, 0.6)
+## The name of the item under the mouse (draw_name): its box, the room
+## around the text, and where it sits from the mouse (above on the right).
+const NAME_FILL := Color(0.13, 0.07, 0.03, 0.94)
+const NAME_PADDING := Vector2(4.0, 2.0)
+const NAME_OFFSET := Vector2(9.0, -15.0)
 
 var slot := 0
 var selected := false
@@ -44,8 +49,12 @@ func show_stack(item: int, count: int, is_selected := false, wear := 0) -> void:
 	_count = count
 	_wear = wear
 	selected = is_selected
-	tooltip_text = Items.name_key(item) if item != Items.Id.NONE else ""
 	queue_redraw()
+
+
+## The item shown (Items.Id.NONE: empty).
+func shown_item() -> int:
+	return _item
 
 
 func _gui_input(event: InputEvent) -> void:
@@ -62,6 +71,28 @@ func _draw() -> void:
 	draw_rect(rect, FILL)
 	draw_rect(rect, SELECTED if selected else FRAME, false, 2.0 if selected else 1.0)
 	draw_stack(self, library, _item, _count, size * 0.5, _wear)
+
+
+## Draws an item's name in a dark box beside `at` (the mouse) on any
+## control, kept inside it.
+static func draw_name(canvas: Control, item: int, at: Vector2) -> void:
+	if item == Items.Id.NONE:
+		return
+	var font := canvas.get_theme_default_font()
+	var font_size := UiTheme.BASE_FONT_SIZE
+	var text := canvas.tr(Items.name_key(item))
+	var text_size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
+	var box := (text_size + NAME_PADDING * 2.0).ceil()
+	var corner := (at + NAME_OFFSET).floor()
+	corner.x = clampf(corner.x, 0.0, maxf(canvas.size.x - box.x, 0.0))
+	corner.y = clampf(corner.y, 0.0, maxf(canvas.size.y - box.y, 0.0))
+	var rect := Rect2(corner, box)
+	canvas.draw_rect(rect, NAME_FILL)
+	canvas.draw_rect(rect, UiTheme.WOOD, false, 1.0)
+	var baseline := corner + Vector2(NAME_PADDING.x, NAME_PADDING.y + font.get_ascent(font_size))
+	canvas.draw_string(
+		font, baseline.round(), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, UiTheme.PARCHMENT
+	)
 
 
 ## Draws a stack (icon and count, or a worn tool's bar) centered at

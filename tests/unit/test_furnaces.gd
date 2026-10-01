@@ -231,7 +231,9 @@ func test_the_server_runs_lights_saves_and_breaks_furnaces() -> void:
 		server.tick()
 	var broken := Voxels.of_block(Tiles.Block.BROKEN_FURNACE_EAST)
 	assert_eq(server.world.voxel_at(cell), broken, "broken by the ore")
+	# What spilled lies around, or the player standing by already picked it up.
 	var spilled := server.items.values().map(func(d: DroppedItem) -> int: return d.item)
+	spilled.append_array(session.inventory.items)
 	assert_true(Items.Id.MUSHROOM_STEW in spilled, "what it held spills")
 	assert_false(Items.Id.RAW_IRON in spilled, "the ore is lost")
 	client.send(Msg.open_furnace(cell))

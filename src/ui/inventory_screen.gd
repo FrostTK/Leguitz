@@ -9,7 +9,8 @@ extends Control
 ## stacks (Inventory.click: the client shows its guess at once, the server
 ## decides), a click on what the grid makes takes it (shift: as many as
 ## possible); the stack held by the cursor follows the mouse, and dropped
-## outside the panel it is thrown away.
+## outside the panel it is thrown away. With empty hands, the name of the
+## item under the mouse shows beside it.
 
 signal slot_clicked(slot: int, right: bool, shift: bool)
 signal cursor_dropped(whole: bool)
@@ -60,8 +61,13 @@ var _flame := Control.new()
 var _cooking := Control.new()
 ## Over the bag when a chest is open: whose slots are whose.
 var _bag_label := Label.new()
-## Draws the cursor's stack over the panel.
+## Draws the cursor's stack (or the name of the item under the mouse) over
+## the panel.
 var _cursor := Control.new()
+## The slot under the mouse (null: none), and where the mouse is (in
+## _cursor, from its own events).
+var _hovered: ItemSlot
+var _pointer := Vector2.ZERO
 
 
 func _ready() -> void:
@@ -123,6 +129,10 @@ func _ready() -> void:
 	_cursor.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_cursor.draw.connect(_draw_cursor)
 	add_child(_cursor)
+	for node in find_children("*", "ItemSlot", true, false):
+		var slot := node as ItemSlot
+		slot.mouse_entered.connect(_on_slot_entered.bind(slot))
+		slot.mouse_exited.connect(_on_slot_exited.bind(slot))
 	visible = false
 
 
@@ -174,6 +184,7 @@ func open_furnace(view: Furnace) -> void:
 func close() -> void:
 	if visible:
 		visible = false
+		_hovered = null
 		close_requested.emit()
 
 
@@ -338,6 +349,12 @@ func _gui_input(event: InputEvent) -> void:
 	accept_event()
 
 
+func _input(event: InputEvent) -> void:
+	var mouse := event as InputEventMouse
+	if visible and mouse != null:
+		_pointer = (_cursor.make_input_local(mouse) as InputEventMouse).position
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if (
 		visible
@@ -354,13 +371,25 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 0.35))
 
 
-## The cursor's stack, under the mouse.
+func _on_slot_entered(slot: ItemSlot) -> void:
+	_hovered = slot
+
+
+func _on_slot_exited(slot: ItemSlot) -> void:
+	if _hovered == slot:
+		_hovered = null
+
+
+## The cursor's stack under the mouse; with empty hands, the name of the
+## item under it.
 func _draw_cursor() -> void:
 	if inventory == null:
 		return
+	var at := _pointer
 	var item := inventory.items[Inventory.CURSOR]
 	if item != Items.Id.NONE:
-		var at := _cursor.get_local_mouse_position()
 		var count := inventory.counts[Inventory.CURSOR]
 		var worn := inventory.wear[Inventory.CURSOR]
 		ItemSlot.draw_stack(_cursor, library, item, count, at, worn)
+	elif _hovered != null and _hovered.is_visible_in_tree():
+		ItemSlot.draw_name(_cursor, _hovered.shown_item(), at)
