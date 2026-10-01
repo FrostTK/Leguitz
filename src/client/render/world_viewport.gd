@@ -14,10 +14,8 @@ extends Node
 
 ## Extra texels rendered around the screen (room for the sub-texel slide).
 const MARGIN := 2
-## Distance of the camera from the target along its view axis.
-const CAMERA_DISTANCE := 80.0
-## Depth range around the target that is drawn (terrain far above or below
-## the player is out of view anyway).
+## Depth drawn above and below the ground around the target (terrain far
+## above or below the player is out of view anyway).
 const DEPTH_ABOVE := 50.0
 const DEPTH_BELOW := 70.0
 ## How fast the view catches up with orbit changes.
@@ -36,6 +34,9 @@ var yaw := 0.0
 var pitch := deg_to_rad(Render3D.DEFAULT_PITCH)
 var current_yaw := 0.0
 var current_pitch := deg_to_rad(Render3D.DEFAULT_PITCH)
+## Distance of the camera from the target along its view axis: it backs
+## away when the view is larger or flatter, so nothing gets clipped.
+var camera_distance := 80.0
 
 var _render_scale := 4
 
@@ -52,8 +53,6 @@ func _ready() -> void:
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
 	camera.keep_aspect = Camera3D.KEEP_HEIGHT
 	camera.rotation = Vector3(-current_pitch, current_yaw, 0.0)
-	camera.near = CAMERA_DISTANCE - DEPTH_ABOVE
-	camera.far = CAMERA_DISTANCE + DEPTH_BELOW
 	viewport.add_child(camera)
 
 	display.texture = viewport.get_texture()
@@ -90,6 +89,14 @@ func refresh_size() -> void:
 func view_size() -> Vector2:
 	var aspect := float(viewport.size.x) / maxf(1.0, float(viewport.size.y))
 	return Vector2(camera.size * aspect, camera.size)
+
+
+## Size of the ground in view, in tiles: across the screen and along the
+## camera's view on the ground (before turning by the yaw).
+func ground_size() -> Vector2:
+	var size := view_size()
+	var depth := size.y / sin(current_pitch) / Render3D.depth_stretch
+	return Vector2(size.x, depth)
 
 
 ## Turns the camera around the target (radians).
@@ -129,6 +136,12 @@ func update_orbit(delta: float) -> void:
 
 func _process(_delta: float) -> void:
 	camera.rotation = Vector3(-current_pitch, current_yaw, 0.0)
+	# The ground at the top and bottom of the screen is this much farther
+	# and closer than the target.
+	var spread := camera.size * 0.5 / tan(current_pitch)
+	camera_distance = DEPTH_ABOVE + spread + 10.0
+	camera.near = 1.0
+	camera.far = camera_distance + spread + DEPTH_BELOW
 	var basis := camera.global_basis
 	var u := target.dot(basis.x)
 	var v := target.dot(basis.y)
@@ -140,7 +153,7 @@ func _process(_delta: float) -> void:
 		snapped_u = roundf(u / texel) * texel
 		snapped_v = roundf(v / texel) * texel
 	camera.global_position = (
-		basis.x * snapped_u + basis.y * snapped_v + basis.z * (w + CAMERA_DISTANCE)
+		basis.x * snapped_u + basis.y * snapped_v + basis.z * (w + camera_distance)
 	)
 	# Slide the image by the part of a texel the camera did not move.
 	var slide := Vector2(u - snapped_u, -(v - snapped_v)) / texel

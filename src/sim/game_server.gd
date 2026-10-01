@@ -13,8 +13,6 @@ const UNLOAD_CHECK_TICKS := GameConst.TICKS_PER_SECOND * 2
 ## Max distance (world px) a player may move between two updates before
 ## the server corrects them. Generous: real validation comes with Phase 3.
 const MAX_MOVE_PER_UPDATE := 96.0
-const MIN_VIEW_DISTANCE := 2
-const MAX_VIEW_DISTANCE := 16
 const MAP_MIN_SIZE := 64
 const MAP_MAX_SIZE := 512
 const MAP_MAX_SCALE := 16
@@ -138,6 +136,8 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 			_on_map_request(session, message)
 		Msg.DEBUG_SET_WEATHER:
 			_on_debug_set_weather(session, message)
+		Msg.SET_VIEW_DISTANCE:
+			_on_set_view_distance(session, message)
 		var unknown:
 			push_warning("Server: unknown message type %s" % unknown)
 
@@ -148,10 +148,8 @@ func _on_hello(session: PlayerSession, message: Dictionary) -> void:
 	session.id = _next_player_id
 	_next_player_id += 1
 	session.player_name = str(message.get("name", "Player"))
-	session.view_distance = clampi(
-		int(message.get("view_distance", GameConst.DEFAULT_VIEW_DISTANCE)),
-		MIN_VIEW_DISTANCE,
-		MAX_VIEW_DISTANCE
+	session.view_distance = _clamp_view_distance(
+		message.get("view_distance", GameConst.DEFAULT_VIEW_DISTANCE)
 	)
 	session.position = Coords.tile_to_world_center(spawn_tile) + Vector2(0, 4)
 	session.layer = WorldGenerator.SURFACE_LAYER
@@ -165,6 +163,19 @@ func _on_hello(session: PlayerSession, message: Dictionary) -> void:
 	_stream_chunks(session, CHUNKS_SENT_PER_TICK)
 	_collect_generated()
 	_stream_chunks(session, CHUNKS_SENT_PER_TICK)
+
+
+## The client's view grew or shrank (zoom, window, camera): stream more
+## chunks, or drop the far ones.
+func _on_set_view_distance(session: PlayerSession, message: Dictionary) -> void:
+	if not session.joined:
+		return
+	session.view_distance = _clamp_view_distance(message.get("distance", session.view_distance))
+	_stream_chunks(session, CHUNKS_SENT_PER_TICK)
+
+
+static func _clamp_view_distance(value: Variant) -> int:
+	return clampi(int(value), GameConst.MIN_VIEW_DISTANCE, GameConst.MAX_VIEW_DISTANCE)
 
 
 func _on_player_move(session: PlayerSession, message: Dictionary) -> void:

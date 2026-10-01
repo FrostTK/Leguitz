@@ -151,3 +151,26 @@ func test_debug_commands_can_be_disabled() -> void:
 	server.process_messages()
 	assert_eq(client.poll().size(), 0)
 	assert_eq(server.first_session().layer, 0)
+
+
+func test_view_distance_follows_the_client() -> void:
+	var setup := _joined_server()
+	var server: GameServer = setup[0]
+	var client: LocalTransport = setup[1]
+	for i in 20:
+		server.tick()
+	var first := _messages_of_type(client.poll(), Msg.CHUNK_DATA).size()
+	assert_eq(first, 25, "radius 2: 5 x 5 chunks")
+	client.send(Msg.set_view_distance(4))
+	server.process_messages()
+	for i in 60:
+		server.tick()
+	var more := _messages_of_type(client.poll(), Msg.CHUNK_DATA).size()
+	assert_eq(first + more, 81, "radius 4: 9 x 9 chunks")
+	client.send(Msg.set_view_distance(2))
+	server.process_messages()
+	var unloads := _messages_of_type(client.poll(), Msg.CHUNK_UNLOAD).size()
+	assert_eq(unloads, 81 - 49, "keeps a ring of one chunk, drops the rest")
+	client.send(Msg.set_view_distance(500))
+	server.process_messages()
+	assert_eq(server.first_session().view_distance, GameConst.MAX_VIEW_DISTANCE)

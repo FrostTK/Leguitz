@@ -11,6 +11,7 @@ const SET_TIME := "set_time"
 const DEBUG_CHANGE_LAYER := "debug_change_layer"
 const MAP_REQUEST := "map_request"
 const DEBUG_SET_WEATHER := "debug_set_weather"
+const SET_VIEW_DISTANCE := "set_view_distance"
 
 # Server -> client
 const WELCOME := "welcome"
@@ -49,6 +50,11 @@ static func map_request(center: Vector2i, layer: int, size_px: int, scale: int) 
 
 
 ## Debug/creative: force a weather (Weather.Kind).
+## Radius in chunks the client needs around the player.
+static func set_view_distance(distance: int) -> Dictionary:
+	return {"t": SET_VIEW_DISTANCE, "distance": distance}
+
+
 static func debug_set_weather(kind: int) -> Dictionary:
 	return {"t": DEBUG_SET_WEATHER, "kind": kind}
 

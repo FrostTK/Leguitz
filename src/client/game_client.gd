@@ -21,6 +21,8 @@ var world_info := {}
 var player_id := -1
 var joined := false
 var local_player := LocalPlayer.new()
+## Radius (chunks) last asked to the server.
+var view_distance := 0
 
 var world_viewport := WorldViewport.new()
 ## Holds the terrain in local tile units; its basis stretches them for the
@@ -42,6 +44,7 @@ var _loading_label := Label.new()
 ## Set on spawn and teleport: place the camera without smoothing once the
 ## player has landed on known ground.
 var _needs_snap := false
+var _min_view_distance := GameConst.DEFAULT_VIEW_DISTANCE
 ## Smoothed camera target (local units).
 var _camera_local := Vector3.ZERO
 var _root_yaw := INF
@@ -102,7 +105,6 @@ func _setup_world() -> void:
 	lighting.sun = sun
 	lighting.lantern = player_model.lantern
 	lighting.environment = environment
-	lighting.camera_distance = WorldViewport.CAMERA_DISTANCE
 	add_child(lighting)
 	lighting.apply_quality(Settings.graphics_quality)
 	Settings.changed.connect(_on_settings_changed)
@@ -113,10 +115,38 @@ func _on_settings_changed(key: StringName) -> void:
 		lighting.apply_quality(Settings.graphics_quality)
 
 
-func connect_to_server(server_transport: Transport, view_distance: int) -> void:
+## `min_view_distance` is the smallest radius (chunks) to load around the
+## player; more is asked when the view needs it (see _update_view_distance).
+func connect_to_server(server_transport: Transport, min_view_distance: int) -> void:
 	transport = server_transport
 	local_player.transport = server_transport
+	_min_view_distance = min_view_distance
+	view_distance = needed_view_distance()
 	transport.send(Msg.hello("Player", view_distance))
+
+
+## Chunks needed around the player to fill the screen: the ground in view
+## (zoom, window size, camera angle), turned by the camera's yaw, plus a
+## margin for the chunk the player is in and for terrain above or below.
+func needed_view_distance() -> int:
+	var ground := world_viewport.ground_size()
+	var yaw := world_viewport.current_yaw
+	var c := absf(cos(yaw))
+	var s := absf(sin(yaw))
+	var half := maxf(c * ground.x + s * ground.y, s * ground.x + c * ground.y) * 0.5
+	var radius := ceili(half / GameConst.CHUNK_SIZE) + 2
+	return clampi(
+		maxi(radius, _min_view_distance), GameConst.MIN_VIEW_DISTANCE, GameConst.MAX_VIEW_DISTANCE
+	)
+
+
+## Asks the server for more chunks when the view grows; gives them back
+## only once it shrank clearly (no back and forth while zooming).
+func _update_view_distance() -> void:
+	var needed := needed_view_distance()
+	if needed > view_distance or needed < view_distance - 1:
+		view_distance = needed
+		transport.send(Msg.set_view_distance(needed))
 
 
 func _process(delta: float) -> void:
@@ -179,6 +209,8 @@ func _update_view(delta: float) -> void:
 	weather_effects.target = target
 	weather_effects.view_size = world_viewport.view_size()
 	lighting.reference_height = (root * focus).y
+	lighting.camera_distance = world_viewport.camera_distance
+	_update_view_distance()
 
 
 ## True once the player has spawned and stands on loaded ground.

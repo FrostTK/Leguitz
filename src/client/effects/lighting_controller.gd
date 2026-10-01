@@ -80,7 +80,6 @@ func _ready() -> void:
 
 	sun.shadow_enabled = true
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
-	sun.directional_shadow_max_distance = camera_distance + WorldViewport.DEPTH_BELOW
 	sun.shadow_bias = 0.03
 	sun.shadow_normal_bias = 0.6
 	sun.light_angular_distance = 0.4

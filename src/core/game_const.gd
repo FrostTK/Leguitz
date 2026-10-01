@@ -15,5 +15,8 @@ const CHUNK_PIXELS := CHUNK_SIZE * TILE_SIZE
 const TICKS_PER_SECOND := 20
 const TICK_DELTA := 1.0 / TICKS_PER_SECOND
 
-## Default radius (in chunks) streamed around each player.
+## Radius (in chunks) streamed around each player: the client asks for
+## what its view needs (zoom, window size, camera angle) within limits.
 const DEFAULT_VIEW_DISTANCE := 4
+const MIN_VIEW_DISTANCE := 2
+const MAX_VIEW_DISTANCE := 16
