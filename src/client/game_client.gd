@@ -45,6 +45,16 @@ const CLICK_SLOP := 6.0
 const HELD_SIZE := 0.28
 const FIRST_PERSON_HELD_SIZE := 0.16
 const FIRST_PERSON_HELD_AT := Vector3(0.36, -0.3, -0.62)
+const FIRST_PERSON_HELD_TURN := Vector3(-0.15, 0.7, 0.0)
+## First person: a tool is held by the handle at the bottom right of the
+## view, the handle going up, forward and a little left (camera space),
+## its flat side towards the eye; the wrist swings it through strokes
+## (radians: arm raised, striking; see PlayerModel), its size in local
+## units per unit of the model.
+const FIRST_PERSON_TOOL_AT := Vector3(0.3, -0.36, -0.5)
+const FIRST_PERSON_TOOL_HANDLE := Vector3(-0.35, 0.85, -0.4)
+const FIRST_PERSON_TOOL_STROKE := Vector2(-0.35, 1.0)
+const FIRST_PERSON_TOOL_SIZE := 0.3
 
 var transport: Transport
 var world := ClientWorld.new()
@@ -113,6 +123,8 @@ var _shown_held := -1
 ## right click places a block.
 var _drag_button := MOUSE_BUTTON_NONE
 var _drag_moved := 0.0
+## The material whose tools the debug key gives next (Items.Tier).
+var _tools_tier := 0
 ## First-person look angles (radians; pitch > 0 looks up).
 var _look_yaw := 0.0
 var _look_pitch := ENTRY_LOOK_PITCH
@@ -140,8 +152,6 @@ func _ready() -> void:
 	dropped_items.library = items
 	dropped_items.local_player = local_player
 	world_root.add_child(dropped_items)
-	first_person_held.position = FIRST_PERSON_HELD_AT
-	first_person_held.rotation = Vector3(-0.15, 0.7, 0.0)
 	first_person_held.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	world_viewport.camera.add_child(first_person_held)
 	hud_clock.clock = clock
@@ -474,6 +484,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		transport.send(Msg.debug_set_weather(next))
 	elif event.is_action_pressed(InputBindings.TOGGLE_NOCLIP):
 		local_player.noclip = not local_player.noclip
+	elif event.is_action_pressed(InputBindings.GIVE_TOOLS):
+		transport.send(Msg.debug_give_tools(_tools_tier))
+		hotbar.announce("HUD_TOOLS_" + String(Items.Tier.find_key(_tools_tier)))
+		_tools_tier = (_tools_tier + 1) % Items.Tier.size()
 	else:
 		return
 	get_viewport().set_input_as_handled()
@@ -583,18 +597,41 @@ func _on_inventory_closed() -> void:
 
 
 ## Puts what is in hand in the body's hand and, in first person, at the
-## bottom right of the view.
+## bottom right of the view, swinging with the arm's strokes.
 func _update_held() -> void:
 	var held := inventory.held()
 	var model := items.mesh(held) if held != Items.Id.NONE else null
 	first_person_held.visible = model != null and first_person >= 1.0
-	if held == _shown_held:
+	if held != _shown_held:
+		_shown_held = held
+		first_person_held.mesh = model
+		if Items.tool_of(held) != Items.Tool.NONE:
+			player_model.hold_tool(model)
+		else:
+			player_model.hold(model, HELD_SIZE * items.fit(held) if model != null else 0.0)
+	if not first_person_held.visible:
 		return
-	_shown_held = held
-	player_model.hold(model, HELD_SIZE * items.fit(held) if model != null else 0.0)
-	first_person_held.mesh = model
-	if model != null:
+	var stroke := player_model.strike_phase
+	if Items.tool_of(held) != Items.Tool.NONE:
+		var pitch := 0.0
+		if stroke >= 0.0:
+			pitch = lerpf(FIRST_PERSON_TOOL_STROKE.x, FIRST_PERSON_TOOL_STROKE.y, stroke)
+		first_person_held.transform = ItemLibrary.held_tool(
+			_first_person_tool_frame(), FIRST_PERSON_TOOL_AT, pitch, FIRST_PERSON_TOOL_SIZE
+		)
+	else:
+		var dip := maxf(stroke, 0.0)
+		first_person_held.position = FIRST_PERSON_HELD_AT + Vector3(0.0, -0.05, -0.04) * dip
+		first_person_held.rotation = FIRST_PERSON_HELD_TURN + Vector3(-0.6, 0.0, 0.0) * dip
 		first_person_held.scale = Vector3.ONE * FIRST_PERSON_HELD_SIZE * items.fit(held)
+
+
+## First person: the hand's basis for a tool (its z along the handle, its
+## y towards the front, where the head strikes; the axe's blade inwards).
+static func _first_person_tool_frame() -> Basis:
+	var handle := FIRST_PERSON_TOOL_HANDLE.normalized()
+	var front := (Vector3.FORWARD - handle * Vector3.FORWARD.dot(handle)).normalized()
+	return Basis(front.cross(handle), front, handle)
 
 
 ## Mouse drag (right or middle button) orbits the camera around the

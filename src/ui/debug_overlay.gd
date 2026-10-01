@@ -128,6 +128,8 @@ func _lines() -> PackedStringArray:
 	lines.append("%s: %s  |  %s: %s  |  %s %d  |  %s: %s" % ground_args)
 	if player.noclip:
 		lines.append(tr("DEBUG_NOCLIP"))
+	if client.interaction.target != null:
+		lines.append(_target_line(client.interaction.target))
 	lines.append("%s %d  %s  |  %s  |  %s x%.2f  |  %s %d/8" % time_args)
 	var view_line := (
 		"%s: %d (r%d, LOD %d)  |  Zoom x%d%s  |  UI x%d  |  Cam %.0f / %.0f" % view_args
@@ -138,6 +140,27 @@ func _lines() -> PackedStringArray:
 	if server_stats.is_valid():
 		lines.append_array(server_stats.call())
 	return lines
+
+
+## What is aimed at, how long breaking it takes with what is in hand, and
+## the tool made for it.
+func _target_line(target: VoxelRay.Hit) -> String:
+	var block := Voxels.block_of(target.voxel)
+	var what: String = (
+		Tiles.Block.find_key(block)
+		if block != Tiles.Block.AIR
+		else Tiles.Ground.find_key(Voxels.ground_of(target.voxel))
+	)
+	var target_args := [
+		tr("DEBUG_TARGET"),
+		what,
+		target.cell.x,
+		target.cell.y - GameConst.SEA_LEVEL,
+		target.cell.z,
+		Mining.break_seconds(target.voxel, client.inventory.held()),
+		Items.Tool.find_key(Mining.tool_for(target.voxel)),
+	]
+	return "%s: %s (%d, %d, %d)  |  %.2f s  |  %s" % target_args
 
 
 func _time_mode_text(clock: WorldClock) -> String:

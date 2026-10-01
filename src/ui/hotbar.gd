@@ -1,9 +1,11 @@
 class_name Hotbar
 extends VBoxContainer
 ## The 9 hotbar slots at the bottom of the screen, the one in hand
-## highlighted; its name shows above for a moment when it changes.
+## highlighted; its name shows above for a moment when it changes, and
+## so do short messages (announce).
 
 const NAME_SECONDS := 1.6
+const ANNOUNCE_SECONDS := 2.5
 
 var inventory: Inventory
 var library: ItemLibrary
@@ -13,6 +15,8 @@ var _name := Label.new()
 var _name_left := 0.0
 var _shown_item := -1
 var _shown_slot := -1
+## A message shows instead of the name for this long.
+var _announce_left := 0.0
 
 
 func _ready() -> void:
@@ -50,7 +54,17 @@ func _process(delta: float) -> void:
 	if held != _shown_item or inventory.selected != _shown_slot:
 		_shown_item = held
 		_shown_slot = inventory.selected
-		_name.text = Items.name_key(held) if held != Items.Id.NONE else ""
-		_name_left = NAME_SECONDS
+		if _announce_left <= 0.0:
+			_name.text = Items.name_key(held) if held != Items.Id.NONE else ""
+			_name_left = NAME_SECONDS
 	_name_left -= delta
+	_announce_left -= delta
 	_name.modulate.a = clampf(_name_left / 0.4, 0.0, 1.0)
+
+
+## Shows a message (a translation key) where the name of what is in hand
+## shows.
+func announce(text: String) -> void:
+	_name.text = text
+	_name_left = ANNOUNCE_SECONDS
+	_announce_left = ANNOUNCE_SECONDS

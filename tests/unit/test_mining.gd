@@ -75,6 +75,42 @@ func test_breaking_takes_longer_for_harder_blocks() -> void:
 	assert_false(Mining.can_place(Voxels.of_ground(Tiles.Ground.WATER)))
 
 
+func test_tools_break_what_they_are_made_for_faster() -> void:
+	var stone := Voxels.of_block(Tiles.Block.STONE)
+	var grass := Voxels.of_ground(Tiles.Ground.GRASS)
+	var oak := Voxels.of_block(Tiles.Block.OAK)
+	var hand := Mining.hand_seconds(stone)
+	assert_eq(Mining.break_seconds(stone, Items.Id.NONE), hand, "by hand")
+	assert_eq(Mining.break_seconds(stone, Items.Id.DIRT), hand, "a block in hand is a hand")
+	assert_almost(Mining.break_seconds(stone, Items.Id.WOODEN_PICKAXE), hand / 2.0)
+	assert_eq(Mining.break_seconds(stone, Items.Id.DIAMOND_SHOVEL), hand, "not made for stone")
+	assert_true(Mining.break_seconds(grass, Items.Id.STONE_SHOVEL) < Mining.hand_seconds(grass))
+	assert_true(Mining.break_seconds(oak, Items.Id.IRON_AXE) < Mining.hand_seconds(oak), "chop")
+	assert_eq(Mining.tool_for(Voxels.of_ground(Tiles.Ground.ICE)), Items.Tool.PICKAXE)
+	assert_eq(Mining.tool_for(Voxels.of_ground(Tiles.Ground.SAND)), Items.Tool.SHOVEL)
+	assert_eq(Mining.tool_for(Voxels.of_block(Tiles.Block.DIAMOND_ORE)), Items.Tool.PICKAXE)
+	assert_eq(Mining.tool_for(Voxels.of_block(Tiles.Block.FLOWER_RED)), Items.Tool.NONE, "plants")
+	assert_eq(Mining.tool_for(Voxels.of_ground(Tiles.Ground.WATER)), Items.Tool.NONE)
+	# Better materials break faster (gold the fastest, as in Minecraft).
+	var last := hand
+	for tier: int in [
+		Items.Tier.WOOD,
+		Items.Tier.STONE,
+		Items.Tier.COPPER,
+		Items.Tier.IRON,
+		Items.Tier.DIAMOND,
+		Items.Tier.GOLD,
+	]:
+		var pickaxe: int = Items.tools_of_tier(tier)[0]
+		var seconds := Mining.break_seconds(stone, pickaxe)
+		assert_true(seconds < last, "%s breaks faster" % Items.name_key(pickaxe))
+		last = seconds
+	for item: int in Items.TOOLS:
+		for voxel in 256:
+			if Voxels.is_cube(voxel) or Voxels.is_object(voxel):
+				assert_true(Mining.break_seconds(voxel, item) > 0.0)
+
+
 ## Returns [server, client transport, session] with a joined player.
 func _joined() -> Array:
 	var settings := WorldSettings.create("Test", "42", WorldSettings.GameMode.SURVIVAL)

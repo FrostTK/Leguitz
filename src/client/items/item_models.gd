@@ -2,7 +2,7 @@ class_name ItemModels
 extends RefCounted
 ## Voxel models of the items that are not blocks (block items are cubes
 ## with the block's texture, see ItemLibrary): logs, lumps of ore, gems,
-## plants... A dozen voxels across, one voxel being one art pixel.
+## plants, tools... A dozen voxels across, one voxel being one art pixel.
 
 const LOGS := {
 	Items.Id.OAK_LOG: [TreeModels.OAK_BARK, ["#b98a55", "#d6a96c", "#8d6338"]],
@@ -33,6 +33,28 @@ const FLOWERS := {
 }
 const STEM := "#3f7f2a"
 const LEAF := "#5fa83d"
+## Tools: the head's colors by material (Items.Tier: dark, mid, light,
+## shine); the handle is a stick.
+const TOOL_HEADS := {
+	Items.Tier.WOOD: ["#6e4b25", "#a07a46", "#c49b5f", "#ddb97c"],
+	Items.Tier.STONE: ["#4a4a50", "#76767c", "#9b9ba1", "#bdbdc2"],
+	Items.Tier.COPPER: ["#7a3a1c", "#b9612d", "#e2894a", "#f9b67e"],
+	Items.Tier.IRON: ["#66666c", "#aeaeb4", "#d6d6da", "#fbfbfb"],
+	Items.Tier.GOLD: ["#94640f", "#dda72a", "#f6cd47", "#fff2a0"],
+	Items.Tier.DIAMOND: ["#11757b", "#35c2c6", "#86eeee", "#e2ffff"],
+}
+const HANDLE := ["#5c3b1f", "#7a5230", "#94683d"]
+const SQRT_HALF := 0.70710678
+## Across the handle, from the middle of its 2-voxel staircase.
+const HANDLE_MIDDLE := 0.3535534
+## Tools lie on the diagonal of a TOOL_SIZE grid, like the icons of block
+## games: the handle from the bottom left, the head at the top right. The
+## hand holds the handle at TOOL_GRIP (grid units), its axis TOOL_AXIS;
+## the axe's blade is on the TOOL_SIDE of it.
+const TOOL_SIZE := Vector3i(16, 16, 3)
+const TOOL_GRIP := Vector3(3.1, 2.6, 1.5)
+const TOOL_AXIS := Vector3(SQRT_HALF, SQRT_HALF, 0.0)
+const TOOL_SIDE := Vector3(-SQRT_HALF, SQRT_HALF, 0.0)
 
 
 ## The model of an item (null for block items).
@@ -45,6 +67,8 @@ static func build(item: int) -> VoxelGrid:
 		return _flakes(GEMS[item]) if item == Items.Id.LAPIS else _gem(GEMS[item])
 	if FLOWERS.has(item):
 		return _flower(FLOWERS[item])
+	if Items.TOOLS.has(item):
+		return _tool(Items.tool_of(item), TOOL_HEADS[Items.tier_of(item)])
 	match item:
 		Items.Id.STICK:
 			return _stick()
@@ -67,8 +91,92 @@ static func build(item: int) -> VoxelGrid:
 	return null
 
 
+## Thin flat items (tools, sticks): their icon faces the camera.
+static func is_flat(item: int) -> bool:
+	return Items.TOOLS.has(item) or item == Items.Id.STICK
+
+
 static func _v(hex: String, kind := VoxelGrid.Kind.SOLID) -> int:
 	return VoxelGrid.voxel(Color(hex), kind)
+
+
+## A tool on the diagonal: the handle, a stick from the bottom left, and
+## the head at the top right, three voxels deep where it holds the handle,
+## one at its points and edges.
+static func _tool(kind: int, head: Array) -> VoxelGrid:
+	var grid := VoxelGrid.new(TOOL_SIZE)
+	var handle_end: float = {Items.Tool.PICKAXE: 15.0, Items.Tool.AXE: 15.3}.get(kind, 12.0)
+	for x in TOOL_SIZE.x:
+		for y in TOOL_SIZE.y:
+			# Along the handle (u) and across it (v, > 0 on the upper left).
+			var u := (x + y + 1.0) * SQRT_HALF
+			var v := (y - x) * SQRT_HALF + HANDLE_MIDDLE
+			var shade := _tool_head(kind, u, v)
+			if shade.x >= 0:
+				for z in range(1 - shade.y, 2 + shade.y):
+					grid.set_voxel(Vector3i(x, y, z), _v(head[shade.x]))
+			elif u > 1.4 and u < handle_end and absf(v) < 0.4:
+				var dark := int(u * SQRT_HALF) % 3 == 0
+				var color: String = HANDLE[2] if v < 0.0 else HANDLE[0 if dark else 1]
+				grid.set_voxel(Vector3i(x, y, 1), _v(color))
+	return grid
+
+
+## The head of a tool at (u, v) (see _tool): [its color (index in the
+## head's colors, -1: not the head), 1 if three voxels deep else 0].
+static func _tool_head(kind: int, u: float, v: float) -> Vector2i:
+	match kind:
+		Items.Tool.PICKAXE:
+			# A curved bar across the top of the handle, pointed at both ends.
+			var reach := absf(v) / 7.6
+			var half := 1.75 - 1.15 * reach * reach
+			var d := Vector2(u - 6.4, v).length() - 9.8
+			if reach > 1.0 or absf(d) > half:
+				return Vector2i(-1, 0)
+			var shade := 1
+			if d > half * 0.35:
+				shade = 2
+			elif d < -half * 0.4:
+				shade = 0
+			if reach > 0.82 or (d > half * 0.6 and reach < 0.35):
+				shade = 3
+			return Vector2i(shade, 1 if absf(v) < 2.2 else 0)
+		Items.Tool.AXE:
+			# A blade on the upper left of the handle's top, flaring towards
+			# its edge, and a short poll on the other side.
+			if v >= 0.0 and v <= 6.3:
+				var flare := maxf(v - 1.8, 0.0) * 0.5
+				if u < 9.8 - flare or u > 14.0 + flare:
+					return Vector2i(-1, 0)
+				var shade := 1
+				if v > 5.7:
+					shade = 3
+				elif v > 5.0:
+					shade = 2
+				elif v < 1.0:
+					shade = 0
+				return Vector2i(shade, 1 if v < 2.6 else 0)
+			if v < 0.0 and v > -2.0 and u > 11.0 and u < 13.4:
+				return Vector2i(0 if v > -1.0 else 1, 1)
+		Items.Tool.SHOVEL:
+			# A spade rounded at its tip, behind a collar on the handle.
+			if u >= 11.4 and u < 12.8 and absf(v) <= 1.25:
+				return Vector2i(0, 1)
+			if u < 12.8 or u > 20.6:
+				return Vector2i(-1, 0)
+			var tip := maxf(u - 17.8, 0.0) / 2.8
+			var half := 2.85 * sqrt(maxf(1.0 - tip * tip, 0.0))
+			if absf(v) > half:
+				return Vector2i(-1, 0)
+			var shade := 1
+			if u > 20.1:
+				shade = 3
+			elif absf(v) > half - 0.75 or u > 19.6:
+				shade = 2
+			elif absf(v) < 0.4 and u < 16.5:
+				shade = 0
+			return Vector2i(shade, 0)
+	return Vector2i(-1, 0)
 
 
 ## A short log lying down: bark around, rings at both ends.

@@ -42,6 +42,12 @@ FPS_SCREEN,Screen rate (VSync),Fréquence de l'écran (VSync)
 HUD_DAY_TIME,Day %d - %s,Jour %d - %s
 HUD_FROZEN,(frozen),(figé)
 HUD_SYNCED,(synced),(synchro)
+HUD_TOOLS_WOOD,Wooden tools,Outils en bois
+HUD_TOOLS_STONE,Stone tools,Outils en pierre
+HUD_TOOLS_COPPER,Copper tools,Outils en cuivre
+HUD_TOOLS_IRON,Iron tools,Outils en fer
+HUD_TOOLS_GOLD,Golden tools,Outils en or
+HUD_TOOLS_DIAMOND,Diamond tools,Outils en diamant
 DEBUG_WORLD,World,Monde
 DEBUG_SEED,Seed,Graine
 DEBUG_POSITION,Position,Position
@@ -59,6 +65,7 @@ DEBUG_BIOME,Biome,Biome
 DEBUG_LEVEL,Level,Niveau
 DEBUG_NOCLIP,Ghost mode (F4),Mode fantôme (F4)
 DEBUG_FIRST_PERSON,First person (F5),1re personne (F5)
+DEBUG_TARGET,Target,Visé
 LAYER_SURFACE,Surface,Surface
 LAYER_UNDERGROUND,Underground %d,Souterrain %d
 MAP_TITLE,Map (debug) - %s,Carte (debug) - %s
@@ -141,4 +148,22 @@ ITEM_CACTUS,Cactus,Cactus
 ITEM_SUGAR_CANE,Sugar cane,Canne à sucre
 ITEM_LILY_PAD,Lily pad,Nénuphar
 ITEM_FERN,Fern,Fougère
+ITEM_WOODEN_PICKAXE,Wooden pickaxe,Pioche en bois
+ITEM_WOODEN_AXE,Wooden axe,Hache en bois
+ITEM_WOODEN_SHOVEL,Wooden shovel,Pelle en bois
+ITEM_STONE_PICKAXE,Stone pickaxe,Pioche en pierre
+ITEM_STONE_AXE,Stone axe,Hache en pierre
+ITEM_STONE_SHOVEL,Stone shovel,Pelle en pierre
+ITEM_COPPER_PICKAXE,Copper pickaxe,Pioche en cuivre
+ITEM_COPPER_AXE,Copper axe,Hache en cuivre
+ITEM_COPPER_SHOVEL,Copper shovel,Pelle en cuivre
+ITEM_IRON_PICKAXE,Iron pickaxe,Pioche en fer
+ITEM_IRON_AXE,Iron axe,Hache en fer
+ITEM_IRON_SHOVEL,Iron shovel,Pelle en fer
+ITEM_GOLDEN_PICKAXE,Golden pickaxe,Pioche en or
+ITEM_GOLDEN_AXE,Golden axe,Hache en or
+ITEM_GOLDEN_SHOVEL,Golden shovel,Pelle en or
+ITEM_DIAMOND_PICKAXE,Diamond pickaxe,Pioche en diamant
+ITEM_DIAMOND_AXE,Diamond axe,Hache en diamant
+ITEM_DIAMOND_SHOVEL,Diamond shovel,Pelle en diamant
 INVENTORY_TITLE,Inventory,Inventaire

@@ -3,8 +3,10 @@ extends Node3D
 ## The items lying in the world (local units, in the world root): each one
 ## turns slowly and bobs a little; picked up, it flies into the player.
 
-## Size of a lying item (local units: its model fitted in this box).
+## Size of a lying item (local units: its model fitted in this box);
+## flat ones (tools...) are bigger, or their handles would be too thin.
 const SIZE := 0.32
+const FLAT_SIZE := 0.5
 const BOB := 0.05
 const SPIN := 1.6
 const FOLLOW_SHARPNESS := 14.0
@@ -34,7 +36,7 @@ func spawn(id: int, item: int, count: int, at: Vector3) -> void:
 	for copy in 2 if count > 1 else 1:
 		var model := MeshInstance3D.new()
 		model.mesh = library.mesh(item)
-		var scale_to := SIZE * library.fit(item)
+		var scale_to := (FLAT_SIZE if ItemModels.is_flat(item) else SIZE) * library.fit(item)
 		model.scale = Vector3.ONE * scale_to
 		model.position = Vector3(
 			copy * 0.08, -model.mesh.get_aabb().size.y * scale_to * 0.5 + copy * 0.05, copy * 0.06

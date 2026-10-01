@@ -1,9 +1,10 @@
 class_name Items
 extends RefCounted
 ## Item registry: every item's name, stack size and the block it places,
-## and what each broken voxel gives ("every block gives something": grass
-## gives dirt, a tree its logs...). Ids are saved in inventories and in the
-## world: only append to the enum, never renumber.
+## what each broken voxel gives ("every block gives something": grass
+## gives dirt, a tree its logs...) and the tools (what each one is made
+## for and of, see Mining.break_seconds). Ids are saved in inventories and
+## in the world: only append to the enum, never renumber.
 
 enum Id {
 	NONE,
@@ -48,9 +49,56 @@ enum Id {
 	SUGAR_CANE,
 	LILY_PAD,
 	FERN,
+	WOODEN_PICKAXE,
+	WOODEN_AXE,
+	WOODEN_SHOVEL,
+	STONE_PICKAXE,
+	STONE_AXE,
+	STONE_SHOVEL,
+	COPPER_PICKAXE,
+	COPPER_AXE,
+	COPPER_SHOVEL,
+	IRON_PICKAXE,
+	IRON_AXE,
+	IRON_SHOVEL,
+	GOLDEN_PICKAXE,
+	GOLDEN_AXE,
+	GOLDEN_SHOVEL,
+	DIAMOND_PICKAXE,
+	DIAMOND_AXE,
+	DIAMOND_SHOVEL,
 }
+## What a tool is made for (Mining.tool_for: what it breaks faster).
+enum Tool { NONE, PICKAXE, AXE, SHOVEL }
+## What a tool is made of.
+enum Tier { WOOD, STONE, COPPER, IRON, GOLD, DIAMOND }
 
 const MAX_STACK := 64
+## Tools: [Tool, Tier]. They do not stack.
+const TOOLS := {
+	Id.WOODEN_PICKAXE: [Tool.PICKAXE, Tier.WOOD],
+	Id.WOODEN_AXE: [Tool.AXE, Tier.WOOD],
+	Id.WOODEN_SHOVEL: [Tool.SHOVEL, Tier.WOOD],
+	Id.STONE_PICKAXE: [Tool.PICKAXE, Tier.STONE],
+	Id.STONE_AXE: [Tool.AXE, Tier.STONE],
+	Id.STONE_SHOVEL: [Tool.SHOVEL, Tier.STONE],
+	Id.COPPER_PICKAXE: [Tool.PICKAXE, Tier.COPPER],
+	Id.COPPER_AXE: [Tool.AXE, Tier.COPPER],
+	Id.COPPER_SHOVEL: [Tool.SHOVEL, Tier.COPPER],
+	Id.IRON_PICKAXE: [Tool.PICKAXE, Tier.IRON],
+	Id.IRON_AXE: [Tool.AXE, Tier.IRON],
+	Id.IRON_SHOVEL: [Tool.SHOVEL, Tier.IRON],
+	Id.GOLDEN_PICKAXE: [Tool.PICKAXE, Tier.GOLD],
+	Id.GOLDEN_AXE: [Tool.AXE, Tier.GOLD],
+	Id.GOLDEN_SHOVEL: [Tool.SHOVEL, Tier.GOLD],
+	Id.DIAMOND_PICKAXE: [Tool.PICKAXE, Tier.DIAMOND],
+	Id.DIAMOND_AXE: [Tool.AXE, Tier.DIAMOND],
+	Id.DIAMOND_SHOVEL: [Tool.SHOVEL, Tier.DIAMOND],
+}
+## How many times faster a tool breaks what it is made for, by tier
+## (Minecraft's, copper between stone and iron; gold is the fastest but
+## will be the first to wear out once tools wear).
+const TIER_SPEED: Array[float] = [2.0, 4.0, 5.0, 6.0, 12.0, 8.0]
 
 ## Items that are blocks: the voxel they place.
 const PLACES := {
@@ -150,7 +198,33 @@ static func name_key(item: int) -> String:
 
 
 static func max_stack(item: int) -> int:
-	return MAX_STACK if is_valid(item) else 0
+	if not is_valid(item):
+		return 0
+	return 1 if TOOLS.has(item) else MAX_STACK
+
+
+## What a tool is made for (Tool.NONE for other items).
+static func tool_of(item: int) -> int:
+	return TOOLS[item][0] if TOOLS.has(item) else Tool.NONE
+
+
+## What a tool is made of (-1 for other items).
+static func tier_of(item: int) -> int:
+	return TOOLS[item][1] if TOOLS.has(item) else -1
+
+
+## How many times faster an item breaks what it is made for (1: a hand).
+static func tool_speed(item: int) -> float:
+	return TIER_SPEED[TOOLS[item][1]] if TOOLS.has(item) else 1.0
+
+
+## The tools of a tier: its pickaxe, axe and shovel.
+static func tools_of_tier(tier: int) -> Array[int]:
+	var result: Array[int] = []
+	for item: int in TOOLS:
+		if TOOLS[item][1] == tier:
+			result.append(item)
+	return result
 
 
 ## The voxel a block item places, or Voxels.AIR for other items.

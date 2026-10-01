@@ -119,18 +119,18 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   Biomes.select -> SurfaceBuilder (surface voxel, filler, vegetation) fill the columns; then
   CaveGenerator carves 3D caves under the terrain (cheese chambers, spaghetti tunnels, lakes, lava,
   ore veins), never closer than a few rows to it. Tune with `tools/render_world_map.gd`.
-- Breaking and placing: rules in `Mining` (sim, shared: reach 5 from the eye, hand breaking
-  times, what can be placed, water filling holes next to it), aiming by `VoxelRay` (DDA in local
-  units; objects are met on their body, trees on their trunk). The client's BlockInteraction aims
-  (top-down: the mouse ray through the ortho camera, taken back to local units by the root's
+- Breaking and placing: rules in `Mining` (sim, shared: reach 5 from the eye, breaking times by hand
+  and with tools, what can be placed, water filling holes next to it), aiming by `VoxelRay` (DDA in
+  local units; objects are met on their body, trees on their trunk). The client's BlockInteraction
+  aims (top-down: the mouse ray through the ortho camera, taken back to local units by the root's
   inverse; first person: the crosshair; gamepad: in front of the player), always clamped to the
-  reach sphere, draws the frame (one art pixel thick), cracks, chips and falling trees, and
-  shows each change at once (prediction). Msg.BLOCK_BREAK / BLOCK_PLACE go to the server, which
-  checks reach, what is there, room and support, changes the voxel through WorldState.set_voxel
-  (objects above go with a broken voxel) and sends BLOCK_CHANGED to players having the chunk
-  (also its answer to a refused guess). WorldView3D.voxel_changed rebuilds the chunk and the
-  neighbors whose border the voxel lies on. Left button held breaks, right click places (a right
-  drag still turns the camera), gamepad triggers; placing uses the block in hand.
+  reach sphere, draws the frame (one art pixel thick), cracks, chips and falling trees, and shows
+  each change at once (prediction). Msg.BLOCK_BREAK / BLOCK_PLACE go to the server, which checks
+  reach, what is there, room and support, changes the voxel through WorldState.set_voxel (objects
+  above go with a broken voxel) and sends BLOCK_CHANGED to players having the chunk (also its answer
+  to a refused guess). WorldView3D.voxel_changed rebuilds the chunk and the neighbors whose border
+  the voxel lies on. Left button held breaks, right click places (a right drag still turns the
+  camera), gamepad triggers; placing uses the block in hand.
 - Items (`src/sim/items/`): `Items` is the registry (ids saved: only append; name key ITEM_<ID>
   in i18n, stack size, the voxel a block item places, what each broken voxel gives: grass gives
   dirt, a tree a log per level of trunk). `Inventory` (hotbar 9 + bag 27 + the cursor's stack,
@@ -142,6 +142,16 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   Hotbar, InventoryScreen (E), DroppedItemsView, the item in hand (body and first person). Wheel
   and 1-9 pick the slot (the wheel zooms with its button held down in the top-down view, or with
   Ctrl: InputBindings.wheel_zooms), Q throws (Ctrl: the stack), shoulders on a gamepad.
+- Tools (`Items.TOOLS`: pickaxe, axe and shovel in 6 materials, `Items.Tier`; they do not stack):
+  `Mining.break_seconds(voxel, held)` divides the hand's time (`hand_seconds`, the voxel's
+  hardness) by `Items.TIER_SPEED` when the tool is the one `Mining.tool_for(voxel)` names; real
+  seconds (a player's action, not paced by the day), `Mining.BREAK_PAUSE` between two breaks.
+  Models lie on the diagonal of a 16x16 grid like block-game icons (ItemModels; flat items' icons
+  face the camera); hands hold them by `ItemModels.TOOL_GRIP` through `ItemLibrary.held_tool` (the
+  body: flat, readable from above, the wrist following `PlayerModel.strike_phase`; first person:
+  bottom right of the view, the body's copy only casts its shadow). F7 (debug) asks the server
+  for the next material's tools (Msg.DEBUG_GIVE_TOOLS, announced over the hotbar); the F3 screen
+  shows what is aimed at, its breaking time with what is in hand and the tool made for it.
 - Saves (`src/sim/save/world_storage.gd`, server side only): `user://worlds/<folder>/` holds
   world.cfg (settings, clock, weather), players/<name>.cfg and regions/r.<x>.<z>.bin (the chunks
   players changed, 32x32 per file, zstd voxels; the others are generated again). Change voxels

@@ -21,7 +21,7 @@ conventions de code ; ce fichier-ci raconte le projet.
    > Lis `CLAUDE.md` et `CLAUDE-README.md`, vérifie que le projet compile et que les tests
    > passent, puis résume-moi où on en est. Attends mon « go » avant de commencer la suite.
 
-4. Dire **« go »** : Claude reprend à la **section 5** (phase 3). Les phases suivantes se lancent
+4. Dire **« go »** : Claude reprend à la **section 5** (phase 4). Les phases suivantes se lancent
    de la même façon, une par une, chacune avec son « go ».
 
 **Manière de travailler convenue** : phase par phase ; Claude explique son plan, attend le
@@ -52,15 +52,15 @@ Les questions de goût ou les choix lourds de conséquences sont posés avant de
 | Sous terre | **Vue en coupe** : dès qu'il y a un plafond au-dessus du joueur (grotte, galerie, toit), tout ce qui dépasse sa tête est coupé, la roche coupée s'affiche en sombre. |
 | Arbres, plantes | Restent des **modèles voxel détaillés** posés dans une case (pas des troncs en blocs) : miner le pied abattra l'arbre entier. Arbres **grands, épais et tous différents** (8 versions par espèce, troncs de hauteurs et d'épaisseurs variées), **réalistes en restant en pixel art** (1 voxel = 1 pixel : troncs penchés sur racines, branches fourchues, grappes de feuilles éclairées, écorce sillonnée, mousse). **Seul le tronc bloque**, et jamais deux objets solides côte à côte : on passe toujours entre les arbres. |
 | Sauvegardes | **Dès la phase 3** (fait) : chunks modifiés + joueur, sauvegarde auto toutes les 2 min, en ouvrant le menu pause et à la fermeture (« Monde sauvegardé » s'affiche sous l'horloge) ; un seul monde en attendant l'écran titre. |
-| Contrôles (phase 3) | Clic gauche maintenu = miner, clic droit court = poser, clic droit glissé = tourner la caméra ; **molette = objet en main** (zoom en vue de dessus : molette en gardant le clic molette enfoncé, ou Ctrl+molette, et +/-), touches 1 à 9 ; manette : gâchettes miner/poser, LB/RB changer d'objet. |
-| Outils avant le craft | **Tout se mine à la main** (lentement, chaque bloc donne quelque chose) ; une touche de debug donne des outils pour tester, en attendant le craft (phase 4). |
+| Contrôles (phase 3) | Clic gauche maintenu = miner, clic droit court = poser, clic droit glissé = tourner la caméra ; **molette = objet en main** (zoom en vue de dessus : molette en gardant le clic molette enfoncé, ou Ctrl+molette, et +/-), touches 1 à 9 ; manette : gâchettes miner/poser, LB/RB changer d'objet ; F7 (debug) : outils. |
+| Outils avant le craft | **Tout se mine à la main** (lentement, chaque bloc donne quelque chose) ; les outils (pioche, hache, pelle, en 6 matériaux) minent plus vite ce pour quoi ils sont faits ; en attendant le craft (phase 4), **F7** (debug) donne les outils du matériau suivant. Fait à l'étape 3.5 (vitesses de Minecraft, temps de minage en temps réel, pas adapté au rythme du monde). |
 | Chargement | Tout ce qui est visible doit être chargé, même dézoomé au maximum sur l'écran ultra-large du propriétaire (3440×1440, fenêtré). Carte graphique du propriétaire : NVIDIA GeForce RTX 5050 (8 Go). |
 
 ---
 
 ## 3. État actuel : ce qui est fait
 
-Godot **4.7.2** (GDScript), rendu Forward+. 114 tests unitaires, lint propre.
+Godot **4.7.2** (GDScript), rendu Forward+. 118 tests unitaires, lint propre.
 
 | Phase | Contenu | Commits |
 |---|---|---|
@@ -80,8 +80,9 @@ Godot **4.7.2** (GDScript), rendu Forward+. 114 tests unitaires, lint propre.
 | 3.2 Sauvegardes | `WorldStorage` (côté serveur) : `user://worlds/world_1/` = world.cfg (réglages, horloge, météo), players/<nom>.cfg, regions/ (chunks modifiés, 32×32 par fichier, compressés) ; écriture à côté puis échange (copie .bak) ; `WorldState.set_voxel` marque le chunk à sauvegarder, chargé au lieu d'être régénéré ; sauvegarde toutes les 2 min, en pause et en quittant ; joueur remis où il était (jamais dans le sol) ; `--seed` seul = monde jetable jamais sauvegardé, `--new-world`, `--world=NOM` | `0ff00bb` |
 | 3.3 Viser, miner, poser | `Mining` (portée 5, temps à la main par bloc, règles de pose, l'eau comble les trous voisins) et `VoxelRay` (rayon voxel par voxel, troncs et plantes atteints sur leur corps) partagés ; `BlockInteraction` côté client : visée à la souris (vue de dessus), au viseur (1re personne) ou devant le joueur (manette), cadre d'un pixel du dessin, fissures (10 stades), éclats, bras qui frappe, arbres qui tombent ; prédiction locale, le serveur vérifie et diffuse `BLOCK_CHANGED` ; `--aim`, `--mine`, `--place` | `0a99322` |
 | 3.4 Objets et inventaire | Registre `Items` (41 objets traduits ; ce que donne chaque bloc : l'herbe de la terre, un arbre une bûche par niveau de tronc et des bâtons…), `Inventory` partagé (barre de 9 + sac de 27 + pile du curseur, règles de Minecraft), objets au sol (tombent, flottent, ramassés en passant, sauvegardés), modèles voxel des objets et icônes rendues hors écran, barre en bas de l'écran (nom de l'objet en main), inventaire (E : clic, clic droit = moitié/un, Maj+clic, lancer en cliquant à côté), molette et 1-9 (clic molette maintenu + molette, ou Ctrl+molette = zoom), Q pour lancer (Ctrl : la pile), LB/RB à la manette, objet tenu en main (corps et 1re personne) ; on pose le bloc en main | `7d2365d` |
+| 3.5 Outils et dureté | 18 outils (`Items.TOOLS` : pioche, hache et pelle en bois, pierre, cuivre, fer, or et diamant ; ils ne s'empilent pas), dureté de chaque bloc et outil qui lui convient (`Mining.break_seconds`, `tool_for` : la pioche pour la pierre, les minerais, la glace et la terre cuite, la pelle pour la terre, l'herbe, le sable, la neige et la boue, la hache pour les arbres et les grands champignons ; rien n'aide pour les plantes) ; vitesses de Minecraft (×2 bois, ×4 pierre, ×5 cuivre, ×6 fer, ×8 diamant, ×12 or), ¼ s entre deux blocs ; modèles voxel en diagonale comme les icônes de Minecraft (icônes face à la caméra, objets plats plus grands au sol), outil tenu par le manche (couché à plat pour se voir de dessus, le poignet frappe ; à la 1re personne en bas à droite, avec le geste) ; **F7** (debug) donne les outils du matériau suivant (annoncé au-dessus de la barre) ; ligne « Visé » de l'écran F3 (bloc, temps de minage avec l'objet en main, outil qui convient) ; une case d'inventaire se redessine quand son icône arrive | « Tools and hardness » |
 
-**Pas encore fait** (prévu) : la fin de la phase 3 (outils), craft, survie/combat, créatures, structures, agriculture, menus de départ, sons,
+**Pas encore fait** (prévu) : craft (phase 4), survie/combat, créatures, structures, agriculture, menus de départ, sons,
 mode Arcade, mobile.
 
 ---
@@ -95,8 +96,8 @@ mode Arcade, mobile.
 | Point d'entrée | `src/main.gd` (crée le serveur, le client, options de développement, captures) |
 | Serveur | `src/sim/game_server.gd` (sessions, envoi des chunks, messages, météo, temps, sauvegarde), `src/sim/save/world_storage.gd` (fichiers du monde sauvegardé) |
 | Monde | `src/sim/world/` (`voxels.gd` : ids et propriétés des voxels ; `chunk_data.gd` : 16×16×128 voxels, biome et sommet du terrain par colonne ; `world_state.gd` : chunks du serveur, recherche d'un sol pour les déplacements de debug), `generation/` (climat, relief, biomes, surface → colonnes, `cave_generator.gd` : grottes 3D et minerais) |
-| Minage | `src/sim/world/mining.gd` (règles), `src/sim/world/voxel_ray.gd` (visée), `src/client/interaction/` (visée et rendu côté client : cadre, fissures, éclats, arbres qui tombent) |
-| Objets | `src/sim/items/` (`items.gd` registre et ce que donne chaque bloc, `inventory.gd`, `dropped_item.gd`), `src/client/items/` (modèles, icônes rendues hors écran, objets au sol), `src/ui/hotbar.gd`, `inventory_screen.gd`, `item_slot.gd` |
+| Minage | `src/sim/world/mining.gd` (règles, durée selon le bloc et l'outil : `break_seconds`, `tool_for`), `src/sim/world/voxel_ray.gd` (visée), `src/client/interaction/` (visée et rendu côté client : cadre, fissures, éclats, arbres qui tombent) |
+| Objets | `src/sim/items/` (`items.gd` registre, ce que donne chaque bloc, outils et leurs vitesses, `inventory.gd`, `dropped_item.gd`), `src/client/items/` (modèles, icônes rendues hors écran, objets au sol), `src/ui/hotbar.gd`, `inventory_screen.gd`, `item_slot.gd` |
 | Physique | `src/sim/physics/player_body.gd` (marche, saut, chute, plafonds, parmi les voxels), `tile_collider.gd` (déplacement parmi des boîtes d'obstacles : case entière, tronc, rocher) ; `src/sim/world/object_shapes.gd` (versions des objets, troncs, emprise au sol : partagé avec les modèles) |
 | Messages | `src/net/msg.gd` (tous les échanges client ⇄ serveur) |
 | Client | `src/client/game_client.gd` (assemble la scène 3D, entrées, caméra), `local_player.gd` |
@@ -120,7 +121,7 @@ Options de développement (après `--`) : `--seed`, `--spawn=X,Y`, `--time`, `--
 `--map`, `--weather`, `--quality`, `--hd`, `--camera=LACET,INCLINAISON`, `--hide-debug`,
 `--first-person`, `--look=INCLINAISON` (1re personne), `--dive=T` (plongée figée à T entre 0 et 1,
 pour les captures), `--new-world` (recommencer le monde sauvegardé), `--world=NOM` (un autre monde
-sauvegardé), `--aim=X,Y` (viser ce point, en unités d'écran depuis le centre), `--mine` (garder le
+sauvegardé), `--aim=X,Y` (viser ce point, en unités de l'interface depuis le centre : pixels divisés par l'échelle de l'interface, « UI x2 » dans l'écran F3), `--mine` (garder le
 bouton de minage enfoncé), `--place` (poser un bloc une fois), `--give=objet:N,...` (donner des
 objets, noms de `Items.Id` : `dirt:20,diamond:3`), `--inventory` (ouvrir l'inventaire), `--drop`
 (lancer la pile en main) (voir `src/core/dev_options.gd`). **`--seed` seul joue un monde jetable, jamais
@@ -174,6 +175,13 @@ xvfb-run -a -s "-screen 0 960x540x24" godot --path . --audio-driver Dummy --reso
 - Un script d'outil (`-s`) qui ne compile pas **bloque** sans quitter : vérifier les erreurs
   d'analyse d'abord (un `timeout` est indispensable).
 - `pkill -f motif` tue aussi le shell qui contient le motif : filtrer avec `[g]odot`.
+- Tester les commandes dans le vrai jeu : un script `-s` qui étend `SceneTree` charge
+  `res://scenes/main.tscn` (options de dev après `--`, `--seed` pour un monde jetable), attend que
+  le client ait rejoint (`find_children("*", "GameClient", true, false)`) et injecte des événements
+  avec `Input.parse_input_event` (renseigner `screen_relative` des mouvements). Si le test change
+  un réglage (zoom…), poser d'abord un `override.cfg` à la racine du projet
+  (`[application]` `config/use_custom_user_dir=true`, `config/custom_user_dir_name="LeguitzTest"`)
+  pour ne pas toucher aux réglages du propriétaire, puis l'effacer avec ce dossier.
 - Ne jamais garder de ressources dans des variables statiques (fuites à la fermeture).
 - Options de développement : passer par `Settings.override()`, jamais par les variables de
   `Settings` (sinon la prochaine sauvegarde les écrit dans les réglages du joueur).
@@ -193,45 +201,40 @@ xvfb-run -a -s "-screen 0 960x540x24" godot --path . --audio-driver Dummy --reso
 
 ---
 
-## 5. Prochaine étape au « go » : suite de la Phase 3 — Joueur et interactions
+## 5. Prochaine étape au « go » : Phase 4 — Craft
 
-But : miner, construire, ramasser et gérer des objets, comme dans Minecraft, dans le monde voxel.
-Les décisions sont prises (section 2). Découpage, une étape par « go », chacune avec tests,
-captures, commit et retour du propriétaire :
+La phase 3 (joueur et interactions : monde en voxels, sauvegardes, miner et poser, objets et
+inventaire, outils) est terminée : voir les lignes 3.1 à 3.5 de la section 3. Les bûches, minerais,
+gemmes et plantes ne se posent pas encore (seuls les blocs se posent) : les planches et les blocs
+fabriqués viennent avec le craft.
 
-1. ✅ **Monde en voxels** (voir section 3).
-2. ✅ **Sauvegardes** (voir section 3). L'inventaire s'ajoutera à l'état du joueur à l'étape 4
-   (`GameServer.player_state`).
-3. ✅ **Viser, miner, poser** (voir section 3). Fait comme prévu ci-dessous, plus : l'eau comble un
-   trou creusé à côté d'elle, les plantes posées sur un bloc cassé tombent avec lui ; en attendant
-   l'inventaire, le clic droit pose le dernier bloc cassé (de la terre au départ). Le plan suivi :
-   rayon depuis la souris dans la vue 3D (caméra orthographique, monde
-   étiré : repasser en unités locales) parcouru voxel par voxel (DDA) jusqu'au premier bloc ou objet,
-   portée ≈ 5 ; à la manette, la case devant le joueur. Contour 3D du bloc visé. Messages
-   `BLOCK_BREAK` / `BLOCK_PLACE` (client → serveur, appliqués par `WorldState.set_voxel` : le chunk
-   est alors sauvegardé), validés (portée, bloc présent, place libre,
-   pas dans le joueur), `BLOCK_CHANGED` diffusé ; le client met à jour le chunk et remaille le
-   chunk et ses voisins touchés (prédiction locale annulée si le serveur refuse). Miner prend du
-   temps (fissures dessinées sur le bloc, petits débris voxel) ; miner le pied d'un arbre l'abat.
-   Contrôles : clic gauche maintenu, clic droit court (le glissé tourne toujours la caméra).
-4. ✅ **Objets et inventaire** (voir section 3). Fait comme prévu ci-dessous ; les bûches, minerais,
-   gemmes et plantes ne se posent pas encore (planches, blocs de bois, plantations : phase 4 et
-   suivantes), seuls les blocs se posent. Le plan suivi : chaque bloc cassé donne son objet (« chaque
-   bloc donne quelque chose » : l'herbe donne de la terre…), qui remplace le « dernier bloc cassé »
-   de l'étape 3 pour poser ; registre des objets en données (id, nom traduit, pile max, type),
-   modèles voxel des objets et icônes rendues hors écran ; objets lâchés qui flottent, tournent et se
-   ramassent ; barre de 9 cases + sac de 27 (E), glisser-déposer, séparer les piles, molette et
-   1-9 pour l'objet en main (zoom : clic molette maintenu + molette, ou Ctrl+molette), Q pour lâcher ;
-   le serveur fait foi.
-5. **Outils et dureté** (prochaine étape) : temps de minage selon le bloc et l'outil (main, hache, pioche, pelle),
-   durées passées par `WorldClock.scale_duration()` si elles dépendent du temps de jeu ; touche de
-   debug donnant des outils en attendant le craft.
+But de la phase 4 : fabriquer ses objets comme dans Minecraft, avec les décisions du propriétaire
+(section 6 : **établi 4×4**, **four alimentaire** et **four d'usine**). Découpage proposé, **à
+valider avec le propriétaire avant de commencer**, une étape par « go », chacune avec tests,
+captures, commit et retour :
+
+1. **Recettes et grille 2×2** : registre de recettes en données (avec forme, sans forme), grille
+   2×2 dans l'inventaire (E) avec sa case de résultat, le serveur vérifie chaque fabrication ;
+   premières recettes : bûche → planches, planches → bâtons, l'établi ; planches de chaque bois
+   posables (nouveaux blocs, textures de `tools/gen_art.py`).
+2. **Établi 4×4** (au lieu du 3×3 de Minecraft) : bloc posé qui s'ouvre au clic droit sur une
+   grille 4×4 ; recettes des outils (les 18 existent déjà, étape 3.5) et des blocs de construction.
+3. **Usure des outils** : solidité par matériau (l'or rapide mais fragile), barre d'usure dans les
+   cases, l'outil casse ; F7 reste une touche de debug (créatif plus tard).
+4. **Coffres** : données de bloc côté serveur (un inventaire par coffre, sauvegardé avec la région),
+   ouverture au clic droit, contenu répandu quand on le casse.
+5. **Fours** : four alimentaire (nourriture seulement ; y fondre du minerai le casse, il devient
+   inutilisable) et four d'usine (le reste ; de la nourriture y ressort carbonisée) ; combustible,
+   cuisson et fonte au fil du temps (`WorldClock.scale_duration()`), lingots de cuivre, de fer et
+   d'or.
+6. **Blocs de construction** variés en voxels (planches, briques, verre, pierre taillée…).
 
 ## 6. Feuille de route détaillée (phases restantes)
 
 ### Phase 4 — Craft
-- Recettes en données (forme et sans forme), grille 2×2 dans l'inventaire, **établi** 3×3.
-- **Four** : combustible, cuisson et fonte au fil du temps (durées adaptées au rythme du monde).
+- Recettes en données (forme et sans forme), grille 2×2 dans l'inventaire, **établi** 4×4.
+- **Four alimentaire** : dédié à la nourriture (si du minerais est fondu dans ce four alors il se casse et deviens inutilisable), combustible, cuisson et fonte au fil du temps (durées adaptées au rythme du monde).
+- **Four d'usine** : dédié aux recettes autres que la nourriture (si de la nourriture est placé dans ce four alors elle ressort carbonisée), combustible, cuisson et fonte au fil du temps (durées adaptées au rythme du monde).
 - **Coffres** (stockage par bloc, données de bloc côté serveur), outils par matériau (bois,
   pierre, cuivre, fer, or, diamant…), usure.
 - Tous les objets fabriqués en 3D voxel ; blocs à poser variés (planches, briques, verre…).
@@ -326,7 +329,8 @@ pousse) : c'est pourquoi elle vient juste après.
   des yeux). Limites connues : les textures (dessinées pour la vue de dessus, sans mipmaps)
   scintillent au loin en surface ; on voit le bord du monde chargé (6 chunks) dans la brume ; pas
   encore de mains ni d'objet tenu (étape 4) ; à la manette, X bascule la vue.
-- **Le serveur ne vérifie pas encore les collisions** des déplacements (seulement la distance) :
+- **Le serveur ne vérifie pas encore les collisions** des déplacements (seulement la distance), ni
+  la durée du minage (un client pourrait casser d'un coup) :
   utiliser `PlayerBody` côté serveur avant le multijoueur.
 - **Carrés plus sombres dans l'herbe**, de la taille d'une tuile, visibles en montagne (déjà là
   avant la caméra basse) : origine à trouver (ombres, occlusion ambiante ?).

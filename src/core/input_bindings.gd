@@ -55,6 +55,8 @@ const DEPTH_UP := &"depth_up"
 const DEPTH_DOWN := &"depth_down"
 const TOGGLE_NOCLIP := &"toggle_noclip"
 const CYCLE_WEATHER := &"cycle_weather"
+## Gives the tools of the next material, until they can be crafted.
+const GIVE_TOOLS := &"give_tools"
 
 const STICK_DEADZONE := 0.25
 
@@ -106,6 +108,7 @@ static func register_defaults() -> void:
 	_bind(DEPTH_DOWN, [_key(KEY_PAGEDOWN)])
 	_bind(TOGGLE_NOCLIP, [_key(KEY_F4)])
 	_bind(CYCLE_WEATHER, [_key(KEY_F6)])
+	_bind(GIVE_TOOLS, [_key(KEY_F7)])
 
 
 ## Whether a turn of the mouse wheel zooms rather than picking the hotbar

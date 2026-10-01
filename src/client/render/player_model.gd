@@ -19,6 +19,15 @@ const TURN_SHARPNESS := 14.0
 ## Strides per tile walked, and how far the limbs swing (radians).
 const STRIDE := 0.9
 const SWING := 0.75
+## Tools are held by the handle at TOOL_HAND, the head forward, lying flat
+## (seen from above, the axe's blade outwards), a voxel of the model being
+## TOOL_SCALE of a voxel of the world; the wrist lifts the head TOOL_REST
+## (radians) at rest, and through a stroke from the first angle (arm
+## raised) to the second (striking down).
+const TOOL_HAND := Vector3(0.0, -7.5, 0.5) * VOXEL
+const TOOL_SCALE := 0.75
+const TOOL_REST := 1.0
+const TOOL_STROKE := Vector2(0.35, -0.8)
 
 var lantern := OmniLight3D.new()
 ## Set by the first-person view: the lantern is carried at the eye instead
@@ -26,10 +35,15 @@ var lantern := OmniLight3D.new()
 var lantern_override := Vector3.INF
 ## The right arm strikes again and again (breaking a block).
 var swinging := false
+## Where the right arm is in its stroke: 0 raised, 1 striking down (-1: no
+## stroke going on).
+var strike_phase := -1.0
 
 var _body := Node3D.new()
-## What the right hand holds (an item's model; see hold).
+## What the right hand holds (an item's model; see hold), and whether it
+## is a tool (held by its handle, see hold_tool).
 var _held := MeshInstance3D.new()
+var _holds_tool := false
 var _arms: Array[Node3D] = []
 var _legs: Array[Node3D] = []
 var _yaw := 0.0
@@ -62,8 +76,6 @@ func _ready() -> void:
 		_part("arm", Vector3(0, -8, 0), shoulder, material)
 		_arms.append(shoulder)
 	# In the right hand, at the end of the arm.
-	_held.position = Vector3(0, -8.5, 2) * VOXEL
-	_held.rotation.x = -0.5
 	_arms[0].add_child(_held)
 
 	lantern.top_level = true
@@ -95,10 +107,17 @@ func animate(feet: Vector3, heading: Vector2, speed: float, airborne: bool, delt
 		if airborne:
 			_legs[i].rotation.x = 0.35 * side
 			_arms[i].rotation.x = -1.1
+	strike_phase = -1.0
 	if swinging or _strike_left > 0.0:
 		_strike += delta * 13.0
 		_strike_left -= delta
 		_arms[0].rotation.x = -1.3 + sin(_strike) * 0.7
+		strike_phase = (sin(_strike) + 1.0) * 0.5
+	if _holds_tool:
+		var pitch := TOOL_REST
+		if strike_phase >= 0.0:
+			pitch = lerpf(TOOL_STROKE.x, TOOL_STROKE.y, strike_phase)
+		_held.transform = ItemLibrary.held_tool(Basis(), TOOL_HAND, pitch, TOOL_SCALE)
 	_body.position.y = absf(sin(_phase)) * _swing * VOXEL * 1.2
 	if is_inside_tree():
 		var above := global_position + Vector3(0, LANTERN_HEIGHT, 0)
@@ -113,9 +132,19 @@ func animate(feet: Vector3, heading: Vector2, speed: float, airborne: bool, delt
 ## size (local units).
 func hold(model: Mesh, size: float) -> void:
 	_held.mesh = model
+	_holds_tool = false
 	if model != null:
+		_held.rotation = Vector3(-0.5, 0.0, 0.0)
 		_held.scale = Vector3.ONE * size
-		_held.position.y = -8.5 * VOXEL - model.get_aabb().size.y * size * 0.5
+		_held.position = Vector3(
+			0.0, -8.5 * VOXEL - model.get_aabb().size.y * size * 0.5, 2 * VOXEL
+		)
+
+
+## Puts a tool in the right hand, held by its handle (see ItemLibrary.held_tool).
+func hold_tool(model: Mesh) -> void:
+	_held.mesh = model
+	_holds_tool = true
 
 
 ## One stroke of the right arm (placing a block).
@@ -123,9 +152,17 @@ func swing() -> void:
 	_strike_left = 0.25
 
 
-## Dithers the body away (0 = shown, 1 = gone; its shadow stays).
+## Dithers the body away (0 = shown, 1 = gone; its shadow stays, and so
+## does the shadow of what it holds, drawn in first person by the view).
 func set_fade(amount: float) -> void:
 	_material.set_shader_parameter("fade", amount)
+	var shadow := (
+		GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+		if amount > 0.5
+		else GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	)
+	if _held.cast_shadow != shadow:
+		_held.cast_shadow = shadow
 
 
 func _part(part: String, offset: Vector3, parent: Node3D, material: Material) -> void:

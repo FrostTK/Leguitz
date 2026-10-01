@@ -55,9 +55,9 @@ func take(slot: int, count: int) -> int:
 
 
 ## A click on a slot, Minecraft's rules: left picks a stack up, puts the
-## held one down, adds it onto the same item or swaps the two; right picks
-## half a stack up or puts one item down; shift moves the stack between
-## the hotbar and the bag.
+## held one down, adds it onto the same item or swaps the two (tools,
+## which do not stack, swap); right picks half a stack up or puts one
+## item down; shift moves the stack between the hotbar and the bag.
 func click(slot: int, right: bool, shift: bool) -> void:
 	if slot < 0 or slot >= SLOTS:
 		return
@@ -77,7 +77,10 @@ func click(slot: int, right: bool, shift: bool) -> void:
 		items[CURSOR] = items[slot]
 		counts[CURSOR] = take(slot, (counts[slot] + 1) / 2 if right else counts[slot])
 		return
-	if items[slot] == Items.Id.NONE or items[slot] == held_item:
+	if (
+		items[slot] == Items.Id.NONE
+		or (items[slot] == held_item and Items.max_stack(held_item) > 1)
+	):
 		var amount := mini(
 			1 if right else counts[CURSOR], Items.max_stack(held_item) - counts[slot]
 		)

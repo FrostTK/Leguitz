@@ -1,8 +1,9 @@
 class_name ItemIcons
 extends Node
 ## Renders the icon of every item off screen, one per frame, into the
-## ItemLibrary: its 3D model seen from above at an angle, lit from the
-## upper left, on a transparent background.
+## ItemLibrary: its 3D model seen from above at an angle (flat items, like
+## tools, turned to face it), lit from the upper left, on a transparent
+## background.
 
 const SIZE := 32
 ## The view: turned and tilted like the icons of block games.
@@ -49,14 +50,35 @@ func _render_queue() -> void:
 	while not _queue.is_empty():
 		var item: int = _queue.pop_front()
 		_model.mesh = library.mesh(item)
-		var box := _model.mesh.get_aabb()
-		# Centered, filling most of the icon whatever the item's size.
+		var flat := ItemModels.is_flat(item)
+		_model.rotation.y = VIEW_YAW if flat else 0.0
+		var box := Transform3D(_model.basis, Vector3.ZERO) * _model.mesh.get_aabb()
+		# Centered, filling most of the icon whatever the item's size (flat
+		# items fill it up to their own outline).
 		_model.position = -box.get_center()
 		var radius := box.size.length() * 0.5
 		_camera.size = radius * 2.0 * 1.04
+		if flat:
+			_camera.size = _outline_size(_model.mesh.get_aabb(), _model.basis) * 1.08
 		_camera.position = _camera.basis.z * (radius + 2.0)
 		_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
 		await RenderingServer.frame_post_draw
 		var image := _viewport.get_texture().get_image()
 		library.set_icon(item, ImageTexture.create_from_image(image))
 	_viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
+
+
+## The width or height (the larger) of a model's box, turned by `turn`,
+## as the camera sees it.
+func _outline_size(box: AABB, turn: Basis) -> float:
+	var right := _camera.basis.x
+	var up := _camera.basis.y
+	var low := Vector2.INF
+	var high := -Vector2.INF
+	for corner in 8:
+		var point := turn * box.get_endpoint(corner)
+		var seen := Vector2(point.dot(right), point.dot(up))
+		low = low.min(seen)
+		high = high.max(seen)
+	var size := high - low
+	return maxf(size.x, size.y)

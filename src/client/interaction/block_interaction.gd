@@ -4,7 +4,9 @@ extends Node
 ## target is what the mouse points at in the top-down view, what the
 ## crosshair points at in first person, and with a gamepad what is in
 ## front of the player. Holding the break button cracks the target over
-## its breaking time, then breaks it (a tree falls); the place button puts
+## its breaking time (faster with the right tool in hand, see
+## Mining.break_seconds), then breaks it (a tree falls), and after a short
+## pause goes on with what is aimed at next; the place button puts
 ## the held block against the side aimed at. Changes show at once
 ## (predicted) and go to the server, whose answer (Msg.BLOCK_CHANGED) has
 ## the last word. The block placed is the one in hand (GameClient.inventory).
@@ -28,6 +30,8 @@ var place_soon := false
 
 var _progress := 0.0
 var _breaking_cell := Vector3i.MAX
+## Seconds left before the next block starts breaking (Mining.BREAK_PAUSE).
+var _pause := 0.0
 var _chip_timer := 0.0
 ## Changes shown before the server confirmed them: cell -> voxel before.
 var _predicted: Dictionary[Vector3i, int] = {}
@@ -95,15 +99,19 @@ func stop() -> void:
 
 
 func _update_breaking(delta: float) -> void:
+	_pause = maxf(_pause - delta, 0.0)
 	if not breaking or target == null:
 		_reset_breaking()
 		return
 	if target.cell != _breaking_cell:
 		_reset_breaking()
 		_breaking_cell = target.cell
-	_progress += delta / Mining.hand_seconds(target.voxel)
 	client.player_model.swinging = true
 	_face(target.box.get_center())
+	if _pause > 0.0:
+		return
+	var seconds := Mining.break_seconds(target.voxel, client.inventory.held())
+	_progress += delta / seconds
 	if Voxels.is_cube(target.voxel):
 		_cracks.show_on(target.box, _progress)
 	_chip_timer -= delta
@@ -113,6 +121,8 @@ func _update_breaking(delta: float) -> void:
 	if _progress >= 1.0:
 		_break(target)
 		_reset_breaking()
+		if seconds > Mining.INSTANT_SECONDS:
+			_pause = Mining.BREAK_PAUSE
 
 
 func _reset_breaking() -> void:

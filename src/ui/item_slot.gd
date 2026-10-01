@@ -17,6 +17,9 @@ var library: ItemLibrary
 
 var _item := Items.Id.NONE
 var _count := 0
+## The icon drawn (icons are rendered after the game starts: redraw once
+## the item's arrives).
+var _icon: Texture2D
 
 
 func _init() -> void:
@@ -25,8 +28,10 @@ func _init() -> void:
 
 
 func show_stack(item: int, count: int, is_selected := false) -> void:
-	if item == _item and count == _count and is_selected == selected:
+	var icon := library.icon(item) if library != null else null
+	if item == _item and count == _count and is_selected == selected and icon == _icon:
 		return
+	_icon = icon
 	_item = item
 	_count = count
 	selected = is_selected

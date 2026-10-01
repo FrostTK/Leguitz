@@ -231,6 +231,8 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 			_on_map_request(session, message)
 		Msg.DEBUG_SET_WEATHER:
 			_on_debug_set_weather(session, message)
+		Msg.DEBUG_GIVE_TOOLS:
+			_on_debug_give_tools(session, message)
 		Msg.SET_VIEW_DISTANCE:
 			_on_set_view_distance(session, message)
 		Msg.BLOCK_BREAK:
@@ -532,6 +534,18 @@ func _on_debug_move_depth(session: PlayerSession, message: Dictionary) -> void:
 	session.height = found[1]
 	session.transport.send(Msg.player_teleport(session.position, session.height))
 	_stream_chunks(session, CHUNKS_SENT_PER_TICK)
+
+
+## Debug: a player gets the tools of a tier (what does not fit is thrown
+## at their feet).
+func _on_debug_give_tools(session: PlayerSession, message: Dictionary) -> void:
+	if not allow_debug_commands or not session.joined:
+		return
+	var tier := clampi(int(message.get("tier", 0)), 0, Items.Tier.size() - 1)
+	for item in Items.tools_of_tier(tier):
+		if session.inventory.add(item, 1) > 0:
+			_throw(session, item, 1)
+	session.transport.send(Msg.inventory(session.inventory))
 
 
 func _on_debug_set_weather(session: PlayerSession, message: Dictionary) -> void:

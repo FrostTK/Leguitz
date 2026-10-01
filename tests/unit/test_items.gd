@@ -58,6 +58,43 @@ func test_items_stack_up_to_a_full_stack() -> void:
 	assert_eq(full.room_for(Items.Id.STONE), 0)
 
 
+func test_tools_do_not_stack() -> void:
+	assert_eq(Items.max_stack(Items.Id.IRON_PICKAXE), 1)
+	var bag := Inventory.new()
+	assert_eq(bag.add(Items.Id.IRON_PICKAXE, 2), 0)
+	assert_eq(bag.items[1], Items.Id.IRON_PICKAXE, "one per slot")
+	assert_eq(bag.counts[0], 1)
+	bag.click(0, false, false)
+	bag.click(1, false, false)
+	assert_eq(bag.counts[1], 1, "not two in a slot")
+	assert_eq(bag.items[Inventory.CURSOR], Items.Id.IRON_PICKAXE, "swapped instead")
+	for tier in Items.Tier.size():
+		var tools := Items.tools_of_tier(tier)
+		assert_eq(tools.size(), 3, "a pickaxe, an axe and a shovel")
+		assert_eq(Items.tool_of(tools[0]), Items.Tool.PICKAXE)
+		assert_eq(Items.tool_of(tools[1]), Items.Tool.AXE)
+		assert_eq(Items.tool_of(tools[2]), Items.Tool.SHOVEL)
+		assert_eq(Items.tier_of(tools[2]), tier)
+	assert_eq(Items.tool_of(Items.Id.STICK), Items.Tool.NONE)
+	assert_eq(Items.placed_voxel(Items.Id.GOLDEN_AXE), Voxels.AIR, "tools are not placed")
+
+
+func test_every_item_has_a_model_and_tools_a_handle() -> void:
+	for item in range(1, Items.Id.size()):
+		if Items.placed_voxel(item) == Voxels.AIR:
+			var grid := ItemModels.build(item)
+			assert_true(grid != null and not grid.is_empty(), "%s looks" % Items.name_key(item))
+	var pickaxe := ItemModels.build(Items.Id.DIAMOND_PICKAXE)
+	assert_ne(pickaxe.get_voxel(Vector3i(ItemModels.TOOL_GRIP)), 0, "held by its handle")
+	var hand := Vector3(0.1, -0.4, 0.2)
+	var held := ItemLibrary.held_tool(Basis(), hand, 0.3, 0.75)
+	var size := ItemModels.TOOL_SIZE
+	var grip := (ItemModels.TOOL_GRIP - Vector3(size.x * 0.5, 0.0, size.z * 0.5)) / 16.0
+	assert_true((held * grip).is_equal_approx(hand), "the grip in the hand")
+	var handle := (held.basis * ItemModels.TOOL_AXIS).normalized()
+	assert_true(handle.z > 0.9 and handle.y > 0.2, "the handle forward, lifted a little")
+
+
 func test_clicks_move_stacks_like_minecraft() -> void:
 	var bag := Inventory.new()
 	bag.add(Items.Id.DIRT, 10)
@@ -167,6 +204,23 @@ func test_broken_blocks_drop_items_players_pick_up() -> void:
 		)
 	)
 	assert_true(said.any(func(m: Dictionary) -> bool: return m["t"] == Msg.INVENTORY))
+
+
+func test_the_debug_key_gives_tools() -> void:
+	var setup := _joined()
+	var server: GameServer = setup[0]
+	var client: LocalTransport = setup[1]
+	var session: GameServer.PlayerSession = setup[2]
+	client.send(Msg.debug_give_tools(Items.Tier.IRON))
+	server.process_messages()
+	assert_eq(session.inventory.items[0], Items.Id.IRON_PICKAXE)
+	assert_eq(session.inventory.items[1], Items.Id.IRON_AXE)
+	assert_eq(session.inventory.items[2], Items.Id.IRON_SHOVEL)
+	assert_true(client.poll().any(func(m: Dictionary) -> bool: return m["t"] == Msg.INVENTORY))
+	server.allow_debug_commands = false
+	client.send(Msg.debug_give_tools(Items.Tier.GOLD))
+	server.process_messages()
+	assert_eq(session.inventory.items[3], Items.Id.NONE, "only with debug commands")
 
 
 func test_thrown_items_are_not_picked_up_at_once() -> void:

@@ -19,6 +19,7 @@ const SELECT_SLOT := "select_slot"
 const SLOT_CLICK := "slot_click"
 const ITEM_DROP := "item_drop"
 const INVENTORY_CLOSE := "inventory_close"
+const DEBUG_GIVE_TOOLS := "debug_give_tools"
 
 ## map_request() row for a map of the surface.
 const MAP_SURFACE := -1
@@ -120,6 +121,12 @@ static func player_move(position: Vector2, facing: Vector2i, height := 0.0) -> D
 ## frozen time of day in game seconds (FROZEN); unused for SYNCED.
 static func set_time(mode: int, value: float) -> Dictionary:
 	return {"t": SET_TIME, "mode": mode, "value": value}
+
+
+## Debug: the pickaxe, axe and shovel of a tier (Items.Tier), until tools
+## can be crafted.
+static func debug_give_tools(tier: int) -> Dictionary:
+	return {"t": DEBUG_GIVE_TOOLS, "tier": tier}
 
 
 ## Debug/creative: go to the next place to stand below (-1) or above (+1).

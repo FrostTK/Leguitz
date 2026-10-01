@@ -40,7 +40,7 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 
 ![Leguitz : même montagne vue de haut (60°) puis caméra baissée (15°), joueur visible derrière un rocher, forêt sombre à 25°](docs/screenshots/phase2-camera-basse.png)
 
-### Phase 3 : joueur et interactions (en cours)
+### Phase 3 : joueur et interactions
 
 | Fonction | État |
 |---|---|
@@ -52,7 +52,7 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Sauvegarde du monde et du joueur : toutes les 2 minutes, en ouvrant le menu pause et en quittant ; on reprend là où on était, à la même heure | ✅ |
 | Viser, miner, poser des blocs : clic gauche maintenu pour miner (fissures, éclats, un arbre abattu tombe), clic droit pour poser ; à la souris en vue de dessus, au viseur à la 1re personne, à la manette | ✅ |
 | Objets et inventaire : chaque bloc cassé donne son objet (l'herbe de la terre, un arbre ses bûches…), objets en 3D voxel qui tombent au sol et se ramassent en passant, barre de 9 objets (molette, 1 à 9), inventaire de 27 cases (E), lancer (Q), objet tenu en main | ✅ |
-| Outils (hache, pioche, pelle) et dureté des blocs | à venir |
+| Outils : pioche, hache et pelle en 6 matériaux (bois, pierre, cuivre, fer, or, diamant), en 3D voxel, tenus en main en vue de dessus comme à la 1re personne ; chaque bloc a sa dureté et son outil (la pioche pour la pierre et les minerais, la pelle pour la terre et le sable, la hache pour les arbres), un meilleur matériau mine plus vite ; F7 donne des outils en attendant le craft | ✅ |
 
 ![Leguitz : le monde en voxels en surface, une grotte vue en coupe, un lac souterrain](docs/screenshots/phase3-voxels-grottes.png)
 
@@ -65,6 +65,8 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 ![Leguitz : miner un bloc (fissures), un arbre abattu qui tombe, miner sous l'eau à la 1re personne, un bloc posé](docs/screenshots/phase3-miner-poser.png)
 
 ![Leguitz : l'inventaire, la barre d'objets, une pile lancée au sol, un diamant tenu à la 1re personne](docs/screenshots/phase3-objets.png)
+
+![Leguitz : les 18 outils dans l'inventaire, un arbre abattu à la hache, une pioche en diamant à la 1re personne, miner la roche d'une grotte](docs/screenshots/phase3-outils.png)
 
 ![Biomes de Leguitz (phase 1, carte)](docs/screenshots/phase1-biomes.png)
 
@@ -132,6 +134,7 @@ du projet, puis appuyer sur F5.
 | Descendre dans la grotte suivante / remonter (debug) | Page ↓ / Page ↑ | |
 | Mode fantôme, traverse tout (debug) | F4 | |
 | Changer la météo (debug) | F6 | |
+| Donner des outils, le matériau suivant à chaque appui (debug) | F7 | |
 
 Les outils de debug seront réservés au mode Créatif quand les modes de jeu arriveront (phase 5).
 
