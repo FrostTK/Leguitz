@@ -197,8 +197,9 @@ func test_every_tile_has_an_atlas_cell() -> void:
 	assert_true(Tiles.Ground.size() <= ground_rows, "ground atlas has a row per ground")
 	for block in VoxelModels.modeled_blocks():
 		for variant in VoxelModels.VARIANTS:
-			var path := VoxelModels.block_path(block, variant)
-			assert_true(ResourceLoader.exists(path), "%s exists (tools/gen_models.gd)" % path)
+			for lod in VoxelModels.LODS:
+				var path := VoxelModels.block_path(block, variant, lod)
+				assert_true(ResourceLoader.exists(path), "%s exists (tools/gen_models.gd)" % path)
 	for part in VoxelModels.PLAYER_PARTS:
 		assert_true(ResourceLoader.exists(VoxelModels.player_path(part)), part)
 	for block: int in Tiles.CUBE_BLOCKS:

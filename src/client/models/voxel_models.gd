@@ -10,6 +10,9 @@ extends RefCounted
 ## on the art-pixel grid.
 
 const VARIANTS := 3
+## Coarser copies for far views (zoomed out) and for shadows: level n is
+## 2^n voxels per voxel.
+const LODS := 3
 const BLOCK_DIR := "res://assets/models/blocks/"
 const PLAYER_DIR := "res://assets/models/player/"
 const PLAYER_PARTS: Array[String] = ["head", "torso", "arm", "leg"]
@@ -53,9 +56,10 @@ static func modeled_blocks() -> Array[int]:
 	return result
 
 
-static func block_path(block: int, variant: int) -> String:
+static func block_path(block: int, variant: int, lod := 0) -> String:
 	var name := String(Tiles.Block.find_key(block)).to_lower()
-	return "%s%s_%d.res" % [BLOCK_DIR, name, variant]
+	var suffix := "" if lod == 0 else "_lod%d" % lod
+	return "%s%s_%d%s.res" % [BLOCK_DIR, name, variant, suffix]
 
 
 static func player_path(part: String) -> String:

@@ -15,6 +15,9 @@ var voxels := PackedInt32Array()
 ## where bending starts (the trunk below stays put).
 var sway := 0.0
 var sway_from := 0
+## Point (x, z, in voxels) the model stands centered on; negative = the
+## middle of the grid. Coarser copies keep the original's center.
+var pivot := Vector2(-1.0, -1.0)
 
 
 func _init(grid_size := Vector3i.ONE) -> void:
@@ -48,6 +51,45 @@ func get_voxel(p: Vector3i) -> int:
 func set_voxel(p: Vector3i, value: int) -> void:
 	if has(p):
 		voxels[p.x + size.x * (p.y + size.y * p.z)] = value
+
+
+## A coarser copy for far views: each factor x factor x factor block
+## becomes one voxel of its most common color, kept when enough of the
+## block is filled (thin stems and blades survive at factor 2).
+func downsampled(factor: int) -> VoxelGrid:
+	var out := VoxelGrid.new(
+		Vector3i(
+			ceili(size.x / float(factor)),
+			ceili(size.y / float(factor)),
+			ceili(size.z / float(factor))
+		)
+	)
+	out.sway = sway
+	out.sway_from = sway_from / factor
+	out.pivot = Vector2(size.x, size.z) * 0.5 / factor
+	var needed := 2 if factor <= 2 else factor * factor * factor / 10
+	for z in out.size.z:
+		for y in out.size.y:
+			for x in out.size.x:
+				var counts := {}
+				var filled := 0
+				for dz in factor:
+					for dy in factor:
+						for dx in factor:
+							var value := get_voxel(
+								Vector3i(x, y, z) * factor + Vector3i(dx, dy, dz)
+							)
+							if value != 0:
+								counts[value] = counts.get(value, 0) + 1
+								filled += 1
+				if filled < needed:
+					continue
+				var best := 0
+				for value: int in counts:
+					if best == 0 or counts[value] > counts[best]:
+						best = value
+				out.set_voxel(Vector3i(x, y, z), best)
+	return out
 
 
 func is_empty() -> bool:

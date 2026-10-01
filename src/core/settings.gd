@@ -10,6 +10,10 @@ const LANGUAGE_AUTO := "auto"
 const SUPPORTED_LANGUAGES: Array[String] = ["fr", "en"]
 const MAX_UI_SCALE := 8
 const MAX_WORLD_ZOOM := 12
+## Frame rate limits offered (0 = the screen's rate, with VSync).
+const FPS_CHOICES: Array[int] = [30, 60, 120, 144, 0]
+## While the game window is in the background.
+const BACKGROUND_FPS := 15
 
 ## "auto" follows the system language, otherwise one of SUPPORTED_LANGUAGES.
 var language := LANGUAGE_AUTO
@@ -24,6 +28,9 @@ var graphics_quality := 2
 ## Renders the 3D world at full screen resolution instead of one texel per
 ## art pixel: smoother lighting and shadows, same pixel-art textures.
 var hd_rendering := false
+## Frames per second at most (0 = the screen's refresh rate): no need to
+## keep the graphics card at full power for a calm pixel-art world.
+var max_fps := 60
 
 
 func _ready() -> void:
@@ -31,6 +38,7 @@ func _ready() -> void:
 	InputBindings.register_defaults()
 	load_settings()
 	apply_language()
+	apply_max_fps()
 	get_tree().root.size_changed.connect(apply_ui_scale)
 	apply_ui_scale()
 
@@ -78,6 +86,25 @@ func set_hd_rendering(value: bool) -> void:
 	changed.emit(&"hd_rendering")
 
 
+func set_max_fps(value: int) -> void:
+	max_fps = maxi(value, 0)
+	apply_max_fps()
+	save_settings()
+	changed.emit(&"max_fps")
+
+
+func apply_max_fps() -> void:
+	Engine.max_fps = max_fps
+
+
+func _notification(what: int) -> void:
+	# Slow down while the window is in the background.
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		Engine.max_fps = BACKGROUND_FPS
+	elif what == NOTIFICATION_APPLICATION_FOCUS_IN:
+		apply_max_fps()
+
+
 func set_show_debug(value: bool) -> void:
 	show_debug = value
 	save_settings()
@@ -109,6 +136,7 @@ func load_settings() -> void:
 	view_distance = file.get_value("display", "view_distance", view_distance)
 	graphics_quality = file.get_value("display", "graphics_quality", graphics_quality)
 	hd_rendering = file.get_value("display", "hd_rendering", hd_rendering)
+	max_fps = file.get_value("display", "max_fps", max_fps)
 	show_debug = file.get_value("debug", "show_debug", show_debug)
 
 
@@ -120,6 +148,7 @@ func save_settings() -> void:
 	file.set_value("display", "view_distance", view_distance)
 	file.set_value("display", "graphics_quality", graphics_quality)
 	file.set_value("display", "hd_rendering", hd_rendering)
+	file.set_value("display", "max_fps", max_fps)
 	file.set_value("debug", "show_debug", show_debug)
 	var error := file.save(PATH)
 	if error != OK:

@@ -39,6 +39,10 @@ xvfb-run -a godot --path . --audio-driver Dummy --resolution 1280x720 -- --seed=
   saved by `godot --headless --path . -s res://tools/gen_models.gd` into `assets/models/` (commit
   the .res files; rerun after changing a model). Every non-cube block needs a model (tested).
   `voxel.gdshader` handles wind, wetness, leaf backlight and the see-through hole around the player.
+  Each model also has coarser copies (`_lod1` = 2 voxels per voxel, `_lod2` = 4) used when the
+  ground in view is large (WorldView3D.lod_for_view); lod1 casts its shadows with lod2.
+- Keep the GPU cool: Settings.max_fps (default 60, 15 in the background), the world SubViewport
+  stops rendering while paused, and the client only asks for the chunks its view needs.
 - Movement is Minecraft-like (`src/sim/physics/player_body.gd`, shared client/server): heights in
   levels from `ChunkData.top_height()` (INF = cannot stand there), walk up to 0.2, jump 1.25,
   fall off edges. No stairs: terrain levels rise one at a time so they can be climbed.

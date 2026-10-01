@@ -210,6 +210,7 @@ func _update_view(delta: float) -> void:
 	weather_effects.view_size = world_viewport.view_size()
 	lighting.reference_height = (root * focus).y
 	lighting.camera_distance = world_viewport.camera_distance
+	world_view.set_lod(WorldView3D.lod_for_view(world_viewport.ground_size()))
 	_update_view_distance()
 
 
@@ -226,12 +227,14 @@ func is_view_complete() -> bool:
 func pause() -> void:
 	debug_map.close()
 	get_tree().paused = true
+	world_viewport.set_paused(true)
 	pause_menu.open()
 
 
 func resume() -> void:
 	pause_menu.close()
 	get_tree().paused = false
+	world_viewport.set_paused(false)
 
 
 func _unhandled_input(event: InputEvent) -> void:

@@ -29,7 +29,8 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Météo : pluie, orage avec éclairs, neige selon le biome, sol mouillé, ombres des nuages | ✅ |
 | Ambiance : brume du matin, brume dans les vallées, lucioles, feuilles au vent, poussière des grottes | ✅ |
 | Eau animée (vagues, écume sur les rives, reflets), lave animée | ✅ |
-| Qualité graphique Bas / Moyen / Élevé / Ultra et rendu HD dans le menu pause | ✅ |
+| Qualité graphique Bas / Moyen / Élevé / Ultra, rendu HD et limite d'images par seconde dans le menu pause | ✅ |
+| Modèles simplifiés quand on dézoome très loin, rendu suspendu pendant la pause | ✅ |
 | Saut d'un bloc, chutes, blocs de pierre sur lesquels on peut monter (comme Minecraft) | ✅ |
 
 ![Leguitz : îles aux champignons (rendu HD), badlands, forêt sombre, grottes](docs/screenshots/phase2-3d-meteo-biomes.png)

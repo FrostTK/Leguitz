@@ -8,8 +8,9 @@ extends RefCounted
 ## - COLOR.rgb: sRGB color, COLOR.a: ambient occlusion (1 = open),
 ## - UV.x: how much the vertex bends in the wind, UV.y: 1 for foliage
 ##   (lets light through).
-## Positions are in local units (1 voxel = 1/16), standing on y = 0,
-## centered on x and z.
+## Positions are in local units (1 voxel = 1/16, times `scale` for the
+## coarser copies of far views), standing on y = 0, centered on the grid's
+## pivot.
 
 const VOXEL := 1.0 / 16.0
 ## Light left in a corner by 0..3 occluding neighbors.
@@ -22,21 +23,29 @@ class Builder:
 	var vertices := PackedVector3Array()
 	var normals := PackedVector3Array()
 	var colors := PackedColorArray()
+	## World size of one voxel and the point the model is centered on.
+	var voxel := VOXEL
+	var offset := Vector3.ZERO
 	var uvs := PackedVector2Array()
 	var indices := PackedInt32Array()
 
 
-static func build(grid: VoxelGrid) -> ArrayMesh:
+static func build(grid: VoxelGrid, scale := 1) -> ArrayMesh:
 	var mesh := ArrayMesh.new()
-	var arrays := build_arrays(grid)
+	var arrays := build_arrays(grid, scale)
 	if not arrays.is_empty():
 		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	return mesh
 
 
 ## Surface arrays of a grid ([] when it has no visible face).
-static func build_arrays(grid: VoxelGrid) -> Array:
+static func build_arrays(grid: VoxelGrid, scale := 1) -> Array:
 	var out := Builder.new()
+	out.voxel = VOXEL * scale
+	if grid.pivot.x >= 0.0:
+		out.offset = Vector3(grid.pivot.x, 0.0, grid.pivot.y)
+	else:
+		out.offset = Vector3(grid.size.x * 0.5, 0.0, grid.size.z * 0.5)
 	for axis in 3:
 		for direction in [-1, 1]:
 			_mesh_direction(grid, axis, direction, out)
@@ -150,7 +159,6 @@ static func _emit(
 	]
 	var normal := Vector3.ZERO
 	normal[axis] = direction
-	var offset := Vector3(grid.size.x * 0.5, 0.0, grid.size.z * 0.5)
 	var start := out.vertices.size()
 	var ao := PackedFloat32Array()
 	for i in 4:
@@ -159,7 +167,7 @@ static func _emit(
 		p[axis] = plane
 		p[u_axis] = c.x
 		p[v_axis] = c.y
-		out.vertices.append((p - offset) * VOXEL)
+		out.vertices.append((p - out.offset) * out.voxel)
 		out.normals.append(normal)
 		var light: float = AO[(key >> (i * 2)) & 3]
 		ao.append(light)

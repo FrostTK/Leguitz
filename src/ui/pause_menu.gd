@@ -36,6 +36,7 @@ var _language := OptionButton.new()
 var _zoom := OptionButton.new()
 var _quality := OptionButton.new()
 var _hd := CheckButton.new()
+var _max_fps := OptionButton.new()
 var _updating := false
 
 
@@ -109,6 +110,11 @@ func _ready() -> void:
 	_hd.toggled.connect(_on_hd_toggled)
 	box.add_child(_row("SETTING_HD", _hd))
 
+	for fps in Settings.FPS_CHOICES:
+		_max_fps.add_item("")
+	_max_fps.item_selected.connect(_on_max_fps_selected)
+	box.add_child(_row("SETTING_MAX_FPS", _max_fps))
+
 	var quit := Button.new()
 	quit.text = "MENU_QUIT"
 	quit.pressed.connect(quit_requested.emit)
@@ -142,6 +148,7 @@ func refresh_from_state() -> void:
 	_zoom.select(maxi(0, ZOOM_CHOICES.find(Settings.world_zoom)))
 	_quality.select(Settings.graphics_quality)
 	_hd.button_pressed = Settings.hd_rendering
+	_max_fps.select(maxi(0, Settings.FPS_CHOICES.find(Settings.max_fps)))
 	_updating = false
 	_refresh_dynamic_texts()
 
@@ -186,6 +193,11 @@ func _on_quality_selected(index: int) -> void:
 		Settings.set_graphics_quality(index)
 
 
+func _on_max_fps_selected(index: int) -> void:
+	if not _updating:
+		Settings.set_max_fps(Settings.FPS_CHOICES[index])
+
+
 func _on_hd_toggled(enabled: bool) -> void:
 	if not _updating:
 		Settings.set_hd_rendering(enabled)
@@ -197,6 +209,9 @@ func _refresh_dynamic_texts() -> void:
 	for i in ZOOM_CHOICES.size():
 		var zoom: int = ZOOM_CHOICES[i]
 		_zoom.set_item_text(i, tr("ZOOM_AUTO") if zoom == 0 else "x%d" % zoom)
+	for i in Settings.FPS_CHOICES.size():
+		var fps: int = Settings.FPS_CHOICES[i]
+		_max_fps.set_item_text(i, tr("FPS_SCREEN") if fps == 0 else str(fps))
 	var mode := _time_mode.selected
 	_day_length_row.visible = mode == WorldClock.Mode.NORMAL
 	_frozen_row.visible = mode == WorldClock.Mode.FROZEN

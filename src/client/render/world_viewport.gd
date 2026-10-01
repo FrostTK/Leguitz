@@ -99,6 +99,20 @@ func ground_size() -> Vector2:
 	return Vector2(size.x, depth)
 
 
+## While the game is paused the world does not move: keep showing the
+## last frame instead of drawing it again and again.
+func set_paused(paused: bool) -> void:
+	viewport.render_target_update_mode = (
+		SubViewport.UPDATE_DISABLED if paused else SubViewport.UPDATE_ALWAYS
+	)
+
+
+## Draws one frame while paused (a setting changed the look).
+func request_frame() -> void:
+	if viewport.render_target_update_mode == SubViewport.UPDATE_DISABLED:
+		viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
+
+
 ## Turns the camera around the target (radians).
 func orbit(delta_yaw: float, delta_pitch: float) -> void:
 	yaw = wrapf(yaw + delta_yaw, -PI, PI)
@@ -164,3 +178,4 @@ func _process(_delta: float) -> void:
 func _on_settings_changed(key: StringName) -> void:
 	if key in [&"world_zoom", &"hd_rendering"]:
 		refresh_size()
+	request_frame()

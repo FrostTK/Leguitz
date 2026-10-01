@@ -35,6 +35,8 @@ QUALITY_MEDIUM,Medium,Moyen
 QUALITY_HIGH,High,Élevé
 QUALITY_ULTRA,Ultra,Ultra
 SETTING_HD,HD rendering,Rendu HD
+SETTING_MAX_FPS,Max frame rate,Images par seconde max
+FPS_SCREEN,Screen rate (VSync),Fréquence de l'écran (VSync)
 HUD_DAY_TIME,Day %d - %s,Jour %d - %s
 HUD_FROZEN,(frozen),(figé)
 HUD_SYNCED,(synced),(synchro)

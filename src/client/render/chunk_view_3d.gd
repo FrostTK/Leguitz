@@ -37,6 +37,8 @@ var _data_image := Image.create(
 )
 var _data_texture := ImageTexture.create_from_image(_data_image)
 var _props: Array[MultiMeshInstance3D] = []
+## (block, variant) shown by each prop node in use.
+var _prop_keys: Array[Vector2i] = []
 var _lava_lights: Array[OmniLight3D] = []
 ## Local positions of the lava lights in use (lights do not support the
 ## root's stretch, so they are placed in world space).
@@ -74,7 +76,7 @@ func build_terrain(chunk: ChunkData, neighbor: Callable) -> void:
 ## Places the 3D props (trees, plants, rocks...) of the chunk, grouped by
 ## model. Each gets a variant, a quarter turn and a slight tint from its
 ## tile, so the same seed always grows the same forest.
-func build_props(chunk: ChunkData, library: PropLibrary) -> void:
+func build_props(chunk: ChunkData, library: PropLibrary, lod: int) -> void:
 	var groups: Dictionary[Vector2i, Array] = {}
 	var origin := Coords.chunk_origin_tile(coord)
 	for index in GameConst.CHUNK_AREA:
@@ -100,13 +102,15 @@ func build_props(chunk: ChunkData, library: PropLibrary) -> void:
 			groups[key] = []
 		groups[key].append([Transform3D(turn, foot), custom])
 	var used := 0
+	_prop_keys.clear()
 	for key: Vector2i in groups:
 		var node := _prop_node(used, library)
 		used += 1
+		_prop_keys.append(key)
 		var entries: Array = groups[key]
 		var multimesh := node.multimesh
 		multimesh.instance_count = 0
-		multimesh.mesh = library.mesh(key.x, key.y)
+		multimesh.mesh = library.mesh(key.x, key.y, lod)
 		multimesh.instance_count = entries.size()
 		for n in entries.size():
 			multimesh.set_instance_transform(n, entries[n][0])
@@ -121,6 +125,13 @@ func build_props(chunk: ChunkData, library: PropLibrary) -> void:
 		_props[i].visible = false
 		_props[i].multimesh.instance_count = 0
 	_place_lava_lights(chunk)
+
+
+## Swaps the props for their finer or coarser copies (zoom changed).
+func set_props_lod(library: PropLibrary, lod: int) -> void:
+	for i in _prop_keys.size():
+		var key := _prop_keys[i]
+		_props[i].multimesh.mesh = library.mesh(key.x, key.y, lod)
 
 
 func _prop_node(index: int, library: PropLibrary) -> MultiMeshInstance3D:

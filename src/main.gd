@@ -55,7 +55,7 @@ func _process(delta: float) -> void:
 		while _tick_accumulator >= GameConst.TICK_DELTA:
 			_tick_accumulator -= GameConst.TICK_DELTA
 			server.tick()
-	if not _dev_actions_started and client.is_ready_to_play():
+	if not _dev_actions_started and client.is_view_complete():
 		_dev_actions_started = true
 		_start_dev_actions()
 	if not dev.screenshot_path.is_empty():

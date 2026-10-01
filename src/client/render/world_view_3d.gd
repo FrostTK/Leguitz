@@ -11,12 +11,17 @@ const FACE_ATLAS := preload("res://assets/textures/tiles/face_atlas.png")
 const FACE_NORMALS := preload("res://assets/textures/tiles/face_atlas_n.png")
 const FACE_EMISSION := preload("res://assets/textures/tiles/face_atlas_e.png")
 const MAX_POOLED_VIEWS := 48
+## Ground area (tiles²) up to which props keep full detail, then half.
+const FULL_DETAIL_AREA := 8000.0
+const HALF_DETAIL_AREA := 26000.0
 ## Milliseconds per frame spent rebuilding chunk meshes.
 const REBUILD_BUDGET_MS := 6
 
 var client_world: ClientWorld
 ## Chunk the camera is over: pending builds closest to it go first.
 var focus := Vector2i.ZERO
+## Level of detail of the props (0 = full voxels, see set_lod).
+var lod := 0
 var top_material := ShaderMaterial.new()
 var face_material := ShaderMaterial.new()
 var props := PropLibrary.new()
@@ -81,6 +86,26 @@ func visible_chunk_count() -> int:
 	return _views.size()
 
 
+## Zoomed far out, the props use coarser copies: far fewer triangles
+## where there are many more of them on screen.
+func set_lod(value: int) -> void:
+	if value == lod:
+		return
+	lod = value
+	for view: ChunkView3D in _views.values():
+		view.set_props_lod(props, lod)
+
+
+## Level of detail for the ground in view (tiles x tiles): full voxels
+## for normal views, coarser copies when zoomed far out on a big screen
+## (that many props at full detail would be tens of millions of triangles).
+static func lod_for_view(ground: Vector2) -> int:
+	var area := ground.x * ground.y
+	if area <= FULL_DETAIL_AREA:
+		return 0
+	return 1 if area <= HALF_DETAIL_AREA else 2
+
+
 ## Re-places the world-space lights after the world root turned.
 func place_lights() -> void:
 	for view: ChunkView3D in _views.values():
@@ -98,7 +123,7 @@ func _process(_delta: float) -> void:
 		if view != null and chunk != null:
 			view.build_terrain(chunk, _chunk)
 			if full:
-				view.build_props(chunk, props)
+				view.build_props(chunk, props, lod)
 			view.visible = true
 		if Time.get_ticks_msec() - started > REBUILD_BUDGET_MS:
 			break
