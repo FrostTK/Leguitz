@@ -1,10 +1,13 @@
 class_name GameClient
-extends Node2D
+extends Node
 ## Everything the player sees and controls. It only knows the world
 ## through messages from the server, which keeps solo and multiplayer on
-## the same code path.
+## the same code path. The world is drawn in 3D (see WorldViewport).
 
 signal quit_requested
+
+## Point the camera looks at, above the player's feet (units).
+const CAMERA_TARGET_OFFSET := Vector3(0.0, 1.5, 0.0)
 
 var transport: Transport
 var world := ClientWorld.new()
@@ -12,11 +15,15 @@ var clock := WorldClock.new()
 var world_info := {}
 var player_id := -1
 var joined := false
+var local_player := LocalPlayer.new()
 
+var world_viewport := WorldViewport.new()
+var world_view := WorldView3D.new()
+var player_view := PlayerView3D.new()
 var lighting := LightingController.new()
 var weather_effects := WeatherEffects.new()
-var clouds := CloudShadows.new()
-var sun := DirectionalLight2D.new()
+var clouds := CloudShadows3D.new()
+var sun := DirectionalLight3D.new()
 var environment := Environment.new()
 
 var debug_overlay := DebugOverlay.new()
@@ -24,22 +31,19 @@ var debug_map := DebugMap.new()
 var hud_clock := HudClock.new()
 var pause_menu := PauseMenu.new()
 var _loading_label := Label.new()
+## Set on spawn and teleport: place the view without smoothing once the
+## ground under the player is loaded.
+var _needs_snap := false
 
-@onready var world_view: WorldView = $WorldView
-@onready var local_player: LocalPlayer = $WorldView/Entities/LocalPlayer
-@onready var camera: CameraRig = $Camera
-@onready var ambient: CanvasModulate = $Ambient
 @onready var _ui_root: Control = $UI/Root
 
 
 func _ready() -> void:
 	# Keep receiving server messages while paused; the world itself pauses.
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	for node: Node in [world_view, camera]:
-		node.process_mode = Node.PROCESS_MODE_PAUSABLE
 	local_player.client_world = world
 	world_view.client_world = world
-	_setup_rendering()
+	_setup_world()
 	hud_clock.clock = clock
 	pause_menu.clock = clock
 	debug_overlay.client = self
@@ -60,43 +64,32 @@ func _ready() -> void:
 	debug_map.map_requested.connect(_on_map_requested)
 
 
-func _setup_rendering() -> void:
-	# Glow (bloom) needs HDR 2D, enabled in the project settings.
-	environment.background_mode = Environment.BG_CANVAS
-	environment.glow_enabled = true
-	environment.glow_intensity = 0.9
-	environment.glow_strength = 1.0
-	environment.glow_bloom = 0.02
-	environment.glow_hdr_threshold = 1.0
-	environment.glow_blend_mode = Environment.GLOW_BLEND_MODE_ADDITIVE
+## Builds the 3D scene: terrain, player, sky light, environment, weather.
+func _setup_world() -> void:
+	world_viewport.process_mode = Node.PROCESS_MODE_PAUSABLE
+	add_child(world_viewport)
+	move_child(world_viewport, 0)
+	var root := world_viewport.world_root()
 	var world_environment := WorldEnvironment.new()
 	world_environment.environment = environment
-	add_child(world_environment)
-
-	sun.energy = 0.0
-	sun.blend_mode = Light2D.BLEND_MODE_ADD
-	add_child(sun)
-
-	clouds.camera = camera
-	add_child(clouds)
-	move_child(clouds, world_view.get_index() + 1)
-
-	weather_effects.camera = camera
+	root.add_child(world_environment)
+	root.add_child(sun)
+	root.add_child(world_view)
+	root.add_child(player_view)
+	root.add_child(clouds)
 	weather_effects.client_world = world
-	weather_effects.player = local_player
-	add_child(weather_effects)
-	weather_effects.attach_glowing($Emission/Root)
+	weather_effects.local_player = local_player
+	root.add_child(weather_effects)
 
+	lighting.process_mode = Node.PROCESS_MODE_PAUSABLE
 	lighting.clock = clock
 	lighting.client_world = world
-	lighting.world_view = world_view
 	lighting.weather = weather_effects
 	lighting.clouds = clouds
-	lighting.canvas_modulate = ambient
 	lighting.sun = sun
-	lighting.lantern = local_player.lantern
+	lighting.lantern = player_view.lantern
 	lighting.environment = environment
-	lighting.player_shadow.connect(local_player.set_sun_shadow)
+	lighting.camera_distance = WorldViewport.CAMERA_DISTANCE
 	add_child(lighting)
 	lighting.apply_quality(Settings.graphics_quality)
 	Settings.changed.connect(_on_settings_changed)
@@ -120,7 +113,27 @@ func _process(delta: float) -> void:
 		_handle_message(message)
 	if not get_tree().paused:
 		clock.advance(delta)
+		local_player.step(delta)
+		_update_view(delta)
 	_loading_label.visible = not is_ready_to_play()
+
+
+func _update_view(delta: float) -> void:
+	if not joined:
+		return
+	var height := ChunkMesher.height_at(world, local_player.position)
+	if _needs_snap and world.has_tile_chunk(local_player.current_tile()):
+		_needs_snap = false
+		player_view.place(local_player.position, height)
+		world_viewport.target = player_view.position + CAMERA_TARGET_OFFSET
+		world_viewport.snap_to_target()
+	player_view.update_from(local_player.position, height, local_player.facing, delta)
+	var target := player_view.position + CAMERA_TARGET_OFFSET
+	world_viewport.target = target
+	clouds.target = target
+	weather_effects.target = target
+	weather_effects.view_size = world_viewport.view_size()
+	lighting.reference_height = player_view.position.y
 
 
 ## True once the player has spawned and the ground under them is loaded.
@@ -156,6 +169,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed(InputBindings.CYCLE_WEATHER):
 		var next := (weather_effects.weather.kind + 1) % Weather.Kind.size()
 		transport.send(Msg.debug_set_weather(next))
+	elif event.is_action_pressed(InputBindings.TOGGLE_NOCLIP):
+		local_player.noclip = not local_player.noclip
 	else:
 		return
 	get_viewport().set_input_as_handled()
@@ -168,8 +183,8 @@ func _handle_message(message: Dictionary) -> void:
 			world_info = message["world"]
 			world.layer = message["layer"]
 			local_player.spawn_at(message["spawn"])
-			camera.snap_to_target()
 			joined = true
+			_needs_snap = true
 		Msg.CHUNK_DATA:
 			var chunk := ChunkData.from_dict(message["chunk"])
 			if chunk.layer == world.layer:
@@ -201,7 +216,7 @@ func _teleport(position: Vector2, layer: int) -> void:
 		world.layer = layer
 		debug_map.close()
 	local_player.apply_correction(position)
-	camera.snap_to_target()
+	_needs_snap = true
 
 
 func _on_time_settings_requested(mode: int, value: float) -> void:

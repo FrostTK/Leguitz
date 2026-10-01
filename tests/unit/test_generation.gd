@@ -195,9 +195,8 @@ func test_threaded_generation_matches_sync() -> void:
 func test_every_tile_has_an_atlas_cell() -> void:
 	var ground_rows := TerrainRenderer.GROUND_ATLAS.get_height() / GameConst.TILE_SIZE
 	assert_true(Tiles.Ground.size() <= ground_rows, "ground atlas has a row per ground")
-	var block_size := TileAtlas.BLOCK_TEXTURE.get_size() / GameConst.TILE_SIZE
 	for block in range(1, Tiles.Block.size()):
 		var cell := TileAtlas.block_cell(block)
-		assert_true(cell.x + 1 < block_size.x and cell.y + 2 < block_size.y, "block %d" % block)
+		assert_true(TileAtlas.block_rows() > cell.y, "block %d has an atlas cell" % block)
 	var wall_rows := TerrainRenderer.WALL_ATLAS.get_height() / GameConst.TILE_SIZE
 	assert_eq(wall_rows, TileAtlas.WALL_KINDS.size(), "one wall atlas row per wall kind")

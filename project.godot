@@ -51,5 +51,19 @@ renderer/rendering_method.mobile="mobile"
 textures/canvas_textures/default_texture_filter=0
 textures/vram_compression/import_etc2_astc=true
 2d/snap/snap_2d_transforms_to_pixel=true
-viewport/hdr_2d=true
 environment/defaults/default_clear_color=Color(0.086, 0.078, 0.11, 1)
+
+[shader_globals]
+
+weather_wetness={
+"type": "float",
+"value": 0.0
+}
+weather_rain={
+"type": "float",
+"value": 0.0
+}
+weather_wind={
+"type": "vec2",
+"value": Vector2(1, 0.25)
+}

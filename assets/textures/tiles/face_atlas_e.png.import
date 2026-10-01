@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://jgh0a0ng3tcd"
-path="res://.godot/imported/cliff_atlas_n.png-16210ae26264d14b0860be5ff4533899.ctex"
+uid="uid://c65sdbv1avaf5"
+path="res://.godot/imported/face_atlas_e.png-e48b8a4a84103be549764c32075ce66d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/textures/tiles/cliff_atlas_n.png"
-dest_files=["res://.godot/imported/cliff_atlas_n.png-16210ae26264d14b0860be5ff4533899.ctex"]
+source_file="res://assets/textures/tiles/face_atlas_e.png"
+dest_files=["res://.godot/imported/face_atlas_e.png-e48b8a4a84103be549764c32075ce66d.ctex"]
 
 [params]
 

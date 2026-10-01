@@ -29,6 +29,12 @@ LANGUAGE_FR,Français,Français
 LANGUAGE_EN,English,English
 SETTING_ZOOM,Zoom,Zoom
 ZOOM_AUTO,Automatic,Automatique
+SETTING_QUALITY,Graphics,Graphismes
+QUALITY_LOW,Low,Bas
+QUALITY_MEDIUM,Medium,Moyen
+QUALITY_HIGH,High,Élevé
+QUALITY_ULTRA,Ultra,Ultra
+SETTING_HD,HD rendering,Rendu HD
 HUD_DAY_TIME,Day %d - %s,Jour %d - %s
 HUD_FROZEN,(frozen),(figé)
 HUD_SYNCED,(synced),(synchro)

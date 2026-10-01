@@ -1,13 +1,11 @@
 class_name TerrainRenderer
 extends RefCounted
-## Owns the shared terrain materials and turns chunks into the small data
-## textures the terrain shader reads (see terrain_common.gdshaderinc).
+## Terrain tables shared by the terrain shaders (ground priorities, kinds,
+## water colors, cliff materials) and the chunk data textures they read
+## (see terrain3d_top.gdshader).
 
 enum Kind { LAND, WATER, LAVA, ICE }
 enum CliffMaterial { DIRT, STONE, SAND, SNOW }
-
-const TERRAIN_SHADER := preload("res://src/client/shaders/terrain.gdshader")
-const EMISSION_SHADER := preload("res://src/client/shaders/terrain_emission.gdshader")
 
 const DATA_SIZE := GameConst.CHUNK_SIZE + 2
 
@@ -16,8 +14,6 @@ const GROUND_NORMALS := preload("res://assets/textures/tiles/ground_atlas_n.png"
 const WALL_ATLAS := preload("res://assets/textures/tiles/wall_atlas.png")
 const WALL_NORMALS := preload("res://assets/textures/tiles/wall_atlas_n.png")
 const WALL_EMISSION := preload("res://assets/textures/tiles/wall_atlas_e.png")
-const CLIFF_ATLAS := preload("res://assets/textures/tiles/cliff_atlas.png")
-const CLIFF_NORMALS := preload("res://assets/textures/tiles/cliff_atlas_n.png")
 
 ## Which ground spreads over which at their borders (higher wins).
 const PRIORITY := {
@@ -74,23 +70,6 @@ const SAND_GROUNDS := {
 }
 const SNOW_GROUNDS := {Tiles.Ground.SNOW: true, Tiles.Ground.ICE: true}
 const MAX_GROUNDS := 32
-
-var terrain_material := ShaderMaterial.new()
-var emission_material := ShaderMaterial.new()
-
-
-func _init() -> void:
-	terrain_material.shader = TERRAIN_SHADER
-	emission_material.shader = EMISSION_SHADER
-	for material in [terrain_material, emission_material]:
-		_configure(material)
-
-
-func set_weather(wetness: float, rain: float, wind: Vector2) -> void:
-	for material in [terrain_material, emission_material]:
-		material.set_shader_parameter("wetness", wetness)
-		material.set_shader_parameter("rain", rain)
-		material.set_shader_parameter("wind", wind)
 
 
 static func cliff_material(ground: int) -> int:
@@ -150,25 +129,20 @@ static func has_emission(chunk: ChunkData) -> bool:
 	return false
 
 
-func _configure(material: ShaderMaterial) -> void:
+## Sets the atlases and ground tables of a terrain top material.
+static func configure_top(material: ShaderMaterial) -> void:
 	material.set_shader_parameter("ground_atlas", GROUND_ATLAS)
 	material.set_shader_parameter("ground_normals", GROUND_NORMALS)
 	material.set_shader_parameter("wall_atlas", WALL_ATLAS)
 	material.set_shader_parameter("wall_normals", WALL_NORMALS)
 	material.set_shader_parameter("wall_emission", WALL_EMISSION)
-	material.set_shader_parameter("cliff_atlas", CLIFF_ATLAS)
-	material.set_shader_parameter("cliff_normals", CLIFF_NORMALS)
 	var priority := PackedInt32Array()
 	var kind := PackedInt32Array()
-	var cliffs := PackedInt32Array()
 	var water := PackedColorArray()
 	for ground in MAX_GROUNDS:
 		priority.append(PRIORITY.get(ground, 0))
 		kind.append(KINDS.get(ground, Kind.LAND))
-		cliffs.append(cliff_material(ground))
-		# Shaders work in linear space with HDR 2D.
-		water.append(WATER_COLORS.get(ground, Color.BLACK).srgb_to_linear())
+		water.append(WATER_COLORS.get(ground, Color.BLACK))
 	material.set_shader_parameter("ground_priority", priority)
 	material.set_shader_parameter("ground_kind", kind)
-	material.set_shader_parameter("cliff_material", cliffs)
 	material.set_shader_parameter("water_colors", water)

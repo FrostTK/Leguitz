@@ -21,6 +21,7 @@ extends RefCounted
 ## --map                open the debug map once the world is ready
 ## --weather=KIND       clear | rain | thunder
 ## --quality=N          graphics quality 0 (low) to 3 (ultra)
+## --hd                 render the 3D world at full resolution
 
 var seed_text := ""
 var spawn_override := Vector2i.ZERO
@@ -41,6 +42,7 @@ var noclip := false
 var open_map := false
 var weather := -1
 var quality := -1
+var hd := false
 
 
 static func parse(args: PackedStringArray) -> DevOptions:
@@ -95,6 +97,8 @@ static func parse(args: PackedStringArray) -> DevOptions:
 				options.weather = ["clear", "rain", "thunder"].find(value)
 			"quality":
 				options.quality = value.to_int()
+			"hd":
+				options.hd = true
 	return options
 
 

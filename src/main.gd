@@ -29,6 +29,8 @@ func _ready() -> void:
 	server = GameServer.new(settings, clock)
 	if dev.has_spawn_override:
 		server.spawn_tile = dev.spawn_override
+	if dev.weather >= 0:
+		server.weather.set_kind(dev.weather as Weather.Kind, clock)
 
 	var transports := LocalTransport.create_pair()
 	server.connect_client(transports[1])
@@ -95,6 +97,8 @@ func _apply_dev_preferences() -> void:
 		Settings.show_debug = true
 	if dev.quality >= 0:
 		Settings.graphics_quality = clampi(dev.quality, 0, 3)
+	if dev.hd:
+		Settings.hd_rendering = true
 
 
 func _start_dev_actions() -> void:
@@ -107,8 +111,6 @@ func _start_dev_actions() -> void:
 	if dev.layer != 0:
 		client.transport.send(Msg.debug_change_layer(dev.layer))
 	client.local_player.noclip = dev.noclip
-	if dev.weather >= 0:
-		client.transport.send(Msg.debug_set_weather(dev.weather))
 	if dev.open_map:
 		client.debug_map.cycle(client.local_player.current_tile(), client.world.layer + dev.layer)
 	if dev.open_pause_menu:

@@ -96,7 +96,8 @@ func _lines() -> PackedStringArray:
 	var view_args := [
 		tr("DEBUG_CHUNKS"),
 		client.world_view.visible_chunk_count(),
-		client.camera.world_zoom,
+		client.world_viewport.world_zoom,
+		" HD" if client.world_viewport.hd else "",
 		int(get_window().content_scale_factor),
 	]
 
@@ -109,7 +110,7 @@ func _lines() -> PackedStringArray:
 	if player.noclip:
 		lines.append(tr("DEBUG_NOCLIP"))
 	lines.append("%s %d  %s  |  %s  |  %s x%.2f  |  %s %d/8" % time_args)
-	lines.append("%s: %d  |  Zoom x%d  |  UI x%d" % view_args)
+	lines.append("%s: %d  |  Zoom x%d%s  |  UI x%d" % view_args)
 	if server_stats.is_valid():
 		lines.append_array(server_stats.call())
 	return lines

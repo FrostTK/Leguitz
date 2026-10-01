@@ -1,41 +1,9 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://src/client/game_client.gd" id="1_client"]
-[ext_resource type="Script" path="res://src/client/world_view.gd" id="2_worldview"]
-[ext_resource type="Script" path="res://src/client/local_player.gd" id="3_player"]
-[ext_resource type="Script" path="res://src/client/camera_rig.gd" id="4_camera"]
 
-[node name="GameClient" type="Node2D"]
+[node name="GameClient" type="Node"]
 script = ExtResource("1_client")
-
-[node name="Ambient" type="CanvasModulate" parent="."]
-
-[node name="WorldView" type="Node2D" parent="." node_paths=PackedStringArray("terrain_root", "shadow_root", "entity_root", "emission_root")]
-script = ExtResource("2_worldview")
-terrain_root = NodePath("Terrain")
-shadow_root = NodePath("Shadows")
-entity_root = NodePath("Entities")
-emission_root = NodePath("../Emission/Root")
-
-[node name="Terrain" type="Node2D" parent="WorldView"]
-
-[node name="Shadows" type="Node2D" parent="WorldView"]
-
-[node name="Entities" type="Node2D" parent="WorldView"]
-y_sort_enabled = true
-
-[node name="LocalPlayer" type="Node2D" parent="WorldView/Entities"]
-script = ExtResource("3_player")
-
-[node name="Emission" type="CanvasLayer" parent="."]
-layer = 1
-follow_viewport_enabled = true
-
-[node name="Root" type="Node2D" parent="Emission"]
-
-[node name="Camera" type="Camera2D" parent="." node_paths=PackedStringArray("target")]
-script = ExtResource("4_camera")
-target = NodePath("../WorldView/Entities/LocalPlayer")
 
 [node name="UI" type="CanvasLayer" parent="."]
 layer = 10

@@ -21,6 +21,9 @@ var view_distance := GameConst.DEFAULT_VIEW_DISTANCE
 var show_debug := false
 ## 0 low, 1 medium, 2 high, 3 ultra (see LightingController.Quality).
 var graphics_quality := 2
+## Renders the 3D world at full screen resolution instead of one texel per
+## art pixel: smoother lighting and shadows, same pixel-art textures.
+var hd_rendering := false
 
 
 func _ready() -> void:
@@ -69,6 +72,12 @@ func set_graphics_quality(value: int) -> void:
 	changed.emit(&"graphics_quality")
 
 
+func set_hd_rendering(value: bool) -> void:
+	hd_rendering = value
+	save_settings()
+	changed.emit(&"hd_rendering")
+
+
 func set_show_debug(value: bool) -> void:
 	show_debug = value
 	save_settings()
@@ -99,6 +108,7 @@ func load_settings() -> void:
 	world_zoom = file.get_value("display", "world_zoom", world_zoom)
 	view_distance = file.get_value("display", "view_distance", view_distance)
 	graphics_quality = file.get_value("display", "graphics_quality", graphics_quality)
+	hd_rendering = file.get_value("display", "hd_rendering", hd_rendering)
 	show_debug = file.get_value("debug", "show_debug", show_debug)
 
 
@@ -109,6 +119,7 @@ func save_settings() -> void:
 	file.set_value("display", "world_zoom", world_zoom)
 	file.set_value("display", "view_distance", view_distance)
 	file.set_value("display", "graphics_quality", graphics_quality)
+	file.set_value("display", "hd_rendering", hd_rendering)
 	file.set_value("debug", "show_debug", show_debug)
 	var error := file.save(PATH)
 	if error != OK:

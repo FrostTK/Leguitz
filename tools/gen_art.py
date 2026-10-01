@@ -10,7 +10,8 @@ Usage: python3 tools/gen_art.py
 Outputs in assets/textures/:
   tiles/ground_atlas.png (+ _n)   4 variants x one 16 px row per ground id
   tiles/wall_atlas.png (+ _n, _e) one row per wall kind: top A, top B, face A, face B
-  tiles/cliff_atlas.png (+ _n)    row 0: faces (material * 2 + variant), row 1: ramps
+  tiles/face_atlas.png (+ _n, _e) vertical faces: rows 0-3 cliff materials (dirt,
+                                  stone, sand, snow), rows 4-15 wall kinds; 2 variants
   tiles/block_atlas.png (+ _n)    16 columns of 32x48 cells, cell index = block id
   entities/player.png (+ _n)      4 frames of 16x24 (down, left, right, up)
 """
@@ -486,20 +487,37 @@ def cliff_face(rng, material, ramp):
     return c, height
 
 
-def build_cliffs(rng):
-    atlas = Canvas(TILE * 8, TILE * 2)
-    heights = np.full((TILE * 2, TILE * 8), 0.5, dtype=np.float32)
-    for material in range(4):
+def build_faces(rng):
+    """Every vertical face of the 3D world in one atlas (2 variants per row)."""
+    rows = len(CLIFF_MATERIALS) + len(WALLS)
+    atlas = Canvas(TILE * 2, TILE * rows)
+    heights = np.zeros((TILE * rows, TILE * 2), dtype=np.float32)
+    emission = Canvas(TILE * 2, TILE * rows)
+    for material in range(len(CLIFF_MATERIALS)):
         for variant in range(2):
             tile, height = cliff_face(rng, material, False)
-            x = (material * 2 + variant) * TILE
-            atlas.blit(tile, x, 0)
-            heights[0:TILE, x:x + TILE] = height
-        tile, height = cliff_face(rng, material, True)
-        atlas.blit(tile, material * TILE, TILE)
-        heights[TILE:2 * TILE, material * TILE:(material + 1) * TILE] = height
-    save(atlas.img, OUT / "tiles/cliff_atlas.png")
-    save(normal_image(atlas.img, "flat", strength=3.0, height=heights), OUT / "tiles/cliff_atlas_n.png")
+            atlas.blit(tile, variant * TILE, material * TILE)
+            heights[material * TILE:(material + 1) * TILE, variant * TILE:(variant + 1) * TILE] = height
+    for index, name in enumerate(WALLS):
+        row = len(CLIFF_MATERIALS) + index
+        if name in ORE_GEMS:
+            base, gem, gem_light, glow = ORE_GEMS[name]
+        else:
+            base = {"STONE": "stone", "DEEPSLATE": "deep", "SANDSTONE": "sandstone",
+                    "PACKED_ICE": "ice"}[name]
+            gem = None
+        for variant in range(2):
+            tile, height = wall_face(rng, base)
+            glow_tile = Canvas(TILE, TILE)
+            if gem:
+                gems(rng, tile, glow_tile, gem, gem_light, glow, False)
+            atlas.blit(tile, variant * TILE, row * TILE)
+            emission.blit(glow_tile, variant * TILE, row * TILE)
+            heights[row * TILE:(row + 1) * TILE, variant * TILE:(variant + 1) * TILE] = height
+    save(atlas.img, OUT / "tiles/face_atlas.png")
+    save(normal_image(atlas.img, "flat", strength=3.0, height=heights), OUT / "tiles/face_atlas_n.png")
+    emission.img[:, :, 3] = 255
+    save(emission.img, OUT / "tiles/face_atlas_e.png")
 
 
 # ------------------------------------------------------------------ blocks (32x48 cells)
@@ -863,7 +881,7 @@ def main():
     rng = np.random.default_rng(1234)
     build_grounds(rng)
     build_walls(rng)
-    build_cliffs(rng)
+    build_faces(rng)
     build_blocks(rng)
     build_player()
     print("Art generated in", OUT)

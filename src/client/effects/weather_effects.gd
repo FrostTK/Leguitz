@@ -1,13 +1,17 @@
 class_name WeatherEffects
-extends Node2D
-## Client-side weather and ambience: rain or snow (depending on the biome
-## under the player), lightning, wet ground, falling leaves, fireflies at
-## night and dust motes in caves. Particles run on the GPU.
+extends Node3D
+## Client-side weather and ambience in the 3D world: rain or snow
+## (depending on the biome under the player), lightning, wet ground,
+## falling leaves, fireflies at night and dust motes in caves.
+## Particles run on the GPU, in world space, around the camera target.
 
 const RAIN_BY_KIND := {Weather.Kind.CLEAR: 0.0, Weather.Kind.RAIN: 0.8, Weather.Kind.THUNDER: 1.0}
 const FADE_PER_SECOND := 0.12
 const WETTING_PER_SECOND := 0.06
 const DRYING_PER_SECOND := 0.012
+## Particles live in a slab this many units above and below the target.
+const SLAB_HALF_HEIGHT := 12.0
+const RAIN_SPEED := 30.0
 
 ## Biomes where it never rains (like Minecraft's deserts and savannas).
 const DRY_BIOMES := {
@@ -38,13 +42,14 @@ const FIREFLY_BIOMES := {
 	Biomes.Id.TAIGA: true,
 	Biomes.Id.RIVER: true,
 }
+const AMOUNTS := {&"rain": 1600, &"snow": 900, &"leaves": 24, &"fireflies": 60, &"dust": 90}
 
 var weather := Weather.new()
-var camera: Camera2D
 var client_world: ClientWorld
-var player: Node2D
-## Glowing particles go in the emission layer (not darkened at night).
-var emission_root: Node2D
+var local_player: LocalPlayer
+## The point the camera looks at, and the visible size (units) around it.
+var target := Vector3.ZERO
+var view_size := Vector2(30.0, 17.0)
 
 ## Smoothed 0..1 values read by the lighting and the shaders.
 var rain_intensity := 0.0
@@ -53,11 +58,10 @@ var snowing := false
 var darkness := 0.0
 var particle_scale := 1.0
 
-var _rain: GPUParticles2D
-var _snow: GPUParticles2D
-var _leaves: GPUParticles2D
-var _fireflies: GPUParticles2D
-var _dust: GPUParticles2D
+var _particles: Dictionary[StringName, GPUParticles3D] = {}
+## The first state (on joining) applies at once, later changes fade in.
+var _has_state := false
+var _snap_state := false
 var _flash := 0.0
 var _flash_timer := 8.0
 var _second_flash := 0.0
@@ -66,34 +70,27 @@ var _rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
 	_rng.randomize()
-	_rain = _make_rain()
-	_snow = _make_snow()
-	_leaves = _make_leaves()
-	add_child(_rain)
-	add_child(_snow)
-	add_child(_leaves)
-
-
-func attach_glowing(root: Node2D) -> void:
-	emission_root = root
-	_fireflies = _make_fireflies()
-	_dust = _make_dust()
-	root.add_child(_fireflies)
-	root.add_child(_dust)
+	_particles[&"rain"] = _make_rain()
+	_particles[&"snow"] = _make_snow()
+	_particles[&"leaves"] = _make_leaves()
+	_particles[&"fireflies"] = _make_fireflies()
+	_particles[&"dust"] = _make_dust()
+	for particles: GPUParticles3D in _particles.values():
+		add_child(particles)
 	set_particle_scale(particle_scale)
 
 
 func set_particle_scale(scale: float) -> void:
 	particle_scale = scale
-	var amounts := [[_rain, 700], [_snow, 400], [_leaves, 14], [_fireflies, 40], [_dust, 50]]
-	for pair: Array in amounts:
-		var particles: GPUParticles2D = pair[0]
-		if particles != null:
-			particles.amount = maxi(1, int(pair[1] * scale))
+	for key: StringName in _particles:
+		_particles[key].amount = maxi(1, int(AMOUNTS[key] * scale))
 
 
 func apply_state(data: Dictionary) -> void:
 	weather.load_dict(data)
+	if not _has_state:
+		_has_state = true
+		_snap_state = true
 
 
 ## Current lightning flash brightness (added to the ambient light).
@@ -102,42 +99,47 @@ func flash() -> float:
 
 
 func _process(delta: float) -> void:
-	if camera == null or client_world == null:
+	if client_world == null or local_player == null:
 		return
 	var underground := client_world.layer < WorldGenerator.SURFACE_LAYER
-	var tile := Coords.world_to_tile(player.position) if player != null else Vector2i.ZERO
-	var biome := client_world.biome_at(tile)
-	var target: float = RAIN_BY_KIND.get(weather.kind, 0.0)
+	var biome := client_world.biome_at(local_player.current_tile())
+	var goal: float = RAIN_BY_KIND.get(weather.kind, 0.0)
 	if underground or DRY_BIOMES.has(biome):
-		target = 0.0
-	rain_intensity = move_toward(rain_intensity, target, FADE_PER_SECOND * delta)
+		goal = 0.0
+	rain_intensity = move_toward(rain_intensity, goal, FADE_PER_SECOND * delta)
 	snowing = Biomes.is_cold(biome)
 	if rain_intensity > 0.2 and not snowing:
 		wetness = move_toward(wetness, 1.0, WETTING_PER_SECOND * delta)
 	else:
 		wetness = move_toward(wetness, 0.0, DRYING_PER_SECOND * delta)
+	if _snap_state:
+		_snap_state = false
+		rain_intensity = goal
+		wetness = 1.0 if rain_intensity > 0.2 and not snowing else 0.0
 	if underground:
 		wetness = 0.0
 	_update_lightning(delta, underground)
 
-	var view := get_viewport_rect().size / camera.zoom
-	var center := camera.get_screen_center_position()
 	var wind := weather.wind_vector()
-	_place(_rain, center + Vector2(0, -view.y * 0.6), view)
-	_place(_snow, center + Vector2(0, -view.y * 0.3), view)
-	_place(_leaves, center, view)
-	_rain.amount_ratio = 0.0 if snowing else rain_intensity
-	_snow.amount_ratio = rain_intensity if snowing else 0.0
-	var rain_material := _rain.process_material as ParticleProcessMaterial
-	rain_material.direction = Vector3(wind.x * 0.5, 1.0, 0.0)
+	RenderingServer.global_shader_parameter_set(&"weather_wind", wind)
+	RenderingServer.global_shader_parameter_set(&"weather_wetness", wetness)
+	RenderingServer.global_shader_parameter_set(&"weather_rain", rain_intensity)
+
+	for particles: GPUParticles3D in _particles.values():
+		_place(particles)
+	var rain := _particles[&"rain"]
+	rain.amount_ratio = 0.0 if snowing else rain_intensity
+	(rain.process_material as ParticleProcessMaterial).direction = Vector3(
+		wind.x * 0.25, -1.0, wind.y * 0.25
+	)
+	_particles[&"snow"].amount_ratio = rain_intensity if snowing else 0.0
 	var leafy := not underground and LEAFY_BIOMES.has(biome)
-	_leaves.amount_ratio = (0.5 + wind.length()) if leafy else 0.0
-	if _fireflies != null:
-		_place(_fireflies, center, view)
-		_place(_dust, center, view)
-		var fireflies := not underground and FIREFLY_BIOMES.has(biome)
-		_fireflies.amount_ratio = darkness * (1.0 - rain_intensity) if fireflies else 0.0
-		_dust.amount_ratio = 1.0 if underground else 0.0
+	_particles[&"leaves"].amount_ratio = minf(0.4 + wind.length(), 1.0) if leafy else 0.0
+	var fireflies := not underground and FIREFLY_BIOMES.has(biome)
+	_particles[&"fireflies"].amount_ratio = (
+		darkness * (1.0 - rain_intensity) if fireflies else 0.0
+	)
+	_particles[&"dust"].amount_ratio = 1.0 if underground else 0.0
 
 
 func _update_lightning(delta: float, underground: bool) -> void:
@@ -155,106 +157,141 @@ func _update_lightning(delta: float, underground: bool) -> void:
 		_flash_timer = _rng.randf_range(5.0, 18.0)
 
 
-func _place(particles: GPUParticles2D, center: Vector2, view: Vector2) -> void:
-	particles.global_position = center
+## Keeps an emitter around the visible area. Seen from the tilted camera,
+## a particle higher up shows further south, so the box is deeper than the
+## ground actually visible.
+func _place(particles: GPUParticles3D) -> void:
+	particles.global_position = target
+	var depth := view_size.y * Render3D.z_stretch
 	var material := particles.process_material as ParticleProcessMaterial
-	material.emission_box_extents = Vector3(view.x * 0.6, view.y * 0.6, 1.0)
+	material.emission_box_extents = Vector3(
+		view_size.x * 0.5 + 1.0, SLAB_HALF_HEIGHT, depth * 0.5 + SLAB_HALF_HEIGHT * 0.6
+	)
 
 
-static func _dot_texture(size: Vector2i, color: Color) -> ImageTexture:
-	var image := Image.create(size.x, size.y, false, Image.FORMAT_RGBA8)
-	image.fill(color)
-	return ImageTexture.create_from_image(image)
-
-
-static func _base(amount: int, lifetime: float) -> GPUParticles2D:
-	var particles := GPUParticles2D.new()
+static func _base(
+	amount: int, lifetime: float, mesh_material: StandardMaterial3D
+) -> GPUParticles3D:
+	var particles := GPUParticles3D.new()
 	particles.amount = amount
 	particles.lifetime = lifetime
 	particles.local_coords = false
 	particles.preprocess = lifetime
 	particles.amount_ratio = 0.0
-	particles.visibility_rect = Rect2(-4000, -4000, 8000, 8000)
+	particles.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	particles.visibility_aabb = AABB(Vector3(-80, -40, -80), Vector3(160, 80, 160))
 	var material := ParticleProcessMaterial.new()
 	material.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
 	material.gravity = Vector3.ZERO
 	particles.process_material = material
+	var quad := QuadMesh.new()
+	quad.material = mesh_material
+	particles.draw_pass_1 = quad
 	return particles
 
 
-func _make_rain() -> GPUParticles2D:
-	var particles := _base(700, 0.9)
-	particles.texture = _dot_texture(Vector2i(1, 6), Color(0.75, 0.85, 1.0, 0.55))
-	var material := particles.process_material as ParticleProcessMaterial
-	material.direction = Vector3(0.2, 1.0, 0.0)
-	material.spread = 3.0
-	material.initial_velocity_min = 300.0
-	material.initial_velocity_max = 360.0
-	material.particle_flag_align_y = true
+## Material for particle quads; billboards face the camera.
+static func _particle_material(color: Color, billboard: bool, lit: bool) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.vertex_color_use_as_albedo = true
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+	material.alpha_scissor_threshold = 0.1
+	material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	if not lit:
+		material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	if billboard:
+		material.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	return material
+
+
+## Size of a particle quad showing `pixels` art pixels on screen.
+static func _pixel_size(pixels: Vector2, billboard: bool) -> Vector2:
+	var size := pixels / Render3D.PIXELS_PER_UNIT
+	if not billboard:
+		size.y *= Render3D.sprite_y_scale
+	return size
+
+
+func _make_rain() -> GPUParticles3D:
+	var material := _particle_material(Color(0.75, 0.85, 1.0, 0.6), false, false)
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	var particles := _base(1600, SLAB_HALF_HEIGHT * 2.0 / RAIN_SPEED, material)
+	(particles.draw_pass_1 as QuadMesh).size = _pixel_size(Vector2(1, 6), false)
+	var process := particles.process_material as ParticleProcessMaterial
+	process.direction = Vector3(0.1, -1.0, 0.0)
+	process.spread = 2.0
+	process.initial_velocity_min = RAIN_SPEED
+	process.initial_velocity_max = RAIN_SPEED * 1.1
+	process.particle_flag_align_y = true
 	return particles
 
 
-func _make_snow() -> GPUParticles2D:
-	var particles := _base(400, 7.0)
-	particles.texture = _dot_texture(Vector2i(2, 2), Color(1, 1, 1, 0.9))
-	var material := particles.process_material as ParticleProcessMaterial
-	material.direction = Vector3(0.2, 1.0, 0.0)
-	material.spread = 25.0
-	material.initial_velocity_min = 18.0
-	material.initial_velocity_max = 34.0
-	material.turbulence_enabled = true
-	material.turbulence_noise_strength = 3.0
-	material.turbulence_noise_scale = 4.0
+func _make_snow() -> GPUParticles3D:
+	var particles := _base(900, 12.0, _particle_material(Color(1, 1, 1, 0.95), true, false))
+	(particles.draw_pass_1 as QuadMesh).size = _pixel_size(Vector2(2, 2), true)
+	var process := particles.process_material as ParticleProcessMaterial
+	process.direction = Vector3(0.2, -1.0, 0.1)
+	process.spread = 25.0
+	process.initial_velocity_min = 1.6
+	process.initial_velocity_max = 2.6
+	process.turbulence_enabled = true
+	process.turbulence_noise_strength = 1.5
+	process.turbulence_noise_scale = 2.0
 	return particles
 
 
-func _make_leaves() -> GPUParticles2D:
-	var particles := _base(14, 7.0)
-	particles.texture = _dot_texture(Vector2i(3, 2), Color.WHITE)
-	var material := particles.process_material as ParticleProcessMaterial
-	material.direction = Vector3(0.6, 1.0, 0.0)
-	material.spread = 40.0
-	material.initial_velocity_min = 10.0
-	material.initial_velocity_max = 22.0
-	material.angular_velocity_min = -90.0
-	material.angular_velocity_max = 90.0
-	material.turbulence_enabled = true
-	material.turbulence_noise_strength = 4.0
+func _make_leaves() -> GPUParticles3D:
+	var particles := _base(24, 9.0, _particle_material(Color.WHITE, true, true))
+	(particles.draw_pass_1 as QuadMesh).size = _pixel_size(Vector2(3, 2), true)
+	var process := particles.process_material as ParticleProcessMaterial
+	process.direction = Vector3(0.8, -0.6, 0.2)
+	process.spread = 40.0
+	process.initial_velocity_min = 1.0
+	process.initial_velocity_max = 2.2
+	process.angle_min = -180.0
+	process.angle_max = 180.0
+	process.angular_velocity_min = -90.0
+	process.angular_velocity_max = 90.0
+	process.turbulence_enabled = true
+	process.turbulence_noise_strength = 2.0
 	var colors := Gradient.new()
 	colors.colors = PackedColorArray([Color("7cc255"), Color("d99a3a"), Color("c7602f")])
 	colors.offsets = PackedFloat32Array([0.0, 0.5, 1.0])
 	var ramp := GradientTexture1D.new()
 	ramp.gradient = colors
-	material.color_initial_ramp = ramp
+	process.color_initial_ramp = ramp
 	return particles
 
 
-func _make_fireflies() -> GPUParticles2D:
-	var particles := _base(40, 5.0)
-	particles.texture = _dot_texture(Vector2i(1, 1), Color.WHITE)
-	var material := particles.process_material as ParticleProcessMaterial
-	material.direction = Vector3(0, -1, 0)
-	material.spread = 180.0
-	material.initial_velocity_min = 3.0
-	material.initial_velocity_max = 9.0
-	material.turbulence_enabled = true
-	material.turbulence_noise_strength = 6.0
-	material.turbulence_noise_scale = 3.0
-	material.color = Color(1.8, 2.0, 0.6)
-	material.color_ramp = _fade_ramp()
+func _make_fireflies() -> GPUParticles3D:
+	var particles := _base(60, 6.0, _particle_material(Color.WHITE, true, false))
+	(particles.draw_pass_1 as QuadMesh).size = _pixel_size(Vector2(1, 1), true)
+	var process := particles.process_material as ParticleProcessMaterial
+	process.direction = Vector3(0, 1, 0)
+	process.spread = 180.0
+	process.initial_velocity_min = 0.2
+	process.initial_velocity_max = 0.6
+	process.turbulence_enabled = true
+	process.turbulence_noise_strength = 0.8
+	process.turbulence_noise_scale = 1.5
+	# Brighter than white: they glow (bloom).
+	process.color = Color(2.6, 3.0, 0.9)
+	process.color_ramp = _fade_ramp()
 	return particles
 
 
-func _make_dust() -> GPUParticles2D:
-	var particles := _base(50, 8.0)
-	particles.texture = _dot_texture(Vector2i(1, 1), Color.WHITE)
-	var material := particles.process_material as ParticleProcessMaterial
-	material.direction = Vector3(0.3, -1, 0)
-	material.spread = 180.0
-	material.initial_velocity_min = 1.0
-	material.initial_velocity_max = 4.0
-	material.color = Color(0.6, 0.55, 0.45, 0.6)
-	material.color_ramp = _fade_ramp()
+func _make_dust() -> GPUParticles3D:
+	var particles := _base(90, 9.0, _particle_material(Color.WHITE, true, true))
+	(particles.draw_pass_1 as QuadMesh).size = _pixel_size(Vector2(1, 1), true)
+	var process := particles.process_material as ParticleProcessMaterial
+	process.direction = Vector3(0.3, 1.0, 0.0)
+	process.spread = 180.0
+	process.initial_velocity_min = 0.05
+	process.initial_velocity_max = 0.25
+	process.color = Color(0.85, 0.8, 0.7, 0.8)
+	process.color_ramp = _fade_ramp()
 	return particles
 
 

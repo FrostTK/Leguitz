@@ -1,6 +1,6 @@
 class_name PauseMenu
 extends Control
-## Pause menu: resume, world time settings, language, zoom, quit.
+## Pause menu: resume, world time settings, language, zoom, graphics, quit.
 ## World settings are sent to the server (they belong to the world);
 ## user preferences go to the Settings autoload.
 
@@ -21,6 +21,7 @@ const LANGUAGE_CHOICES := [
 	["LANGUAGE_EN", "en"],
 ]
 const ZOOM_CHOICES := [0, 2, 3, 4, 5, 6, 8]
+const QUALITY_KEYS := ["QUALITY_LOW", "QUALITY_MEDIUM", "QUALITY_HIGH", "QUALITY_ULTRA"]
 
 var clock: WorldClock
 
@@ -33,6 +34,8 @@ var _frozen_row: Control
 var _pace_info := Label.new()
 var _language := OptionButton.new()
 var _zoom := OptionButton.new()
+var _quality := OptionButton.new()
+var _hd := CheckButton.new()
 var _updating := false
 
 
@@ -98,6 +101,14 @@ func _ready() -> void:
 	_zoom.item_selected.connect(_on_zoom_selected)
 	box.add_child(_row("SETTING_ZOOM", _zoom))
 
+	for key in QUALITY_KEYS:
+		_quality.add_item(key)
+	_quality.item_selected.connect(_on_quality_selected)
+	box.add_child(_row("SETTING_QUALITY", _quality))
+
+	_hd.toggled.connect(_on_hd_toggled)
+	box.add_child(_row("SETTING_HD", _hd))
+
 	var quit := Button.new()
 	quit.text = "MENU_QUIT"
 	quit.pressed.connect(quit_requested.emit)
@@ -129,6 +140,8 @@ func refresh_from_state() -> void:
 	)
 	_language.select(maxi(0, language_index))
 	_zoom.select(maxi(0, ZOOM_CHOICES.find(Settings.world_zoom)))
+	_quality.select(Settings.graphics_quality)
+	_hd.button_pressed = Settings.hd_rendering
 	_updating = false
 	_refresh_dynamic_texts()
 
@@ -166,6 +179,16 @@ func _on_language_selected(index: int) -> void:
 func _on_zoom_selected(index: int) -> void:
 	if not _updating:
 		Settings.set_world_zoom(ZOOM_CHOICES[index])
+
+
+func _on_quality_selected(index: int) -> void:
+	if not _updating:
+		Settings.set_graphics_quality(index)
+
+
+func _on_hd_toggled(enabled: bool) -> void:
+	if not _updating:
+		Settings.set_hd_rendering(enabled)
 
 
 func _refresh_dynamic_texts() -> void:
