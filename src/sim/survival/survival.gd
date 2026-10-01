@@ -1,10 +1,11 @@
 class_name Survival
 extends RefCounted
-## Runs the players' vitality on the server (see Vitals): falls (reported
-## by the clients' bodies, PlayerBody.take_fall; water breaks them), lava,
-## slow healing, passing out (what they carry falls where they are) and
-## getting up at the spawn. Creative players are never hurt. Stateless:
-## each call is given the server.
+## Runs the players' vitality and satiety on the server (see Vitals):
+## falls (reported by the clients' bodies, PlayerBody.take_fall; water
+## breaks them), lava, satiety spent with effort, eating, starving, slow
+## healing when well fed, passing out (what they carry falls where they
+## are) and getting up at the spawn. Creative players are never hurt nor
+## hungry. Stateless: each call is given the server.
 
 
 ## A player landed after falling `fell` levels: over FALL_SAFE it hurts,
@@ -29,7 +30,7 @@ static func hurt(
 	session.health = maxi(session.health - points, 0)
 	session.immune = Vitals.HURT_IMMUNITY
 	session.since_hurt = 0.0
-	session.transport.send(Msg.health(session.health, true, cause))
+	_tell(session, true, cause)
 	if session.health == 0:
 		_pass_out(server, session, cause)
 
@@ -61,16 +62,55 @@ static func get_up(server: GameServer, session: GameServer.PlayerSession) -> voi
 	if not session.joined or session.alive():
 		return
 	session.health = Vitals.MAX_HEALTH
+	session.food = Vitals.MAX_FOOD
+	session.effort = 0.0
 	session.immune = 0.0
 	session.since_hurt = INF
 	session.position = Coords.tile_to_world_center(server.spawn_tile) + Vector2(0, 4)
 	session.height = server.world.surface_height(server.spawn_tile)
 	session.transport.send(Msg.player_teleport(session.position, session.height))
-	session.transport.send(Msg.health(session.health))
+	_tell(session)
 
 
-## Lava burns the players standing in it; vitality comes back slowly to
-## those nothing hurt for a while.
+## A player spends effort (Vitals: walking, mining, healing): a point of
+## satiety goes per point of effort (never in creative mode).
+static func spend(server: GameServer, session: GameServer.PlayerSession, effort: float) -> void:
+	if (
+		effort <= 0.0
+		or not session.alive()
+		or server.settings.game_mode == WorldSettings.GameMode.CREATIVE
+	):
+		return
+	session.effort += effort
+	if session.effort < 1.0:
+		return
+	var spent := floori(session.effort)
+	session.effort -= spent
+	if session.food > 0:
+		session.food = maxi(session.food - spent, 0)
+		_tell(session)
+
+
+## A player ate one of what a hotbar slot holds: food fills them up (not
+## past full: then nothing is eaten); a raw red mushroom makes them sick.
+static func eat(server: GameServer, session: GameServer.PlayerSession, slot: int) -> void:
+	if not session.joined or not session.alive() or slot < 0 or slot >= Inventory.HOTBAR:
+		return
+	var item := session.inventory.items[slot]
+	if not Items.is_food(item) or session.food >= Vitals.MAX_FOOD:
+		session.transport.send(Msg.inventory(session.inventory))
+		return
+	session.inventory.take(slot, 1)
+	session.food = mini(session.food + Items.FOOD[item], Vitals.MAX_FOOD)
+	session.transport.send(Msg.inventory(session.inventory))
+	_tell(session)
+	if Vitals.POISONS.has(item):
+		hurt(server, session, Vitals.POISONS[item], Vitals.Cause.POISON)
+
+
+## Lava burns the players standing in it; satiety goes with time, and
+## starving hurts; vitality comes back slowly to those well fed whom
+## nothing hurt for a while.
 static func update(server: GameServer, sessions: Array, delta: float) -> void:
 	for session: GameServer.PlayerSession in sessions:
 		if not session.joined or not session.alive():
@@ -84,16 +124,47 @@ static func update(server: GameServer, sessions: Array, delta: float) -> void:
 				hurt(server, session, Vitals.LAVA_DAMAGE, Vitals.Cause.LAVA)
 		else:
 			session.burning = Vitals.LAVA_SECONDS
-		if session.health >= Vitals.MAX_HEALTH or not session.alive():
-			session.healing = 0.0
-			continue
-		if session.since_hurt < server.clock.scale_duration(Vitals.REGEN_DELAY):
-			continue
-		session.healing += delta
-		if session.healing >= server.clock.scale_duration(Vitals.REGEN_SECONDS):
-			session.healing = 0.0
-			session.health += 1
-			session.transport.send(Msg.health(session.health))
+		spend(server, session, delta / server.clock.scale_duration(Vitals.FOOD_SECONDS))
+		_starve(server, session, delta)
+		_heal(server, session, delta)
+
+
+## Starving (no satiety left): a point of vitality every STARVE_SECONDS.
+static func _starve(server: GameServer, session: GameServer.PlayerSession, delta: float) -> void:
+	if session.food > 0 or not session.alive():
+		session.starving = 0.0
+		return
+	session.starving += delta
+	if session.starving >= server.clock.scale_duration(Vitals.STARVE_SECONDS):
+		session.starving = 0.0
+		hurt(server, session, 1, Vitals.Cause.STARVATION)
+
+
+## Well fed, a point of vitality every REGEN_SECONDS once nothing hurt
+## for REGEN_DELAY; it costs satiety.
+static func _heal(server: GameServer, session: GameServer.PlayerSession, delta: float) -> void:
+	if (
+		session.health >= Vitals.MAX_HEALTH
+		or not session.alive()
+		or session.food < Vitals.FED
+		or session.since_hurt < server.clock.scale_duration(Vitals.REGEN_DELAY)
+	):
+		session.healing = 0.0
+		return
+	session.healing += delta
+	if session.healing >= server.clock.scale_duration(Vitals.REGEN_SECONDS):
+		session.healing = 0.0
+		session.health += 1
+		_tell(session)
+		spend(server, session, Vitals.HEAL_EFFORT)
+
+
+## Tells a player their vitality and satiety (`hurt`: vitality just went
+## down, from `cause`).
+static func _tell(
+	session: GameServer.PlayerSession, hurt := false, cause := Vitals.Cause.NONE
+) -> void:
+	session.transport.send(Msg.vitals(session.health, session.food, hurt, cause))
 
 
 ## The ground (Tiles.Ground) under a player's feet: water or lava they

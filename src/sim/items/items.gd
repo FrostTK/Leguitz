@@ -261,6 +261,17 @@ const BLOCK_DROPS := {
 	Tiles.Block.CUT_SANDSTONE: [Id.CUT_SANDSTONE, 1, 1],
 	Tiles.Block.GLASS: [Id.GLASS, 1, 1],
 }
+## Food: how much satiety eating one gives (Vitals.MAX_FOOD points; see
+## also Vitals.POISONS). Cooking pays: dried berries and the stew feed
+## best, charred food hardly.
+const FOOD := {
+	Id.BERRIES: 2,
+	Id.DRIED_BERRIES: 4,
+	Id.MUSHROOM_BROWN: 1,
+	Id.MUSHROOM_RED: 1,
+	Id.MUSHROOM_STEW: 8,
+	Id.CHARRED_FOOD: 1,
+}
 ## The planks each log is sawn into.
 const PLANKS_OF := {
 	Id.OAK_LOG: Id.OAK_PLANKS,
@@ -296,6 +307,10 @@ static func max_stack(item: int) -> int:
 	if not is_valid(item):
 		return 0
 	return 1 if TOOLS.has(item) or item == Id.GUIDE_BOOK else MAX_STACK
+
+
+static func is_food(item: int) -> bool:
+	return FOOD.has(item)
 
 
 ## What a tool is made for (Tool.NONE for other items).

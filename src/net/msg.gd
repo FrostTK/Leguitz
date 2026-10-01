@@ -19,6 +19,7 @@ const SELECT_SLOT := "select_slot"
 const SLOT_CLICK := "slot_click"
 const SLOT_SPREAD := "slot_spread"
 const RESPAWN := "respawn"
+const EAT := "eat"
 const ITEM_DROP := "item_drop"
 const INVENTORY_CLOSE := "inventory_close"
 const DEBUG_GIVE_TOOLS := "debug_give_tools"
@@ -48,7 +49,7 @@ const ITEM_SPAWN := "item_spawn"
 const ITEM_MOVE := "item_move"
 const ITEM_REMOVE := "item_remove"
 const CHEST := "chest"
-const HEALTH := "health"
+const VITALS := "vitals"
 const DIED := "died"
 const FURNACE := "furnace"
 
@@ -196,10 +197,16 @@ static func respawn() -> Dictionary:
 	return {"t": RESPAWN}
 
 
-## A player's vitality (Vitals): `hurt` when it just went down, and what
-## hurt them (Vitals.Cause).
-static func health(points: int, hurt := false, cause := Vitals.Cause.NONE) -> Dictionary:
-	return {"t": HEALTH, "health": points, "hurt": hurt, "cause": cause}
+## A player's vitality and satiety (Vitals): `hurt` when vitality just
+## went down, and what hurt them (Vitals.Cause).
+static func vitals(health: int, food: int, hurt := false, cause := Vitals.Cause.NONE) -> Dictionary:
+	return {"t": VITALS, "health": health, "food": food, "hurt": hurt, "cause": cause}
+
+
+## The player ate one of what hotbar slot `slot` holds (after holding the
+## right button for Vitals.EAT_SECONDS).
+static func eat(slot: int) -> Dictionary:
+	return {"t": EAT, "slot": slot}
 
 
 ## The player passed out (their vitality ran out), from `cause`

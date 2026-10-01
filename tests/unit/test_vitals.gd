@@ -50,7 +50,7 @@ func test_falls_hurt_unless_into_water() -> void:
 	_fall(client, session, 5.2)
 	server.process_messages()
 	assert_eq(session.health, Vitals.MAX_HEALTH - 2, "five: two points")
-	var told := _said(client, Msg.HEALTH)
+	var told := _said(client, Msg.VITALS)
 	assert_eq(told.size(), 1)
 	assert_true(told[0]["hurt"])
 	assert_eq(told[0]["cause"], Vitals.Cause.FALL)
@@ -99,7 +99,7 @@ func test_lava_burns_until_the_player_passes_out_and_gets_up() -> void:
 	assert_eq(Coords.world_to_tile(session.position), server.spawn_tile, "at the spawn")
 	var said := client.poll().map(func(m: Dictionary) -> String: return m["t"])
 	assert_true(Msg.PLAYER_TELEPORT in said)
-	assert_true(Msg.HEALTH in said)
+	assert_true(Msg.VITALS in said)
 
 
 func test_vitality_comes_back_and_is_saved() -> void:
@@ -137,3 +137,65 @@ func test_vitality_comes_back_and_is_saved() -> void:
 	assert_eq(back.health, Vitals.MAX_HEALTH, "left while passed out: up at the spawn")
 	assert_eq(Coords.world_to_tile(back.position), third.spawn_tile)
 	storage.erase()
+
+
+func test_satiety_goes_with_time_and_effort_and_food_brings_it_back() -> void:
+	var made := _server()
+	var server: GameServer = made[0]
+	var client: LocalTransport = made[1]
+	var session: GameServer.PlayerSession = made[2]
+	assert_eq(session.food, Vitals.MAX_FOOD)
+	_ticks(server, Vitals.FOOD_SECONDS + 0.2)
+	assert_eq(session.food, Vitals.MAX_FOOD - 1, "a point with time")
+	var walk := Vector2.RIGHT * GameConst.TILE_SIZE * 0.5
+	for i in 200:
+		client.send(Msg.player_move(session.position + walk, session.facing, session.height))
+		server.process_messages()
+	assert_eq(session.food, Vitals.MAX_FOOD - 2, "a hundred tiles walked: another one")
+	var told := _said(client, Msg.VITALS)
+	assert_eq(told[-1]["food"], Vitals.MAX_FOOD - 2, "the player is told")
+	session.inventory.add(Items.Id.MUSHROOM_STEW, 1)
+	session.inventory.add(Items.Id.BERRIES, 3)
+	client.send(Msg.eat(0))
+	server.process_messages()
+	assert_eq(session.food, Vitals.MAX_FOOD, "the stew fills up (not past full)")
+	assert_eq(session.inventory.items[0], Items.Id.NONE, "eaten")
+	client.send(Msg.eat(1))
+	server.process_messages()
+	assert_eq(session.inventory.counts[1], 3, "full: nothing eaten")
+	session.food = 10
+	client.send(Msg.eat(1))
+	server.process_messages()
+	assert_eq(session.food, 10 + Items.FOOD[Items.Id.BERRIES])
+	assert_eq(session.inventory.counts[1], 2)
+	session.inventory.add(Items.Id.MUSHROOM_RED, 1)
+	var red := session.inventory.items.find(Items.Id.MUSHROOM_RED)
+	client.send(Msg.eat(red))
+	server.process_messages()
+	assert_eq(session.health, Vitals.MAX_HEALTH - Vitals.POISONS[Items.Id.MUSHROOM_RED], "sick")
+	var sick := _said(client, Msg.VITALS).filter(func(m: Dictionary) -> bool: return m["hurt"])
+	assert_eq(sick[0]["cause"], Vitals.Cause.POISON)
+	client.send(Msg.eat(5))
+	server.process_messages()
+	assert_eq(session.food, 10 + 2 + 1, "an empty slot feeds nothing")
+
+
+func test_healing_needs_food_and_starving_hurts() -> void:
+	var made := _server()
+	var server: GameServer = made[0]
+	var session: GameServer.PlayerSession = made[2]
+	session.health = 10
+	session.food = Vitals.FED - 1
+	_ticks(server, Vitals.REGEN_SECONDS * 3.0)
+	assert_eq(session.health, 10, "hungry: no healing")
+	session.food = Vitals.MAX_FOOD
+	_ticks(server, Vitals.REGEN_SECONDS * 2.0 + 0.2)
+	assert_eq(session.health, 12, "well fed: healing")
+	assert_true(session.food < Vitals.MAX_FOOD, "which costs satiety")
+	session.food = 0
+	session.health = 5
+	_ticks(server, Vitals.STARVE_SECONDS * 2.0 + 0.2)
+	assert_eq(session.health, 3, "starving: a point every few seconds")
+	var creative := _server(WorldSettings.GameMode.CREATIVE)
+	_ticks(creative[0], Vitals.FOOD_SECONDS * 2.0)
+	assert_eq(creative[2].food, Vitals.MAX_FOOD, "never hungry in creative mode")

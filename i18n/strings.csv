@@ -306,4 +306,14 @@ DEATH_CAUSE_FALL,A fall from too high.,Une chute de trop haut.
 DEATH_CAUSE_LAVA,The lava burnt you.,La lave t'a brûlé la peau.
 DEATH_THINGS,What you carried lies where you fell. Hurry back for it!,"Ce que tu portais est resté sur place. Vite, va le reprendre !"
 DEATH_GET_UP,Get up,Se relever
-BOOK_TIP_15,"The red gauge over your items is your vitality: a fall of more than 3 levels (unless into water) or lava wears it down, and it comes back slowly. Empty, you pass out.","La jauge rouge au-dessus de tes objets est ta vitalité : une chute de plus de 3 niveaux (sauf dans l'eau) ou la lave l'usent, elle revient doucement. Vide, tu perds connaissance."
+BOOK_TIP_15,"The red gauge over your items is your vitality, the amber one your satiety: falls, lava and hunger wear you down; well fed, you heal slowly.","La jauge rouge au-dessus de tes objets est ta vitalité, l'ambrée ta satiété : chutes, lave et faim t'usent ; bien nourri, tu guéris doucement."
+HUD_NOT_HUNGRY,You are not hungry.,Tu n'as pas faim.
+DEATH_CAUSE_STARVATION,Hunger got the better of you.,La faim a eu raison de toi.
+DEATH_CAUSE_POISON,A raw red mushroom made you sick.,Un champignon rouge cru t'a rendu malade.
+BOOK_CHAPTER_SURVIVAL,Survival,Survie
+BOOK_SURVIVAL_VITALITY,"The red gauge is your vitality. Falls of more than 3 levels (unless into water), lava, hunger and some raw food wear it down; well fed, it comes back slowly. Empty, you pass out and what you carried stays there.","La jauge rouge est ta vitalité. Les chutes de plus de 3 niveaux (sauf dans l'eau), la lave, la faim et certains aliments crus l'usent ; bien nourri, elle revient doucement. Vide, tu perds connaissance et ce que tu portais reste sur place."
+BOOK_SURVIVAL_FOOD,"The amber gauge is your satiety: it goes down with time, walking and mining. Hold {place} with food in hand to eat. Too hungry, you cannot run; starving, you weaken.","La jauge ambrée est ta satiété : elle baisse avec le temps, la marche et le minage. Maintiens le {place} avec de la nourriture en main pour manger. Trop affamé, tu ne peux plus courir ; quand tu meurs de faim, tu t'affaiblis."
+BOOK_SURVIVAL_FOODS,What feeds you,Ce qui nourrit
+BOOK_SURVIVAL_FEEDS,%s: +%d,%s : +%d
+BOOK_SURVIVAL_SICK,(makes you sick raw),(rend malade cru)
+BOOK_SURVIVAL_COOK,Cook in the food furnace: dried berries and stew feed far better than raw food.,Cuisine au four alimentaire : les baies déshydratées et le ragoût nourrissent bien mieux que la nourriture crue.

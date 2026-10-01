@@ -1,15 +1,18 @@
 class_name VitalsBar
 extends Control
-## The player's vitality over the hotbar's left half: a life crystal and a
-## gauge framed in wood, a notch every two points. What a hurt took shows
-## pale for a moment and melts away; nearly empty, the gauge throbs. The
-## right half waits for hunger.
+## The player's vitality over the hotbar's left half (a life crystal and a
+## gauge framed in wood, a notch every two points; what a hurt took shows
+## pale for a moment and melts away; nearly empty, it throbs) and their
+## satiety over the right half (a loaf and an amber gauge, throbbing when
+## hungry).
 
 ## Gauge and crystal sizes (UI units).
 const HEIGHT := 9.0
 const BAR_HEIGHT := 5.0
 const CRYSTAL := ["#5e0e1a", "#a01e2c", "#d8404a", "#ff9a8a"]
 const FILL := ["#7c1622", "#b82634", "#e2524e"]
+const FOOD_FILL := ["#9a5512", "#d0861e", "#f2b84a"]
+const LOAF := ["#5c3412", "#a8641e", "#d89a40", "#f2c878"]
 const TRACK := Color("2a1410")
 const TRAIL := Color("f2d6a6")
 ## How fast the pale trail of a hurt melts (points per second), after
@@ -20,6 +23,7 @@ const TRAIL_HOLD := 0.35
 const LOW := 5
 
 var health := Vitals.MAX_HEALTH
+var food := Vitals.MAX_FOOD
 
 var _trail := float(Vitals.MAX_HEALTH)
 var _hold := 0.0
@@ -42,13 +46,18 @@ func set_health(points: int) -> void:
 	queue_redraw()
 
 
+func set_food(points: int) -> void:
+	food = points
+	queue_redraw()
+
+
 func _process(delta: float) -> void:
 	_time += delta
 	if _hold > 0.0:
 		_hold -= delta
 	elif _trail > health:
 		_trail = maxf(_trail - TRAIL_SPEED * delta, health)
-	if _trail > health or health <= LOW:
+	if _trail > health or health <= LOW or food < Vitals.HUNGRY:
 		queue_redraw()
 
 
@@ -59,6 +68,14 @@ func _draw() -> void:
 	var top := floorf((HEIGHT - BAR_HEIGHT) * 0.5)
 	# The frame and the track, from the crystal's middle on.
 	var bar := Rect2(left + 4.0, top, width - 4.0, BAR_HEIGHT)
+	_draw_health(bar)
+	_draw_crystal(Vector2(left, 0.0))
+	var food_left := left + slots - width
+	_draw_food(Rect2(food_left + 4.0, top, width - 4.0, BAR_HEIGHT))
+	_draw_loaf(Vector2(food_left, 1.0))
+
+
+func _draw_health(bar: Rect2) -> void:
 	draw_rect(bar.grow(1.0), UiTheme.WOOD_DARK)
 	draw_rect(bar, TRACK)
 	var inner := bar.grow(-1.0)
@@ -78,7 +95,44 @@ func _draw() -> void:
 	for point in range(2, Vitals.MAX_HEALTH, 2):
 		var x := inner.position.x + roundf(per_point * point)
 		draw_rect(Rect2(x, inner.position.y, 1.0, 3.0), Color(0, 0, 0, 0.25))
-	_draw_crystal(Vector2(left, 0.0))
+
+
+## The satiety gauge: amber, a notch every two points, throbbing hungry.
+func _draw_food(bar: Rect2) -> void:
+	draw_rect(bar.grow(1.0), UiTheme.WOOD_DARK)
+	draw_rect(bar, TRACK)
+	var inner := bar.grow(-1.0)
+	var per_point := inner.size.x / Vitals.MAX_FOOD
+	var filled := roundf(per_point * food)
+	var throb := 1.0
+	if food < Vitals.HUNGRY:
+		throb = 0.75 + 0.25 * sin(_time * 5.0)
+	for row in 3:
+		var color := Color(FOOD_FILL[row]) * throb
+		color.a = 1.0
+		draw_rect(Rect2(inner.position.x, inner.position.y + row, filled, 1.0), color)
+	for point in range(2, Vitals.MAX_FOOD, 2):
+		var x := inner.position.x + roundf(per_point * point)
+		draw_rect(Rect2(x, inner.position.y, 1.0, 3.0), Color(0, 0, 0, 0.25))
+
+
+## A small golden loaf, scored on top.
+func _draw_loaf(at: Vector2) -> void:
+	var rows := [[2, 5], [1, 7], [0, 9], [0, 9], [0, 9], [1, 7]]
+	for y in rows.size():
+		var start: int = rows[y][0]
+		var run: int = rows[y][1]
+		for x in run:
+			var shade := 2
+			if y == 0 or (y == 1 and (x == 0 or x == run - 1)):
+				shade = 3
+			if y >= 4:
+				shade = 1
+			if x == 0 or x == run - 1 or y == rows.size() - 1:
+				shade = mini(shade, 1) if y < 4 else 0
+			draw_rect(Rect2(at + Vector2(start + x, y), Vector2.ONE), Color(LOAF[shade]))
+	for x: int in [3, 5]:
+		draw_rect(Rect2(at + Vector2(x, 1), Vector2.ONE), Color(LOAF[1]))
 
 
 ## The life crystal: a faceted red gem, lit from the top left.

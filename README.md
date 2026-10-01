@@ -20,7 +20,7 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Fonction | État |
 |---|---|
 | Vitalité : une jauge au-dessus de la barre ; les chutes de plus de 3 niveaux (sauf dans l'eau) et la lave blessent ; la vitalité revient doucement ; à zéro, on perd connaissance, ses affaires restent sur place et on se relève au point d'apparition | ✅ |
-| Faim et nourriture (manger les baies, le ragoût…) | à venir |
+| Faim et nourriture : une jauge de satiété qui baisse avec le temps, la marche et le minage ; manger en maintenant le clic droit (le ragoût et les baies déshydratées nourrissent bien mieux que le cru ; le champignon rouge cru rend malade) ; la vitalité ne revient que bien nourri, la faim l'use ; chapitre « Survie » du livre | ✅ |
 | Nage et noyade | à venir |
 | Modes de jeu : Créatif, Survie, Hardcore | à venir |
 | Animaux, monstres (originaux), combat et armures | à venir |
@@ -166,6 +166,7 @@ du projet, puis appuyer sur F5.
 | Revenir à la vue par défaut | Début (Home) | Clic du stick droit |
 | Miner (maintenir) | Clic gauche | Gâchette droite |
 | Poser le bloc en main | Clic droit | Gâchette gauche |
+| Manger (nourriture en main) | Maintenir le clic droit | Maintenir la gâchette gauche |
 | Utiliser le bloc visé (ouvrir un établi, un coffre, un four) | E | B |
 | Choisir l'objet en main | Molette, 1 à 9 | RB / LB |
 | Inventaire | Tab | |

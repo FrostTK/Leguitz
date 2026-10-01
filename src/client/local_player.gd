@@ -18,6 +18,8 @@ var active := false
 var noclip := false
 ## False while a screen takes the keys (the inventory): the player stands.
 var controls_enabled := true
+## Too hungry to run (Vitals.WEAK, told by VitalsView).
+var can_sprint := true
 ## Direction the player looks at, on the ground (world axes): exact, and
 ## rounded to the nearest side.
 var heading := Vector2.DOWN
@@ -78,7 +80,7 @@ func step(delta: float) -> void:
 		_update_facing(input)
 		var ground := client_world.ground_under(current_tile(), body.height)
 		var speed := WALK_SPEED * Tiles.ground_speed(ground)
-		if Input.is_action_pressed(InputBindings.SPRINT):
+		if can_sprint and Input.is_action_pressed(InputBindings.SPRINT):
 			speed *= SPRINT_MULTIPLIER
 		# Cap the step so a frame hitch never tunnels through a tile.
 		motion = input * speed * minf(delta, 0.1)

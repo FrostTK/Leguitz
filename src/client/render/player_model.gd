@@ -37,6 +37,8 @@ var lantern := OmniLight3D.new()
 var lantern_override := Vector3.INF
 ## The right arm strikes again and again (breaking a block).
 var swinging := false
+## Eating: the right hand at the mouth, munching.
+var eating := false
 ## Where the right arm is in its stroke: 0 raised, 1 striking down (-1: no
 ## stroke going on).
 var strike_phase := -1.0
@@ -113,7 +115,10 @@ func animate(feet: Vector3, heading: Vector2, speed: float, airborne: bool, delt
 			_legs[i].rotation.x = 0.35 * side
 			_arms[i].rotation.x = -1.1
 	strike_phase = -1.0
-	if swinging or _strike_left > 0.0:
+	if eating:
+		_strike += delta * 18.0
+		_arms[0].rotation.x = -2.1 + sin(_strike) * 0.12
+	elif swinging or _strike_left > 0.0:
 		_strike += delta * 13.0
 		_strike_left -= delta
 		_arms[0].rotation.x = -1.3 + sin(_strike) * 0.7

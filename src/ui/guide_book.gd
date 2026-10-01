@@ -2,7 +2,7 @@ class_name GuideBook
 extends RefCounted
 ## What the player's book says (the 10th slot, shown by BookScreen): the
 ## controls as they are bound (in the player's keyboard layout), the
-## gamepad, tips, tools, the recipes and the furnaces. A chapter is a list of entries:
+## gamepad, tips, tools, the recipes, the furnaces and survival. A chapter is a list of entries:
 ## Dictionaries with a "kind" (Kind) and their text already translated,
 ## built again when the language changes.
 
@@ -16,6 +16,7 @@ const CHAPTERS: Array[String] = [
 	"BOOK_CHAPTER_TOOLS",
 	"BOOK_CHAPTER_CRAFT",
 	"BOOK_CHAPTER_FURNACES",
+	"BOOK_CHAPTER_SURVIVAL",
 ]
 const TIP_COUNT := 15
 ## The tools chapter: what each kind of tool is for, shown with this tool.
@@ -35,7 +36,7 @@ const TOOL_ROWS := [
 
 ## The entries of every chapter, in CHAPTERS order.
 static func chapters() -> Array[Array]:
-	return [_controls(), _gamepad(), _tips(), _tools(), _craft(), _furnaces()]
+	return [_controls(), _gamepad(), _tips(), _tools(), _craft(), _furnaces(), _survival()]
 
 
 static func _controls() -> Array:
@@ -183,6 +184,25 @@ static func _furnaces() -> Array:
 	return entries
 
 
+## Vitality and satiety: what wears them down, how to eat, what feeds.
+static func _survival() -> Array:
+	var entries := [
+		_title(CHAPTERS[6]),
+		_text("BOOK_SURVIVAL_VITALITY"),
+		_text("BOOK_SURVIVAL_FOOD"),
+		_heading("BOOK_SURVIVAL_FOODS"),
+	]
+	var foods := Items.FOOD.keys()
+	foods.sort_custom(func(a: int, b: int) -> bool: return Items.FOOD[a] > Items.FOOD[b])
+	for item: int in foods:
+		var text := _t("BOOK_SURVIVAL_FEEDS") % [_t(Items.name_key(item)), Items.FOOD[item]]
+		if Vitals.POISONS.has(item):
+			text += " " + _t("BOOK_SURVIVAL_SICK")
+		entries.append(_icon(item, text))
+	entries.append(_text("BOOK_SURVIVAL_COOK"))
+	return entries
+
+
 static func _title(key: String) -> Dictionary:
 	return {"kind": Kind.TITLE, "text": _t(key)}
 
@@ -218,5 +238,6 @@ static func _t(key: String) -> String:
 	var keys := {
 		"use": " / ".join(InputNames.keys(InputBindings.USE)),
 		"inventory": " / ".join(InputNames.keys(InputBindings.INVENTORY)),
+		"place": String(TranslationServer.translate("MOUSE_RIGHT")).to_lower(),
 	}
 	return text.format(keys)

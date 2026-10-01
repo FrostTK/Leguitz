@@ -341,6 +341,17 @@ static func _reach_span(origin: Vector3, direction: Vector3, eye: Vector3) -> Ve
 	return Vector2(maxf(-b - root, 0.0), -b + root)
 
 
+## A few crumbs of `color` at the player's mouth (eating; not in first
+## person: they would fly into the eye).
+func crumbs(color: Color) -> void:
+	if client.first_person > 0.5:
+		return
+	var player := client.local_player
+	var feet := Render3D.world_px_to_local(player.position, player.height)
+	var mouth := feet + Vector3(player.heading.x, 0.0, player.heading.y) * 0.3
+	_debris.throw(_world_point(mouth + Vector3(0.0, 1.35, 0.0)), color, 3, 0.06)
+
+
 ## A local point in world space (the bits fly outside the stretched root).
 func _world_point(local: Vector3) -> Vector3:
 	return client.world_root.global_transform * local

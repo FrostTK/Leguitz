@@ -46,6 +46,8 @@ const HELD_SIZE := 0.28
 const FIRST_PERSON_HELD_SIZE := 0.16
 const FIRST_PERSON_HELD_AT := Vector3(0.36, -0.3, -0.62)
 const FIRST_PERSON_HELD_TURN := Vector3(-0.15, 0.7, 0.0)
+## Where food goes while it is eaten (in front of the mouth).
+const FIRST_PERSON_EAT_AT := Vector3(0.14, -0.3, -0.52)
 ## A food furnace breaking is told to players within this many tiles.
 const FURNACE_NEWS_RANGE := 12.0
 ## First person: a tool is held by the handle at the bottom right of the
@@ -629,6 +631,18 @@ func _handle_item_input(event: InputEvent) -> bool:
 	return false
 
 
+## The player holds the right button (or the left trigger) with food in
+## hand, free to act: they eat (VitalsView).
+func wants_to_eat() -> bool:
+	if not local_player.controls_enabled or vitals.passed_out or get_tree().paused:
+		return false
+	if not Items.is_food(held_item()):
+		return false
+	if Input.is_action_pressed(InputBindings.PLACE):
+		return true
+	return Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT) and not _dragging
+
+
 ## What is in hand: the player's book or the selected hotbar slot's item.
 func held_item() -> int:
 	return Items.Id.GUIDE_BOOK if book_in_hand else inventory.held()
@@ -834,7 +848,12 @@ func _update_held() -> void:
 		)
 	else:
 		var dip := maxf(stroke, 0.0)
-		first_person_held.position = FIRST_PERSON_HELD_AT + Vector3(0.0, -0.05, -0.04) * dip
+		var at := FIRST_PERSON_HELD_AT + Vector3(0.0, -0.05, -0.04) * dip
+		if vitals.eating:
+			# Up to the mouth, munching.
+			var munch := sin(vitals.eat_time * 18.0) * 0.015
+			at = FIRST_PERSON_EAT_AT + Vector3(0.0, munch, 0.0)
+		first_person_held.position = at
 		first_person_held.rotation = FIRST_PERSON_HELD_TURN + Vector3(-0.6, 0.0, 0.0) * dip
 		first_person_held.scale = Vector3.ONE * FIRST_PERSON_HELD_SIZE * items.fit(held)
 
@@ -933,8 +952,8 @@ func _handle_message(message: Dictionary) -> void:
 		Msg.BLOCK_CHANGED:
 			interaction.on_block_changed(message["cell"], message["voxel"])
 			_close_if_gone(message["cell"])
-		Msg.HEALTH:
-			vitals.on_health(message["health"], message["hurt"])
+		Msg.VITALS:
+			vitals.on_vitals(message["health"], message["food"], message["hurt"])
 		Msg.DIED:
 			vitals.on_passed_out(message["cause"])
 		Msg.INVENTORY:

@@ -268,17 +268,26 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   and monsters): `Vitals` holds the rules (MAX_HEALTH 20 points, falls over FALL_SAFE 3 levels
   cost a point a level unless the player lands on water, lava burns LAVA_DAMAGE every
   LAVA_SECONDS real seconds, a short immunity after a hurt, a point back every REGEN_SECONDS
-  once nothing hurt for REGEN_DELAY, both paced by `WorldClock.scale_duration()`). The server
-  keeps PlayerSession.health (saved with the player; 0 = passed out) and runs `Survival`
-  (stateless, given the server): falls reported by the client (Msg.player_move's `fell`, from
-  PlayerBody.take_fall), lava under the feet, healing, `GameServer.hurt` (not in creative mode);
+  once nothing hurt for REGEN_DELAY and the player is fed at least FED, both paced by
+  `WorldClock.scale_duration()`). Satiety: MAX_FOOD points, one spent per point of effort (time:
+  FOOD_SECONDS paced; WALK_EFFORT per tile; BREAK_EFFORT per block; HEAL_EFFORT per point
+  healed); at 0 starving costs a point of vitality every STARVE_SECONDS; under WEAK no running
+  (LocalPlayer.can_sprint). Food: Items.FOOD (satiety per item), Vitals.POISONS (raw red
+  mushroom: sick). The server keeps PlayerSession.health and .food (saved with the player;
+  health 0 = passed out) and runs `Survival` (stateless, given the server): falls reported by
+  the client (Msg.player_move's `fell`, from PlayerBody.take_fall), lava under the feet,
+  effort (`spend`), eating (Msg.EAT: a hotbar slot's food, not past full), starving, healing,
+  `GameServer.hurt` (no hurt nor hunger in creative mode);
   at 0 the player passes out: what they carried (bag, cursor, grid) falls where they are, open
   screens close, their moves and actions are ignored and they pick nothing up until Msg.RESPAWN
-  (back at the spawn, full). Msg.HEALTH (points, hurt, Vitals.Cause), Msg.DIED. Client:
-  VitalsView (the gauge, VitalsBar over the hotbar's left half: a life crystal, a notch every 2
-  points, a pale trail melting after a hurt, throbbing when low; the body reddens, voxel.gdshader
-  `hurt`; DeathScreen pulses the screen's edges, and when passed out darkens the world, says
-  why and offers "Get up"; the body lies down, PlayerModel.set_down).
+  (back at the spawn, full). Msg.VITALS (health, food, hurt, Vitals.Cause), Msg.DIED. Client:
+  VitalsView (VitalsBar over the hotbar: vitality on the left half, a life crystal, a notch every
+  2 points, a pale trail melting after a hurt, throbbing when low; satiety on the right half, a
+  loaf, amber, throbbing hungry; the body reddens, voxel.gdshader `hurt`; DeathScreen pulses the
+  screen's edges, and when passed out darkens the world, says why and offers "Get up"; the body
+  lies down, PlayerModel.set_down; eating: GameClient.wants_to_eat, food in hand and the right
+  button or the left trigger held, one eaten every EAT_SECONDS, predicted, the arm at the mouth,
+  crumbs, the first-person hand at the mouth). The book's Survival chapter lists what feeds.
 - Saves (`src/sim/save/world_storage.gd`, server side only): `user://worlds/<folder>/` holds
   world.cfg (settings, clock, weather), players/<name>.cfg and regions/r.<x>.<z>.bin (the chunks
   players changed, 32x32 per file, zstd voxels; the others are generated again). Change voxels

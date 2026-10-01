@@ -63,12 +63,16 @@ class PlayerSession:
 	var furnace := NO_CELL
 	## Vitality (Vitals); 0: passed out, until they get up (Msg.RESPAWN).
 	var health := Vitals.MAX_HEALTH
+	## Satiety (Vitals), and the effort spent towards the next point lost.
+	var food := Vitals.MAX_FOOD
+	var effort := 0.0
 	## Seconds left of the immunity after a hurt, since the last hurt, and
 	## in lava (towards the next burn) and getting better (the next point).
 	var immune := 0.0
 	var since_hurt := INF
 	var burning := 0.0
 	var healing := 0.0
+	var starving := 0.0
 
 	func alive() -> bool:
 		return health > 0
@@ -171,6 +175,7 @@ static func player_state(session: PlayerSession) -> Dictionary:
 		"facing": session.facing,
 		"inventory": session.inventory.to_dict(),
 		"health": session.health,
+		"food": session.food,
 	}
 
 
@@ -287,6 +292,8 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 			_on_slot_spread(session, message)
 		Msg.RESPAWN:
 			Survival.get_up(self, session)
+		Msg.EAT:
+			Survival.eat(self, session, int(message.get("slot", -1)))
 		Msg.OPEN_CHEST:
 			_on_open_chest(session, message)
 		Msg.CHEST_CLICK:
@@ -347,7 +354,7 @@ func _on_hello(session: PlayerSession, message: Dictionary) -> void:
 	session.transport.send(Msg.time_state(clock))
 	session.transport.send(Msg.weather_state(weather))
 	session.transport.send(Msg.inventory(session.inventory))
-	session.transport.send(Msg.health(session.health))
+	session.transport.send(Msg.vitals(session.health, session.food))
 	for dropped: DroppedItem in items.values():
 		session.transport.send(Msg.item_spawn(dropped))
 	# Start generating the whole initial view right away.
@@ -361,9 +368,11 @@ func _place_player(session: PlayerSession) -> void:
 	var saved := storage.load_player(session.player_name) if storage != null else {}
 	session.inventory.load_dict(saved.get("inventory", {}))
 	session.health = clampi(int(saved.get("health", Vitals.MAX_HEALTH)), 0, Vitals.MAX_HEALTH)
+	session.food = clampi(int(saved.get("food", Vitals.MAX_FOOD)), 0, Vitals.MAX_FOOD)
 	if session.health == 0:
 		# They left while passed out: they get up at the spawn.
 		session.health = Vitals.MAX_HEALTH
+		session.food = Vitals.MAX_FOOD
 		saved.erase("position")
 	if saved.has("position") and not spawn_forced:
 		session.position = saved["position"]
@@ -407,6 +416,7 @@ func _on_block_break(session: PlayerSession, message: Dictionary) -> void:
 		change_voxel(part, Mining.left_after_break(part, world.voxel_at))
 	_drop_from(cell, voxel)
 	_spill_contents(cell)
+	Survival.spend(self, session, Vitals.BREAK_EFFORT)
 	for part in cells:
 		var above := part + Vector3i.UP
 		var standing := world.voxel_at(above)
@@ -767,6 +777,8 @@ func _on_player_move(session: PlayerSession, message: Dictionary) -> void:
 	if new_pos.distance_to(session.position) > MAX_MOVE_PER_UPDATE:
 		session.transport.send(Msg.player_correction(session.position, session.height))
 		return
+	var walked := new_pos.distance_to(session.position) / GameConst.TILE_SIZE
+	Survival.spend(self, session, walked * Vitals.WALK_EFFORT)
 	session.position = new_pos
 	session.facing = message.get("facing", session.facing)
 	session.height = message.get("h", session.height)
