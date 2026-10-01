@@ -22,6 +22,8 @@ const INVENTORY_CLOSE := "inventory_close"
 const DEBUG_GIVE_TOOLS := "debug_give_tools"
 const CRAFT := "craft"
 const OPEN_WORKBENCH := "open_workbench"
+const OPEN_CHEST := "open_chest"
+const CHEST_CLICK := "chest_click"
 
 ## map_request() row for a map of the surface.
 const MAP_SURFACE := -1
@@ -41,6 +43,7 @@ const INVENTORY := "inventory"
 const ITEM_SPAWN := "item_spawn"
 const ITEM_MOVE := "item_move"
 const ITEM_REMOVE := "item_remove"
+const CHEST := "chest"
 
 
 ## The player broke the voxel at `cell` (tile x, row, tile y) with the
@@ -81,6 +84,22 @@ static func inventory_close() -> Dictionary:
 ## grid is its 5 x 5 one until the screen closes.
 static func open_workbench(cell: Vector3i) -> Dictionary:
 	return {"t": OPEN_WORKBENCH, "cell": cell}
+
+
+## The player opened the chest standing in `cell` (until the screen
+## closes, Msg.inventory_close).
+static func open_chest(cell: Vector3i) -> Dictionary:
+	return {"t": OPEN_CHEST, "cell": cell}
+
+
+## A click on a slot of the chest the player opened (Inventory.click_chest).
+static func chest_click(slot: int, right: bool, shift: bool) -> Dictionary:
+	return {"t": CHEST_CLICK, "slot": slot, "right": right, "shift": shift}
+
+
+## What a chest a player opened holds (Inventory.contents).
+static func chest(cell: Vector3i, chest_items: Inventory) -> Dictionary:
+	return {"t": CHEST, "cell": cell, "chest": chest_items.contents(Inventory.CHEST)}
 
 
 ## The player takes what their crafting grid makes (shift: as many as

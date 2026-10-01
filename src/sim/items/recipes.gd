@@ -27,6 +27,7 @@ const STONES: Array[int] = [Items.Id.STONE, Items.Id.DEEPSLATE]
 const SHAPED := [
 	{"pattern": ["P", "P"], "keys": {"P": PLANKS}, "result": [Items.Id.STICK, 4]},
 	{"pattern": ["PP", "PP"], "keys": {"P": PLANKS}, "result": [Items.Id.WORKBENCH, 1]},
+	{"pattern": ["PPP", "P P", "PPP"], "keys": {"P": PLANKS}, "result": [Items.Id.CHEST, 1]},
 	{"pattern": ["SS", "SS"], "keys": {"S": Items.Id.SAND}, "result": [Items.Id.SANDSTONE, 1]},
 	{
 		"pattern": ["III", "III", "III"],

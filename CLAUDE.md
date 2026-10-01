@@ -202,6 +202,17 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   carries the way it faces. Bodies are kept out of both tiles end to end
   (ObjectShapes.footprint_rect); the aiming frame covers the whole bench. The item's icon, the one
   in hand and on the ground use the same model (ItemModels).
+- Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST: ObjectShapes.CHEST_FRONTS; facing
+  objects share `front_of`, `facing`, `turn_of`, `model_block`): placed facing the player, opened by
+  a right click (`Mining.opens`). What a chest holds is its own Inventory (first
+  Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made
+  empty the first time; `chest_changed` marks the chunk to save; saved in the region with the
+  chunk, never sent with it). Msg.OPEN_CHEST (in reach) sets PlayerSession.chest and answers
+  Msg.CHEST (its contents; sent again to everyone who has it open when it changes);
+  Msg.CHEST_CLICK runs Inventory.click_chest (the player's cursor, Minecraft's rules), and with a
+  chest open shift-clicks in the bag move into it (Inventory.click's `chest`). Broken, a chest
+  spills its stacks (GameServer._spill_chest). Client: GameClient.chest (its copy, predicted),
+  InventoryScreen.open_chest (its 27 slots over the bag instead of the crafting grid).
 - Saves (`src/sim/save/world_storage.gd`, server side only): `user://worlds/<folder>/` holds
   world.cfg (settings, clock, weather), players/<name>.cfg and regions/r.<x>.<z>.bin (the chunks
   players changed, 32x32 per file, zstd voxels; the others are generated again). Change voxels

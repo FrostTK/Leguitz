@@ -63,7 +63,7 @@ Les questions de goût ou les choix lourds de conséquences sont posés avant de
 
 ## 3. État actuel : ce qui est fait
 
-Godot **4.7.2** (GDScript), rendu Forward+. 136 tests unitaires, lint propre.
+Godot **4.7.2** (GDScript), rendu Forward+. 139 tests unitaires, lint propre.
 
 | Phase | Contenu | Commits |
 |---|---|---|
@@ -88,7 +88,8 @@ Godot **4.7.2** (GDScript), rendu Forward+. 136 tests unitaires, lint propre.
 | 4.1 Recettes et grille 3×3 | Registre `Recipes` (avec forme, placée n'importe où et en miroir, ou sans forme ; groupes d'ingrédients comme « n'importe quelles planches » ; recettes réservées à l'établi possibles), grille de fabrication dans l'`Inventory` (5×5 cases, l'inventaire utilise les 3×3 du haut à gauche), clic sur le résultat (Maj : le plus possible), la grille et le curseur reviennent dans le sac à la fermeture, `Msg.CRAFT` vérifié par le serveur ; recettes : bûche → 4 planches de son bois, 2 planches → 4 bâtons, 4 planches → établi ; planches des 6 bois et établi posables (blocs cubes, textures de `gen_art.py` : planches clouées, établi à grille 5×5 et outils sur les côtés), à la hache ; les objets-blocs montrent leurs côtés ; chapitre « Fabrication » du livre (recettes dessinées, les planches défilent) ; `--grid` | `6f011e6` |
 | 4.1b Établi en modèle | L'établi devient un modèle voxel de 2 cases (`WorkbenchModel` : établi de menuisier en hêtre, étau, tiroirs, porte, enclume, marteau et scie en fer dessus), posé face au joueur (4 orientations : `WORKBENCH`, `_WEST`, `_NORTH`, `_EAST`, plus son autre bout `WORKBENCH_END_X/_Z` sans modèle) sur la case visée et celle de sa droite (sinon de sa gauche), libres et posées sur des cubes (`Mining.placement`) ; casser un bout casse tout l'établi et rend un établi (`Mining.object_cells`) ; collisions sur les deux cases, cadre de visée autour de l'établi entier ; icône, objet en main et au sol avec le même modèle ; sa texture de cube est retirée des atlas | `97dc394` |
 | 4.2 Établi 5×5 | Clic droit sur un établi posé (n'importe quel bout ; à la manette, gâchette gauche) : l'écran « Établi » avec la grille 5×5 (`InventoryScreen.open(width)`), le serveur l'accepte si l'établi est à portée (`Msg.OPEN_WORKBENCH`, `PlayerSession.craft_width` jusqu'à la fermeture) ; recettes des 18 outils aux formes classiques de Minecraft, seulement à l'établi (planches, n'importe quelle pierre, lingots de cuivre/fer/or, diamants ; bâtons) ; lingots de cuivre, de fer et d'or (objets en voxels, pas encore fabricables : le four viendra à l'étape 5) ; grès (4 sable) et glace compacte (9 glace) ; le livre classe les recettes (inventaire, puis « À l'établi », une entrée par sorte d'outil qui fait défiler les matériaux) ; `--grid` par lignes | `600a254` |
-| 4.3 Usure des outils | Solidité de Minecraft par matériau (bois 59 blocs, pierre 131, cuivre 190, fer 250, or 32, diamant 1561 : l'or rapide mais fragile) ; chaque bloc cassé (sauf ce qui part d'un coup, les plantes) use l'outil en main, qui se casse quand il est usé (éclats de sa tête, « Pioche en fer cassée ! » au-dessus de la barre) ; l'usure suit l'outil partout (déplacé, lancé, ramassé, sauvegardé) ; barre d'usure verte → rouge sous l'icône ; le livre donne la vitesse et la solidité de chaque matériau | « Tool wear » |
+| 4.3 Usure des outils | Solidité de Minecraft par matériau (bois 59 blocs, pierre 131, cuivre 190, fer 250, or 32, diamant 1561 : l'or rapide mais fragile) ; chaque bloc cassé (sauf ce qui part d'un coup, les plantes) use l'outil en main, qui se casse quand il est usé (éclats de sa tête, « Pioche en fer cassée ! » au-dessus de la barre) ; l'usure suit l'outil partout (déplacé, lancé, ramassé, sauvegardé) ; barre d'usure verte → rouge sous l'icône ; le livre donne la vitesse et la solidité de chaque matériau | `05b81e3` |
+| 4.4 Coffres | Coffre en voxels (planches, coins et cerclage de fer, serrure dorée), recette de Minecraft (8 planches en anneau), posé face au joueur ; clic droit : l'écran « Coffre » (ses 27 cases au-dessus du sac), clics et Maj+clic comme dans Minecraft (l'usure des outils suit) ; le contenu est gardé par le serveur dans le chunk (`ChunkData.chests`) et sauvegardé avec la région ; tous ceux qui l'ont ouvert voient ses changements ; cassé, il répand son contenu et rend un coffre | « Chests » |
 
 **Pas encore fait** (prévu) : la suite de la phase 4 (établi 5×5, usure, coffres, fours, blocs de construction), survie/combat, créatures, structures, agriculture, menus de départ, sons,
 mode Arcade, mobile.
@@ -238,9 +239,9 @@ valider avec le propriétaire avant de commencer** (validé, avec la grille 3×3
 3. ✅ **Usure des outils** (voir section 3), comme prévu : solidité par matériau (l'or rapide mais
    fragile), barre d'usure dans les cases, l'outil casse ; F7 reste une touche de debug (créatif plus
    tard).
-4. **Coffres** (prochaine étape) : données de bloc côté serveur (un inventaire par coffre, sauvegardé avec la région),
-   ouverture au clic droit, contenu répandu quand on le casse.
-5. **Fours** : four alimentaire (nourriture seulement ; y fondre du minerai le casse, il devient
+4. ✅ **Coffres** (voir section 3), comme prévu : données de bloc côté serveur (un inventaire par
+   coffre, sauvegardé avec la région), ouverture au clic droit, contenu répandu quand on le casse.
+5. **Fours** (prochaine étape) : four alimentaire (nourriture seulement ; y fondre du minerai le casse, il devient
    inutilisable) et four d'usine (le reste ; de la nourriture y ressort carbonisée) ; combustible,
    cuisson et fonte au fil du temps (`WorldClock.scale_duration()`), lingots de cuivre, de fer et
    d'or.

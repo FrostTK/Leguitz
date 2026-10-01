@@ -58,11 +58,14 @@ func _process(delta: float) -> void:
 		place()
 
 
-## Puts the block in hand against the side of the target; a workbench
-## aimed at opens instead, and so does the player's book in hand.
+## Puts the block in hand against the side of the target; a workbench or
+## a chest aimed at opens instead, and so does the player's book in hand.
 func place() -> void:
 	if target != null and Mining.opens(target.voxel):
-		client.open_workbench(target.cell)
+		if ObjectShapes.is_chest(Voxels.block_of(target.voxel)):
+			client.open_chest(target.cell)
+		else:
+			client.open_workbench(target.cell)
 		return
 	if client.held_item() == Items.Id.GUIDE_BOOK:
 		client.open_book()

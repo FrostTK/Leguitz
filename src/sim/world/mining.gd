@@ -60,6 +60,10 @@ const BLOCK_SECONDS := {
 	Tiles.Block.WORKBENCH_EAST: 2.5,
 	Tiles.Block.WORKBENCH_END_X: 2.5,
 	Tiles.Block.WORKBENCH_END_Z: 2.5,
+	Tiles.Block.CHEST: 2.5,
+	Tiles.Block.CHEST_WEST: 2.5,
+	Tiles.Block.CHEST_NORTH: 2.5,
+	Tiles.Block.CHEST_EAST: 2.5,
 }
 ## Trees by hand: chopping a trunk takes a while.
 const TREE_SECONDS := 3.5
@@ -93,6 +97,10 @@ const AXE_BLOCKS := {
 	Tiles.Block.WORKBENCH_EAST: true,
 	Tiles.Block.WORKBENCH_END_X: true,
 	Tiles.Block.WORKBENCH_END_Z: true,
+	Tiles.Block.CHEST: true,
+	Tiles.Block.CHEST_WEST: true,
+	Tiles.Block.CHEST_NORTH: true,
+	Tiles.Block.CHEST_EAST: true,
 }
 const PICKAXE_BLOCKS := {Tiles.Block.ROCK: true, Tiles.Block.MOSSY_ROCK: true}
 
@@ -106,24 +114,30 @@ static func can_break(voxel: int, row: int) -> bool:
 	)
 
 
-## Voxels a player can place: cubes (grounds and blocks), and the
-## workbench.
+## Voxels a player can place: cubes (grounds and blocks), the workbench
+## and the chest.
 static func can_place(voxel: int) -> bool:
 	if voxel == Voxels.UNKNOWN:
 		return false
-	return Voxels.is_cube(voxel) or ObjectShapes.BENCH_FRONTS.has(Voxels.block_of(voxel))
+	return Voxels.is_cube(voxel) or ObjectShapes.front_of(Voxels.block_of(voxel)) != Vector2i.ZERO
 
 
 ## The cells a placed voxel takes ({cell: voxel}; empty: no room). A cube
 ## takes the cell aimed at; a workbench faces `front` and takes the cell
-## aimed at and the one on its right (or else the one on its left), both
-## free of anything solid or liquid and standing on cubes.
+## aimed at and the one on its right (or else the one on its left), a
+## chest faces `front` in the cell aimed at, all free of anything solid or
+## liquid and standing on cubes.
 static func placement(
 	cell: Vector3i, voxel: int, front: Vector2i, voxel_at: Callable
 ) -> Dictionary:
-	if not ObjectShapes.BENCH_FRONTS.has(Voxels.block_of(voxel)):
+	var block := Voxels.block_of(voxel)
+	if ObjectShapes.is_chest(block):
+		if not _bench_room(cell, voxel_at):
+			return {}
+		return {cell: Voxels.of_block(ObjectShapes.facing(Tiles.Block.CHEST, front))}
+	if not ObjectShapes.BENCH_FRONTS.has(block):
 		return {cell: voxel} if is_replaceable(voxel_at.call(cell)) else {}
-	var left := ObjectShapes.bench_facing(front)
+	var left := ObjectShapes.facing(Tiles.Block.WORKBENCH, front)
 	var right := ObjectShapes.bench_right(left)
 	var step := Vector3i(right.x, 0, right.y)
 	var end := Voxels.of_block(ObjectShapes.bench_end(right))
@@ -139,9 +153,11 @@ static func wears(voxel: int) -> bool:
 	return hand_seconds(voxel) > INSTANT_SECONDS
 
 
-## Whether a voxel opens something when used (right click): a workbench.
+## Whether a voxel opens something when used (right click): a workbench
+## or a chest.
 static func opens(voxel: int) -> bool:
-	return ObjectShapes.is_bench(Voxels.block_of(voxel))
+	var block := Voxels.block_of(voxel)
+	return ObjectShapes.is_bench(block) or ObjectShapes.is_chest(block)
 
 
 ## Which way a workbench placed at `cell` faces: towards the player's feet

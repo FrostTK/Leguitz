@@ -88,6 +88,10 @@ enum Block {
 	WORKBENCH_EAST,
 	WORKBENCH_END_X,
 	WORKBENCH_END_Z,
+	CHEST,
+	CHEST_WEST,
+	CHEST_NORTH,
+	CHEST_EAST,
 }
 
 const FLOWERS: Array[Block] = [

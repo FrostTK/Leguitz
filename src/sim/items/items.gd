@@ -78,6 +78,7 @@ enum Id {
 	COPPER_INGOT,
 	IRON_INGOT,
 	GOLD_INGOT,
+	CHEST,
 }
 ## What a tool is made for (Mining.tool_for: what it breaks faster).
 enum Tool { NONE, PICKAXE, AXE, SHOVEL }
@@ -138,6 +139,7 @@ const PLACES_BLOCK := {
 	Id.JUNGLE_PLANKS: Tiles.Block.JUNGLE_PLANKS,
 	Id.ACACIA_PLANKS: Tiles.Block.ACACIA_PLANKS,
 	Id.WORKBENCH: Tiles.Block.WORKBENCH,
+	Id.CHEST: Tiles.Block.CHEST,
 }
 
 ## What a ground gives (soil gives dirt); grounds left out give nothing.
@@ -207,6 +209,10 @@ const BLOCK_DROPS := {
 	Tiles.Block.WORKBENCH_EAST: [Id.WORKBENCH, 1, 1],
 	Tiles.Block.WORKBENCH_END_X: [Id.WORKBENCH, 1, 1],
 	Tiles.Block.WORKBENCH_END_Z: [Id.WORKBENCH, 1, 1],
+	Tiles.Block.CHEST: [Id.CHEST, 1, 1],
+	Tiles.Block.CHEST_WEST: [Id.CHEST, 1, 1],
+	Tiles.Block.CHEST_NORTH: [Id.CHEST, 1, 1],
+	Tiles.Block.CHEST_EAST: [Id.CHEST, 1, 1],
 }
 ## The planks each log is sawn into.
 const PLANKS_OF := {

@@ -55,6 +55,8 @@ static func _compute(voxel: int) -> Color:
 		return Color(TREE_COLORS[block][0][2])
 	if ObjectShapes.is_bench(block):
 		return Color(WorkbenchModel.TOP[1])
+	if ObjectShapes.is_chest(block):
+		return Color(ChestModel.WOOD[2])
 	return OBJECT_COLORS.get(block, PLANT_COLOR)
 
 

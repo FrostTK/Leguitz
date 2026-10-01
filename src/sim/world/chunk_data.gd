@@ -20,6 +20,9 @@ var biome := PackedByteArray()
 var tops := PackedByteArray()
 ## Set when a player changed the chunk (it must be saved, not regenerated).
 var modified := false
+## Server side: the chests standing in the chunk, by cell (their own
+## Inventory; see WorldState.chest_at), saved with it, never sent.
+var chests: Dictionary[Vector3i, Inventory] = {}
 
 
 func _init(chunk_coord := Vector2i.ZERO) -> void:

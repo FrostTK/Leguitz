@@ -101,6 +101,10 @@ var book_screen := BookScreen.new()
 var book_in_hand := false
 ## Cells across of the crafting grid in use (a workbench's is wider).
 var craft_width := Inventory.OWN_GRID
+## The chest open (what it holds as the server last told; null: none), and
+## where it stands.
+var chest: Inventory
+var chest_cell := Vector3i.MAX
 var dropped_items := DroppedItemsView.new()
 var item_icons := ItemIcons.new()
 ## What is in hand in first person (a child of the camera).
@@ -160,6 +164,7 @@ func _ready() -> void:
 	inventory_screen.close_requested.connect(_on_inventory_closed)
 	inventory_screen.book_requested.connect(_on_book_requested)
 	inventory_screen.craft_clicked.connect(_on_craft_clicked)
+	inventory_screen.chest_clicked.connect(_on_chest_clicked)
 	book_screen.library = items
 	book_screen.close_requested.connect(_on_book_closed)
 	dropped_items.library = items
@@ -658,6 +663,24 @@ func open_inventory() -> void:
 	inventory_screen.open(craft_width)
 
 
+## Opens the chest standing in `cell`: its slots over the inventory (what
+## it holds comes from the server).
+func open_chest(cell: Vector3i) -> void:
+	interaction.stop()
+	local_player.controls_enabled = false
+	craft_width = Inventory.OWN_GRID
+	chest = Inventory.new()
+	chest_cell = cell
+	transport.send(Msg.open_chest(cell))
+	inventory_screen.open_chest(chest)
+
+
+func _on_chest_clicked(slot: int, right: bool, shift: bool) -> void:
+	if chest != null:
+		inventory.click_chest(chest, slot, right, shift)
+		transport.send(Msg.chest_click(slot, right, shift))
+
+
 ## Opens the workbench standing in `cell`: the inventory with its 5 x 5
 ## crafting grid (the server is told: its grid is used until it closes).
 func open_workbench(cell: Vector3i) -> void:
@@ -669,7 +692,7 @@ func open_workbench(cell: Vector3i) -> void:
 
 
 func _on_slot_clicked(slot: int, right: bool, shift: bool) -> void:
-	inventory.click(slot, right, shift)
+	inventory.click(slot, right, shift, chest)
 	transport.send(Msg.slot_click(slot, right, shift))
 
 
@@ -681,6 +704,8 @@ func _on_cursor_dropped(whole: bool) -> void:
 
 func _on_inventory_closed() -> void:
 	local_player.controls_enabled = true
+	chest = null
+	chest_cell = Vector3i.MAX
 	inventory.put_back_all()
 	transport.send(Msg.inventory_close())
 
@@ -818,6 +843,9 @@ func _handle_message(message: Dictionary) -> void:
 			inventory.load_dict(message["inventory"])
 			# The hand follows the player's own choice (the server may lag).
 			inventory.selected = selected
+		Msg.CHEST:
+			if chest != null and message["cell"] == chest_cell:
+				chest.load_dict(message["chest"])
 		Msg.ITEM_SPAWN:
 			dropped_items.spawn(message["id"], message["item"], message["count"], message["pos"])
 		Msg.ITEM_MOVE:

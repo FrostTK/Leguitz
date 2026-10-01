@@ -181,7 +181,7 @@ BOOK_MOVE,Move,Se déplacer
 BOOK_SPRINT,Run,Courir
 BOOK_JUMP,Jump,Sauter
 BOOK_BREAK,Mine (hold),Miner (maintenir)
-BOOK_PLACE,"Place a block, read this book","Poser un bloc, lire ce livre"
+BOOK_PLACE,"Place a block, open a chest or a workbench, read this book","Poser un bloc, ouvrir un coffre ou un établi, lire ce livre"
 BOOK_CAMERA,Turn the camera,Tourner la caméra
 BOOK_CAMERA_MOUSE,Drag with the right or middle button,Glisser avec le clic droit ou le clic molette
 BOOK_ZOOM,Zoom (top-down view),Zoomer (vue de dessus)
@@ -269,3 +269,6 @@ BOOK_CRAFT_SHOVEL,Shovels (every material),Pelles (tous les matériaux)
 HUD_TOOL_BROKE,%s broke!,%s cassée !
 BOOK_TOOLS_TIER,"%s: ×%s, %d blocks","%s : ×%s, %d blocs"
 BOOK_TOOLS_WEAR,"A tool wears with every block it breaks (the bar under its icon), and breaks when worn out.",Un outil s'use à chaque bloc cassé (la barre sous son icône) et se casse quand il est usé.
+ITEM_CHEST,Chest,Coffre
+CHEST_TITLE,Chest,Coffre
+BOOK_TIP_12,"A chest keeps 27 stacks (right click to open it); broken, it spills them.","Un coffre garde 27 piles d'objets (clic droit pour l'ouvrir) ; cassé, il les répand."

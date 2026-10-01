@@ -52,6 +52,29 @@ func set_voxel(cell: Vector3i, voxel: int) -> void:
 	_changed[chunk.coord] = true
 
 
+## The chest standing in a cell (its Inventory, empty the first time).
+func chest_at(cell: Vector3i) -> Inventory:
+	var chunk := get_or_create_chunk(Coords.tile_to_chunk(Vector2i(cell.x, cell.z)))
+	if not chunk.chests.has(cell):
+		chunk.chests[cell] = Inventory.new()
+	return chunk.chests[cell]
+
+
+## A chest's items changed: its chunk is saved with them.
+func chest_changed(cell: Vector3i) -> void:
+	var chunk := get_or_create_chunk(Coords.tile_to_chunk(Vector2i(cell.x, cell.z)))
+	chunk.modified = true
+	_changed[chunk.coord] = true
+
+
+## Takes away the chest of a cell (it was broken): its Inventory, or null.
+func take_chest(cell: Vector3i) -> Inventory:
+	var chunk := get_or_create_chunk(Coords.tile_to_chunk(Vector2i(cell.x, cell.z)))
+	var chest: Inventory = chunk.chests.get(cell)
+	chunk.chests.erase(cell)
+	return chest
+
+
 ## Hands the chunks changed since the last call to the storage.
 func store_changed() -> void:
 	if storage == null:

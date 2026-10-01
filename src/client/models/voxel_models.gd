@@ -99,6 +99,8 @@ static func build(block: int, variant: int) -> VoxelGrid:
 			return _lily_pad(rng, variant)
 		Tiles.Block.WORKBENCH:
 			return WorkbenchModel.build()
+		Tiles.Block.CHEST:
+			return ChestModel.build()
 	return VoxelGrid.new()
 
 

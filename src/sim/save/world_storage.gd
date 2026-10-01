@@ -117,16 +117,24 @@ func load_chunk(coord: Vector2i) -> ChunkData:
 		)
 	)
 	chunk.modified = true
+	for cell: Vector3i in data.get("chests", {}):
+		var chest := Inventory.new()
+		chest.load_dict(data["chests"][cell])
+		chunk.chests[cell] = chest
 	return chunk
 
 
 ## Keeps a changed chunk until the next flush().
 func store_chunk(chunk: ChunkData) -> void:
 	var key := region_of(chunk.coord)
+	var chests := {}
+	for cell: Vector3i in chunk.chests:
+		chests[cell] = chunk.chests[cell].contents(Inventory.CHEST)
 	_region(key)[chunk.coord] = {
 		"voxels": chunk.voxels.compress(COMPRESSION),
 		"size": chunk.voxels.size(),
 		"biome": chunk.biome,
+		"chests": chests,
 	}
 	_dirty[key] = true
 

@@ -24,9 +24,11 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Établi : un vrai établi de menuisier en 3D voxel sur 2 cases (étau, tiroirs, porte, une enclume, un marteau et une scie en fer dessus), posé face au joueur | ✅ |
 | Établi : clic droit dessus pour sa grille 5×5 ; les 18 outils (pioche, hache, pelle en bois, pierre, cuivre, fer, or, diamant) avec les formes de Minecraft ; lingots de cuivre, de fer et d'or (le four viendra) | ✅ |
 | Usure des outils : chaque matériau a sa solidité (l'or rapide mais fragile), barre d'usure sous l'icône, l'outil se casse quand il est usé | ✅ |
-| Coffres | à venir |
+| Coffres : 27 cases, ouverts au clic droit, gardés avec le monde ; cassés, ils répandent leur contenu | ✅ |
 | Four alimentaire et four d'usine | à venir |
 | Blocs de construction variés (briques, verre, pierre taillée…) | à venir |
+
+![Leguitz : un coffre ouvert (lingots et diamants rangés), deux coffres posés face au joueur](docs/screenshots/phase4-coffres.png)
 
 ![Leguitz : l'établi ouvert (grille 5×5, une pioche en diamant), les recettes dans le livre, l'établi à la 1re personne](docs/screenshots/phase4-etabli-5x5.png)
 

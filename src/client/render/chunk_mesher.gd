@@ -691,8 +691,9 @@ static func _add_prop(
 	var offset := Vector2(ObjectShapes.offset_at(block, tile)) / 16.0
 	var foot := Vector3(lx + 0.5 + offset.x, height, lz + 0.5 + offset.y)
 	var turn := prop_turn(tile)
+	if ObjectShapes.front_of(block) != Vector2i.ZERO:
+		turn = Basis(Vector3.UP, ObjectShapes.turn_of(block))
 	if ObjectShapes.BENCH_FRONTS.has(block):
-		turn = Basis(Vector3.UP, ObjectShapes.bench_turn(block))
 		var right := ObjectShapes.bench_right(block)
 		foot += Vector3(right.x, 0.0, right.y) * 0.5
 	var shade := 0.93 + ((h >> 16) & 15) / 15.0 * 0.14

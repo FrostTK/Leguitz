@@ -32,6 +32,8 @@ const THROW_SPEED := Vector2(6.0, 4.0)
 ## Max distance (world px) a player may move between two updates before
 ## the server corrects them. Generous: real validation comes with Phase 3.
 const MAX_MOVE_PER_UPDATE := 96.0
+## No chest open.
+const NO_CHEST := Vector3i(0, -1, 0)
 const MAP_MIN_SIZE := 64
 const MAP_MAX_SIZE := 512
 const MAP_MAX_SCALE := 16
@@ -53,6 +55,8 @@ class PlayerSession:
 	## Cells across of the crafting grid the player uses (a workbench's is
 	## wider than the inventory's).
 	var craft_width := Inventory.OWN_GRID
+	## The chest the player has open (NO_CHEST: none).
+	var chest := NO_CHEST
 
 
 class MapJob:
@@ -249,10 +253,23 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 		Msg.SLOT_CLICK:
 			if session.joined:
 				var slot := int(message.get("slot", -1))
+				var open := _open_chest(session)
 				session.inventory.click(
-					slot, message.get("right", false), message.get("shift", false)
+					slot, message.get("right", false), message.get("shift", false), open
 				)
 				session.transport.send(Msg.inventory(session.inventory))
+				if open != null:
+					_chest_changed(session.chest)
+		Msg.OPEN_CHEST:
+			_on_open_chest(session, message)
+		Msg.CHEST_CLICK:
+			var chest := _open_chest(session)
+			if chest != null:
+				var slot := int(message.get("slot", -1))
+				var right: bool = message.get("right", false)
+				session.inventory.click_chest(chest, slot, right, message.get("shift", false))
+				session.transport.send(Msg.inventory(session.inventory))
+				_chest_changed(session.chest)
 		Msg.ITEM_DROP:
 			_on_item_drop(session, message)
 		Msg.INVENTORY_CLOSE:
@@ -260,6 +277,7 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 				for left in session.inventory.put_back_all():
 					_throw(session, left.x, left.y, left.z)
 				session.craft_width = Inventory.OWN_GRID
+				session.chest = NO_CHEST
 				session.transport.send(Msg.inventory(session.inventory))
 		Msg.OPEN_WORKBENCH:
 			_on_open_workbench(session, message)
@@ -340,6 +358,7 @@ func _on_block_break(session: PlayerSession, message: Dictionary) -> void:
 	for part in cells:
 		change_voxel(part, Mining.left_after_break(part, world.voxel_at))
 	_drop_from(cell, voxel)
+	_spill_chest(cell)
 	for part in cells:
 		var above := part + Vector3i.UP
 		var standing := world.voxel_at(above)
@@ -347,6 +366,23 @@ func _on_block_break(session: PlayerSession, message: Dictionary) -> void:
 			for piece in Mining.object_cells(above, standing, world.voxel_at):
 				change_voxel(piece, Voxels.AIR)
 			_drop_from(above, standing)
+
+
+## A chest broken: what it held falls out where it was.
+func _spill_chest(cell: Vector3i) -> void:
+	var chest := world.take_chest(cell)
+	if chest == null:
+		return
+	world.chest_changed(cell)
+	var middle := Vector3(cell.x + 0.5, cell.y - GameConst.SEA_LEVEL + 0.5, cell.z + 0.5)
+	for slot in Inventory.CHEST:
+		if chest.items[slot] != Items.Id.NONE:
+			var speed := Vector3(_rng.randf_range(-1.5, 1.5), 3.0, _rng.randf_range(-1.5, 1.5))
+			var dropped := spawn_item(chest.items[slot], chest.counts[slot], middle, speed)
+			dropped.wear = chest.wear[slot]
+	for other in _sessions:
+		if other.chest == cell:
+			other.chest = NO_CHEST
 
 
 ## What a broken voxel gives falls where it was.
@@ -406,6 +442,38 @@ func _on_open_workbench(session: PlayerSession, message: Dictionary) -> void:
 	var near := Mining.reach_to(session.position, session.height, cell)
 	if Mining.opens(world.voxel_at(cell)) and near <= Mining.REACH + REACH_LEEWAY:
 		session.craft_width = Inventory.GRID
+
+
+## A player opened a chest within reach: they see what it holds, and
+## their clicks go to it until they close it.
+func _on_open_chest(session: PlayerSession, message: Dictionary) -> void:
+	if not session.joined:
+		return
+	var cell: Vector3i = message.get("cell", Vector3i.ZERO)
+	var near := Mining.reach_to(session.position, session.height, cell)
+	var there := Voxels.block_of(world.voxel_at(cell))
+	if not ObjectShapes.is_chest(there) or near > Mining.REACH + REACH_LEEWAY:
+		return
+	session.chest = cell
+	session.transport.send(Msg.chest(cell, world.chest_at(cell)))
+
+
+## The chest a player has open (null: none, or it is gone).
+func _open_chest(session: PlayerSession) -> Inventory:
+	if not session.joined or session.chest == NO_CHEST:
+		return null
+	if not ObjectShapes.is_chest(Voxels.block_of(world.voxel_at(session.chest))):
+		return null
+	return world.chest_at(session.chest)
+
+
+## A chest's items changed: saved with its chunk, shown to every player
+## who has it open.
+func _chest_changed(cell: Vector3i) -> void:
+	world.chest_changed(cell)
+	for other in _sessions:
+		if other.joined and other.chest == cell:
+			other.transport.send(Msg.chest(cell, world.chest_at(cell)))
 
 
 ## A player throws one item of a slot, or its whole stack.

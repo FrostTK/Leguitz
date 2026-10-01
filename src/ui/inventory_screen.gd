@@ -15,11 +15,15 @@ signal close_requested
 signal book_requested
 ## What the crafting grid makes was clicked (shift: make as many as possible).
 signal craft_clicked(shift: bool)
+## A slot of the open chest was clicked.
+signal chest_clicked(slot: int, right: bool, shift: bool)
 
 var inventory: Inventory
 var library: ItemLibrary
 ## Cells across of the crafting grid shown (see open).
 var craft_width := Inventory.OWN_GRID
+## The chest shown instead of the crafting grid (see open_chest; null: none).
+var chest: Inventory
 ## The book's slot shows, and the book is in hand (set by GameClient).
 var book_shown := false
 var book_selected := false
@@ -34,6 +38,11 @@ var _title := Label.new()
 ## width in use hide).
 var _grid := GridContainer.new()
 var _cells: Array[ItemSlot] = []
+var _crafting_area: Control
+var _chest_grid := GridContainer.new()
+var _chest_slots: Array[ItemSlot] = []
+## Over the bag when a chest is open: whose slots are whose.
+var _bag_label := Label.new()
 ## Draws the cursor's stack over the panel.
 var _cursor := Control.new()
 
@@ -54,7 +63,23 @@ func _ready() -> void:
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_title.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	top.add_child(_title)
-	top.add_child(_crafting())
+	_crafting_area = _crafting()
+	top.add_child(_crafting_area)
+	_chest_grid.columns = Inventory.HOTBAR
+	_chest_grid.add_theme_constant_override("h_separation", 1)
+	_chest_grid.add_theme_constant_override("v_separation", 1)
+	box.add_child(_chest_grid)
+	for i in Inventory.CHEST:
+		var chest_slot := ItemSlot.new()
+		chest_slot.slot = i
+		chest_slot.library = library
+		chest_slot.clicked.connect(
+			func(at: int, right: bool, shift: bool) -> void: chest_clicked.emit(at, right, shift)
+		)
+		_chest_grid.add_child(chest_slot)
+		_chest_slots.append(chest_slot)
+	_bag_label.text = "INVENTORY_TITLE"
+	box.add_child(_bag_label)
 	var bag := GridContainer.new()
 	bag.columns = Inventory.HOTBAR
 	bag.add_theme_constant_override("h_separation", 1)
@@ -85,11 +110,26 @@ func _ready() -> void:
 ## Opens with a crafting grid `width` cells across: the inventory's own,
 ## or a workbench's (Inventory.GRID).
 func open(width := Inventory.OWN_GRID) -> void:
+	chest = null
+	_chest_grid.visible = false
+	_bag_label.visible = false
+	_crafting_area.visible = true
 	craft_width = width
 	_title.text = "WORKBENCH_TITLE" if width > Inventory.OWN_GRID else "INVENTORY_TITLE"
 	_grid.columns = width
 	for cell in _cells.size():
 		_cells[cell].visible = cell % Inventory.GRID < width and cell / Inventory.GRID < width
+	visible = true
+
+
+## Opens with a chest's slots over the bag (`view`: what it holds, kept
+## up to date by GameClient) instead of the crafting grid.
+func open_chest(view: Inventory) -> void:
+	chest = view
+	_title.text = "CHEST_TITLE"
+	_crafting_area.visible = false
+	_chest_grid.visible = true
+	_bag_label.visible = true
 	visible = true
 
 
@@ -162,6 +202,9 @@ func _process(_delta: float) -> void:
 		slot.show_stack(
 			inventory.items[at], inventory.counts[at], at == selected, inventory.wear[at]
 		)
+	if chest != null:
+		for i in Inventory.CHEST:
+			_chest_slots[i].show_stack(chest.items[i], chest.counts[i], false, chest.wear[i])
 	var made := inventory.craft_result(craft_width)
 	_result.show_stack(made.x, made.y)
 	_book.visible = book_shown

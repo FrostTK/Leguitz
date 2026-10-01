@@ -16,7 +16,7 @@ const CHAPTERS: Array[String] = [
 	"BOOK_CHAPTER_TOOLS",
 	"BOOK_CHAPTER_CRAFT",
 ]
-const TIP_COUNT := 11
+const TIP_COUNT := 12
 ## The tools chapter: what each kind of tool is for, shown with this tool.
 const TOOL_ROWS := [
 	[Items.Id.IRON_PICKAXE, "BOOK_TOOLS_PICKAXE"],

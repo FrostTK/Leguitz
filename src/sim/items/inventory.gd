@@ -19,6 +19,8 @@ const GRID := 5
 const OWN_GRID := 3
 const CRAFT := CURSOR + 1
 const SIZE := CRAFT + GRID * GRID
+## A chest's slots (the first ones of an Inventory of its own).
+const CHEST := 27
 
 var items := PackedInt32Array()
 var counts := PackedInt32Array()
@@ -86,56 +88,93 @@ func wear_out(slot: int) -> bool:
 ## left picks a stack up, puts the held one down, adds it onto the same
 ## item or swaps the two (tools, which do not stack, swap); right picks
 ## half a stack up or puts one item down; shift moves the stack between
-## the hotbar and the bag (from the grid: into the slots).
-func click(slot: int, right: bool, shift: bool) -> void:
+## the hotbar and the bag (from the grid: into the slots; with a chest
+## open, `chest`: into the chest).
+func click(slot: int, right: bool, shift: bool, chest: Inventory = null) -> void:
 	if slot < 0 or slot >= SIZE or slot == CURSOR:
 		return
 	if shift:
-		var item := items[slot]
-		var worn := wear[slot]
-		var count := take(slot, counts[slot])
 		var others := range(HOTBAR, SLOTS) if slot < HOTBAR else range(HOTBAR)
 		if slot >= CRAFT:
 			others = range(SLOTS)
-		var left := _add_to(item, count, others, worn)
-		if left > 0:
-			items[slot] = item
-			counts[slot] = left
-			wear[slot] = worn
+		if chest != null and slot < SLOTS:
+			_move(slot, chest, range(CHEST))
+		else:
+			_move(slot, self, others)
 		return
+	_click_on(self, slot, right)
+
+
+## A click on a slot of a chest (its own Inventory) with this inventory's
+## cursor: the same rules; shift moves the stack into this inventory's
+## slots.
+func click_chest(chest: Inventory, slot: int, right: bool, shift: bool) -> void:
+	if slot < 0 or slot >= CHEST:
+		return
+	if shift:
+		chest._move(slot, self, range(SLOTS))
+	else:
+		_click_on(chest, slot, right)
+
+
+## The items of the slots (to save a chest: its first CHEST slots).
+func contents(slots: int) -> Dictionary:
+	return {
+		"items": items.slice(0, slots),
+		"counts": counts.slice(0, slots),
+		"wear": wear.slice(0, slots)
+	}
+
+
+## A left or right click on `holder`'s `slot` with this inventory's cursor.
+func _click_on(holder: Inventory, slot: int, right: bool) -> void:
 	var held_item := items[CURSOR]
 	if held_item == Items.Id.NONE:
-		if items[slot] == Items.Id.NONE:
+		if holder.items[slot] == Items.Id.NONE:
 			return
-		items[CURSOR] = items[slot]
-		wear[CURSOR] = wear[slot]
-		counts[CURSOR] = take(slot, (counts[slot] + 1) / 2 if right else counts[slot])
+		items[CURSOR] = holder.items[slot]
+		wear[CURSOR] = holder.wear[slot]
+		var half := (holder.counts[slot] + 1) / 2
+		counts[CURSOR] = holder.take(slot, half if right else holder.counts[slot])
 		return
 	if (
-		items[slot] == Items.Id.NONE
-		or (items[slot] == held_item and Items.max_stack(held_item) > 1)
+		holder.items[slot] == Items.Id.NONE
+		or (holder.items[slot] == held_item and Items.max_stack(held_item) > 1)
 	):
 		var amount := mini(
-			1 if right else counts[CURSOR], Items.max_stack(held_item) - counts[slot]
+			1 if right else counts[CURSOR], Items.max_stack(held_item) - holder.counts[slot]
 		)
 		if amount <= 0:
 			return
-		if items[slot] == Items.Id.NONE:
-			wear[slot] = wear[CURSOR]
-		items[slot] = held_item
-		counts[slot] += amount
+		if holder.items[slot] == Items.Id.NONE:
+			holder.wear[slot] = wear[CURSOR]
+		holder.items[slot] = held_item
+		holder.counts[slot] += amount
 		take(CURSOR, amount)
 		return
 	if not right:
-		var item := items[slot]
-		var count := counts[slot]
-		var worn := wear[slot]
-		items[slot] = held_item
-		counts[slot] = counts[CURSOR]
-		wear[slot] = wear[CURSOR]
+		var item := holder.items[slot]
+		var count := holder.counts[slot]
+		var worn := holder.wear[slot]
+		holder.items[slot] = held_item
+		holder.counts[slot] = counts[CURSOR]
+		holder.wear[slot] = wear[CURSOR]
 		items[CURSOR] = item
 		counts[CURSOR] = count
 		wear[CURSOR] = worn
+
+
+## Moves the stack of a slot into `into`'s `slots` (what does not fit
+## stays).
+func _move(slot: int, into: Inventory, slots: Array) -> void:
+	var item := items[slot]
+	var worn := wear[slot]
+	var count := take(slot, counts[slot])
+	var left := into._add_to(item, count, slots, worn)
+	if left > 0:
+		items[slot] = item
+		counts[slot] = left
+		wear[slot] = worn
 
 
 ## The items of the crafting grid `width` cells wide, row by row.
