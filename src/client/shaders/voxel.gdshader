@@ -6,6 +6,8 @@ shader_type spatial;
 
 render_mode world_vertex_coords;
 
+#include "res://src/client/shaders/see_through.gdshaderinc"
+
 // Wind bending at weight 1, in world units.
 uniform float sway_distance = 0.11;
 // Per-instance tint and phase (props) or plain (the player).
@@ -19,8 +21,6 @@ uniform vec2 cut_size = vec2(1.5, 2.1);
 
 global uniform vec2 weather_wind;
 global uniform float weather_wetness;
-// The player's chest, in world space.
-global uniform vec3 player_position;
 
 varying float foliage;
 varying vec3 tint;
@@ -53,24 +53,10 @@ void vertex() {
 	}
 }
 
-// 4x4 ordered dither threshold (0..1) of a screen pixel.
-float dither(vec2 fragcoord) {
-	ivec2 p = ivec2(fragcoord) & ivec2(3);
-	int index = p.x + p.y * 4;
-	int bayer[16] = int[](0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5);
-	return (float(bayer[index]) + 0.5) / 16.0;
-}
-
 void fragment() {
-	if (cut_out && !IN_SHADOW_PASS) {
-		// Orthographic view: view-space x/y distances are screen distances.
-		vec3 player_view = (VIEW_MATRIX * vec4(player_position, 1.0)).xyz;
-		float d = length((VERTEX.xy - player_view.xy) / cut_size);
-		if (d < 1.0 && VERTEX.z > player_view.z + 0.6) {
-			if (dither(FRAGCOORD.xy) > smoothstep(0.6, 1.0, d)) {
-				discard;
-			}
-		}
+	if (cut_out && !IN_SHADOW_PASS
+			&& hides_player(VERTEX, VIEW_MATRIX, INV_VIEW_MATRIX, cut_size, 0.6, FRAGCOORD.xy)) {
+		discard;
 	}
 	vec3 albedo = srgb_to_linear(COLOR.rgb) * tint;
 	albedo *= 1.0 - wet_darkening * weather_wetness * (1.0 - foliage * 0.5);

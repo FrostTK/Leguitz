@@ -20,6 +20,17 @@ gdlint src tests && gdformat --check src tests             # CI runs both
 xvfb-run -a godot --path . --audio-driver Dummy --resolution 1280x720 -- --seed=42 --debug --screenshot=/tmp/s.png
 ```
 
+On the owner's Windows PC (Git Bash; Godot in `C:\Users\guill\godot\`, real GPU, no xvfb; the
+gdtoolkit scripts are not on PATH, use `py -m`). Dev options (`--zoom`, `--debug`...) are session
+overrides and never reach the owner's settings file:
+
+```bash
+G=/c/Users/guill/godot/Godot_v4.7.2-stable_win64_console.exe   # console build: prints to the terminal
+$G --headless --path . --import && $G --headless --path . -s res://tests/run_tests.gd
+py -m gdtoolkit.linter src tests && py -m gdtoolkit.formatter --check src tests
+$G --path . --audio-driver Dummy --resolution 1280x720 -- --seed=42 --screenshot="$SCRATCH/s.png"
+```
+
 ## Architecture rules
 
 - `src/sim` is the authoritative server. It must not depend on nodes, input or rendering.
@@ -33,8 +44,11 @@ xvfb-run -a godot --path . --audio-driver Dummy --resolution 1280x720 -- --seed=
   Only SYNCED worlds catch up offline, capped to one game day.
 - Pixel art: 16 px tiles, integer world zoom, UI scaled via the window content scale factor.
 - 3D view (`src/client/render`): terrain is meshed in local tile units (1 tile = 1 unit, 1 level =
-  1 unit) under a world root whose basis (`Render3D.root_basis(yaw)`) stretches it so the default
-  camera (pitch 60°) is pixel-perfect; the stretch turns with the camera yaw. The SubViewport renders
+  1 unit) under a world root whose basis (`Render3D.root_basis(yaw, pitch)`) stretches it so the
+  default camera (pitch 60°) is pixel-perfect. Lower (down to 15°) the height stretch is
+  1/cos(pitch), so things keep their height on screen, and both stretches fade out towards the
+  horizon (a cube looks like a cube): nothing gets taller when the camera goes down. Steeper than
+  60° keeps the default stretch. The stretch turns with the camera yaw. The SubViewport renders
   at art resolution (1 texel per art pixel) unless HD. Lights and particles live outside the root
   (no non-uniform scale). Faces exist on every side: the camera can look from anywhere.
   Terrain textures come from `tools/gen_art.py`; its GROUNDS list must match the enum.
@@ -42,7 +56,8 @@ xvfb-run -a godot --path . --audio-driver Dummy --resolution 1280x720 -- --seed=
   generators in `src/client/models/voxel_models.gd`, meshed by VoxelMesher (greedy faces + AO) and
   saved by `godot --headless --path . -s res://tools/gen_models.gd` into `assets/models/` (commit
   the .res files; rerun after changing a model). Every non-cube block needs a model (tested).
-  `voxel.gdshader` handles wind, wetness, leaf backlight and the see-through hole around the player.
+  `voxel.gdshader` handles wind, wetness and leaf backlight. `see_through.gdshaderinc` (voxel and
+  terrain shaders) dithers away what stands between the camera and the player, around them.
   Each model also has coarser copies (`_lod1` = 2 voxels per voxel, `_lod2` = 4) used when the
   ground in view is large (WorldView3D.lod_for_view); lod1 casts its shadows with lod2.
 - Keep the GPU cool: Settings.max_fps (default 60, 15 in the background), the world SubViewport

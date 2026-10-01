@@ -83,8 +83,10 @@ func animate(feet: Vector3, heading: Vector2, speed: float, airborne: bool, delt
 	_body.position.y = absf(sin(_phase)) * _swing * VOXEL * 1.2
 	if is_inside_tree():
 		lantern.global_position = global_position + Vector3(0, LANTERN_HEIGHT, 0)
-		var chest := get_parent_node_3d().global_transform * (feet + CHEST)
-		RenderingServer.global_shader_parameter_set(&"player_position", chest)
+		# For the see-through hole (see see_through.gdshaderinc).
+		var root := get_parent_node_3d().global_transform
+		RenderingServer.global_shader_parameter_set(&"player_position", root * (feet + CHEST))
+		RenderingServer.global_shader_parameter_set(&"player_feet", root * feet)
 
 
 func _part(part: String, offset: Vector3, parent: Node3D, material: Material) -> void:

@@ -42,6 +42,9 @@ const VALLEY_HAZE_BELOW := 5.0
 const VALLEY_HAZE := 0.03
 const SHADOW_SIZES: Array[int] = [1024, 2048, 4096, 8192]
 const PARTICLE_SCALES: Array[float] = [0.3, 0.6, 1.0, 1.5]
+## Shadows reach this far beyond the ground at the top of the screen
+## (valleys below the player show farther away).
+const SHADOW_MARGIN := 20.0
 
 var clock: WorldClock
 var client_world: ClientWorld
@@ -54,6 +57,9 @@ var clouds: CloudShadows3D
 var reference_height := 0.0
 ## Distance from the camera to the player (for the fog).
 var camera_distance := 80.0
+## Distance from the camera to the ground at the top of the screen: a
+## lower camera sees much farther, and the shadows must reach that far.
+var view_depth := 80.0
 var quality: Quality = Quality.HIGH
 
 ## 0 in daylight, 1 in the dark (read by the particles and the lantern).
@@ -183,6 +189,7 @@ func _update_sky_light(angle: float, moon: float, storm: float, underground: boo
 	sun.light_energy = energy
 	sun.light_color = color
 	sun.visible = energy > 0.001
+	sun.directional_shadow_max_distance = view_depth + SHADOW_MARGIN
 	_aim(sun, sky_direction(light_angle))
 
 

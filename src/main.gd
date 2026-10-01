@@ -91,16 +91,16 @@ func _server_stats() -> PackedStringArray:
 func _apply_dev_preferences() -> void:
 	# Temporary overrides: not saved to the user's settings file.
 	if not dev.language.is_empty():
-		Settings.language = dev.language
+		Settings.override(&"language", dev.language)
 		Settings.apply_language()
 	if dev.zoom > 0:
-		Settings.world_zoom = dev.zoom
+		Settings.override(&"world_zoom", dev.zoom)
 	if dev.show_debug:
-		Settings.show_debug = true
+		Settings.override(&"show_debug", true)
 	if dev.quality >= 0:
-		Settings.graphics_quality = clampi(dev.quality, 0, 3)
+		Settings.override(&"graphics_quality", clampi(dev.quality, 0, 3))
 	if dev.hd:
-		Settings.hd_rendering = true
+		Settings.override(&"hd_rendering", true)
 
 
 func _start_dev_actions() -> void:

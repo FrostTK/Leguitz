@@ -8,6 +8,7 @@ shader_type spatial;
 render_mode cull_disabled;
 
 #include "res://src/client/shaders/terrain3d_common.gdshaderinc"
+#include "res://src/client/shaders/see_through.gdshaderinc"
 
 uniform sampler2D face_atlas : source_color, filter_nearest;
 uniform sampler2D face_normals : filter_nearest;
@@ -21,6 +22,10 @@ void vertex() {
 }
 
 void fragment() {
+	if (!IN_SHADOW_PASS
+			&& hides_player(VERTEX, VIEW_MATRIX, INV_VIEW_MATRIX, see_through_size, 0.0, FRAGCOORD.xy)) {
+		discard;
+	}
 	int u = clamp(int(floor(UV.x)), 0, 15);
 	int v = max(int(floor(UV.y)), 0);
 	int kind = int(face_data.x + 0.5);

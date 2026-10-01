@@ -7,6 +7,10 @@ global uniform float weather_wetness;
 global uniform float weather_rain;
 global uniform vec2 weather_wind;
 
+// See-through hole in the terrain around the player (half width and half
+// height around the chest, world units on screen; see see_through.gdshaderinc).
+uniform vec2 see_through_size = vec2(1.0, 1.6);
+
 const int HASH_OFFSET = 16777216;
 
 uint hash2(ivec2 p) {

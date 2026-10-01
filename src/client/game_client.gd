@@ -26,7 +26,7 @@ var view_distance := 0
 
 var world_viewport := WorldViewport.new()
 ## Holds the terrain in local tile units; its basis stretches them for the
-## camera (see Render3D.root_basis).
+## camera's yaw and pitch (see Render3D.root_basis).
 var world_root := Node3D.new()
 var world_view := WorldView3D.new()
 var player_model := PlayerModel.new()
@@ -47,7 +47,8 @@ var _needs_snap := false
 var _min_view_distance := GameConst.DEFAULT_VIEW_DISTANCE
 ## Smoothed camera target (local units).
 var _camera_local := Vector3.ZERO
-var _root_yaw := INF
+## Camera yaw and pitch the world root is stretched for.
+var _root_orbit := Vector2.INF
 var _dragging := false
 
 @onready var _ui_root: Control = $UI/Root
@@ -174,11 +175,11 @@ func _update_orbit(delta: float) -> void:
 		world_viewport.orbit(-stick.x * STICK_ORBIT_SPEED.x * delta, 0.0)
 		world_viewport.orbit(0.0, stick.y * STICK_ORBIT_SPEED.y * delta)
 	world_viewport.update_orbit(delta)
-	var yaw := world_viewport.current_yaw
-	local_player.camera_yaw = yaw
-	if yaw != _root_yaw:
-		_root_yaw = yaw
-		world_root.basis = Render3D.root_basis(yaw)
+	var orbit := Vector2(world_viewport.current_yaw, world_viewport.current_pitch)
+	local_player.camera_yaw = orbit.x
+	if orbit != _root_orbit:
+		_root_orbit = orbit
+		world_root.basis = Render3D.root_basis(orbit.x, orbit.y)
 		world_view.place_lights()
 
 
@@ -208,8 +209,10 @@ func _update_view(delta: float) -> void:
 	clouds.target = _camera_local
 	weather_effects.target = target
 	weather_effects.view_size = world_viewport.view_size()
+	weather_effects.view_pitch = world_viewport.current_pitch
 	lighting.reference_height = (root * focus).y
 	lighting.camera_distance = world_viewport.camera_distance
+	lighting.view_depth = world_viewport.far_ground_distance()
 	world_view.set_lod(WorldView3D.lod_for_view(world_viewport.ground_size()))
 	_update_view_distance()
 

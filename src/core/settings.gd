@@ -32,6 +32,10 @@ var hd_rendering := false
 ## keep the graphics card at full power for a calm pixel-art world.
 var max_fps := 60
 
+## The user's own values of the settings overridden for this session only
+## (developer options): those are saved instead.
+var _saved_values := {}
+
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -60,7 +64,7 @@ func resolved_language() -> String:
 func set_language(code: String) -> void:
 	language = code if code in SUPPORTED_LANGUAGES else LANGUAGE_AUTO
 	apply_language()
-	save_settings()
+	_save_choice(&"language")
 	changed.emit(&"language")
 
 
@@ -70,26 +74,26 @@ func apply_language() -> void:
 
 func set_world_zoom(value: int) -> void:
 	world_zoom = clampi(value, 0, MAX_WORLD_ZOOM)
-	save_settings()
+	_save_choice(&"world_zoom")
 	changed.emit(&"world_zoom")
 
 
 func set_graphics_quality(value: int) -> void:
 	graphics_quality = clampi(value, 0, 3)
-	save_settings()
+	_save_choice(&"graphics_quality")
 	changed.emit(&"graphics_quality")
 
 
 func set_hd_rendering(value: bool) -> void:
 	hd_rendering = value
-	save_settings()
+	_save_choice(&"hd_rendering")
 	changed.emit(&"hd_rendering")
 
 
 func set_max_fps(value: int) -> void:
 	max_fps = maxi(value, 0)
 	apply_max_fps()
-	save_settings()
+	_save_choice(&"max_fps")
 	changed.emit(&"max_fps")
 
 
@@ -107,7 +111,7 @@ func _notification(what: int) -> void:
 
 func set_show_debug(value: bool) -> void:
 	show_debug = value
-	save_settings()
+	_save_choice(&"show_debug")
 	changed.emit(&"show_debug")
 
 
@@ -140,16 +144,35 @@ func load_settings() -> void:
 	show_debug = file.get_value("debug", "show_debug", show_debug)
 
 
+## Changes a setting for this session only: the settings file keeps the
+## user's own value (developer command line options).
+func override(key: StringName, value: Variant) -> void:
+	if not _saved_values.has(key):
+		_saved_values[key] = get(key)
+	set(key, value)
+
+
 func save_settings() -> void:
 	var file := ConfigFile.new()
-	file.set_value("general", "language", language)
-	file.set_value("display", "ui_scale", ui_scale)
-	file.set_value("display", "world_zoom", world_zoom)
-	file.set_value("display", "view_distance", view_distance)
-	file.set_value("display", "graphics_quality", graphics_quality)
-	file.set_value("display", "hd_rendering", hd_rendering)
-	file.set_value("display", "max_fps", max_fps)
-	file.set_value("debug", "show_debug", show_debug)
+	file.set_value("general", "language", _saved(&"language"))
+	file.set_value("display", "ui_scale", _saved(&"ui_scale"))
+	file.set_value("display", "world_zoom", _saved(&"world_zoom"))
+	file.set_value("display", "view_distance", _saved(&"view_distance"))
+	file.set_value("display", "graphics_quality", _saved(&"graphics_quality"))
+	file.set_value("display", "hd_rendering", _saved(&"hd_rendering"))
+	file.set_value("display", "max_fps", _saved(&"max_fps"))
+	file.set_value("debug", "show_debug", _saved(&"show_debug"))
 	var error := file.save(PATH)
 	if error != OK:
 		push_warning("Settings: could not save %s (%s)" % [PATH, error_string(error)])
+
+
+## The value of a setting to write to the file.
+func _saved(key: StringName) -> Variant:
+	return _saved_values.get(key, get(key))
+
+
+## Saves a setting the user just chose (it no longer is an override).
+func _save_choice(key: StringName) -> void:
+	_saved_values.erase(key)
+	save_settings()

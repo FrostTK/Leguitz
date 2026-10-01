@@ -67,6 +67,10 @@ player_position={
 "type": "vec3",
 "value": Vector3(0, 0, 0)
 }
+player_feet={
+"type": "vec3",
+"value": Vector3(0, 0, 0)
+}
 weather_wind={
 "type": "vec2",
 "value": Vector2(1, 0.25)

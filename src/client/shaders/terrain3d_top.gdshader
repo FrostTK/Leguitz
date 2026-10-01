@@ -9,6 +9,7 @@ shader_type spatial;
 render_mode cull_disabled;
 
 #include "res://src/client/shaders/terrain3d_common.gdshaderinc"
+#include "res://src/client/shaders/see_through.gdshaderinc"
 
 uniform sampler2D chunk_data : filter_nearest;
 uniform vec2 chunk_origin_px = vec2(0.0);
@@ -51,6 +52,10 @@ float edge_shade(ivec4 n[9], ivec2 tx) {
 }
 
 void fragment() {
+	if (!IN_SHADOW_PASS
+			&& hides_player(VERTEX, VIEW_MATRIX, INV_VIEW_MATRIX, see_through_size, 0.0, FRAGCOORD.xy)) {
+		discard;
+	}
 	vec2 local = UV * 256.0;
 	ivec2 lp = clamp(ivec2(floor(local)), ivec2(0), ivec2(255));
 	ivec2 tile = lp / 16;
@@ -163,7 +168,10 @@ void fragment() {
 			} else if (foam_margin >= 0.0 && foam_margin < foam_width + 0.1) {
 				albedo = albedo * 1.2 + vec3(0.02, 0.04, 0.05);
 			}
-			roughness = 0.15;
+			// The orthographic view mirrors the sun on all the water at once:
+			// seen from a low camera, a rougher surface keeps the glare soft.
+			float grazing = 1.0 - smoothstep(0.35, 0.8, dot(NORMAL, VIEW));
+			roughness = mix(0.15, 0.4, grazing);
 			specular = 0.8;
 		} else if (kind == KIND_LAVA) {
 			vec2 p = wp / 16.0;

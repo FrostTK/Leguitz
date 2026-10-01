@@ -20,14 +20,37 @@ func test_local_mapping_and_root_stretch() -> void:
 	assert_eq(Render3D.tile_center_local(Vector2i(0, 0), 0.0), Vector3(0.5, 0.0, 0.5))
 	# At the default angle a tile top and a one-level face both show 16 px.
 	var pitch := deg_to_rad(Render3D.DEFAULT_PITCH)
-	var root := Render3D.root_basis(0.0)
+	var root := Render3D.root_basis(0.0, pitch)
 	assert_almost((root * Vector3.BACK).z * sin(pitch), 1.0)
 	assert_almost((root * Vector3.UP).y * cos(pitch), 1.0)
 	assert_almost((root * Vector3.RIGHT).x, 1.0)
 	# The stretch turns with the camera: tiles stay square on screen.
-	var turned := Render3D.root_basis(PI / 2.0)
-	assert_almost((turned * Vector3.RIGHT).length(), Render3D.depth_stretch)
+	var turned := Render3D.root_basis(PI / 2.0, pitch)
+	assert_almost((turned * Vector3.RIGHT).length(), Render3D.depth_stretch(pitch))
 	assert_almost((turned * Vector3.BACK).length(), 1.0)
+
+
+func test_lower_camera_does_not_stretch_things() -> void:
+	var default_pitch := deg_to_rad(Render3D.DEFAULT_PITCH)
+	var previous_top := 0.0
+	for degrees in range(int(Render3D.MIN_PITCH), int(Render3D.DEFAULT_PITCH) + 1, 5):
+		var pitch := deg_to_rad(degrees)
+		var root := Render3D.root_basis(0.0, pitch)
+		# A level keeps its 16 px on screen: nothing gets taller...
+		assert_almost((root * Vector3.UP).y * cos(pitch), 1.0)
+		# ...while the ground flattens as the camera goes down.
+		var top := (root * Vector3.BACK).z * sin(pitch)
+		assert_true(top > previous_top, "tile tops grow with the pitch")
+		previous_top = top
+	# Near the horizon the stretch fades out: a cube looks like a cube.
+	var low := deg_to_rad(Render3D.MIN_PITCH)
+	assert_almost(Render3D.vertical_scale(low), 1.0, 0.05)
+	assert_almost(Render3D.depth_stretch(low), 1.0, 0.01)
+	# Looking down more steeply keeps the default stretch.
+	var steep := deg_to_rad(Render3D.MAX_PITCH)
+	assert_almost(Render3D.vertical_scale(steep), Render3D.vertical_scale(default_pitch))
+	assert_almost(Render3D.depth_stretch(steep), Render3D.depth_stretch(default_pitch))
+	assert_true(Render3D.MIN_PITCH <= 15.0, "the camera can go down low")
 
 
 func test_screen_directions_follow_the_camera() -> void:

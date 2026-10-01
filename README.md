@@ -22,9 +22,9 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Rendu 3D : blocs, falaises et murs de roche en vrais cubes texturés en pixel art | ✅ |
 | Tout en 3D voxel (1 voxel = 1 pixel) : joueur animé, 8 sortes d'arbres, buissons, herbes, fleurs, cannes à sucre, champignons, cactus, rochers | ✅ |
 | Vue par défaut « pixel parfait » : chaque pixel du dessin = un pixel à l'écran, défilement fluide | ✅ |
-| Caméra orbitale : tourner et incliner la vue autour du joueur à la souris ou à la manette | ✅ |
+| Caméra orbitale : tourner et incliner la vue autour du joueur à la souris ou à la manette, jusqu'à une vue presque à l'horizontale sans déformer les objets | ✅ |
 | Vraies ombres, occlusion ambiante, feuillages translucents qui ondulent au vent | ✅ |
-| Le feuillage devient transparent autour du joueur quand il passe sous les arbres | ✅ |
+| Les arbres et les falaises deviennent transparents autour du joueur quand ils le cachent | ✅ |
 | Soleil et lune qui traversent le ciel, ombres longues le matin et le soir, phases de la lune | ✅ |
 | Lanterne du joueur la nuit et sous terre, lave lumineuse, minerais brillants | ✅ |
 | Météo : pluie, orage avec éclairs, neige selon le biome, sol mouillé, ombres des nuages | ✅ |
@@ -35,6 +35,8 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Saut d'un bloc, chutes, blocs de pierre sur lesquels on peut monter (comme Minecraft) | ✅ |
 
 ![Leguitz : îles aux champignons (rendu HD), badlands, forêt sombre, grottes](docs/screenshots/phase2-3d-meteo-biomes.png)
+
+![Leguitz : même montagne vue de haut (60°) puis caméra baissée (15°), joueur visible derrière un rocher, forêt sombre à 25°](docs/screenshots/phase2-camera-basse.png)
 
 ![Biomes de Leguitz (phase 1, carte)](docs/screenshots/phase1-biomes.png)
 

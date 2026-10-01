@@ -95,7 +95,7 @@ func view_size() -> Vector2:
 ## camera's view on the ground (before turning by the yaw).
 func ground_size() -> Vector2:
 	var size := view_size()
-	var depth := size.y / sin(current_pitch) / Render3D.depth_stretch
+	var depth := size.y / sin(current_pitch) / Render3D.depth_stretch(current_pitch)
 	return Vector2(size.x, depth)
 
 
@@ -148,11 +148,21 @@ func update_orbit(delta: float) -> void:
 		current_pitch = pitch
 
 
+## Distance from the camera to the ground at the top of the screen (at the
+## target's height).
+func far_ground_distance() -> float:
+	return camera_distance + _ground_spread()
+
+
+## How much farther (and closer) than the target the ground at the top
+## (and bottom) of the screen is.
+func _ground_spread() -> float:
+	return camera.size * 0.5 / tan(current_pitch)
+
+
 func _process(_delta: float) -> void:
 	camera.rotation = Vector3(-current_pitch, current_yaw, 0.0)
-	# The ground at the top and bottom of the screen is this much farther
-	# and closer than the target.
-	var spread := camera.size * 0.5 / tan(current_pitch)
+	var spread := _ground_spread()
 	camera_distance = DEPTH_ABOVE + spread + 10.0
 	camera.near = 1.0
 	camera.far = camera_distance + spread + DEPTH_BELOW

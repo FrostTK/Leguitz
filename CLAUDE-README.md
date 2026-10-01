@@ -45,7 +45,7 @@ Les questions de goût ou les choix lourds de conséquences sont posés avant de
 | Langues | Français et anglais, réglables dans le jeu. |
 | Dépôt | Privé, compilation automatique par GitHub (Windows, Linux, macOS). |
 | Temps | Durée d'une journée réglable **par monde** (5 à 120 min), réglage « **Synchroniser avec l'appareil** » (1 journée = 24 h, heure du jeu = heure de l'appareil), et temps figé. La faim, la cuisson, les cultures… s'adaptent **légèrement** : rythme = clamp((durée/20 min)^0,25 ; 0,7 ; 2,5), synchronisé = ×2,5. Rattrapage hors-ligne **seulement en mode synchronisé, limité à 1 journée de jeu**. |
-| Caméra | Vue de dessus inclinée façon Stardew par défaut (60°), **orbite à la souris** autour du joueur (clic droit ou molette enfoncée), zoom à la molette. |
+| Caméra | Vue de dessus inclinée façon Stardew par défaut (60°, « pixel parfaite »), **orbite à la souris** autour du joueur (clic droit ou molette enfoncée), zoom à la molette. On peut **baisser la caméra jusqu'à 15°** sans que les objets s'étirent : les hauteurs gardent leur taille à l'écran, le sol se resserre, et près de l'horizon on retrouve les vraies proportions (un cube est un cube). |
 | Déplacements | **Pas d'escaliers générés** : le joueur **saute d'un bloc** (1,25 niveau, comme Minecraft), tombe des bords. |
 | Chargement | Tout ce qui est visible doit être chargé, même dézoomé au maximum sur l'écran ultra-large du propriétaire (3440×1440, fenêtré). Carte graphique du propriétaire : NVIDIA GeForce RTX 5050 (8 Go). |
 
@@ -53,7 +53,7 @@ Les questions de goût ou les choix lourds de conséquences sont posés avant de
 
 ## 3. État actuel : ce qui est fait
 
-Godot **4.7.2** (GDScript), rendu Forward+. 67 tests unitaires, lint propre, compilation GitHub verte.
+Godot **4.7.2** (GDScript), rendu Forward+. 69 tests unitaires, lint propre, compilation GitHub verte.
 
 | Phase | Contenu | Commits |
 |---|---|---|
@@ -65,6 +65,7 @@ Godot **4.7.2** (GDScript), rendu Forward+. 67 tests unitaires, lint propre, com
 | 2+ Full 3D | Modèles voxel procéduraux (8 arbres, buissons, herbes, fougères, 5 fleurs, champignons, cactus, canne à sucre, nénuphars, rochers) + joueur animé ; feuillage transparent autour du joueur | `89563c1`, `2cfa843` |
 | 2+ Chargement | Rayon de chunks calculé d'après la vue (zoom, fenêtre, angle) | `96b5b52` |
 | 2+ Carte graphique | Modèles simplifiés de loin (3 niveaux de détail), limite d'images par seconde (60 par défaut, 15 en arrière-plan), rendu suspendu en pause | `09261cf` |
+| 2+ Caméra basse | Caméra jusqu'à 15° sans étirer les objets (étirement selon l'inclinaison), trou transparent aussi dans les falaises, ombres et pluie qui suivent la vue, reflets du soleil adoucis sur l'eau, options de dev jamais enregistrées dans les réglages | « Lower camera without stretching » |
 
 **Pas encore fait** (prévu) : interactions avec les blocs, objets et inventaire, craft,
 survie/combat, créatures, structures, agriculture, sauvegardes, menus de départ, sons, mode Arcade,
@@ -107,6 +108,15 @@ Lieux utiles avec la graine 42 : rivière `4,-6` ; plaine `-12,21` ; montagnes `
 forêt sombre `-123,261` ; désert `338,-228` ; badlands `474,-232` ; jungle `-334,-498` ;
 taïga enneigée `-219,147` ; champignons `163,347` ; marais `-119,-12`.
 
+### Sur le PC Windows du propriétaire
+
+Godot 4.7.2 est dans `C:\Users\guill\godot\` (utiliser la version `_console` pour lire la
+sortie), gdtoolkit/Pillow/numpy sont installés pour `py` (Python 3.14 ; `python` est un autre
+Python, celui de Laragon). Commandes depuis Git Bash : voir `CLAUDE.md`. Les captures utilisent la
+vraie carte graphique (pas de xvfb) et ouvrent brièvement une fenêtre ; elles lisent les réglages du
+propriétaire (HD, qualité Ultra). Une fenêtre en arrière-plan tourne à 15 images/s : le compteur
+d'images de l'écran F3 n'y veut rien dire.
+
 ### Captures d'écran dans le conteneur cloud
 
 Le rendu y est logiciel (Vulkan lavapipe, ~1 image/s en forêt) : garder des captures de
@@ -129,6 +139,10 @@ xvfb-run -a -s "-screen 0 960x540x24" godot --path . --audio-driver Dummy --reso
   d'analyse d'abord (un `timeout` est indispensable).
 - `pkill -f motif` tue aussi le shell qui contient le motif : filtrer avec `[g]odot`.
 - Ne jamais garder de ressources dans des variables statiques (fuites à la fermeture).
+- Options de développement : passer par `Settings.override()`, jamais par les variables de
+  `Settings` (sinon la prochaine sauvegarde les écrit dans les réglages du joueur).
+- Caméra orthographique : la direction de vue est la même partout, un reflet du soleil couvre
+  donc toute l'eau d'un coup (d'où la rugosité de l'eau qui augmente à angle rasant).
 
 ---
 
@@ -272,9 +286,10 @@ pousse) : c'est pourquoi elle vient juste après.
 - **Carte graphique** : après la limite à 60 images/s et les modèles simplifiés, vérifier chez le
   propriétaire l'utilisation de la RTX 5050 (zoom normal et dézoom maximum).
 - **Menu pause** trop haut sur petites fenêtres (960×540) : le rendre défilant.
-- **Inclinaison basse** : la vue par défaut est « pixel parfaite » grâce à un étirement vertical ;
-  quand on incline beaucoup la caméra, les objets paraissent un peu plus hauts.
 - **Maillage des chunks** sur le fil principal (budget de 6 ms par image) : à paralléliser.
 - **Le serveur ne vérifie pas encore les collisions** des déplacements (seulement la distance) :
   utiliser `PlayerBody` côté serveur avant le multijoueur.
-- La découpe transparente autour du joueur ne concerne que les objets 3D, pas les falaises.
+- **Carrés plus sombres dans l'herbe**, de la taille d'une tuile, visibles en montagne (déjà là
+  avant la caméra basse) : origine à trouver (ombres, occlusion ambiante ?).
+- À angle bas sur très grand écran, plus de terrain est visible : les modèles simplifiés arrivent
+  plus tôt (zoom 2 sur 3440×1440). Pire cas mesuré : 961 chunks, 60 images/s sur la RTX 5050.

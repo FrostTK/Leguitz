@@ -45,6 +45,10 @@ const FIREFLY_BIOMES := {
 	Biomes.Id.RIVER: true,
 }
 const AMOUNTS := {&"rain": 2000, &"snow": 1100, &"leaves": 24, &"fireflies": 60, &"dust": 90}
+## Seen from a low camera the particles spread over much more ground: the
+## buffers hold up to this many times the amounts above, so the density on
+## screen stays the same.
+const MAX_SPREAD := 3.0
 
 var weather := Weather.new()
 var client_world: ClientWorld
@@ -53,6 +57,8 @@ var local_player: LocalPlayer
 ## (units) around it.
 var target := Vector3.ZERO
 var view_size := Vector2(30.0, 17.0)
+## Camera pitch (radians).
+var view_pitch := deg_to_rad(Render3D.DEFAULT_PITCH)
 
 ## Smoothed 0..1 values read by the lighting and the shaders.
 var rain_intensity := 0.0
@@ -62,6 +68,8 @@ var darkness := 0.0
 var particle_scale := 1.0
 
 var _particles: Dictionary[StringName, GPUParticles3D] = {}
+## Part of the particle buffers in use (1 / MAX_SPREAD at the default angle).
+var _share := 1.0 / MAX_SPREAD
 ## The first state (on joining) applies at once, later changes fade in.
 var _has_state := false
 var _snap_state := false
@@ -86,7 +94,7 @@ func _ready() -> void:
 func set_particle_scale(scale: float) -> void:
 	particle_scale = scale
 	for key: StringName in _particles:
-		_particles[key].amount = maxi(1, int(AMOUNTS[key] * scale))
+		_particles[key].amount = maxi(1, int(AMOUNTS[key] * scale * MAX_SPREAD))
 
 
 func apply_state(data: Dictionary) -> void:
@@ -128,21 +136,25 @@ func _process(delta: float) -> void:
 	RenderingServer.global_shader_parameter_set(&"weather_wetness", wetness)
 	RenderingServer.global_shader_parameter_set(&"weather_rain", rain_intensity)
 
+	var reach := _reach(view_pitch)
+	var spread := pow(reach / _reach(deg_to_rad(Render3D.DEFAULT_PITCH)), 2.0)
+	_share = clampf(spread, 1.0, MAX_SPREAD) / MAX_SPREAD
 	for particles: GPUParticles3D in _particles.values():
-		_place(particles)
+		_place(particles, reach)
 	var rain := _particles[&"rain"]
-	rain.amount_ratio = 0.0 if snowing else rain_intensity
+	rain.amount_ratio = 0.0 if snowing else rain_intensity * _share
 	(rain.process_material as ParticleProcessMaterial).direction = Vector3(
 		wind.x * 0.25, -1.0, wind.y * 0.25
 	)
-	_particles[&"snow"].amount_ratio = rain_intensity if snowing else 0.0
+	_particles[&"snow"].amount_ratio = rain_intensity * _share if snowing else 0.0
 	var leafy := not underground and LEAFY_BIOMES.has(biome)
-	_particles[&"leaves"].amount_ratio = minf(0.4 + wind.length(), 1.0) if leafy else 0.0
+	var leaves := minf(0.4 + wind.length(), 1.0) * _share
+	_particles[&"leaves"].amount_ratio = leaves if leafy else 0.0
 	var fireflies := not underground and FIREFLY_BIOMES.has(biome)
 	_particles[&"fireflies"].amount_ratio = (
-		darkness * (1.0 - rain_intensity) if fireflies else 0.0
+		darkness * (1.0 - rain_intensity) * _share if fireflies else 0.0
 	)
-	_particles[&"dust"].amount_ratio = 1.0 if underground else 0.0
+	_particles[&"dust"].amount_ratio = _share if underground else 0.0
 
 
 func _update_lightning(delta: float, underground: bool) -> void:
@@ -160,13 +172,17 @@ func _update_lightning(delta: float, underground: bool) -> void:
 		_flash_timer = _rng.randf_range(5.0, 18.0)
 
 
-## Keeps an emitter around the visible area. Seen from the tilted camera,
-## a particle higher up shows further away, and the camera can turn: the
-## box covers the view in every direction.
-func _place(particles: GPUParticles3D) -> void:
+## Half width of the emitters for a camera tilted at `pitch`. Seen from
+## the tilted camera, a particle higher up shows further away, and the
+## camera can turn: the box covers the view in every direction.
+func _reach(pitch: float) -> float:
+	var depth := view_size.y / sin(pitch)
+	return maxf(view_size.x * 0.5 + 1.0, depth * 0.5 + SLAB_HALF_HEIGHT * 0.6)
+
+
+## Keeps an emitter around the visible area.
+func _place(particles: GPUParticles3D, reach: float) -> void:
 	particles.global_position = target
-	var depth := view_size.y * Render3D.depth_stretch
-	var reach := maxf(view_size.x * 0.5 + 1.0, depth * 0.5 + SLAB_HALF_HEIGHT * 0.6)
 	var material := particles.process_material as ParticleProcessMaterial
 	material.emission_box_extents = Vector3(reach, SLAB_HALF_HEIGHT, reach)
 
@@ -212,7 +228,7 @@ static func _particle_material(color: Color, billboard: bool, lit: bool) -> Stan
 static func _pixel_size(pixels: Vector2, billboard: bool) -> Vector2:
 	var size := pixels / Render3D.PIXELS_PER_UNIT
 	if not billboard:
-		size.y *= Render3D.vertical_scale
+		size.y *= Render3D.vertical_scale(deg_to_rad(Render3D.DEFAULT_PITCH))
 	return size
 
 
