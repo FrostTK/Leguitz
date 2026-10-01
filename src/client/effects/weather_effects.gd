@@ -49,6 +49,8 @@ const AMOUNTS := {&"rain": 2000, &"snow": 1100, &"leaves": 24, &"fireflies": 60,
 ## buffers hold up to this many times the amounts above, so the density on
 ## screen stays the same.
 const MAX_SPREAD := 3.0
+## In first person, the emitters cover this far around the eye.
+const FIRST_PERSON_REACH := 24.0
 
 var weather := Weather.new()
 var client_world: ClientWorld
@@ -61,6 +63,8 @@ var target := Vector3.ZERO
 var view_size := Vector2(30.0, 17.0)
 ## Camera pitch (radians).
 var view_pitch := deg_to_rad(Render3D.DEFAULT_PITCH)
+## First-person view: `target` is the eye.
+var first_person := false
 
 ## Smoothed 0..1 values read by the lighting and the shaders.
 var rain_intensity := 0.0
@@ -137,7 +141,7 @@ func _process(delta: float) -> void:
 	RenderingServer.global_shader_parameter_set(&"weather_wetness", wetness)
 	RenderingServer.global_shader_parameter_set(&"weather_rain", rain_intensity)
 
-	var reach := _reach(view_pitch)
+	var reach := FIRST_PERSON_REACH if first_person else _reach(view_pitch)
 	var spread := pow(reach / _reach(deg_to_rad(Render3D.DEFAULT_PITCH)), 2.0)
 	_share = clampf(spread, 1.0, MAX_SPREAD) / MAX_SPREAD
 	for particles: GPUParticles3D in _particles.values():

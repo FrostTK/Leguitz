@@ -1,7 +1,8 @@
 shader_type spatial;
 // Vertical faces of the 3D terrain (sides of the voxels open to the air)
 // and the undersides closing the rock. Mesh data:
-//   UV   = (pixels along the face, pixels down from the top of the face)
+//   UV   = (pixels along the face, pixels down from the top of the face;
+//          for undersides: world pixels along x and z)
 //   UV2  = (face kind: 0-3 cliff materials, 4+ wall kinds; lip ground + 1)
 //   COLOR.r = variant (0 or 1), COLOR.g = lip ground variant / 3
 
@@ -30,8 +31,14 @@ void fragment() {
 	}
 	// Seen from behind (through the view cut): the section of the rock.
 	bool section = !IN_SHADOW_PASS && !FRONT_FACING;
-	int u = clamp(int(floor(UV.x)), 0, 15);
-	int v = max(int(floor(UV.y)), 0);
+	if (section && section_on < 0.5) {
+		discard;
+	}
+	// Texture pixels repeat every 16 (ceilings span several tiles); `down`
+	// counts the pixels from the top of the face (the lip hangs there).
+	int u = int(floor(UV.x)) & 15;
+	int down = max(int(floor(UV.y)), 0);
+	int v = down & 15;
 	int kind = int(face_data.x + 0.5);
 	int lip_ground = int(face_data.y + 0.5) - 1;
 	int variant = int(face_data.z + 0.5);
@@ -39,7 +46,7 @@ void fragment() {
 	vec3 albedo;
 	vec3 normal;
 	vec3 emission = vec3(0.0);
-	if (lip_ground >= 0 && v < 3) {
+	if (lip_ground >= 0 && down < 3) {
 		// The plateau's own ground hangs over the top of the cliff.
 		ivec2 at = ivec2(lip_variant * 16 + u, lip_ground * 16 + v + 13);
 		albedo = texelFetch(ground_atlas, at, 0).rgb;
@@ -48,11 +55,11 @@ void fragment() {
 			albedo *= 0.8;
 		}
 	} else {
-		ivec2 at = ivec2(variant * 16 + u, kind * 16 + (v & 15));
+		ivec2 at = ivec2(variant * 16 + u, kind * 16 + v);
 		albedo = texelFetch(face_atlas, at, 0).rgb;
 		normal = unpack_normal(texelFetch(face_normals, at, 0));
 		emission = texelFetch(face_emission, at, 0).rgb;
-		if (lip_ground >= 0 && v == 3) {
+		if (lip_ground >= 0 && down == 3) {
 			albedo *= 0.55;
 		}
 	}

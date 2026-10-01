@@ -10,7 +10,10 @@ extends Node
 ## effects, same pixel-art textures).
 ##
 ## The camera orbits around its target: `yaw` turns around the vertical
-## axis, `pitch` tilts between Render3D.MIN_PITCH and MAX_PITCH.
+## axis, `pitch` tilts between Render3D.MIN_PITCH and MAX_PITCH. It can
+## also dive into the player's head for the first-person view (see
+## first_person and dive_frame): a perspective camera there, without the
+## texel snapping.
 
 ## Extra texels rendered around the screen (room for the sub-texel slide).
 const MARGIN := 2
@@ -21,6 +24,15 @@ const DEPTH_ABOVE := 50.0
 const DEPTH_BELOW := 240.0
 ## How fast the view catches up with orbit changes.
 const ORBIT_SHARPNESS := 18.0
+## First-person camera: vertical field of view (degrees) and depth range.
+const FIRST_PERSON_FOV := 70.0
+const FIRST_PERSON_NEAR := 0.05
+const FIRST_PERSON_FAR := 240.0
+## The dive starts with a nearly orthographic perspective (this narrow
+## field of view, from far away) and closes in on the player's head (this
+## much height in view, in world units) before entering it.
+const DIVE_START_FOV := 1.0
+const DIVE_END_HEIGHT := 1.6
 
 var viewport := SubViewport.new()
 var camera := Camera3D.new()
@@ -38,6 +50,13 @@ var current_pitch := deg_to_rad(Render3D.DEFAULT_PITCH)
 ## Distance of the camera from the target along its view axis: it backs
 ## away when the view is larger or flatter, so nothing gets clipped.
 var camera_distance := 80.0
+## 0 = top-down view, 1 = first person, in between during the dive.
+var first_person := 0.0
+## First-person eye (world space) and look angles (radians: `look_pitch`
+## > 0 looks up).
+var eye := Vector3.ZERO
+var look_yaw := 0.0
+var look_pitch := 0.0
 
 var _render_scale := 4
 
@@ -53,7 +72,7 @@ func _ready() -> void:
 
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
 	camera.keep_aspect = Camera3D.KEEP_HEIGHT
-	camera.rotation = Vector3(-current_pitch, current_yaw, 0.0)
+	camera.basis = Basis.from_euler(Vector3(-current_pitch, current_yaw, 0.0))
 	viewport.add_child(camera)
 
 	display.texture = viewport.get_texture()
@@ -161,16 +180,67 @@ func _ground_spread() -> float:
 	return camera.size * 0.5 / tan(current_pitch)
 
 
+## Camera of the dive between the top-down view and the first-person one.
+## `amount` 0: the top-down view (`top_basis`), seen through a nearly
+## orthographic perspective showing `view_height` units at `target`;
+## 1: at `eye`, looking along `look_basis`. Depths in front of the target
+## (`front`) and behind it (`back`) stay in view. Returns [Transform3D,
+## field of view (degrees), near, far].
+static func dive_frame(
+	amount: float,
+	top_basis: Basis,
+	target: Vector3,
+	view_height: float,
+	look_basis: Basis,
+	eye_position: Vector3,
+	front: float,
+	back: float
+) -> Array:
+	var a := smoothstep(0.0, 1.0, amount)
+	var basis := top_basis.slerp(look_basis, a)
+	var fov := lerpf(DIVE_START_FOV, FIRST_PERSON_FOV, a)
+	# The height in view shrinks steadily (in ratio) down to the head.
+	var height := view_height * pow(DIVE_END_HEIGHT / view_height, a)
+	var distance := height / (2.0 * tan(deg_to_rad(fov) * 0.5))
+	var end_distance := DIVE_END_HEIGHT / (2.0 * tan(deg_to_rad(FIRST_PERSON_FOV) * 0.5))
+	# Ends looking at a point just ahead of the eye, from the eye.
+	var focus := target.lerp(eye_position - look_basis.z * end_distance, a)
+	var near := lerpf(maxf(FIRST_PERSON_NEAR, distance - front), FIRST_PERSON_NEAR, a)
+	var far := distance + lerpf(back, FIRST_PERSON_FAR, a)
+	return [Transform3D(basis, focus + basis.z * distance), fov, near, far]
+
+
 func _process(_delta: float) -> void:
-	camera.rotation = Vector3(-current_pitch, current_yaw, 0.0)
 	var spread := _ground_spread()
 	camera_distance = DEPTH_ABOVE + spread + 10.0
+	var top_basis := Basis.from_euler(Vector3(-current_pitch, current_yaw, 0.0))
+	var center := get_viewport().get_visible_rect().size / 2.0
+	if first_person > 0.0:
+		var look_basis := Basis.from_euler(Vector3(look_pitch, look_yaw, 0.0))
+		var frame := dive_frame(
+			first_person,
+			top_basis,
+			target,
+			camera.size,
+			look_basis,
+			eye,
+			camera_distance - 1.0,
+			spread + DEPTH_BELOW
+		)
+		camera.projection = Camera3D.PROJECTION_PERSPECTIVE
+		camera.global_transform = frame[0]
+		camera.fov = frame[1]
+		camera.near = frame[2]
+		camera.far = frame[3]
+		display.position = center
+		return
+	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
+	camera.basis = top_basis
 	camera.near = 1.0
 	camera.far = camera_distance + spread + DEPTH_BELOW
-	var basis := camera.global_basis
-	var u := target.dot(basis.x)
-	var v := target.dot(basis.y)
-	var w := target.dot(basis.z)
+	var u := target.dot(top_basis.x)
+	var v := target.dot(top_basis.y)
+	var w := target.dot(top_basis.z)
 	var texel := 1.0 / (Render3D.PIXELS_PER_UNIT * world_zoom / _render_scale)
 	var snapped_u := u
 	var snapped_v := v
@@ -178,11 +248,10 @@ func _process(_delta: float) -> void:
 		snapped_u = roundf(u / texel) * texel
 		snapped_v = roundf(v / texel) * texel
 	camera.global_position = (
-		basis.x * snapped_u + basis.y * snapped_v + basis.z * (w + camera_distance)
+		top_basis.x * snapped_u + top_basis.y * snapped_v + top_basis.z * (w + camera_distance)
 	)
 	# Slide the image by the part of a texel the camera did not move.
 	var slide := Vector2(u - snapped_u, -(v - snapped_v)) / texel
-	var center := get_viewport().get_visible_rect().size / 2.0
 	display.position = center - slide * display.scale
 
 

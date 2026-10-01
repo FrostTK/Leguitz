@@ -8,6 +8,8 @@
 // The player's chest and feet (world space).
 global uniform vec3 player_position;
 global uniform vec3 player_feet;
+// 1 while the see-through hole is on (not in first person: no body to see).
+global uniform float see_through_on;
 
 // Height (world units) above which the view cuts the world; very high when
 // the player is in the open.
@@ -15,6 +17,9 @@ global uniform float cut_height;
 // Color of rock seen in section through the view cut (emitted: the same
 // in the dark, so the shape of the caves always reads).
 const vec3 SECTION_COLOR = vec3(0.022, 0.02, 0.027);
+// 0 while the camera dives into the player's head: it may pass through
+// the rock, which then lets it see through (the backs of faces vanish).
+global uniform float section_on;
 
 // Only what is at least this far (world units) in front of the player's
 // vertical plane counts as being in the way.
@@ -36,6 +41,9 @@ float see_through_dither(vec2 fragcoord) {
 // way. `soft_bottom` fades that lower edge out over a height (0 = sharp).
 bool hides_player(
 		vec3 vertex, mat4 view, mat4 inv_view, vec2 size, float soft_bottom, vec2 fragcoord) {
+	if (see_through_on < 0.5) {
+		return false;
+	}
 	vec3 chest = (view * vec4(player_position, 1.0)).xyz;
 	float d = length((vertex.xy - chest.xy) / size);
 	if (d >= 1.0) {

@@ -17,6 +17,8 @@ var caves := MeshInstance3D.new()
 var top_material: ShaderMaterial
 var face_material: ShaderMaterial
 var caves_shown := false
+## Level of detail of the props shown (see WorldView3D.lod_of).
+var props_lod := 0
 
 var _data_image := Image.create(
 	TerrainRenderer.DATA_SIZE, TerrainRenderer.DATA_SIZE, false, Image.FORMAT_RGBAF
@@ -51,6 +53,7 @@ func apply(result: ChunkMesher.Result, library: PropLibrary, lod: int) -> void:
 	var parts := result.parts
 	terrain.mesh = _mesh(parts[ChunkMesher.Part.TOPS], parts[ChunkMesher.Part.FACES])
 	caves.mesh = _mesh(parts[ChunkMesher.Part.DEEP_TOPS], parts[ChunkMesher.Part.DEEP_FACES])
+	props_lod = lod
 	_apply_props(result.props, library, lod)
 	_lava_spots = result.lava_spots
 	_lava_deep = result.lava_deep
@@ -75,8 +78,8 @@ func apply_surface_map(values: PackedFloat32Array) -> void:
 	_data_texture.update(_data_image)
 
 
-## Caves (and their lava lights) only show when the view cuts the world
-## above the player: from the sky they are hidden under the terrain.
+## Caves (and their lava lights) only show under cover or in first person:
+## from the sky they are hidden under the terrain anyway.
 func show_caves(shown: bool) -> void:
 	caves_shown = shown
 	caves.visible = shown
@@ -86,6 +89,9 @@ func show_caves(shown: bool) -> void:
 
 ## Swaps the props for their finer or coarser copies (zoom changed).
 func set_props_lod(library: PropLibrary, lod: int) -> void:
+	if lod == props_lod:
+		return
+	props_lod = lod
 	for i in _prop_keys.size():
 		var key := _prop_keys[i]
 		_props[i].multimesh.mesh = library.mesh(key.x, key.y, lod)

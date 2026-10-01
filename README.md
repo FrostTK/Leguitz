@@ -23,6 +23,7 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Tout en 3D voxel (1 voxel = 1 pixel) : joueur animé, 8 sortes d'arbres, buissons, herbes, fleurs, cannes à sucre, champignons, cactus, rochers | ✅ |
 | Vue par défaut « pixel parfait » : chaque pixel du dessin = un pixel à l'écran, défilement fluide | ✅ |
 | Caméra orbitale : tourner et incliner la vue autour du joueur à la souris ou à la manette, jusqu'à une vue presque à l'horizontale sans déformer les objets | ✅ |
+| Vue à la 1re personne : automatique en entrant dans une grotte (désactivable dans le menu pause), ou à tout moment avec F5 ; la caméra plonge dans la tête du joueur | ✅ |
 | Vraies ombres, occlusion ambiante, feuillages translucents qui ondulent au vent | ✅ |
 | Les arbres et les falaises deviennent transparents autour du joueur quand ils le cachent | ✅ |
 | Soleil et lune qui traversent le ciel, ombres longues le matin et le soir, phases de la lune | ✅ |
@@ -44,11 +45,14 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 |---|---|
 | Monde en vrais voxels 3D comme Minecraft : 128 blocs de haut, grottes 3D sous la surface (salles, tunnels, lacs, lave, filons de minerai) | ✅ |
 | Vue en coupe sous terre : tout ce qui dépasse la tête du joueur est coupé, la roche coupée en sombre | ✅ |
+| 1re personne dans les grottes (ou avec F5) : plongée de la caméra, ciel, brume au loin, lanterne à la main | ✅ |
 | Sauvegarde du monde et du joueur | à venir |
 | Viser, miner, poser des blocs | à venir |
 | Objets, inventaire, outils | à venir |
 
 ![Leguitz : le monde en voxels en surface, une grotte vue en coupe, un lac souterrain](docs/screenshots/phase3-voxels-grottes.png)
+
+![Leguitz : la plongée de la caméra vers la 1re personne, une grotte à la lanterne, la rivière la nuit, la savane au soleil couchant](docs/screenshots/phase3-premiere-personne.png)
 
 ![Biomes de Leguitz (phase 1, carte)](docs/screenshots/phase1-biomes.png)
 
@@ -103,6 +107,7 @@ du projet, puis appuyer sur F5.
 | Sauter (1 bloc de haut) | Espace | A |
 | Pause | Échap | Start |
 | Tourner / incliner la caméra | Glisser avec le clic droit (ou la molette enfoncée) | Stick droit |
+| Vue à la 1re personne / vue de dessus | F5 (souris pour regarder autour) | X (stick droit) |
 | Revenir à la vue par défaut | Début (Home) | Clic du stick droit |
 | Zoom | Molette, + / - | RB / LB |
 | Carte (debug) : ouvrir, dézoomer, fermer | M | Y |

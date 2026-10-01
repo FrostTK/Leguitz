@@ -69,6 +69,9 @@ void fragment() {
 	}
 	// Seen from behind (through the view cut): the section of the rock.
 	bool section = !IN_SHADOW_PASS && !FRONT_FACING;
+	if (section && section_on < 0.5) {
+		discard;
+	}
 	vec2 local = UV * 256.0;
 	ivec2 lp = clamp(ivec2(floor(local)), ivec2(0), ivec2(255));
 	ivec2 tile = lp / 16;

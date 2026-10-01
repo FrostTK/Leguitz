@@ -25,6 +25,8 @@ const CAMERA_RIGHT := &"camera_right"
 const CAMERA_UP := &"camera_up"
 const CAMERA_DOWN := &"camera_down"
 const CAMERA_RESET := &"camera_reset"
+## Switches between the top-down view and the first-person view.
+const TOGGLE_VIEW := &"toggle_view"
 # Debug (creative-only later).
 const DEPTH_UP := &"depth_up"
 const DEPTH_DOWN := &"depth_down"
@@ -83,6 +85,7 @@ static func register_defaults() -> void:
 	_bind(CAMERA_UP, [_axis(JOY_AXIS_RIGHT_Y, -1.0)])
 	_bind(CAMERA_DOWN, [_axis(JOY_AXIS_RIGHT_Y, 1.0)])
 	_bind(CAMERA_RESET, [_key(KEY_HOME), _button(JOY_BUTTON_RIGHT_STICK)])
+	_bind(TOGGLE_VIEW, [_key(KEY_F5), _button(JOY_BUTTON_X)])
 	_bind(TOGGLE_MAP, [_letter(KEY_M), _button(JOY_BUTTON_Y)])
 	_bind(DEPTH_UP, [_key(KEY_PAGEUP)])
 	_bind(DEPTH_DOWN, [_key(KEY_PAGEDOWN)])

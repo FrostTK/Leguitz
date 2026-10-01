@@ -79,6 +79,14 @@ cut_height={
 "type": "float",
 "value": 100000.0
 }
+see_through_on={
+"type": "float",
+"value": 1.0
+}
+section_on={
+"type": "float",
+"value": 1.0
+}
 weather_wind={
 "type": "vec2",
 "value": Vector2(1, 0.25)

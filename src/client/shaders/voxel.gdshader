@@ -18,6 +18,9 @@ uniform float wet_darkening = 0.22;
 uniform bool cut_out = true;
 // Half width and half height of the hole (world units, on screen).
 uniform vec2 cut_size = vec2(1.5, 2.1);
+// Dithers the model away (the player's body while the camera dives into
+// its head): 0 = shown, 1 = gone. Its shadow stays.
+uniform float fade = 0.0;
 
 global uniform vec2 weather_wind;
 global uniform float weather_wetness;
@@ -54,6 +57,9 @@ void vertex() {
 }
 
 void fragment() {
+	if (fade > 0.0 && !IN_SHADOW_PASS && see_through_dither(FRAGCOORD.xy) < fade) {
+		discard;
+	}
 	if (cut_out && !IN_SHADOW_PASS
 			&& (above_cut(VERTEX, INV_VIEW_MATRIX)
 			|| hides_player(VERTEX, VIEW_MATRIX, INV_VIEW_MATRIX, cut_size, 0.6, FRAGCOORD.xy))) {

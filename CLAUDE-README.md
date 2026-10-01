@@ -45,7 +45,7 @@ Les questions de goût ou les choix lourds de conséquences sont posés avant de
 | Langues | Français et anglais, réglables dans le jeu. |
 | Dépôt | Privé, compilation automatique par GitHub (Windows, Linux, macOS). |
 | Temps | Durée d'une journée réglable **par monde** (5 à 120 min), réglage « **Synchroniser avec l'appareil** » (1 journée = 24 h, heure du jeu = heure de l'appareil), et temps figé. La faim, la cuisson, les cultures… s'adaptent **légèrement** : rythme = clamp((durée/20 min)^0,25 ; 0,7 ; 2,5), synchronisé = ×2,5. Rattrapage hors-ligne **seulement en mode synchronisé, limité à 1 journée de jeu**. |
-| Caméra | Vue de dessus inclinée façon Stardew par défaut (60°, « pixel parfaite »), **orbite à la souris** autour du joueur (clic droit ou molette enfoncée), zoom à la molette. On peut **baisser la caméra jusqu'à 15°** sans que les objets s'étirent : les hauteurs gardent leur taille à l'écran, le sol se resserre, et près de l'horizon on retrouve les vraies proportions (un cube est un cube). |
+| Caméra | Vue de dessus inclinée façon Stardew par défaut (60°, « pixel parfaite »), **orbite à la souris** autour du joueur (clic droit ou molette enfoncée), zoom à la molette. On peut **baisser la caméra jusqu'à 15°** sans que les objets s'étirent : les hauteurs gardent leur taille à l'écran, le sol se resserre, et près de l'horizon on retrouve les vraies proportions (un cube est un cube). **1re personne automatique en entrant dans une grotte** (réglage désactivable dans le menu pause) et **à tout moment avec F5**, avec une **plongée** de la caméra dans la tête du joueur ; F5 vaut jusqu'à la prochaine entrée ou sortie de grotte. |
 | Déplacements | **Pas d'escaliers générés** : le joueur **saute d'un bloc** (1,25 niveau, comme Minecraft), tombe des bords. |
 | Monde | **Vrais voxels 3D** comme Minecraft (choix de la phase 3) : chunks de 16×16 colonnes sur **128 blocs de haut** (64 sous le niveau de la mer, le relief jusqu'à +32, de la place pour construire au-dessus). Grottes 3D sous la surface, plus de « couches » séparées. **L'eau ne coule pas encore** (on y marche ; coulées en phase 6, nage en phase 5). |
 | Sous terre | **Vue en coupe** : dès qu'il y a un plafond au-dessus du joueur (grotte, galerie, toit), tout ce qui dépasse sa tête est coupé, la roche coupée s'affiche en sombre. |
@@ -59,7 +59,7 @@ Les questions de goût ou les choix lourds de conséquences sont posés avant de
 
 ## 3. État actuel : ce qui est fait
 
-Godot **4.7.2** (GDScript), rendu Forward+. 73 tests unitaires, lint propre.
+Godot **4.7.2** (GDScript), rendu Forward+. 78 tests unitaires, lint propre.
 
 | Phase | Contenu | Commits |
 |---|---|---|
@@ -72,7 +72,8 @@ Godot **4.7.2** (GDScript), rendu Forward+. 73 tests unitaires, lint propre.
 | 2+ Chargement | Rayon de chunks calculé d'après la vue (zoom, fenêtre, angle) | `96b5b52` |
 | 2+ Carte graphique | Modèles simplifiés de loin (3 niveaux de détail), limite d'images par seconde (60 par défaut, 15 en arrière-plan), rendu suspendu en pause | `09261cf` |
 | 2+ Caméra basse | Caméra jusqu'à 15° sans étirer les objets (étirement selon l'inclinaison), trou transparent aussi dans les falaises, ombres et pluie qui suivent la vue, reflets du soleil adoucis sur l'eau, options de dev jamais enregistrées dans les réglages | `8e1ed5d` |
-| 3.1 Monde en voxels | Chunks 16×16×128 (ids : sols < 64, blocs 64+), génération remplissant les colonnes + grottes 3D (salles, tunnels, lacs, lave, filons de minerai), physique 3D (plafonds, objets hauts de 3), maillage sur les cœurs (faces fusionnées, grottes à part), vue en coupe sous terre, Page ↓/↑ = grotte suivante (`--descend=N`), carte de debug en coupe, chargement aussi rapide qu'avant | « Voxel world » |
+| 3.1 Monde en voxels | Chunks 16×16×128 (ids : sols < 64, blocs 64+), génération remplissant les colonnes + grottes 3D (salles, tunnels, lacs, lave, filons de minerai), physique 3D (plafonds, objets hauts de 3), maillage sur les cœurs (faces fusionnées, grottes à part), vue en coupe sous terre, Page ↓/↑ = grotte suivante (`--descend=N`), carte de debug en coupe, chargement aussi rapide qu'avant | `493ff38` |
+| 3.1b 1re personne | Automatique dans les grottes (réglage), F5 partout, plongée de la caméra (perspective qui s'ouvre, étirement qui s'efface, corps qui disparaît en tramé, roche traversée transparente), souris capturée, viseur, lanterne à la main, ciel procédural, brume au loin, ombres en cascades, détail des objets selon la distance, plafonds texturés (`--first-person`, `--look`, `--dive`) | « First-person view » |
 
 **Pas encore fait** (prévu) : le reste de la phase 3 (sauvegardes, miner/poser, objets et
 inventaire, outils), craft, survie/combat, créatures, structures, agriculture, menus de départ, sons,
@@ -109,8 +110,9 @@ godot --headless --path . -s res://tools/render_world_map.gd -- --seed=42 --size
 Options de développement (après `--`) : `--seed`, `--spawn=X,Y`, `--time`, `--time-mode`,
 `--day-minutes`, `--game-mode`, `--debug`, `--lang`, `--zoom`, `--screenshot=chemin`,
 `--screenshot-delay`, `--autowalk=DX,DY`, `--jump`, `--pause-menu`, `--descend=N`, `--noclip`,
-`--map`, `--weather`, `--quality`, `--hd`, `--camera=LACET,INCLINAISON`, `--hide-debug` (voir
-`src/core/dev_options.gd`).
+`--map`, `--weather`, `--quality`, `--hd`, `--camera=LACET,INCLINAISON`, `--hide-debug`,
+`--first-person`, `--look=INCLINAISON` (1re personne), `--dive=T` (plongée figée à T entre 0 et 1,
+pour les captures) (voir `src/core/dev_options.gd`).
 
 Lieux utiles avec la graine 42 : rivière `4,-6` ; plaine `-12,21` ; montagnes `76,123` ;
 forêt sombre `-123,261` ; désert `338,-228` ; badlands `474,-232` ; jungle `-334,-498` ;
@@ -154,6 +156,9 @@ xvfb-run -a -s "-screen 0 960x540x24" godot --path . --audio-driver Dummy --reso
 - Caméra orthographique : la direction de vue est la même partout, un reflet du soleil couvre
   donc toute l'eau d'un coup (d'où la rugosité de l'eau qui augmente à angle rasant).
 - `return` est interdit dans `fragment()` : écraser les sorties à la fin (voir la roche en coupe).
+- L'import (`--import`) et les lancements réécrivent `project.godot` (réglages par défaut retirés,
+  sections déplacées) : avant un commit, repartir de la version du dépôt et n'y ajouter que les
+  vrais changements.
 - Fils de travail : le GDScript pur passe à l'échelle, mais les appels aux objets natifs (bruits
   `FastNoiseLite`…) et les allocations presque pas (×1,6 sur 12 fils) : bruits en bloc avec
   `get_image_3d`, pas d'allocation ni d'appel dans les boucles chaudes, tables statiques copiées
@@ -287,6 +292,10 @@ pousse) : c'est pourquoi elle vient juste après.
   coupée montre encore de légères variations de gris (faces vues de dos à diverses profondeurs).
 - **Ressenti sous terre** : grottes assez sombres (lanterne et lumière ambiante des grottes) ; à
   rééclairer si le propriétaire trouve que c'est trop.
+- **1re personne** : à essayer en vrai (sensibilité de la souris, vitesse de la plongée, hauteur
+  des yeux). Limites connues : les textures (dessinées pour la vue de dessus, sans mipmaps)
+  scintillent au loin en surface ; on voit le bord du monde chargé (6 chunks) dans la brume ; pas
+  encore de mains ni d'objet tenu (étape 4) ; à la manette, X bascule la vue.
 - **Le serveur ne vérifie pas encore les collisions** des déplacements (seulement la distance) :
   utiliser `PlayerBody` côté serveur avant le multijoueur.
 - **Carrés plus sombres dans l'herbe**, de la taille d'une tuile, visibles en montagne (déjà là

@@ -8,7 +8,9 @@ extends Node
 ## - ambient light and background: dawn, day, dusk, moonlit nights, caves,
 ## - the player's lantern at night and underground,
 ## - fog (haze in the valleys below the player, morning mist, rain), cloud
-##   shadows, glow (bloom) and lightning flashes.
+##   shadows, glow (bloom) and lightning flashes,
+## - in first person: a sky over the horizon, a distance haze (the loaded
+##   world ends somewhere), sharper shadows near the eye.
 
 enum Quality { LOW, MEDIUM, HIGH, ULTRA }
 
@@ -25,6 +27,9 @@ const DAY_FOG := Color(0.72, 0.8, 0.9)
 const NIGHT_FOG := Color(0.1, 0.13, 0.24)
 const TWILIGHT_FOG := Color(0.95, 0.6, 0.48)
 const CAVE_FOG := Color(0.05, 0.04, 0.06)
+const DAY_SKY := Color(0.36, 0.56, 0.86)
+const NIGHT_SKY := Color(0.03, 0.04, 0.1)
+const TWILIGHT_SKY := Color(0.45, 0.42, 0.7)
 
 const DAY_AMBIENT_ENERGY := 0.62
 const NIGHT_AMBIENT_ENERGY := 0.3
@@ -45,6 +50,13 @@ const PARTICLE_SCALES: Array[float] = [0.3, 0.6, 1.0, 1.5]
 ## Shadows reach this far beyond the ground at the top of the screen
 ## (valleys below the player show farther away).
 const SHADOW_MARGIN := 20.0
+## First person: the haze reaches this much at this distance (world units),
+## underground the fog closes in; shadows reach this far from the eye.
+const FIRST_PERSON_HAZE := 0.6
+const FIRST_PERSON_HAZE_DISTANCE := 80.0
+const FIRST_PERSON_CAVE_FOG := 0.5
+const FIRST_PERSON_CAVE_FOG_DISTANCE := 28.0
+const FIRST_PERSON_SHADOW_DISTANCE := 70.0
 
 var clock: WorldClock
 var client_world: ClientWorld
@@ -62,10 +74,14 @@ var camera_distance := 80.0
 ## Distance from the camera to the ground at the top of the screen: a
 ## lower camera sees much farther, and the shadows must reach that far.
 var view_depth := 80.0
+## 0 = top-down view, 1 = first person (see WorldViewport.first_person).
+var first_person := 0.0
 var quality: Quality = Quality.HIGH
 
 ## 0 in daylight, 1 in the dark (read by the particles and the lantern).
 var darkness := 0.0
+
+var _sky_material := ProceduralSkyMaterial.new()
 
 
 func _ready() -> void:
@@ -85,6 +101,14 @@ func _ready() -> void:
 	environment.ssil_intensity = 0.6
 	environment.fog_mode = Environment.FOG_MODE_EXPONENTIAL
 	environment.fog_sky_affect = 0.0
+	# Only seen in first person (the lights use their own colors).
+	var sky := Sky.new()
+	sky.sky_material = _sky_material
+	sky.radiance_size = Sky.RADIANCE_SIZE_32
+	sky.process_mode = Sky.PROCESS_MODE_INCREMENTAL
+	environment.sky = sky
+	_sky_material.sun_angle_max = 12.0
+	_sky_material.sky_curve = 0.12
 
 	sun.shadow_enabled = true
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
@@ -165,6 +189,7 @@ func _process(_delta: float) -> void:
 	_update_sky_light(angle, moon, storm, underground)
 	_update_fog(hours, daylight, twilight, storm, underground)
 	environment.background_color = environment.fog_light_color.darkened(0.2)
+	_update_sky(daylight, twilight, storm, underground)
 	lantern.light_energy = clampf(darkness * 2.0 - 0.4, 0.0, 1.6)
 	lantern.visible = lantern.light_energy > 0.02
 	clouds.visible = quality >= Quality.HIGH and not underground
@@ -190,7 +215,16 @@ func _update_sky_light(angle: float, moon: float, storm: float, underground: boo
 	sun.light_energy = energy
 	sun.light_color = color
 	sun.visible = energy > 0.001
-	sun.directional_shadow_max_distance = view_depth + SHADOW_MARGIN
+	var top_down_shadows := view_depth + SHADOW_MARGIN
+	sun.directional_shadow_max_distance = lerpf(
+		top_down_shadows, FIRST_PERSON_SHADOW_DISTANCE, first_person
+	)
+	# In perspective, split shadows keep them sharp near the eye.
+	sun.directional_shadow_mode = (
+		DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+		if first_person > 0.5
+		else DirectionalLight3D.SHADOW_ORTHOGONAL
+	)
 	_aim(sun, sky_direction(light_angle))
 
 
@@ -208,10 +242,34 @@ func _update_fog(
 		amount = 0.2
 		haze = VALLEY_HAZE * 2.0
 	environment.fog_light_color = color
-	# Exponential fog reaches `amount` at the player's distance.
-	environment.fog_density = -log(1.0 - amount) / camera_distance
+	# Exponential fog reaches `amount` at the player's distance; in first
+	# person, a haze over the distance instead.
+	var distance := camera_distance
+	if first_person > 0.0:
+		var far_amount := FIRST_PERSON_CAVE_FOG if underground else FIRST_PERSON_HAZE
+		var far_distance := (
+			FIRST_PERSON_CAVE_FOG_DISTANCE if underground else FIRST_PERSON_HAZE_DISTANCE
+		)
+		amount = lerpf(amount, maxf(amount, far_amount), first_person)
+		distance = lerpf(distance, far_distance, first_person)
+	environment.fog_density = -log(1.0 - amount) / distance
 	environment.fog_height = reference_height - VALLEY_HAZE_BELOW
 	environment.fog_height_density = haze
+
+
+## The sky behind the horizon, in first person in the open air.
+func _update_sky(daylight: float, twilight: float, storm: float, underground: bool) -> void:
+	var open_sky := first_person > 0.0 and not underground
+	environment.background_mode = Environment.BG_SKY if open_sky else Environment.BG_COLOR
+	if not open_sky:
+		return
+	var top := NIGHT_SKY.lerp(DAY_SKY, daylight).lerp(TWILIGHT_SKY, twilight * 0.4)
+	top = top.lerp(top * STORM_TINT, storm)
+	var horizon := environment.fog_light_color
+	_sky_material.sky_top_color = top
+	_sky_material.sky_horizon_color = horizon
+	_sky_material.ground_horizon_color = horizon
+	_sky_material.ground_bottom_color = horizon.darkened(0.5)
 
 
 ## Points a directional light so that it shines from `towards_light`.

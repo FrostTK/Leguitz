@@ -2,7 +2,8 @@
 
 Top-down pixel-art open-world sandbox (Stardew visuals, Minecraft mechanics), rendered in full 3D:
 a true voxel world (16x16x128 chunks, cubes textured in pixel art), voxel models for everything else
-(trees, plants, player), orbit camera, cut-away view underground. Godot 4.7.
+(trees, plants, player), orbit camera, cut-away view underground, first person in caves (and with
+F5). Godot 4.7.
 The owner speaks French: talk to them in French. Code, identifiers and comments are in English;
 player-facing text goes through `i18n/strings.csv` (keys + en + fr), never hard-coded.
 
@@ -68,6 +69,14 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   the player is under cover (ClientWorld.is_covered): the view then cuts everything above their
   head (global `cut_height`), the surface maps are rebuilt for the cut, and the back of the faces
   closing the rock draws its section in dark (`see_through.gdshaderinc`).
+- First person (`ViewMode`: automatic when entering a cave, setting `cave_first_person`; F5 any
+  time): WorldViewport.dive_frame blends the ortho top-down camera into a perspective one at the
+  eye (a 1° perspective from far away opening to 70°), the world root stretch fades to identity
+  (`Render3D.root_basis(yaw, pitch, amount)`), the body dithers away (shadow kept), the lantern is
+  carried in hand. No cut, no see-through hole (globals `cut_height`, `see_through_on`); during the
+  dive the backs of faces vanish (`section_on`) so the camera sees through the rock it crosses.
+  In first person: caves always shown, props' detail by distance, haze, split sun shadows, a
+  procedural sky, 6 chunks loaded; the mouse is captured (released by the pause menu).
 - Trees, plants, rocks and the player are voxel models (1 voxel = 1 art pixel = 1/16 tile):
   generators in `src/client/models/voxel_models.gd`, meshed by VoxelMesher (greedy faces + AO) and
   saved by `godot --headless --path . -s res://tools/gen_models.gd` into `assets/models/` (commit

@@ -36,6 +36,7 @@ QUALITY_HIGH,High,Élevé
 QUALITY_ULTRA,Ultra,Ultra
 SETTING_HD,HD rendering,Rendu HD
 SETTING_MAX_FPS,Max frame rate,Images par seconde max
+SETTING_CAVE_FIRST_PERSON,First person in caves,1re personne dans les grottes
 FPS_SCREEN,Screen rate (VSync),Fréquence de l'écran (VSync)
 HUD_DAY_TIME,Day %d - %s,Jour %d - %s
 HUD_FROZEN,(frozen),(figé)
@@ -56,6 +57,7 @@ DEBUG_LAYER,Layer,Couche
 DEBUG_BIOME,Biome,Biome
 DEBUG_LEVEL,Level,Niveau
 DEBUG_NOCLIP,Ghost mode (F4),Mode fantôme (F4)
+DEBUG_FIRST_PERSON,First person (F5),1re personne (F5)
 LAYER_SURFACE,Surface,Surface
 LAYER_UNDERGROUND,Underground %d,Souterrain %d
 MAP_TITLE,Map (debug) - %s,Carte (debug) - %s

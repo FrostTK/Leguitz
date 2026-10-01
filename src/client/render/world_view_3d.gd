@@ -7,7 +7,7 @@ extends Node3D
 ## borders), so each arrival also rebuilds its neighbors.
 ##
 ## When the player is under cover (a cave, a tunnel, a roof), the view
-## cuts the world above their head (see set_cut): caves show, and the top
+## cuts the world above their head (see set_view): caves show, and the top
 ## shader's surface maps are rebuilt for the cut.
 
 const TOP_SHADER := preload("res://src/client/shaders/terrain3d_top.gdshader")
@@ -32,8 +32,13 @@ var client_world: ClientWorld
 var focus := Vector2i.ZERO
 ## Level of detail of the props (0 = full voxels, see set_lod).
 var lod := 0
-## Row the view cuts the world at (ChunkData.HEIGHT: no cut).
+## First-person view: the props' detail follows each chunk's distance
+## instead (see set_lod_by_distance).
+var lod_by_distance := false
+## Row the top shader's surface maps are cut at (ChunkData.HEIGHT: none),
+## and whether caves show (see set_view).
 var cut_row := ChunkData.HEIGHT
+var caves_shown := false
 var top_material := ShaderMaterial.new()
 var face_material := ShaderMaterial.new()
 var props := PropLibrary.new()
@@ -51,6 +56,8 @@ var _serials: Dictionary[Vector2i, int] = {}
 var _results: Array[ChunkMesher.Result] = []
 var _results_mutex := Mutex.new()
 var _variants := PackedByteArray()
+## Focus the props' distance-based detail was last set for.
+var _lod_focus := Vector2i.MAX
 
 
 func _ready() -> void:
@@ -121,8 +128,24 @@ func set_lod(value: int) -> void:
 	if value == lod:
 		return
 	lod = value
-	for view: ChunkView3D in _views.values():
-		view.set_props_lod(props, lod)
+	_refresh_lods()
+
+
+## In first person, near props keep full detail and far ones (small on
+## screen) get coarser.
+func set_lod_by_distance(enabled: bool) -> void:
+	if enabled == lod_by_distance:
+		return
+	lod_by_distance = enabled
+	_refresh_lods()
+
+
+## Level of detail of the props of a chunk.
+func lod_of(coord: Vector2i) -> int:
+	if not lod_by_distance:
+		return lod
+	var distance := Coords.chunk_distance(coord, focus)
+	return 0 if distance <= 2 else (1 if distance <= 4 else 2)
 
 
 ## Level of detail for the ground in view (tiles x tiles): full voxels
@@ -135,17 +158,17 @@ static func lod_for_view(ground: Vector2) -> int:
 	return 1 if area <= HALF_DETAIL_AREA else 2
 
 
-## Cuts the world above `row` (ChunkData.HEIGHT: no cut): caves show and
-## every surface map is rebuilt for the new cut.
-func set_cut(row: int) -> void:
+## Cuts the surface maps at `row` (ChunkData.HEIGHT: no cut; the shaders
+## cut the world itself, see the `cut_height` global) and shows or hides
+## the caves.
+func set_view(row: int, caves: bool) -> void:
+	if caves != caves_shown:
+		caves_shown = caves
+		for view: ChunkView3D in _views.values():
+			view.show_caves(caves)
 	if row == cut_row:
 		return
-	var was_cut := cut_row < ChunkData.HEIGHT
 	cut_row = row
-	var cut := cut_row < ChunkData.HEIGHT
-	if cut != was_cut:
-		for view: ChunkView3D in _views.values():
-			view.show_caves(cut)
 	for coord: Vector2i in _views:
 		if not _pending.has(coord):
 			_mark_pending(coord, false)
@@ -165,6 +188,8 @@ func wait_for_builds() -> void:
 
 
 func _process(_delta: float) -> void:
+	if lod_by_distance and focus != _lod_focus:
+		_refresh_lods()
 	_start_jobs()
 	_apply_results()
 
@@ -218,8 +243,8 @@ func _apply_results() -> void:
 		if result.map_only:
 			view.apply_surface_map(result.surface_map)
 		else:
-			view.caves_shown = cut_row < ChunkData.HEIGHT
-			view.apply(result, props, lod)
+			view.caves_shown = caves_shown
+			view.apply(result, props, lod_of(result.coord))
 			view.visible = true
 	if not left.is_empty():
 		_results_mutex.lock()
@@ -253,6 +278,12 @@ func _nearest_pending(count: int) -> Array[Vector2i]:
 			best.pop_back()
 			distances.resize(count)
 	return best
+
+
+func _refresh_lods() -> void:
+	_lod_focus = focus
+	for coord: Vector2i in _views:
+		_views[coord].set_props_lod(props, lod_of(coord))
 
 
 func _mark_pending(coord: Vector2i, full: bool) -> void:

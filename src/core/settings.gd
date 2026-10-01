@@ -31,6 +31,8 @@ var hd_rendering := false
 ## Frames per second at most (0 = the screen's refresh rate): no need to
 ## keep the graphics card at full power for a calm pixel-art world.
 var max_fps := 60
+## Goes first person when entering a cave (F5 switches by hand anyway).
+var cave_first_person := true
 
 ## The user's own values of the settings overridden for this session only
 ## (developer options): those are saved instead.
@@ -109,6 +111,12 @@ func _notification(what: int) -> void:
 		apply_max_fps()
 
 
+func set_cave_first_person(value: bool) -> void:
+	cave_first_person = value
+	_save_choice(&"cave_first_person")
+	changed.emit(&"cave_first_person")
+
+
 func set_show_debug(value: bool) -> void:
 	show_debug = value
 	_save_choice(&"show_debug")
@@ -141,6 +149,7 @@ func load_settings() -> void:
 	graphics_quality = file.get_value("display", "graphics_quality", graphics_quality)
 	hd_rendering = file.get_value("display", "hd_rendering", hd_rendering)
 	max_fps = file.get_value("display", "max_fps", max_fps)
+	cave_first_person = file.get_value("display", "cave_first_person", cave_first_person)
 	show_debug = file.get_value("debug", "show_debug", show_debug)
 
 
@@ -161,6 +170,7 @@ func save_settings() -> void:
 	file.set_value("display", "graphics_quality", _saved(&"graphics_quality"))
 	file.set_value("display", "hd_rendering", _saved(&"hd_rendering"))
 	file.set_value("display", "max_fps", _saved(&"max_fps"))
+	file.set_value("display", "cave_first_person", _saved(&"cave_first_person"))
 	file.set_value("debug", "show_debug", _saved(&"show_debug"))
 	var error := file.save(PATH)
 	if error != OK:

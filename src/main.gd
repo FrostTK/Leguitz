@@ -42,6 +42,9 @@ func _ready() -> void:
 	client.quit_requested.connect(_quit)
 	client.connect_to_server(transports[0], Settings.view_distance)
 	client.world_viewport.set_orbit_degrees(dev.camera_angles.x, dev.camera_angles.y)
+	if dev.first_person or dev.dive >= 0.0:
+		client.start_first_person(deg_to_rad(dev.look_pitch))
+		client.dive_hold = dev.dive
 	# Answer the handshake right away so the first frame has terrain.
 	server.process_messages()
 

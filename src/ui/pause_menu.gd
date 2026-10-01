@@ -36,6 +36,7 @@ var _language := OptionButton.new()
 var _zoom := OptionButton.new()
 var _quality := OptionButton.new()
 var _hd := CheckButton.new()
+var _cave_first_person := CheckButton.new()
 var _max_fps := OptionButton.new()
 var _updating := false
 
@@ -115,6 +116,9 @@ func _ready() -> void:
 	_max_fps.item_selected.connect(_on_max_fps_selected)
 	box.add_child(_row("SETTING_MAX_FPS", _max_fps))
 
+	_cave_first_person.toggled.connect(_on_cave_first_person_toggled)
+	box.add_child(_row("SETTING_CAVE_FIRST_PERSON", _cave_first_person))
+
 	var quit := Button.new()
 	quit.text = "MENU_QUIT"
 	quit.pressed.connect(quit_requested.emit)
@@ -148,6 +152,7 @@ func refresh_from_state() -> void:
 	_zoom.select(maxi(0, ZOOM_CHOICES.find(Settings.world_zoom)))
 	_quality.select(Settings.graphics_quality)
 	_hd.button_pressed = Settings.hd_rendering
+	_cave_first_person.button_pressed = Settings.cave_first_person
 	_max_fps.select(maxi(0, Settings.FPS_CHOICES.find(Settings.max_fps)))
 	_updating = false
 	_refresh_dynamic_texts()
@@ -201,6 +206,11 @@ func _on_max_fps_selected(index: int) -> void:
 func _on_hd_toggled(enabled: bool) -> void:
 	if not _updating:
 		Settings.set_hd_rendering(enabled)
+
+
+func _on_cave_first_person_toggled(enabled: bool) -> void:
+	if not _updating:
+		Settings.set_cave_first_person(enabled)
 
 
 func _refresh_dynamic_texts() -> void:

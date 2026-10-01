@@ -115,7 +115,12 @@ func _lines() -> PackedStringArray:
 	if player.noclip:
 		lines.append(tr("DEBUG_NOCLIP"))
 	lines.append("%s %d  %s  |  %s  |  %s x%.2f  |  %s %d/8" % time_args)
-	lines.append("%s: %d (r%d, LOD %d)  |  Zoom x%d%s  |  UI x%d  |  Cam %.0f / %.0f" % view_args)
+	var view_line := (
+		"%s: %d (r%d, LOD %d)  |  Zoom x%d%s  |  UI x%d  |  Cam %.0f / %.0f" % view_args
+	)
+	if client.view_mode.first_person:
+		view_line += "  |  " + tr("DEBUG_FIRST_PERSON")
+	lines.append(view_line)
 	if server_stats.is_valid():
 		lines.append_array(server_stats.call())
 	return lines

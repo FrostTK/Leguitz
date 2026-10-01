@@ -45,10 +45,13 @@ static func depth_stretch(pitch: float) -> float:
 
 
 ## Basis of the world root for a camera turned by `yaw` around the vertical
-## axis and tilted at `pitch` (radians).
-static func root_basis(yaw: float, pitch: float) -> Basis:
+## axis and tilted at `pitch` (radians). `amount` fades the stretch out (0:
+## true proportions, for the first-person view).
+static func root_basis(yaw: float, pitch: float, amount := 1.0) -> Basis:
 	var turn := Basis(Vector3.UP, yaw)
-	var stretch := Basis.from_scale(Vector3(1.0, vertical_scale(pitch), depth_stretch(pitch)))
+	var vertical := lerpf(1.0, vertical_scale(pitch), amount)
+	var depth := lerpf(1.0, depth_stretch(pitch), amount)
+	var stretch := Basis.from_scale(Vector3(1.0, vertical, depth))
 	return turn * stretch * turn.transposed()
 
 

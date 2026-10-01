@@ -146,6 +146,12 @@ func test_caves_are_meshed_apart_and_the_map_follows_the_cut() -> void:
 	assert_almost(_area(result.parts[ChunkMesher.Part.DEEP_TOPS]), 25.0, 0.001, "the floor")
 	# Walls (5 per side, each three levels tall), ceiling and world bottom.
 	assert_eq(result.parts[ChunkMesher.Part.DEEP_FACES].quad_count(), 20 + 1 + 1)
+	# The ceiling's texture repeats on every tile (seen in first person).
+	var ceiling := result.parts[ChunkMesher.Part.DEEP_FACES]
+	for quad in ceiling.quad_count():
+		if ceiling.normals[quad * 4] == Vector3.DOWN and ceiling.vertices[quad * 4].y > -10.0:
+			var span := ceiling.uvs[quad * 4 + 1] - ceiling.uvs[quad * 4]
+			assert_almost(absf(span.x), 5.0 * 16.0, 0.001, "16 texture pixels per tile")
 	var column := (7 + 1) * ChunkMesher.SPAN + (7 + 1)
 	assert_almost(result.surface_map[column * 4 + 2], 4.0, 0.001, "from the sky: the grass")
 	var cut := _build(chunk, SEA - 4)

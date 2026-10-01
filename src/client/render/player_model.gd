@@ -21,6 +21,9 @@ const STRIDE := 0.9
 const SWING := 0.75
 
 var lantern := OmniLight3D.new()
+## Set by the first-person view: the lantern is carried at the eye instead
+## (world space; INF: above the head as usual).
+var lantern_override := Vector3.INF
 
 var _body := Node3D.new()
 var _arms: Array[Node3D] = []
@@ -28,10 +31,11 @@ var _legs: Array[Node3D] = []
 var _yaw := 0.0
 var _phase := 0.0
 var _swing := 0.0
+var _material := ShaderMaterial.new()
 
 
 func _ready() -> void:
-	var material := ShaderMaterial.new()
+	var material := _material
 	material.shader = SHADER
 	material.set_shader_parameter("use_instance_data", false)
 	material.set_shader_parameter("cut_out", false)
@@ -82,11 +86,17 @@ func animate(feet: Vector3, heading: Vector2, speed: float, airborne: bool, delt
 			_arms[i].rotation.x = -1.1
 	_body.position.y = absf(sin(_phase)) * _swing * VOXEL * 1.2
 	if is_inside_tree():
-		lantern.global_position = global_position + Vector3(0, LANTERN_HEIGHT, 0)
+		var above := global_position + Vector3(0, LANTERN_HEIGHT, 0)
+		lantern.global_position = above if lantern_override == Vector3.INF else lantern_override
 		# For the see-through hole (see see_through.gdshaderinc).
 		var root := get_parent_node_3d().global_transform
 		RenderingServer.global_shader_parameter_set(&"player_position", root * (feet + CHEST))
 		RenderingServer.global_shader_parameter_set(&"player_feet", root * feet)
+
+
+## Dithers the body away (0 = shown, 1 = gone; its shadow stays).
+func set_fade(amount: float) -> void:
+	_material.set_shader_parameter("fade", amount)
 
 
 func _part(part: String, offset: Vector3, parent: Node3D, material: Material) -> void:

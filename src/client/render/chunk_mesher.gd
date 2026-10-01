@@ -530,7 +530,11 @@ static func _add_flat(result: Result, group: Vector3i, run: Vector2i, z0: int, z
 			Vector3(x1, bottom, z0),
 			Vector3(x0, bottom, z0),
 		]
-		surface.quad(below, _texels(), Vector3.DOWN, Vector3.RIGHT, Vector2(code, 0))
+		# Ceilings show in first person: their texture repeats on every tile.
+		var texels: Array[Vector2] = []
+		for corner in below:
+			texels.append(Vector2(corner.x, corner.z) * FACE_PX_PER_UNIT)
+		surface.quad(below, texels, Vector3.DOWN, Vector3.RIGHT, Vector2(code, 0))
 		return
 	var level := y + 1 - SEA
 	var height := float(level)
@@ -550,7 +554,7 @@ static func _add_flat(result: Result, group: Vector3i, run: Vector2i, z0: int, z
 
 
 ## One underside under the whole chunk: the bottom of the world closes the
-## rock (see the view cut).
+## rock (see the view cut). It is only ever seen from behind.
 static func _add_world_bottom(surface: Surface) -> void:
 	var bottom := float(-SEA)
 	var corners: Array[Vector3] = [
@@ -559,12 +563,8 @@ static func _add_world_bottom(surface: Surface) -> void:
 		Vector3(SIZE, bottom, 0),
 		Vector3(0, bottom, 0),
 	]
-	surface.quad(corners, _texels(), Vector3.DOWN, Vector3.RIGHT, Vector2(WALL_KIND_OFFSET, 0))
-
-
-## Face texture coordinates of an underside (only ever seen from behind).
-static func _texels() -> Array[Vector2]:
-	return [Vector2(0, 0), Vector2(16, 0), Vector2(16, 16), Vector2(0, 16)]
+	var texels: Array[Vector2] = [Vector2(0, 0), Vector2(16, 0), Vector2(16, 16), Vector2(0, 16)]
+	surface.quad(corners, texels, Vector3.DOWN, Vector3.RIGHT, Vector2(WALL_KIND_OFFSET, 0))
 
 
 ## Vertical quad on `side` of tile (lx, lz), facing out, from `bottom` to

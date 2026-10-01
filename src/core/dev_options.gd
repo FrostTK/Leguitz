@@ -25,6 +25,9 @@ extends RefCounted
 ## --quality=N          graphics quality 0 (low) to 3 (ultra)
 ## --hd                 render the 3D world at full resolution
 ## --camera=YAW,PITCH   camera orbit angles in degrees (default 0,60)
+## --first-person       start in first person (like F5)
+## --look=PITCH         first-person look pitch in degrees (default -11)
+## --dive=T             hold the dive into first person at T (0..1)
 
 var seed_text := ""
 var spawn_override := Vector2i.ZERO
@@ -49,6 +52,9 @@ var weather := -1
 var quality := -1
 var hd := false
 var camera_angles := Vector2(0.0, Render3D.DEFAULT_PITCH)
+var first_person := false
+var look_pitch := -11.5
+var dive := -1.0
 
 
 static func parse(args: PackedStringArray) -> DevOptions:
@@ -109,6 +115,12 @@ static func parse(args: PackedStringArray) -> DevOptions:
 				options.quality = value.to_int()
 			"hd":
 				options.hd = true
+			"first-person":
+				options.first_person = true
+			"look":
+				options.look_pitch = value.to_float()
+			"dive":
+				options.dive = clampf(value.to_float(), 0.0, 1.0)
 			"camera":
 				var angles := value.split(",")
 				if angles.size() == 2:
