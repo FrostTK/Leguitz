@@ -196,6 +196,11 @@ const BLOCK_DROPS := {
 	Tiles.Block.JUNGLE_PLANKS: [Id.JUNGLE_PLANKS, 1, 1],
 	Tiles.Block.ACACIA_PLANKS: [Id.ACACIA_PLANKS, 1, 1],
 	Tiles.Block.WORKBENCH: [Id.WORKBENCH, 1, 1],
+	Tiles.Block.WORKBENCH_WEST: [Id.WORKBENCH, 1, 1],
+	Tiles.Block.WORKBENCH_NORTH: [Id.WORKBENCH, 1, 1],
+	Tiles.Block.WORKBENCH_EAST: [Id.WORKBENCH, 1, 1],
+	Tiles.Block.WORKBENCH_END_X: [Id.WORKBENCH, 1, 1],
+	Tiles.Block.WORKBENCH_END_Z: [Id.WORKBENCH, 1, 1],
 }
 ## The planks each log is sawn into.
 const PLANKS_OF := {

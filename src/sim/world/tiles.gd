@@ -83,6 +83,11 @@ enum Block {
 	JUNGLE_PLANKS,
 	ACACIA_PLANKS,
 	WORKBENCH,
+	WORKBENCH_WEST,
+	WORKBENCH_NORTH,
+	WORKBENCH_EAST,
+	WORKBENCH_END_X,
+	WORKBENCH_END_Z,
 }
 
 const FLOWERS: Array[Block] = [
@@ -148,7 +153,6 @@ const CUBE_BLOCKS := {
 	Block.DARK_OAK_PLANKS: true,
 	Block.JUNGLE_PLANKS: true,
 	Block.ACACIA_PLANKS: true,
-	Block.WORKBENCH: true,
 }
 
 const NON_SOLID_BLOCKS := {

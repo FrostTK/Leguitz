@@ -51,7 +51,7 @@ func _process(delta: float) -> void:
 	if not client.joined or client.transport == null:
 		return
 	target = _aim()
-	_highlight.outline(target.box if target != null else AABB())
+	_highlight.outline(_whole_box(target))
 	_update_breaking(delta)
 	if place_soon and target != null:
 		place_soon = false
@@ -72,14 +72,20 @@ func place() -> void:
 	var voxel := Items.placed_voxel(client.inventory.items[slot])
 	if (
 		not Mining.can_place(voxel)
-		or not Mining.is_replaceable(client.world.voxel_at(cell))
-		or Mining.overlaps_body(cell, player.position, player.height)
 		or Mining.reach_to(player.position, player.height, cell) > Mining.REACH
 	):
 		return
-	_predict(cell, voxel)
+	var front := Mining.front_towards(cell, player.position)
+	var cells := Mining.placement(cell, voxel, front, client.world.voxel_at)
+	if cells.is_empty():
+		return
+	for at: Vector3i in cells:
+		if Mining.overlaps_body(at, player.position, player.height):
+			return
+	for at: Vector3i in cells:
+		_predict(at, cells[at])
 	client.inventory.take(slot, 1)
-	client.transport.send(Msg.block_place(cell, slot))
+	client.transport.send(Msg.block_place(cell, slot, front))
 	client.player_model.swing()
 
 
@@ -141,11 +147,29 @@ func _reset_breaking() -> void:
 func _break(hit: VoxelRay.Hit) -> void:
 	var center := _world_point(hit.box.get_center())
 	_debris.throw(center, BlockColors.of(hit.voxel), 16, 0.3)
-	_predict(hit.cell, Mining.left_after_break(hit.cell, client.world.voxel_at))
-	var above := hit.cell + Vector3i.UP
-	if Mining.needs_support(client.world.voxel_at(above)):
-		_predict(above, Voxels.AIR)
+	var voxel_at := client.world.voxel_at
+	var cells := Mining.object_cells(hit.cell, hit.voxel, voxel_at)
+	for part in cells:
+		_predict(part, Mining.left_after_break(part, voxel_at))
+	for part in cells:
+		var above := part + Vector3i.UP
+		var standing := client.world.voxel_at(above)
+		if Mining.needs_support(standing):
+			for piece in Mining.object_cells(above, standing, voxel_at):
+				_predict(piece, Voxels.AIR)
 	client.transport.send(Msg.block_break(hit.cell))
+
+
+## The frame around what is aimed at: a whole workbench, both its ends.
+func _whole_box(hit: VoxelRay.Hit) -> AABB:
+	if hit == null:
+		return AABB()
+	var box := hit.box
+	if ObjectShapes.is_bench(Voxels.block_of(hit.voxel)):
+		for part in Mining.object_cells(hit.cell, hit.voxel, client.world.voxel_at):
+			var block := Voxels.block_of(client.world.voxel_at(part))
+			box = box.merge(VoxelRay.object_box(block, part))
+	return box
 
 
 ## Shows a change before the server confirms it.

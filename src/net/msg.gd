@@ -47,9 +47,10 @@ static func block_break(cell: Vector3i) -> Dictionary:
 	return {"t": BLOCK_BREAK, "cell": cell}
 
 
-## The player placed the block of hotbar slot `slot` at `cell`.
-static func block_place(cell: Vector3i, slot: int) -> Dictionary:
-	return {"t": BLOCK_PLACE, "cell": cell, "slot": slot}
+## The player placed the block of hotbar slot `slot` at `cell` (a
+## workbench facing `front`, see Mining.placement).
+static func block_place(cell: Vector3i, slot: int, front := Vector2i(0, 1)) -> Dictionary:
+	return {"t": BLOCK_PLACE, "cell": cell, "slot": slot, "front": front}
 
 
 ## The player took hotbar slot `slot` in hand.

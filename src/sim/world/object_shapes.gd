@@ -31,6 +31,21 @@ const SOLIDS := {
 	Tiles.Block.CACTUS: [8, 2],
 	Tiles.Block.BIG_MUSHROOM: [8, 3],
 }
+## The workbench stands on two tiles: its left end seen from its front
+## (one block for each way it faces, keyed to that way; it holds the
+## model) and its right end beside it (one block per axis it lies along).
+## It is BENCH_DEPTH voxels deep and blocks a level.
+const BENCH_FRONTS := {
+	Tiles.Block.WORKBENCH: Vector2i(0, 1),
+	Tiles.Block.WORKBENCH_WEST: Vector2i(-1, 0),
+	Tiles.Block.WORKBENCH_NORTH: Vector2i(0, -1),
+	Tiles.Block.WORKBENCH_EAST: Vector2i(1, 0),
+}
+const BENCH_ENDS := {
+	Tiles.Block.WORKBENCH_END_X: Vector2i(1, 0),
+	Tiles.Block.WORKBENCH_END_Z: Vector2i(0, 1),
+}
+const BENCH_DEPTH := 14
 ## Small things stand anywhere in their tile (whole voxels), not centered.
 const WANDERING := {
 	Tiles.Block.TALL_GRASS: true,
@@ -54,7 +69,49 @@ static func is_tree(block: int) -> bool:
 
 
 static func variant_count(block: int) -> int:
+	if is_bench(block):
+		return 1
 	return TREE_VARIANTS if TREES.has(block) else VARIANTS
+
+
+## A part of a workbench (either end).
+static func is_bench(block: int) -> bool:
+	return BENCH_FRONTS.has(block) or BENCH_ENDS.has(block)
+
+
+## The block whose model a block shows: the ways a workbench faces share
+## one; -1 for the blocks showing none (a workbench's right end).
+static func model_block(block: int) -> int:
+	if BENCH_ENDS.has(block):
+		return -1
+	return Tiles.Block.WORKBENCH if BENCH_FRONTS.has(block) else block
+
+
+## The left end of a workbench facing `front` (a unit step on the ground).
+static func bench_facing(front: Vector2i) -> int:
+	for block: int in BENCH_FRONTS:
+		if BENCH_FRONTS[block] == front:
+			return block
+	return Tiles.Block.WORKBENCH
+
+
+## Where a workbench's right end lies from its left end (on its right,
+## seen from its front).
+static func bench_right(block: int) -> Vector2i:
+	var front: Vector2i = BENCH_FRONTS[block]
+	return Vector2i(front.y, -front.x)
+
+
+## The block of a workbench's right end lying `right` of its left end.
+static func bench_end(right: Vector2i) -> int:
+	return Tiles.Block.WORKBENCH_END_X if right.x != 0 else Tiles.Block.WORKBENCH_END_Z
+
+
+## How a workbench's left end turns its model (made facing +z, its right
+## end towards +x), radians about the vertical.
+static func bench_turn(block: int) -> float:
+	var front: Vector2i = BENCH_FRONTS[block]
+	return atan2(front.x, front.y)
 
 
 ## Version of an object standing on a tile.
@@ -95,6 +152,8 @@ static func footprint(block: int, variant: int) -> int:
 
 ## Levels an object blocks, from its voxel up.
 static func blocking_levels(block: int, variant: int) -> int:
+	if is_bench(block):
+		return 1
 	if TREES.has(block):
 		return ceili(trunk(block, variant).y / float(GameConst.TILE_SIZE))
 	if SOLIDS.has(block):
@@ -105,6 +164,15 @@ static func blocking_levels(block: int, variant: int) -> int:
 ## The box (world pixels) an object standing on a tile blocks (empty if it
 ## blocks nothing).
 static func footprint_rect(block: int, tile: Vector2i) -> Rect2:
+	if is_bench(block):
+		# Its whole tile along the bench, BENCH_DEPTH across.
+		var along: Vector2i = BENCH_ENDS.get(block, Vector2i.ZERO)
+		if BENCH_FRONTS.has(block):
+			along = bench_right(block).abs()
+		var bench := (
+			Vector2(along) * GameConst.TILE_SIZE + Vector2(Vector2i.ONE - along) * BENCH_DEPTH
+		)
+		return Rect2(Coords.tile_to_world_center(tile) - bench * 0.5, bench)
 	var size := footprint(block, variant_at(block, tile))
 	if size == 0:
 		return Rect2()

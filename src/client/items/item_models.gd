@@ -90,6 +90,8 @@ static func build(item: int) -> VoxelGrid:
 			return _fern()
 		Items.Id.GUIDE_BOOK:
 			return _book()
+		Items.Id.WORKBENCH:
+			return WorkbenchModel.build()
 	return null
 
 

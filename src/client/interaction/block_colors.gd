@@ -1,7 +1,8 @@
 class_name BlockColors
 extends RefCounted
 ## The main color of each voxel, for the bits flying off it: the average of
-## its top in the terrain atlases; objects from their models' palettes.
+## its top in the terrain atlases; objects from their models' palettes
+## (the workbench's beech).
 
 const TREE_COLORS := {
 	Tiles.Block.OAK: [TreeModels.OAK_BARK, TreeModels.OAK_LEAVES],
@@ -52,6 +53,8 @@ static func _compute(voxel: int) -> Color:
 		return _average(TerrainRenderer.WALL_ATLAS.get_image(), TileAtlas.WALL_KINDS[block])
 	if TREE_COLORS.has(block):
 		return Color(TREE_COLORS[block][0][2])
+	if ObjectShapes.is_bench(block):
+		return Color(WorkbenchModel.TOP[1])
 	return OBJECT_COLORS.get(block, PLANT_COLOR)
 
 

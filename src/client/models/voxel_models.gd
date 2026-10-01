@@ -33,11 +33,14 @@ const PANTS_SHADE := "#2c4373"
 const SHOES := "#4a3020"
 
 
-## Every block that is drawn as a model (not air, not cube blocks).
+## Every block that has a model of its own (not air, not cube blocks; the
+## ways a workbench faces share one, its right end shows none).
 static func modeled_blocks() -> Array[int]:
 	var result: Array[int] = []
 	for block in Tiles.Block.size():
-		if block != Tiles.Block.AIR and not Tiles.is_cube(block):
+		if block == Tiles.Block.AIR or Tiles.is_cube(block):
+			continue
+		if ObjectShapes.model_block(block) == block:
 			result.append(block)
 	return result
 
@@ -94,6 +97,8 @@ static func build(block: int, variant: int) -> VoxelGrid:
 			return _sugar_cane(rng)
 		Tiles.Block.LILY_PAD:
 			return _lily_pad(rng, variant)
+		Tiles.Block.WORKBENCH:
+			return WorkbenchModel.build()
 	return VoxelGrid.new()
 
 

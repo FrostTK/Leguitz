@@ -172,11 +172,23 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   `PlayerSession.craft_width`. InventoryScreen shows the grid, an arrow and the result; the
   book's Crafting chapter draws every recipe (GuideBook Kind.RECIPE, groups going through their
   items). `--grid=ITEM,...` fills the grid for screenshots.
-- New cube blocks (planks, the workbench): append to Tiles.Block and CUBE_BLOCKS, give them a
+- New cube blocks (planks): append to Tiles.Block and CUBE_BLOCKS, give them a
   TileAtlas.WALL_KINDS row and a `tools/gen_art.py` WALLS entry (walls from FIRST_OWN_SEED_WALL
   draw from random generators of their own, so the older textures stay the same), then Items
   (PLACES_BLOCK, BLOCK_DROPS) and Mining (time, tool). Block items are cubes wearing their top
   texture above and below and their face texture around (ItemLibrary._cube).
+- The workbench is a voxel model two tiles long (WorkbenchModel: a carpenter's bench with a
+  vise, drawers, a cupboard, and an iron anvil, hammer and saw on top) standing in two object
+  voxels: its left end seen from its front (WORKBENCH, _WEST, _NORTH, _EAST: the way it faces,
+  ObjectShapes.BENCH_FRONTS) holds the model, drawn turned and centered on both tiles
+  (ChunkMesher._add_prop), and its right end (WORKBENCH_END_X / _Z, no model:
+  ObjectShapes.model_block -1) lies on its right. `Mining.placement` gives the cells a placed
+  voxel takes (a bench faces the player, `front_towards`, and takes the cell aimed at and the
+  next on its right, else on its left; both free and on cubes); `Mining.object_cells` the cells
+  of the object in a cell (breaking either end breaks both, one workbench drops). Msg.BLOCK_PLACE
+  carries the way it faces. Bodies are kept out of both tiles end to end
+  (ObjectShapes.footprint_rect); the aiming frame covers the whole bench. The item's icon, the one
+  in hand and on the ground use the same model (ItemModels).
 - Saves (`src/sim/save/world_storage.gd`, server side only): `user://worlds/<folder>/` holds
   world.cfg (settings, clock, weather), players/<name>.cfg and regions/r.<x>.<z>.bin (the chunks
   players changed, 32x32 per file, zstd voxels; the others are generated again). Change voxels

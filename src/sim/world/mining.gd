@@ -55,6 +55,11 @@ const BLOCK_SECONDS := {
 	Tiles.Block.JUNGLE_PLANKS: 2.0,
 	Tiles.Block.ACACIA_PLANKS: 2.0,
 	Tiles.Block.WORKBENCH: 2.5,
+	Tiles.Block.WORKBENCH_WEST: 2.5,
+	Tiles.Block.WORKBENCH_NORTH: 2.5,
+	Tiles.Block.WORKBENCH_EAST: 2.5,
+	Tiles.Block.WORKBENCH_END_X: 2.5,
+	Tiles.Block.WORKBENCH_END_Z: 2.5,
 }
 ## Trees by hand: chopping a trunk takes a while.
 const TREE_SECONDS := 3.5
@@ -83,6 +88,11 @@ const AXE_BLOCKS := {
 	Tiles.Block.JUNGLE_PLANKS: true,
 	Tiles.Block.ACACIA_PLANKS: true,
 	Tiles.Block.WORKBENCH: true,
+	Tiles.Block.WORKBENCH_WEST: true,
+	Tiles.Block.WORKBENCH_NORTH: true,
+	Tiles.Block.WORKBENCH_EAST: true,
+	Tiles.Block.WORKBENCH_END_X: true,
+	Tiles.Block.WORKBENCH_END_Z: true,
 }
 const PICKAXE_BLOCKS := {Tiles.Block.ROCK: true, Tiles.Block.MOSSY_ROCK: true}
 
@@ -96,9 +106,70 @@ static func can_break(voxel: int, row: int) -> bool:
 	)
 
 
-## Voxels a player can place: cubes (grounds and blocks).
+## Voxels a player can place: cubes (grounds and blocks), and the
+## workbench.
 static func can_place(voxel: int) -> bool:
-	return voxel != Voxels.UNKNOWN and Voxels.is_cube(voxel)
+	if voxel == Voxels.UNKNOWN:
+		return false
+	return Voxels.is_cube(voxel) or ObjectShapes.BENCH_FRONTS.has(Voxels.block_of(voxel))
+
+
+## The cells a placed voxel takes ({cell: voxel}; empty: no room). A cube
+## takes the cell aimed at; a workbench faces `front` and takes the cell
+## aimed at and the one on its right (or else the one on its left), both
+## free of anything solid or liquid and standing on cubes.
+static func placement(
+	cell: Vector3i, voxel: int, front: Vector2i, voxel_at: Callable
+) -> Dictionary:
+	if not ObjectShapes.BENCH_FRONTS.has(Voxels.block_of(voxel)):
+		return {cell: voxel} if is_replaceable(voxel_at.call(cell)) else {}
+	var left := ObjectShapes.bench_facing(front)
+	var right := ObjectShapes.bench_right(left)
+	var step := Vector3i(right.x, 0, right.y)
+	var end := Voxels.of_block(ObjectShapes.bench_end(right))
+	for start: Vector3i in [cell, cell - step]:
+		if _bench_room(start, voxel_at) and _bench_room(start + step, voxel_at):
+			return {start: Voxels.of_block(left), start + step: end}
+	return {}
+
+
+## Which way a workbench placed at `cell` faces: towards the player's feet
+## (world pixels), along the nearer axis.
+static func front_towards(cell: Vector3i, feet: Vector2) -> Vector2i:
+	var away := feet / GameConst.TILE_SIZE - Vector2(cell.x + 0.5, cell.z + 0.5)
+	if absf(away.x) > absf(away.y):
+		return Vector2i(1 if away.x > 0.0 else -1, 0)
+	return Vector2i(0, 1 if away.y >= 0.0 else -1)
+
+
+## The cells of the object standing in `cell` (its left end first): both
+## ends of a workbench, else the cell alone.
+static func object_cells(cell: Vector3i, voxel: int, voxel_at: Callable) -> Array[Vector3i]:
+	var block := Voxels.block_of(voxel)
+	if ObjectShapes.BENCH_FRONTS.has(block):
+		var right := ObjectShapes.bench_right(block)
+		var other := cell + Vector3i(right.x, 0, right.y)
+		if ObjectShapes.BENCH_ENDS.has(Voxels.block_of(voxel_at.call(other))):
+			return [cell, other]
+	elif ObjectShapes.BENCH_ENDS.has(block):
+		var along: Vector2i = ObjectShapes.BENCH_ENDS[block]
+		for side: int in [-1, 1]:
+			var left := cell + Vector3i(along.x, 0, along.y) * side
+			var left_block := Voxels.block_of(voxel_at.call(left))
+			if ObjectShapes.BENCH_FRONTS.has(left_block):
+				var right := ObjectShapes.bench_right(left_block)
+				if left + Vector3i(right.x, 0, right.y) == cell:
+					return [left, cell]
+	return [cell]
+
+
+static func _bench_room(cell: Vector3i, voxel_at: Callable) -> bool:
+	var there: int = voxel_at.call(cell)
+	return (
+		is_replaceable(there)
+		and not Voxels.is_liquid(there)
+		and Voxels.is_cube(voxel_at.call(cell + Vector3i.DOWN))
+	)
 
 
 ## Whether a block can be placed into a voxel: air, liquids, small plants.

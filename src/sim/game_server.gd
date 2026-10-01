@@ -325,13 +325,18 @@ func _on_block_break(session: PlayerSession, message: Dictionary) -> void:
 	if not Mining.can_break(voxel, cell.y) or near > Mining.REACH + REACH_LEEWAY:
 		session.transport.send(Msg.block_changed(cell, voxel))
 		return
-	change_voxel(cell, Mining.left_after_break(cell, world.voxel_at))
+	# The whole object goes (both ends of a workbench), and what stood on it.
+	var cells := Mining.object_cells(cell, voxel, world.voxel_at)
+	for part in cells:
+		change_voxel(part, Mining.left_after_break(part, world.voxel_at))
 	_drop_from(cell, voxel)
-	var above := cell + Vector3i.UP
-	var standing := world.voxel_at(above)
-	if Mining.needs_support(standing):
-		change_voxel(above, Voxels.AIR)
-		_drop_from(above, standing)
+	for part in cells:
+		var above := part + Vector3i.UP
+		var standing := world.voxel_at(above)
+		if Mining.needs_support(standing):
+			for piece in Mining.object_cells(above, standing, world.voxel_at):
+				change_voxel(piece, Voxels.AIR)
+			_drop_from(above, standing)
 
 
 ## What a broken voxel gives falls where it was.
@@ -353,24 +358,31 @@ func _on_block_place(session: PlayerSession, message: Dictionary) -> void:
 	var cell: Vector3i = message.get("cell", Vector3i.ZERO)
 	var slot := clampi(int(message.get("slot", 0)), 0, Inventory.HOTBAR - 1)
 	var voxel := Items.placed_voxel(session.inventory.items[slot])
-	var there := world.voxel_at(cell)
+	var front: Vector2i = message.get("front", Vector2i(0, 1))
+	if absi(front.x) + absi(front.y) != 1:
+		front = Vector2i(0, 1)
+	var cells := Mining.placement(cell, voxel, front, world.voxel_at)
 	var near := Mining.reach_to(session.position, session.height, cell)
 	var ok := (
 		cell.y >= Mining.LOWEST_ROW
 		and cell.y < GameConst.WORLD_HEIGHT
 		and Mining.can_place(voxel)
-		and Mining.is_replaceable(there)
+		and not cells.is_empty()
 		and near <= Mining.REACH + REACH_LEEWAY
-		and _against_terrain(cell)
+		and (cells.size() > 1 or _against_terrain(cell))
 	)
 	for other in _sessions:
-		if ok and other.joined and Mining.overlaps_body(cell, other.position, other.height):
-			ok = false
+		for at: Vector3i in cells:
+			if ok and other.joined and Mining.overlaps_body(at, other.position, other.height):
+				ok = false
 	if not ok:
-		session.transport.send(Msg.block_changed(cell, there))
+		# What is really there, where the player guessed it changed.
+		for at: Vector3i in cells.keys() if not cells.is_empty() else [cell]:
+			session.transport.send(Msg.block_changed(at, world.voxel_at(at)))
 		session.transport.send(Msg.inventory(session.inventory))
 		return
-	change_voxel(cell, voxel)
+	for at: Vector3i in cells:
+		change_voxel(at, cells[at])
 	session.inventory.take(slot, 1)
 	session.transport.send(Msg.inventory(session.inventory))
 

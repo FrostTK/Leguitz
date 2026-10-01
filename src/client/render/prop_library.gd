@@ -31,9 +31,10 @@ func _init() -> void:
 		_meshes[block] = variants
 
 
+## Versions of a block's model (0: it shows none).
 func variant_count(block: int) -> int:
-	return _meshes.get(block, []).size()
+	return _meshes.get(ObjectShapes.model_block(block), []).size()
 
 
 func mesh(block: int, variant: int, lod := 0) -> Mesh:
-	return _meshes[block][variant][lod]
+	return _meshes[ObjectShapes.model_block(block)][variant][lod]

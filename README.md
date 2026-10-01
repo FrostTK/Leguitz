@@ -20,12 +20,15 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Fonction | État |
 |---|---|
 | Recettes comme Minecraft (forme placée n'importe où dans la grille, ou sans forme), grille de fabrication 3×3 dans l'inventaire : bûches → planches (6 bois), bâtons, établi ; Maj + clic pour en faire le plus possible ; les recettes s'affichent dans le livre | ✅ |
-| Planches des 6 bois et établi : blocs à poser, en pixel art | ✅ |
+| Planches des 6 bois : blocs à poser, en pixel art | ✅ |
+| Établi : un vrai établi de menuisier en 3D voxel sur 2 cases (étau, tiroirs, porte, une enclume, un marteau et une scie en fer dessus), posé face au joueur | ✅ |
 | Établi : grille 5×5 pour fabriquer les outils et les blocs de construction | à venir |
 | Usure des outils | à venir |
 | Coffres | à venir |
 | Four alimentaire et four d'usine | à venir |
 | Blocs de construction variés (briques, verre, pierre taillée…) | à venir |
+
+![Leguitz : l'établi en 3D voxel sur 2 cases, vu de biais, à la 1re personne, de dessus, et le modèle seul](docs/screenshots/phase4-etabli.png)
 
 ![Leguitz : la grille de fabrication de l'inventaire (bâtons, établi), des planches et un établi posés, les recettes dans le livre](docs/screenshots/phase4-recettes.png)
 

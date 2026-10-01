@@ -24,7 +24,6 @@ const WALL_KINDS := {
 	Tiles.Block.DARK_OAK_PLANKS: 15,
 	Tiles.Block.JUNGLE_PLANKS: 16,
 	Tiles.Block.ACACIA_PLANKS: 17,
-	Tiles.Block.WORKBENCH: 18,
 }
 const GLOWING_WALLS := {
 	Tiles.Block.GOLD_ORE: true,

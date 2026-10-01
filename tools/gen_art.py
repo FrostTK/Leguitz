@@ -39,7 +39,7 @@ WALLS = [
     "STONE", "DEEPSLATE", "COAL_ORE", "COPPER_ORE", "IRON_ORE", "GOLD_ORE", "LAPIS_ORE",
     "RUBY_ORE", "DIAMOND_ORE", "EMERALD_ORE", "SANDSTONE", "PACKED_ICE",
     "OAK_PLANKS", "BIRCH_PLANKS", "SPRUCE_PLANKS", "DARK_OAK_PLANKS", "JUNGLE_PLANKS",
-    "ACACIA_PLANKS", "WORKBENCH",
+    "ACACIA_PLANKS",
 ]
 # Walls from this row on draw from random generators of their own, so the
 # textures made before them (and the cliffs after) stay the same.
@@ -441,49 +441,8 @@ def planks(rng, base, dark, light, face):
     return c, height
 
 
-def workbench_top(rng):
-    """A 5 x 5 grid of cells (2 px, between lines of 1 px) on an oak board."""
-    base, dark, light = PLANKS["OAK_PLANKS"]
-    c = Canvas(TILE, TILE)
-    c.fill(0, 0, TILE, TILE, shade(base, 0.1))
-    speckle(rng, c, [shade(base, 0.02), shade(base, 0.16)], 0.3)
-    height = np.full((TILE, TILE), 0.75, dtype=np.float32)
-    for i in range(6):
-        c.fill(i * 3, 0, 1, TILE, dark)
-        c.fill(0, i * 3, TILE, 1, dark)
-        height[:, i * 3] = 0.35
-        height[i * 3, :] = 0.35
-    c.fill(0, 0, TILE, 1, shade(dark, -0.2))
-    c.fill(0, 0, 1, TILE, shade(dark, -0.2))
-    return c, height
-
-
-def workbench_face(rng, variant):
-    """Oak planks with a tool hung on them: a saw, or a hammer."""
-    base, dark, light = PLANKS["OAK_PLANKS"]
-    c, height = planks(rng, base, dark, light, True)
-    steel, steel_dark, wood = "#c9ccd4", "#7c808c", "#6b4424"
-    if variant == 0:
-        c.fill(3, 5, 9, 3, steel)
-        for x in range(3, 12, 2):
-            c.put(x, 8, steel_dark)
-        c.fill(3, 5, 9, 1, shade(steel, 0.2))
-        c.fill(12, 4, 2, 5, wood)
-        c.put(12, 6, shade(wood, 0.25))
-    else:
-        c.fill(7, 4, 2, 9, wood)
-        c.fill(7, 4, 1, 9, shade(wood, 0.2))
-        c.fill(4, 3, 8, 3, steel_dark)
-        c.fill(4, 3, 8, 1, steel)
-        c.put(11, 4, steel)
-    height += luminance(c.img) * 0.1
-    return c, height
-
-
 def wall_tile(rng, name, is_top, variant):
     """The tile of a wall added after the first ones (own generator)."""
-    if name == "WORKBENCH":
-        return workbench_top(rng) if is_top else workbench_face(rng, variant)
     return planks(rng, *PLANKS[name], not is_top)
 
 

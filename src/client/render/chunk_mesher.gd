@@ -665,7 +665,8 @@ static func _add_side(
 
 ## A prop (tree, plant, rock...) standing in its voxel. Each gets a
 ## variant, a quarter turn and a slight tint from its tile, so the same
-## seed always grows the same forest.
+## seed always grows the same forest. A workbench is drawn from its left
+## end, turned the way it faces, over both its tiles.
 static func _add_prop(
 	result: Result,
 	variants: PackedByteArray,
@@ -690,10 +691,16 @@ static func _add_prop(
 	var offset := Vector2(ObjectShapes.offset_at(block, tile)) / 16.0
 	var foot := Vector3(lx + 0.5 + offset.x, height, lz + 0.5 + offset.y)
 	var turn := prop_turn(tile)
+	if ObjectShapes.BENCH_FRONTS.has(block):
+		turn = Basis(Vector3.UP, ObjectShapes.bench_turn(block))
+		var right := ObjectShapes.bench_right(block)
+		foot += Vector3(right.x, 0.0, right.y) * 0.5
 	var shade := 0.93 + ((h >> 16) & 15) / 15.0 * 0.14
 	var warmth := 0.97 + ((h >> 20) & 7) / 7.0 * 0.06
 	var custom := Color(shade * warmth, shade, shade / warmth, ((h >> 24) & 255) / 255.0)
-	var key := Vector2i(block, ObjectShapes.variant_at(block, tile) % count)
+	var key := Vector2i(
+		ObjectShapes.model_block(block), ObjectShapes.variant_at(block, tile) % count
+	)
 	if not result.props.has(key):
 		result.props[key] = []
 	result.props[key].append([Transform3D(turn, foot), custom])
