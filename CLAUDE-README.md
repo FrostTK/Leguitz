@@ -21,7 +21,7 @@ conventions de code ; ce fichier-ci raconte le projet.
    > Lis `CLAUDE.md` et `CLAUDE-README.md`, vérifie que le projet compile et que les tests
    > passent, puis résume-moi où on en est. Attends mon « go » avant de commencer la suite.
 
-4. Dire **« go »** : Claude reprend à la **section 5** (phase 4). Les phases suivantes se lancent
+4. Dire **« go »** : Claude reprend à la **section 5** (phase 5). Les phases suivantes se lancent
    de la même façon, une par une, chacune avec son « go ».
 
 **Manière de travailler convenue** : phase par phase ; Claude explique son plan, attend le
@@ -63,7 +63,7 @@ Les questions de goût ou les choix lourds de conséquences sont posés avant de
 
 ## 3. État actuel : ce qui est fait
 
-Godot **4.7.2** (GDScript), rendu Forward+. 139 tests unitaires, lint propre.
+Godot **4.7.2** (GDScript), rendu Forward+. 156 tests unitaires, lint propre.
 
 | Phase | Contenu | Commits |
 |---|---|---|
@@ -95,9 +95,10 @@ Godot **4.7.2** (GDScript), rendu Forward+. 139 tests unitaires, lint propre.
 | 4.5c Cadre de visée fin | En 1re personne, le cadre autour du bloc ou de l'objet visé fait environ 2 pixels d'écran quelle que soit la distance (au moins un texel de la vue) au lieu d'un pixel du dessin (énorme de près) ; vue de dessus inchangé (un pixel du dessin) | `5032583` |
 | 4.5d Monter sur les meubles | On ne passe plus au travers de l'établi, des coffres et des fours en sautant dessus : on se tient sur leur dessus, à la hauteur de leur modèle (établi 15/16, coffre 13/16, fours 14/16 : `ObjectShapes.TOPS`), et on en redescend ou on monte de là sur un bloc sans sauter ; les objets lâchés s'y posent aussi ; un joueur sauvegardé debout sur un meuble y revient | `165221b` |
 | 4.5e Glisser au clic droit | Comme dans Minecraft : avec une pile au curseur, maintenir le clic droit et bouger la souris pose un objet dans chaque case survolée (une fois par case et par glissé ; les cases qui ne l'acceptent pas sont sautées), dans le sac, la barre, la grille de fabrication (inventaire et établi), les coffres et les fours (entrée et combustible) | `2cdbe29` |
-| 4.5f Glisser au clic gauche | Comme dans Minecraft : avec une pile au curseur, maintenir le clic gauche et passer sur des cases répartit la pile à parts égales entre elles (le reste de la division reste en main ; pas plus de cases que d'objets ; les cases qui ne l'acceptent pas sont sautées), l'aperçu se met à jour pendant le glissé et le serveur reçoit la répartition au relâchement (`Inventory.spread`, `Msg.SLOT_SPREAD`) ; appuyer et relâcher sur une seule case reste un clic normal ; mêmes endroits que le glissé au clic droit ; le nom de l'objet survolé se cache pendant un glissé | « Left drag shares a stack » |
+| 4.5f Glisser au clic gauche | Comme dans Minecraft : avec une pile au curseur, maintenir le clic gauche et passer sur des cases répartit la pile à parts égales entre elles (le reste de la division reste en main ; pas plus de cases que d'objets ; les cases qui ne l'acceptent pas sont sautées), l'aperçu se met à jour pendant le glissé et le serveur reçoit la répartition au relâchement (`Inventory.spread`, `Msg.SLOT_SPREAD`) ; appuyer et relâcher sur une seule case reste un clic normal ; mêmes endroits que le glissé au clic droit ; le nom de l'objet survolé se cache pendant un glissé | `bef6cf1` |
+| 4.6 Blocs de construction | Six blocs cubes à poser, textures pixel art de `gen_art.py` : **briques de pierre** (4 pierres → 4), **briques d'ardoise des abîmes** (4 ardoises → 4), **grès taillé** (4 grès → 4), **briques** (4 briques → 1 ; la brique sort du four d'usine à partir de boue), **pierre lisse** (pierre au four d'usine), **verre** (sable ou sable rouge au four d'usine) ; le verre est **transparent** (cadre et reflets opaques, le reste découpé : on voit le sol, les fleurs et les blocs derrière, vue de dessus comme en 1re personne, la lumière passe ; deux vitres collées ne montrent pas de face entre elles), il casse vite ; icônes en cubes (le verre transparent) ; tous à la pioche ; recettes dans le livre ; poser en visant une petite plante la remplace (comme dans Minecraft) | « Building blocks » |
 
-**Pas encore fait** (prévu) : la fin de la phase 4 (blocs de construction), survie/combat, créatures, structures, agriculture, menus de départ, sons,
+**Pas encore fait** (prévu) : survie/combat, créatures, structures, agriculture, menus de départ, sons,
 mode Arcade, mobile.
 
 ---
@@ -219,49 +220,41 @@ xvfb-run -a -s "-screen 0 960x540x24" godot --path . --audio-driver Dummy --reso
 
 ---
 
-## 5. Prochaine étape au « go » : Phase 4 — Craft
+## 5. Prochaine étape au « go » : Phase 5 — Survie et combat
 
-La phase 3 (joueur et interactions : monde en voxels, sauvegardes, miner et poser, objets et
-inventaire, outils) est terminée : voir les lignes 3.1 à 3.5 de la section 3. Les bûches, minerais,
-gemmes et plantes ne se posent pas encore (seuls les blocs se posent) : les planches et les blocs
-fabriqués viennent avec le craft.
+La phase 4 (craft) est terminée : voir les lignes 4.1 à 4.6 de la section 3 (recettes et grille
+3×3, établi 5×5 aux outils de Minecraft, usure, coffres, four alimentaire et four d'usine avec les
+premiers aliments, blocs de construction dont le verre transparent ; noms au survol, cadre de visée
+fin en 1re personne, monter sur les meubles, glissés au clic droit et gauche). Les aliments
+existent mais ne se mangent pas encore.
 
-But de la phase 4 : fabriquer ses objets comme dans Minecraft, avec les décisions du propriétaire
-(section 6 : **établi 5×5**, **four alimentaire** et **four d'usine**). Découpage proposé, **à
-valider avec le propriétaire avant de commencer** (validé, avec la grille 3×3 et l'établi 5×5), une
-étape par « go », chacune avec tests, captures, commit et retour :
+But de la phase 5 : survivre et se battre, avec les modes de jeu (section 6). Découpage proposé,
+**à valider avec le propriétaire avant de commencer**, une étape par « go », chacune avec tests,
+captures, commit et retour :
 
-1. ✅ **Recettes et grille 3×3** (voir section 3). Fait comme prévu ci-dessous ; Maj+clic sur le
-   résultat en fait le plus possible. Le plan suivi : registre de recettes en données (avec forme, sans forme), grille
-   3×3 dans l'inventaire (E) avec sa case de résultat, le serveur vérifie chaque fabrication ;
-   premières recettes : bûche → planches, planches → bâtons, l'établi ; planches de chaque bois
-   posables (nouveaux blocs, textures de `tools/gen_art.py`) ; les recettes s'affichent dans le
-   chapitre « Fabrication » du livre du joueur (`GuideBook._craft`).
-2. ✅ **Établi 5×5** (voir section 3). Outils aux formes classiques de Minecraft (décision du
-   propriétaire : la grille 5×5 servira à de futurs objets). Les lingots existent comme objets ; ils
-   sortiront du four (étape 5). Les blocs de construction nouveaux restent à l'étape 6 ; pour
-   l'instant grès et glace compacte. Le plan suivi : l'établi posé s'ouvre au clic droit sur une
-   grille 5×5 ; recettes des outils (les 18 existent déjà, étape 3.5) et des blocs de construction.
-3. ✅ **Usure des outils** (voir section 3), comme prévu : solidité par matériau (l'or rapide mais
-   fragile), barre d'usure dans les cases, l'outil casse ; F7 reste une touche de debug (créatif plus
-   tard).
-4. ✅ **Coffres** (voir section 3), comme prévu : données de bloc côté serveur (un inventaire par
-   coffre, sauvegardé avec la région), ouverture au clic droit, contenu répandu quand on le casse.
-5. ✅ **Fours** (voir section 3), comme prévu, avec les premiers aliments (baies déshydratées,
-   ragoût de champignons) et le charbon de bois ; on ne les mange pas encore (la faim vient avec la
-   survie, phase 5).
-6. **Blocs de construction** (prochaine étape) variés en voxels (planches, briques, verre, pierre
-   taillée…), dont ceux qui sortiront du four d'usine (verre depuis le sable, pierre lisse…).
+1. **Vie et dégâts** : 10 cœurs côté serveur (sauvegardés), affichés au-dessus de la barre ;
+   dégâts de chute (au-delà de 3 niveaux), de la lave ; rougeur et recul quand on est touché ;
+   mort (écran « Vous êtes mort », le contenu de l'inventaire tombe au sol) et réapparition au
+   point d'apparition.
+2. **Faim et nourriture** : barre de faim qui baisse avec le temps et l'effort (rythme du monde,
+   `WorldClock.scale_duration()`), manger en maintenant le clic droit (baies, baies déshydratées,
+   ragoût, champignons ; la nourriture carbonisée nourrit mal), la vie remonte rassasié, baisse
+   affamé.
+3. **Nage et noyade** : on nage dans l'eau au lieu de marcher dessus (monter, descendre, plus
+   lent), réserve d'air sous l'eau, noyade.
+4. **Modes de jeu** : Créatif (vol, blocs illimités, ni dégâts ni faim, F7 et les outils de debug),
+   Survie, Hardcore (une seule vie) ; choix à la création du monde (en attendant les menus de
+   départ : réglage du monde et option de lancement).
+5. **Premiers animaux** en voxel animé (par exemple moutons, cochons, poules selon les biomes) :
+   entités gérées par le serveur et synchronisées (messages d'entités), errance, fuite quand on
+   les frappe, recherche de chemin sur les hauteurs (sauts d'un niveau), ce qu'ils donnent.
+6. **Monstres** : apparition la nuit et dans le noir (selon la lumière), poursuite, attaque,
+   disparition au loin.
+7. **Combat et armures** : épées (6 matériaux, à l'établi), coups au corps à corps avec recul et
+   courte invincibilité, arc et flèches, armures (casque, plastron, jambières, bottes) en voxel,
+   qui réduisent les dégâts et s'usent.
 
 ## 6. Feuille de route détaillée (phases restantes)
-
-### Phase 4 — Craft
-- Recettes en données (forme et sans forme), grille 3×3 dans l'inventaire, **établi** 5×5.
-- **Four alimentaire** : dédié à la nourriture (si du minerais est fondu dans ce four alors il se casse et deviens inutilisable), combustible, cuisson et fonte au fil du temps (durées adaptées au rythme du monde).
-- **Four d'usine** : dédié aux recettes autres que la nourriture (si de la nourriture est placé dans ce four alors elle ressort carbonisée), combustible, cuisson et fonte au fil du temps (durées adaptées au rythme du monde).
-- **Coffres** (stockage par bloc, données de bloc côté serveur), outils par matériau (bois,
-  pierre, cuivre, fer, or, diamant…), usure.
-- Tous les objets fabriqués en 3D voxel ; blocs à poser variés (planches, briques, verre…).
 
 ### Phase 5 — Survie et combat
 - Vie, faim (rythme adapté), dégâts de chute (la physique de saut existe déjà), noyade, lave,

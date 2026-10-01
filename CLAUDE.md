@@ -199,11 +199,19 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   chapter draws every recipe (GuideBook Kind.RECIPE, groups and each kind of tool going through
   their items). `--grid=ROW/ROW` fills the grid for screenshots; `--place` aimed at a workbench
   opens it.
-- New cube blocks (planks): append to Tiles.Block and CUBE_BLOCKS, give them a
-  TileAtlas.WALL_KINDS row and a `tools/gen_art.py` WALLS entry (walls from FIRST_OWN_SEED_WALL
-  draw from random generators of their own, so the older textures stay the same), then Items
-  (PLACES_BLOCK, BLOCK_DROPS) and Mining (time, tool). Block items are cubes wearing their top
-  texture above and below and their face texture around (ItemLibrary._cube).
+- New cube blocks (planks, stone/deepslate bricks, smooth stone, bricks, cut sandstone, glass):
+  append to Tiles.Block and CUBE_BLOCKS, give them a TileAtlas.WALL_KINDS row (at most 31: the
+  surface map packs wall kind + 1 in 5 bits) and a `tools/gen_art.py` WALLS entry (walls from
+  FIRST_OWN_SEED_WALL draw from random generators of their own, `wall_tile`, so the older
+  textures stay the same; restore the ground atlases from git when their pixels did not
+  change), then Items (PLACES_BLOCK, BLOCK_DROPS) and Mining (time, tool). Block items are cubes
+  wearing their top texture above and below and their face texture around (ItemLibrary._cube;
+  alpha scissor for glass). Glass is a cube for physics and mining but one sees through it
+  (TileAtlas.CLEAR_WALLS): ChunkMesher gives it CLEAR_CUBE instead of CUBE, so it does not hide
+  its neighbors' faces (two panes hide each other's, and what stands under or behind glass is
+  meshed as seen from the sky, `_sky_through`), and the terrain shaders cut out its texture's
+  clear pixels (alpha < 0.5, shadows too) and draw its backs as panes, not rock sections
+  (`see_through_walls`). Placing aimed at a small plant puts the block in its place (Minecraft's).
 - The workbench is a voxel model two tiles long (WorkbenchModel: a carpenter's bench with a
   vise, drawers, a cupboard, and an iron anvil, hammer and saw on top) standing in two object
   voxels: its left end seen from its front (WORKBENCH, _WEST, _NORTH, _EAST: the way it faces,

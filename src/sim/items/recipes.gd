@@ -36,6 +36,18 @@ const SHAPED := [
 		"keys": {"I": Items.Id.ICE},
 		"result": [Items.Id.PACKED_ICE, 1],
 	},
+	{"pattern": ["SS", "SS"], "keys": {"S": Items.Id.STONE}, "result": [Items.Id.STONE_BRICKS, 4]},
+	{
+		"pattern": ["DD", "DD"],
+		"keys": {"D": Items.Id.DEEPSLATE},
+		"result": [Items.Id.DEEPSLATE_BRICKS, 4],
+	},
+	{
+		"pattern": ["SS", "SS"],
+		"keys": {"S": Items.Id.SANDSTONE},
+		"result": [Items.Id.CUT_SANDSTONE, 4],
+	},
+	{"pattern": ["BB", "BB"], "keys": {"B": Items.Id.BRICK}, "result": [Items.Id.BRICKS, 1]},
 	{
 		"pattern": ["SSS", "S S", "SSS"],
 		"keys": {"S": STONES},

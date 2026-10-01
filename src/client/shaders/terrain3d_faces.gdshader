@@ -15,6 +15,11 @@ uniform sampler2D face_atlas : source_color, filter_nearest;
 uniform sampler2D face_normals : filter_nearest;
 uniform sampler2D face_emission : source_color, filter_nearest;
 uniform float emission_strength = 2.2;
+// Per wall kind: 1 for the walls one sees through (glass): their clear
+// pixels are cut out, their backs seen through them are not rock sections.
+uniform int see_through_walls[32];
+// Face kinds: the cliff materials, then the wall kinds.
+const int WALL_KIND_OFFSET = 4;
 
 varying flat vec4 face_data;
 
@@ -29,8 +34,11 @@ void fragment() {
 			discard;
 		}
 	}
+	int kind = int(face_data.x + 0.5);
+	bool clear_wall = kind >= WALL_KIND_OFFSET
+			&& see_through_walls[min(kind - WALL_KIND_OFFSET, 31)] == 1;
 	// Seen from behind (through the view cut): the section of the rock.
-	bool section = !IN_SHADOW_PASS && !FRONT_FACING;
+	bool section = !IN_SHADOW_PASS && !FRONT_FACING && !clear_wall;
 	if (section && section_on < 0.5) {
 		discard;
 	}
@@ -39,7 +47,6 @@ void fragment() {
 	int u = int(floor(UV.x)) & 15;
 	int down = max(int(floor(UV.y)), 0);
 	int v = down & 15;
-	int kind = int(face_data.x + 0.5);
 	int lip_ground = int(face_data.y + 0.5) - 1;
 	int variant = int(face_data.z + 0.5);
 	int lip_variant = int(face_data.w + 0.5);
@@ -56,7 +63,11 @@ void fragment() {
 		}
 	} else {
 		ivec2 at = ivec2(variant * 16 + u, kind * 16 + v);
-		albedo = texelFetch(face_atlas, at, 0).rgb;
+		vec4 texel = texelFetch(face_atlas, at, 0);
+		if (texel.a < 0.5) {
+			discard;
+		}
+		albedo = texel.rgb;
 		normal = unpack_normal(texelFetch(face_normals, at, 0));
 		emission = texelFetch(face_emission, at, 0).rgb;
 		if (lip_ground >= 0 && down == 3) {

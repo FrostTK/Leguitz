@@ -15,6 +15,9 @@ extends RefCounted
 ## the player.
 ## Undersides are never seen from the camera (it always looks down) but
 ## close the rock: seen from behind through the cut, they draw its section.
+## Cubes one sees through (glass, TileAtlas.CLEAR_WALLS) draw their faces
+## like the others (the shaders cut out their clear pixels) and do not hide
+## the faces of their neighbors, but two of the same hide each other's.
 ## Also gathers the props (trees, plants... in object voxels), the lava
 ## spots that light their surroundings, and the surface map of the top
 ## shader (see surface_map).
@@ -45,6 +48,9 @@ const FIRE_LIGHT := 0.75
 const CUBE := Voxels.FLAG_CUBE
 const LIQUID := Voxels.FLAG_LIQUID
 const TERRAIN := CUBE | LIQUID
+## Flag of the cubes one sees through (instead of CUBE, see _build_flags).
+const CLEAR_CUBE := 8
+const ANY_CUBE := CUBE | CLEAR_CUBE
 
 ## Horizontal faces are gathered per row of the chunk before being merged
 ## into rectangles: tops, or undersides (see _record_flat).
@@ -55,6 +61,8 @@ const FLAT_UNDERSIDE := 1
 static var _face_kinds := _build_face_kinds()
 static var _top_codes := _build_top_codes()
 static var _clear := _build_clear()
+## Voxels.flag_table() for meshing: see-through cubes are CLEAR_CUBE.
+static var _flags := _build_flags()
 
 
 ## What a build reads: the voxels and column tops of the chunk and of its
@@ -180,7 +188,7 @@ static func build(job: Job) -> Result:
 	lava_counts.resize(8)
 	# Local copies of the tables: shared statics are slow in tight loops,
 	# more so on several threads.
-	var flags := Voxels.flag_table()
+	var flags := _flags.duplicate()
 	var kinds := _face_kinds.duplicate()
 	var codes := _top_codes.duplicate()
 	var tables := [flags, kinds, codes, clear]
@@ -197,7 +205,7 @@ static func build(job: Job) -> Result:
 				if voxel == Voxels.AIR:
 					continue
 				var flag := flags[voxel]
-				if flag & CUBE != 0:
+				if flag & ANY_CUBE != 0:
 					# Most cubes are buried: cubes all around, nothing to draw.
 					if (
 						y > 0
@@ -350,6 +358,14 @@ static func _build_face_kinds() -> PackedInt32Array:
 	return kinds
 
 
+static func _build_flags() -> PackedByteArray:
+	var flags := Voxels.flag_table()
+	for block: int in TileAtlas.CLEAR_WALLS:
+		var voxel := Voxels.of_block(block)
+		flags[voxel] = (flags[voxel] & ~CUBE) | CLEAR_CUBE
+	return flags
+
+
 static func _build_clear() -> PackedByteArray:
 	var table := PackedByteArray()
 	table.resize(256)
@@ -393,11 +409,11 @@ static func _add_cube(
 	var index := column * HEIGHT + y
 	var voxel := voxels[index]
 	var above := voxels[index + 1] if y + 1 < HEIGHT else Voxels.AIR
-	if _open(flags, clear, above):
+	if _open(flags, clear, above) and above != voxel:
 		var rows := tops[column] - y
-		var sky := rows <= 1 or _sky_through_water(voxels, clear, index, rows)
+		var sky := rows <= 1 or _sky_through(voxels, flags, clear, index, rows)
 		_record_flat(flats, y, codes[voxel], Part.TOPS if sky else Part.DEEP_TOPS, 0, lx, lz)
-	if y > 0 and flags[voxels[index - 1]] & CUBE == 0:
+	if y > 0 and flags[voxels[index - 1]] & CUBE == 0 and voxels[index - 1] != voxel:
 		_record_flat(flats, y, kinds[voxel], Part.DEEP_FACES, FLAT_UNDERSIDE, lx, lz)
 	var kind := kinds[voxel]
 	for side in 4:
@@ -467,17 +483,19 @@ static func _side_deep(
 ) -> int:
 	var neighbor := voxels[index + step]
 	var flag := flags[neighbor]
-	if flag & CUBE != 0:
+	if flag & CUBE != 0 or neighbor == voxels[index]:
 		return -1
 	if clear[neighbor] != 0:
 		var rows := tops[other] - y
-		return 0 if rows <= 1 or _sky_through_water(voxels, clear, index + step, rows) else 1
+		return 0 if rows <= 1 or _sky_through(voxels, flags, clear, index + step, rows) else 1
 	if flag & LIQUID != 0:
 		var above := voxels[index + step + 1] if y + 1 < HEIGHT else Voxels.AIR
 		if flags[above] & TERRAIN != 0:
 			return -1
 		return 0 if y + 1 >= tops[other] else 1
-	return 1 if y < tops[other] else 0
+	if y < tops[other] and not _sky_through(voxels, flags, clear, index + step, tops[other] - y):
+		return 1
+	return 0
 
 
 ## True if the cube at `index` (row `y`) continues a run of side faces of
@@ -511,13 +529,16 @@ static func _open(flags: PackedByteArray, clear: PackedByteArray, voxel: int) ->
 
 
 ## Whether the `rows` - 1 voxels above `index` (padded voxels), up to the
-## column's top, are all clear water: then what is at `index` shows from
-## the sky through the water (a lake bed, a drowned bank).
-static func _sky_through_water(
-	voxels: PackedByteArray, clear: PackedByteArray, index: int, rows: int
+## column's top, all let the eye through (air, plants, clear water,
+## glass): then what is at `index` shows from the sky (a lake bed, a
+## drowned bank, what stands under or behind glass).
+static func _sky_through(
+	voxels: PackedByteArray, flags: PackedByteArray, clear: PackedByteArray, index: int, rows: int
 ) -> bool:
 	for k in range(1, rows):
-		if clear[voxels[index + k]] == 0:
+		var voxel := voxels[index + k]
+		var flag := flags[voxel]
+		if flag & CUBE != 0 or (flag & LIQUID != 0 and clear[voxel] == 0):
 			return false
 	return true
 

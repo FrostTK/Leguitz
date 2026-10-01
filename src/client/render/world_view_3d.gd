@@ -93,6 +93,7 @@ func _ready() -> void:
 	face_material.set_shader_parameter("face_atlas", FACE_ATLAS)
 	face_material.set_shader_parameter("face_normals", FACE_NORMALS)
 	face_material.set_shader_parameter("face_emission", FACE_EMISSION)
+	face_material.set_shader_parameter("see_through_walls", TileAtlas.clear_wall_flags())
 	face_material.set_shader_parameter("ground_atlas", TerrainRenderer.GROUND_ATLAS)
 	face_material.set_shader_parameter("ground_normals", TerrainRenderer.GROUND_NORMALS)
 	_variants.resize(256)

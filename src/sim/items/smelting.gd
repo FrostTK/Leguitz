@@ -4,7 +4,8 @@ extends RefCounted
 ## and the client (which shows them and predicts clicks). The food furnace
 ## cooks food: berries dry, mushrooms simmer into a stew; ore melted in it
 ## is too hot for it and breaks it. The factory furnace smelts ores into
-## ingots and chars logs into charcoal; food put in it comes out charred.
+## ingots, chars logs into charcoal, melts sand into glass, smooths stone
+## and fires mud into bricks; food put in it comes out charred.
 ## Durations are authored for the default 20-minute day and go through
 ## WorldClock.scale_duration().
 
@@ -35,6 +36,10 @@ const FACTORY := {
 	Items.Id.DARK_OAK_LOG: Items.Id.CHARCOAL,
 	Items.Id.JUNGLE_LOG: Items.Id.CHARCOAL,
 	Items.Id.ACACIA_LOG: Items.Id.CHARCOAL,
+	Items.Id.SAND: Items.Id.GLASS,
+	Items.Id.RED_SAND: Items.Id.GLASS,
+	Items.Id.STONE: Items.Id.SMOOTH_STONE,
+	Items.Id.MUD: Items.Id.BRICK,
 }
 ## Ores: melted in a food furnace, they break it.
 const ORES := {

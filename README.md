@@ -13,9 +13,9 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 
 ![Leguitz : vue par défaut, fin d'après-midi caméra tournée, neige, nuit à la lanterne](docs/screenshots/phase2-3d-jour-nuit.png)
 
-## État actuel : phase 4 (craft)
+## État actuel : phase 4 (craft) terminée
 
-### Phase 4 : craft (en cours)
+### Phase 4 : craft
 
 | Fonction | État |
 |---|---|
@@ -26,7 +26,10 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Usure des outils : chaque matériau a sa solidité (l'or rapide mais fragile), barre d'usure sous l'icône, l'outil se casse quand il est usé | ✅ |
 | Coffres : 27 cases, ouverts au clic droit, gardés avec le monde ; cassés, ils répandent leur contenu | ✅ |
 | Four alimentaire (four à pain : baies déshydratées, ragoût de champignons ; du minerai le casse) et four d'usine (lingots de cuivre, fer et or, charbon de bois ; la nourriture y carbonise), combustibles, cuisson au fil du temps, feu qui éclaire | ✅ |
-| Blocs de construction variés (briques, verre, pierre taillée…) | à venir |
+| Blocs de construction : briques de pierre, briques d'ardoise, grès taillé, briques (brique cuite au four), pierre lisse, verre transparent (sable au four d'usine) | ✅ |
+| Confort : nom de l'objet survolé (inventaire et livre), glisser une pile au clic droit (un par case) ou gauche (parts égales), monter sur les meubles, cadre de visée fin en 1re personne | ✅ |
+
+![Leguitz : les blocs de construction à la 1re personne (une fenêtre en verre dans un mur de briques), l'inventaire avec les nouveaux blocs, et vus de dessus (le verre laisse voir le sol et une fleur)](docs/screenshots/phase4-construction.png)
 
 ![Leguitz : le four alimentaire ouvert (baies et charbon), le chapitre « Fours » du livre, les deux fours éteints, allumés au crépuscule, puis le four alimentaire cassé par du minerai](docs/screenshots/phase4-fours.png)
 
@@ -215,7 +218,7 @@ Pour le multijoueur, il suffira de brancher un transport réseau.
 1. ✅ Génération du monde à la Minecraft (bruits climatiques, biomes, rivières, falaises, grottes, minerais)
 2. ✅ Visuels et lumière en 3D pixel art (ombres, jour/nuit, eau, vent, météo, caméra orbitale)
 3. ✅ Joueur et interactions (minage, construction, objets, inventaire, outils, livre du joueur)
-4. Craft (recettes ✅, établi ✅, usure ✅, coffres ✅, fours ✅, blocs de construction) : en cours
+4. ✅ Craft (recettes, établi, usure, coffres, fours, blocs de construction)
 5. Survie et combat (vie, faim, animaux, monstres, combat, modes de jeu)
 6. Souterrain et structures
 7. Agriculture et élevage

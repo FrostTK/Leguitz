@@ -112,6 +112,12 @@ enum Block {
 	BROKEN_FURNACE_WEST,
 	BROKEN_FURNACE_NORTH,
 	BROKEN_FURNACE_EAST,
+	STONE_BRICKS,
+	SMOOTH_STONE,
+	BRICKS,
+	DEEPSLATE_BRICKS,
+	CUT_SANDSTONE,
+	GLASS,
 }
 
 const FLOWERS: Array[Block] = [
@@ -177,6 +183,12 @@ const CUBE_BLOCKS := {
 	Block.DARK_OAK_PLANKS: true,
 	Block.JUNGLE_PLANKS: true,
 	Block.ACACIA_PLANKS: true,
+	Block.STONE_BRICKS: true,
+	Block.SMOOTH_STONE: true,
+	Block.BRICKS: true,
+	Block.DEEPSLATE_BRICKS: true,
+	Block.CUT_SANDSTONE: true,
+	Block.GLASS: true,
 }
 
 const NON_SOLID_BLOCKS := {

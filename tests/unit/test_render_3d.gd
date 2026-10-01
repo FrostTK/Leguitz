@@ -292,3 +292,29 @@ func _shader_variant(x: int, y: int) -> int:
 	h &= mask
 	h = ((h ^ (h >> 13)) * 1274126177) & mask
 	return (h ^ (h >> 16)) & 3
+
+
+func test_glass_shows_what_is_behind_it() -> void:
+	var chunk := _flat_chunk(0)
+	var glass := Voxels.of_block(Tiles.Block.GLASS)
+	var stone := Voxels.of_block(Tiles.Block.STONE)
+	# A pane alone, two stacked, and a stone with a pane against its east side.
+	chunk.set_voxel(Vector3i(5, SEA, 5), glass)
+	chunk.set_voxel(Vector3i(8, SEA, 8), glass)
+	chunk.set_voxel(Vector3i(8, SEA + 1, 8), glass)
+	chunk.set_voxel(Vector3i(12, SEA, 5), stone)
+	chunk.set_voxel(Vector3i(13, SEA, 5), glass)
+	var result := _build(chunk)
+	# 4 sides, 4 + 4 (not between the two), the stone's 4 (also behind the
+	# pane), the pane's 3 (not against the stone).
+	assert_eq(result.parts[ChunkMesher.Part.FACES].quad_count(), 4 + 8 + 4 + 3)
+	assert_true(result.parts[ChunkMesher.Part.DEEP_FACES].quad_count() == 1, "the world bottom")
+	# The ground under the panes shows from the sky (not under the stone),
+	# so does the top of each pile.
+	var ground := float(GameConst.CHUNK_AREA - 1)
+	assert_almost(_area(result.parts[ChunkMesher.Part.TOPS]), ground + 4.0, 0.001)
+	assert_true(result.parts[ChunkMesher.Part.DEEP_TOPS].is_empty(), "nothing under cover")
+	var glass_kind: int = TileAtlas.WALL_KINDS[Tiles.Block.GLASS]
+	assert_eq(ChunkMesher.face_kind(glass), ChunkMesher.WALL_KIND_OFFSET + glass_kind)
+	assert_eq(TileAtlas.clear_wall_flags()[glass_kind], 1)
+	assert_true(TileAtlas.WALL_KINDS.size() <= 31, "wall kinds fit the surface map")

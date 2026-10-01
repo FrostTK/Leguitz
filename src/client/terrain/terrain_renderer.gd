@@ -104,6 +104,7 @@ static func configure_top(material: ShaderMaterial) -> void:
 	material.set_shader_parameter("wall_atlas", WALL_ATLAS)
 	material.set_shader_parameter("wall_normals", WALL_NORMALS)
 	material.set_shader_parameter("wall_emission", WALL_EMISSION)
+	material.set_shader_parameter("see_through_walls", TileAtlas.clear_wall_flags())
 
 
 ## Sets the ground and water tables of a water material.

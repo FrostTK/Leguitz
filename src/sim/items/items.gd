@@ -85,6 +85,13 @@ enum Id {
 	MUSHROOM_STEW,
 	CHARCOAL,
 	CHARRED_FOOD,
+	STONE_BRICKS,
+	SMOOTH_STONE,
+	BRICK,
+	BRICKS,
+	DEEPSLATE_BRICKS,
+	CUT_SANDSTONE,
+	GLASS,
 }
 ## What a tool is made for (Mining.tool_for: what it breaks faster).
 enum Tool { NONE, PICKAXE, AXE, SHOVEL }
@@ -148,6 +155,12 @@ const PLACES_BLOCK := {
 	Id.CHEST: Tiles.Block.CHEST,
 	Id.FOOD_FURNACE: Tiles.Block.FOOD_FURNACE,
 	Id.FACTORY_FURNACE: Tiles.Block.FACTORY_FURNACE,
+	Id.STONE_BRICKS: Tiles.Block.STONE_BRICKS,
+	Id.SMOOTH_STONE: Tiles.Block.SMOOTH_STONE,
+	Id.BRICKS: Tiles.Block.BRICKS,
+	Id.DEEPSLATE_BRICKS: Tiles.Block.DEEPSLATE_BRICKS,
+	Id.CUT_SANDSTONE: Tiles.Block.CUT_SANDSTONE,
+	Id.GLASS: Tiles.Block.GLASS,
 }
 
 ## What a ground gives (soil gives dirt); grounds left out give nothing.
@@ -241,6 +254,12 @@ const BLOCK_DROPS := {
 	Tiles.Block.BROKEN_FURNACE_WEST: [Id.STONE, 2, 4],
 	Tiles.Block.BROKEN_FURNACE_NORTH: [Id.STONE, 2, 4],
 	Tiles.Block.BROKEN_FURNACE_EAST: [Id.STONE, 2, 4],
+	Tiles.Block.STONE_BRICKS: [Id.STONE_BRICKS, 1, 1],
+	Tiles.Block.SMOOTH_STONE: [Id.SMOOTH_STONE, 1, 1],
+	Tiles.Block.BRICKS: [Id.BRICKS, 1, 1],
+	Tiles.Block.DEEPSLATE_BRICKS: [Id.DEEPSLATE_BRICKS, 1, 1],
+	Tiles.Block.CUT_SANDSTONE: [Id.CUT_SANDSTONE, 1, 1],
+	Tiles.Block.GLASS: [Id.GLASS, 1, 1],
 }
 ## The planks each log is sawn into.
 const PLANKS_OF := {

@@ -39,7 +39,8 @@ WALLS = [
     "STONE", "DEEPSLATE", "COAL_ORE", "COPPER_ORE", "IRON_ORE", "GOLD_ORE", "LAPIS_ORE",
     "RUBY_ORE", "DIAMOND_ORE", "EMERALD_ORE", "SANDSTONE", "PACKED_ICE",
     "OAK_PLANKS", "BIRCH_PLANKS", "SPRUCE_PLANKS", "DARK_OAK_PLANKS", "JUNGLE_PLANKS",
-    "ACACIA_PLANKS",
+    "ACACIA_PLANKS", "STONE_BRICKS", "SMOOTH_STONE", "BRICKS", "DEEPSLATE_BRICKS",
+    "CUT_SANDSTONE", "GLASS",
 ]
 # Walls from this row on draw from random generators of their own, so the
 # textures made before them (and the cliffs after) stay the same.
@@ -441,9 +442,116 @@ def planks(rng, base, dark, light, face):
     return c, height
 
 
+BRICKS = {
+    # name: (brick, dark, light, mortar, brick width, brick height)
+    "STONE_BRICKS": ("#7a7884", "#605e6a", "#93919c", "#45434e", 8, 4),
+    "DEEPSLATE_BRICKS": ("#4c4a59", "#3a3846", "#605e70", "#262430", 4, 4),
+    "BRICKS": ("#a24e38", "#823b2a", "#bd6a4f", "#c9bba8", 8, 4),
+}
+
+
+def bricks(rng, base, dark, light, mortar, width, height_px, face):
+    """Bricks in staggered courses, a pixel of mortar under and after each."""
+    c = Canvas(TILE, TILE)
+    c.fill(0, 0, TILE, TILE, mortar)
+    height = np.full((TILE, TILE), 0.25, dtype=np.float32)
+    for course in range(TILE // height_px):
+        y0 = course * height_px
+        offset = width // 2 if course % 2 else 0
+        for x0 in range(-offset, TILE, width):
+            x1, x2 = max(x0, 0), min(x0 + width - 1, TILE)
+            if x2 <= x1:
+                continue
+            tone = shade(base, float(rng.uniform(-0.09, 0.09)))
+            if face:
+                tone = shade(tone, -0.12)
+            c.fill(x1, y0, x2 - x1, height_px - 1, tone)
+            c.fill(x1, y0, x2 - x1, 1, shade(tone, 0.14))
+            speckle(rng, c, [dark, light], 0.12, (x1, y0 + 1, x2 - x1, height_px - 2))
+            height[y0:y0 + height_px - 1, x1:x2] = 0.85
+    if face:
+        c.fill(0, TILE - 1, TILE, 1, shade(mortar, -0.35))
+    height += luminance(c.img) * 0.15
+    return c, height
+
+
+def smooth_stone(rng, face):
+    """Smooth stone: one pale slab, bevelled; its sides show the seam of two."""
+    base = "#a3a1ab" if not face else "#8d8b96"
+    c = Canvas(TILE, TILE)
+    c.fill(0, 0, TILE, TILE, base)
+    speckle(rng, c, [shade(base, -0.05), shade(base, 0.05)], 0.25)
+    c.fill(0, 0, TILE, 1, shade(base, 0.15))
+    c.fill(0, 0, 1, TILE, shade(base, 0.1))
+    c.fill(0, TILE - 1, TILE, 1, shade(base, -0.25))
+    c.fill(TILE - 1, 0, 1, TILE, shade(base, -0.18))
+    height = np.full((TILE, TILE), 0.75, dtype=np.float32)
+    if face:
+        c.fill(1, 7, TILE - 2, 1, shade(base, -0.3))
+        c.fill(1, 8, TILE - 2, 1, shade(base, 0.1))
+        height[7, :] = 0.3
+    height[TILE - 1, :] = 0.4
+    height += luminance(c.img) * 0.1
+    return c, height
+
+
+def cut_sandstone(rng, face):
+    """Sandstone cut in blocks: a framed top, sides in smooth bands."""
+    base, dark, light = ("#e2c886", "#c4a061", "#f1dda8") if not face else (
+        "#cfae6c", "#ad8a4a", "#e2c486")
+    c = Canvas(TILE, TILE)
+    c.fill(0, 0, TILE, TILE, base)
+    speckle(rng, c, [shade(base, -0.04), shade(base, 0.04)], 0.3)
+    height = np.full((TILE, TILE), 0.75, dtype=np.float32)
+    if face:
+        for y, color in ((0, light), (1, light), (2, dark), (TILE - 3, dark), (TILE - 1, dark)):
+            c.fill(0, y, TILE, 1, color)
+        height[2, :] = 0.35
+        height[TILE - 3, :] = 0.35
+    else:
+        c.fill(0, 0, TILE, 1, dark)
+        c.fill(0, 0, 1, TILE, dark)
+        c.fill(0, TILE - 1, TILE, 1, dark)
+        c.fill(TILE - 1, 0, 1, TILE, dark)
+        c.fill(2, 2, TILE - 4, 1, light)
+        c.fill(2, 2, 1, TILE - 4, light)
+        c.fill(2, TILE - 3, TILE - 4, 1, dark)
+        c.fill(TILE - 3, 2, 1, TILE - 4, dark)
+        height[0, :] = height[:, 0] = height[TILE - 1, :] = height[:, TILE - 1] = 0.35
+    height += luminance(c.img) * 0.1
+    return c, height
+
+
+def glass(rng, variant):
+    """Glass: a pale frame, clear inside (transparent pixels, cut out by the
+    terrain shaders) but for a few glints."""
+    edge, dark, shine = "#d4ebf0", "#9dc0ca", "#f6fcfd"
+    c = Canvas(TILE, TILE)
+    c.fill(0, 0, TILE, 1, edge)
+    c.fill(0, 0, 1, TILE, edge)
+    c.fill(0, TILE - 1, TILE, 1, dark)
+    c.fill(TILE - 1, 0, 1, TILE, dark)
+    starts = [(3, 5), (9, 11)] if variant == 0 else [(4, 4), (8, 12)]
+    for x, y in starts:
+        for i in range(3):
+            c.put(x + i, y - i, shine)
+    c.put(11, 4, shine)
+    c.put(12, 3, edge)
+    height = np.full((TILE, TILE), 0.8, dtype=np.float32)
+    return c, height
+
+
 def wall_tile(rng, name, is_top, variant):
     """The tile of a wall added after the first ones (own generator)."""
-    return planks(rng, *PLANKS[name], not is_top)
+    if name in PLANKS:
+        return planks(rng, *PLANKS[name], not is_top)
+    if name in BRICKS:
+        return bricks(rng, *BRICKS[name], not is_top)
+    if name == "SMOOTH_STONE":
+        return smooth_stone(rng, not is_top)
+    if name == "CUT_SANDSTONE":
+        return cut_sandstone(rng, not is_top)
+    return glass(rng, variant)
 
 
 def gems(rng, canvas, emission, gem, gem_light, glow, top):

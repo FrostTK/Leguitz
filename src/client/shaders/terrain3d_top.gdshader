@@ -19,6 +19,9 @@ uniform sampler2D wall_atlas : source_color, filter_nearest;
 uniform sampler2D wall_normals : filter_nearest;
 uniform sampler2D wall_emission : source_color, filter_nearest;
 uniform float emission_strength = 2.2;
+// Per wall kind: 1 for the walls one sees through (glass): their clear
+// pixels are cut out, their backs seen through them are not rock sections.
+uniform int see_through_walls[32];
 
 varying flat vec2 top_info;
 
@@ -33,8 +36,11 @@ void fragment() {
 			discard;
 		}
 	}
+	int face_code = int(top_info.x + 0.5);
+	bool clear_wall = face_code >= WALL_CODE
+			&& see_through_walls[min(face_code - WALL_CODE, 31)] == 1;
 	// Seen from behind (through the view cut): the section of the rock.
-	bool section = !IN_SHADOW_PASS && !FRONT_FACING;
+	bool section = !IN_SHADOW_PASS && !FRONT_FACING && !clear_wall;
 	if (section && section_on < 0.5) {
 		discard;
 	}
@@ -48,7 +54,6 @@ void fragment() {
 	for (int i = 0; i < 9; i++) {
 		n[i] = column_at(tile + ivec2(i % 3 - 1, i / 3 - 1));
 	}
-	int face_code = int(top_info.x + 0.5);
 	int face_level = int(round(top_info.y));
 	bool bed = false;
 	if (n[4].b != face_level) {
@@ -82,7 +87,11 @@ void fragment() {
 		// Top of a rock wall, with lit rims where it drops.
 		int variant = int(hash2(world_tile + ivec2(3, 11)) & 1u);
 		ivec2 at = ivec2(variant * 16 + tx.x, (wall - 1) * 16 + tx.y);
-		albedo = texelFetch(wall_atlas, at, 0).rgb;
+		vec4 texel = texelFetch(wall_atlas, at, 0);
+		if (texel.a < 0.5) {
+			discard;
+		}
+		albedo = texel.rgb;
 		normal = unpack_normal(texelFetch(wall_normals, at, 0));
 		emission = texelFetch(wall_emission, at, 0).rgb;
 		if (n[1].g == 0 && tx.y == 0) {

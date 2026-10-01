@@ -261,3 +261,38 @@ static func _grid(width: int, at: Vector2i, rows: Array) -> PackedInt32Array:
 		for x in rows[y].size():
 			cells[(at.y + y) * width + at.x + x] = rows[y][x]
 	return cells
+
+
+func test_building_blocks_are_crafted_and_smelted() -> void:
+	var square := func(item: int) -> PackedInt32Array:
+		return PackedInt32Array([item, item, Items.Id.NONE, item, item, Items.Id.NONE, 0, 0, 0])
+	var stone := Recipes.result_of(square.call(Items.Id.STONE), 3)
+	assert_eq(stone, Vector2i(Items.Id.STONE_BRICKS, 4), "4 stones: 4 stone bricks")
+	var deep := Recipes.result_of(square.call(Items.Id.DEEPSLATE), 3)
+	assert_eq(deep, Vector2i(Items.Id.DEEPSLATE_BRICKS, 4))
+	var cut := Recipes.result_of(square.call(Items.Id.SANDSTONE), 3)
+	assert_eq(cut, Vector2i(Items.Id.CUT_SANDSTONE, 4))
+	assert_eq(Recipes.result_of(square.call(Items.Id.SAND), 3), Vector2i(Items.Id.SANDSTONE, 1))
+	assert_eq(Recipes.result_of(square.call(Items.Id.BRICK), 3), Vector2i(Items.Id.BRICKS, 1))
+	var factory := Tiles.Block.FACTORY_FURNACE
+	assert_eq(Smelting.result_of(factory, Items.Id.SAND), Items.Id.GLASS)
+	assert_eq(Smelting.result_of(factory, Items.Id.RED_SAND), Items.Id.GLASS)
+	assert_eq(Smelting.result_of(factory, Items.Id.STONE), Items.Id.SMOOTH_STONE)
+	assert_eq(Smelting.result_of(factory, Items.Id.MUD), Items.Id.BRICK)
+	assert_false(Smelting.accepts(Tiles.Block.FOOD_FURNACE, Items.Id.SAND), "not in the oven")
+	for item: int in [
+		Items.Id.STONE_BRICKS,
+		Items.Id.SMOOTH_STONE,
+		Items.Id.BRICKS,
+		Items.Id.DEEPSLATE_BRICKS,
+		Items.Id.CUT_SANDSTONE,
+		Items.Id.GLASS,
+	]:
+		var voxel := Items.placed_voxel(item)
+		assert_true(Voxels.is_cube(voxel), "%s is a cube to build with" % Items.name_key(item))
+		assert_true(TileAtlas.is_wall(Voxels.block_of(voxel)), "with its own textures")
+		var rng := RandomNumberGenerator.new()
+		assert_eq(Items.drops(voxel, Vector2i.ZERO, rng)[0].x, item, "it gives itself back")
+		assert_eq(Mining.tool_for(voxel), Items.Tool.PICKAXE)
+	var glass := Voxels.of_block(Tiles.Block.GLASS)
+	assert_true(Mining.hand_seconds(glass) < 1.0, "glass breaks fast")

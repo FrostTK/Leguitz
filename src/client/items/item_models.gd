@@ -47,6 +47,8 @@ const HANDLE := ["#5c3b1f", "#7a5230", "#94683d"]
 const SQRT_HALF := 0.70710678
 ## Across the handle, from the middle of its 2-voxel staircase.
 const HANDLE_MIDDLE := 0.3535534
+## A brick (fired mud, see Smelting): shaped like an ingot.
+const BRICK := ["#6e2f20", "#9a4a34", "#b8644a", "#d4886a"]
 ## Ingots: the colors of their metal (the tools' heads).
 const INGOTS := {
 	Items.Id.COPPER_INGOT: Items.Tier.COPPER,
@@ -114,6 +116,8 @@ static func build(item: int) -> VoxelGrid:
 			return _charcoal()
 		Items.Id.CHARRED_FOOD:
 			return _charred()
+		Items.Id.BRICK:
+			return _ingot(BRICK)
 	return null
 
 

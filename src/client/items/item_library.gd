@@ -122,6 +122,9 @@ static func _cube_faces(mesh: ArrayMesh, faces: Array, texture: Image) -> void:
 	var material := StandardMaterial3D.new()
 	material.albedo_texture = ImageTexture.create_from_image(texture)
 	material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	if texture.detect_alpha() != Image.ALPHA_NONE:
+		# Glass: its clear pixels are cut out.
+		material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
 	material.cull_mode = BaseMaterial3D.CULL_DISABLED
 	material.roughness = 0.9
 	tool.set_material(material)

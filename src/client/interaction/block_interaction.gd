@@ -75,9 +75,13 @@ func place() -> void:
 	if client.held_item() == Items.Id.GUIDE_BOOK:
 		client.open_book()
 		return
-	if target == null or target.normal == Vector3i.ZERO:
+	if target == null:
 		return
-	var cell := target.cell + target.normal
+	# A small plant aimed at gives way to the block (as in Minecraft).
+	var replaced := Mining.is_replaceable(target.voxel)
+	if target.normal == Vector3i.ZERO and not replaced:
+		return
+	var cell := target.cell if replaced else target.cell + target.normal
 	var player := client.local_player
 	var slot := client.inventory.selected
 	var voxel := Items.placed_voxel(client.inventory.items[slot])

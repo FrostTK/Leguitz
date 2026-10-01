@@ -4,7 +4,8 @@ extends RefCounted
 ## cube blocks drawn as part of the terrain. Trees, plants, rocks... are 3D
 ## voxel models instead (VoxelModels).
 
-## Solid terrain blocks drawn by the terrain shader (value = wall atlas row).
+## Solid terrain blocks drawn by the terrain shader (value = wall atlas row;
+## at most 31 of them: the surface map packs a wall kind + 1 in 5 bits).
 const WALL_KINDS := {
 	Tiles.Block.STONE: 0,
 	Tiles.Block.DEEPSLATE: 1,
@@ -24,7 +25,16 @@ const WALL_KINDS := {
 	Tiles.Block.DARK_OAK_PLANKS: 15,
 	Tiles.Block.JUNGLE_PLANKS: 16,
 	Tiles.Block.ACACIA_PLANKS: 17,
+	Tiles.Block.STONE_BRICKS: 18,
+	Tiles.Block.SMOOTH_STONE: 19,
+	Tiles.Block.BRICKS: 20,
+	Tiles.Block.DEEPSLATE_BRICKS: 21,
+	Tiles.Block.CUT_SANDSTONE: 22,
+	Tiles.Block.GLASS: 23,
 }
+## Walls one sees through (glass): their textures' clear pixels are cut
+## out, and what lies behind them is drawn (ChunkMesher).
+const CLEAR_WALLS := {Tiles.Block.GLASS: true}
 const GLOWING_WALLS := {
 	Tiles.Block.GOLD_ORE: true,
 	Tiles.Block.LAPIS_ORE: true,
@@ -39,6 +49,15 @@ static var wall_lookup := _build_wall_lookup()
 
 static func is_wall(block: int) -> bool:
 	return WALL_KINDS.has(block)
+
+
+## Per wall kind (32): 1 for the walls one sees through, for the shaders.
+static func clear_wall_flags() -> PackedInt32Array:
+	var flags := PackedInt32Array()
+	flags.resize(32)
+	for block: int in CLEAR_WALLS:
+		flags[WALL_KINDS[block]] = 1
+	return flags
 
 
 static func _build_wall_lookup() -> PackedByteArray:

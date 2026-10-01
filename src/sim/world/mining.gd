@@ -84,6 +84,12 @@ const BLOCK_SECONDS := {
 	Tiles.Block.BROKEN_FURNACE_WEST: 3.5,
 	Tiles.Block.BROKEN_FURNACE_NORTH: 3.5,
 	Tiles.Block.BROKEN_FURNACE_EAST: 3.5,
+	Tiles.Block.STONE_BRICKS: 3.5,
+	Tiles.Block.SMOOTH_STONE: 3.5,
+	Tiles.Block.BRICKS: 4.0,
+	Tiles.Block.DEEPSLATE_BRICKS: 5.0,
+	Tiles.Block.CUT_SANDSTONE: 2.5,
+	Tiles.Block.GLASS: 0.5,
 }
 ## Trees by hand: chopping a trunk takes a while.
 const TREE_SECONDS := 3.5

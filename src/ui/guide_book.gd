@@ -17,7 +17,7 @@ const CHAPTERS: Array[String] = [
 	"BOOK_CHAPTER_CRAFT",
 	"BOOK_CHAPTER_FURNACES",
 ]
-const TIP_COUNT := 13
+const TIP_COUNT := 14
 ## The tools chapter: what each kind of tool is for, shown with this tool.
 ## The fuels shown in the furnaces chapter: an item and its name.
 const FUEL_ROWS := [
