@@ -57,6 +57,11 @@ static func _compute(voxel: int) -> Color:
 		return Color(WorkbenchModel.TOP[1])
 	if ObjectShapes.is_chest(block):
 		return Color(ChestModel.WOOD[2])
+	var kind := ObjectShapes.kind_of(block)
+	if kind == Tiles.Block.FACTORY_FURNACE or kind == Tiles.Block.FACTORY_FURNACE_LIT:
+		return Color(FurnaceModels.BRICK[2])
+	if kind != -1:
+		return Color(FurnaceModels.CLAY[2])
 	return OBJECT_COLORS.get(block, PLANT_COLOR)
 
 

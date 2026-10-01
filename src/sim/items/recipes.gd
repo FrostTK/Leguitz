@@ -21,6 +21,8 @@ const PLANKS: Array[int] = [
 ]
 ## Any stone.
 const STONES: Array[int] = [Items.Id.STONE, Items.Id.DEEPSLATE]
+## Coal or charcoal.
+const COALS: Array[int] = [Items.Id.COAL, Items.Id.CHARCOAL]
 ## The recipes besides the logs sawn into planks and the tools (see
 ## all()): a "pattern" (rows of letters, spaces left empty) and its "keys"
 ## (letter -> ingredient), and the "result" [item, count].
@@ -33,6 +35,17 @@ const SHAPED := [
 		"pattern": ["III", "III", "III"],
 		"keys": {"I": Items.Id.ICE},
 		"result": [Items.Id.PACKED_ICE, 1],
+	},
+	{
+		"pattern": ["SSS", "S S", "SSS"],
+		"keys": {"S": STONES},
+		"result": [Items.Id.FOOD_FURNACE, 1],
+	},
+	{
+		"pattern": ["SSS", "SCS", "SSS"],
+		"keys": {"S": STONES, "C": COALS},
+		"result": [Items.Id.FACTORY_FURNACE, 1],
+		"workbench": true,
 	},
 ]
 ## The tools, at the workbench: Minecraft's shapes ("M": the material,

@@ -121,6 +121,8 @@ func load_chunk(coord: Vector2i) -> ChunkData:
 		var chest := Inventory.new()
 		chest.load_dict(data["chests"][cell])
 		chunk.chests[cell] = chest
+	for cell: Vector3i in data.get("furnaces", {}):
+		chunk.furnaces[cell] = Furnace.from_dict(data["furnaces"][cell])
 	return chunk
 
 
@@ -130,11 +132,15 @@ func store_chunk(chunk: ChunkData) -> void:
 	var chests := {}
 	for cell: Vector3i in chunk.chests:
 		chests[cell] = chunk.chests[cell].contents(Inventory.CHEST)
+	var furnaces := {}
+	for cell: Vector3i in chunk.furnaces:
+		furnaces[cell] = chunk.furnaces[cell].to_dict()
 	_region(key)[chunk.coord] = {
 		"voxels": chunk.voxels.compress(COMPRESSION),
 		"size": chunk.voxels.size(),
 		"biome": chunk.biome,
 		"chests": chests,
+		"furnaces": furnaces,
 	}
 	_dirty[key] = true
 

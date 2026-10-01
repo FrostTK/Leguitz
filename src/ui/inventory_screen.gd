@@ -1,7 +1,9 @@
 class_name InventoryScreen
 extends Control
 ## The inventory (E): the crafting grid (3 x 3; a workbench's, 5 x 5, when
-## one is opened) and what it makes, the
+## one is opened) and what it makes (or an open chest's slots, or a
+## furnace: what it cooks, its fire, its fuel, an arrow filling up as it
+## cooks and what it made), the
 ## bag's 27 slots over the hotbar's 9, and the player's book set apart (it
 ## stays there: a click opens it). Clicks pick up, put down, split and swap
 ## stacks (Inventory.click: the client shows its guess at once, the server
@@ -17,6 +19,13 @@ signal book_requested
 signal craft_clicked(shift: bool)
 ## A slot of the open chest was clicked.
 signal chest_clicked(slot: int, right: bool, shift: bool)
+## A slot of the open furnace was clicked.
+signal furnace_clicked(slot: int, right: bool, shift: bool)
+
+## The flame shown under what a furnace cooks: its rows' widths, from the
+## bottom; and its colors (embers to tip).
+const FLAME_ROWS: Array[int] = [8, 8, 8, 6, 6, 6, 4, 4, 2, 2]
+const FLAME_COLORS: Array[Color] = [Color("ee6420"), Color("ffa634"), Color("ffe27a")]
 
 var inventory: Inventory
 var library: ItemLibrary
@@ -24,6 +33,9 @@ var library: ItemLibrary
 var craft_width := Inventory.OWN_GRID
 ## The chest shown instead of the crafting grid (see open_chest; null: none).
 var chest: Inventory
+## The furnace shown instead of the crafting grid (see open_furnace; null:
+## none).
+var furnace: Furnace
 ## The book's slot shows, and the book is in hand (set by GameClient).
 var book_shown := false
 var book_selected := false
@@ -41,6 +53,11 @@ var _cells: Array[ItemSlot] = []
 var _crafting_area: Control
 var _chest_grid := GridContainer.new()
 var _chest_slots: Array[ItemSlot] = []
+var _furnace_area: Control
+var _furnace_slots: Array[ItemSlot] = []
+var _furnace_hint := Label.new()
+var _flame := Control.new()
+var _cooking := Control.new()
 ## Over the bag when a chest is open: whose slots are whose.
 var _bag_label := Label.new()
 ## Draws the cursor's stack over the panel.
@@ -65,6 +82,8 @@ func _ready() -> void:
 	top.add_child(_title)
 	_crafting_area = _crafting()
 	top.add_child(_crafting_area)
+	_furnace_area = _furnace()
+	top.add_child(_furnace_area)
 	_chest_grid.columns = Inventory.HOTBAR
 	_chest_grid.add_theme_constant_override("h_separation", 1)
 	_chest_grid.add_theme_constant_override("v_separation", 1)
@@ -111,6 +130,8 @@ func _ready() -> void:
 ## or a workbench's (Inventory.GRID).
 func open(width := Inventory.OWN_GRID) -> void:
 	chest = null
+	furnace = null
+	_furnace_area.visible = false
 	_chest_grid.visible = false
 	_bag_label.visible = false
 	_crafting_area.visible = true
@@ -126,9 +147,26 @@ func open(width := Inventory.OWN_GRID) -> void:
 ## up to date by GameClient) instead of the crafting grid.
 func open_chest(view: Inventory) -> void:
 	chest = view
+	furnace = null
+	_furnace_area.visible = false
 	_title.text = "CHEST_TITLE"
 	_crafting_area.visible = false
 	_chest_grid.visible = true
+	_bag_label.visible = true
+	visible = true
+
+
+## Opens with a furnace over the bag (`view`: kept up to date by
+## GameClient) instead of the crafting grid.
+func open_furnace(view: Furnace) -> void:
+	furnace = view
+	chest = null
+	var food := view.kind == Tiles.Block.FOOD_FURNACE
+	_title.text = "ITEM_FOOD_FURNACE" if food else "ITEM_FACTORY_FURNACE"
+	_furnace_hint.text = "FURNACE_FOOD_HINT" if food else "FURNACE_FACTORY_HINT"
+	_crafting_area.visible = false
+	_chest_grid.visible = false
+	_furnace_area.visible = true
 	_bag_label.visible = true
 	visible = true
 
@@ -170,6 +208,71 @@ func _crafting() -> Control:
 	return area
 
 
+## A furnace: what it cooks over its fire and its fuel, an arrow, what it
+## made; a word on what it is for under them.
+func _furnace() -> Control:
+	var area := VBoxContainer.new()
+	area.add_theme_constant_override("separation", 2)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 3)
+	area.add_child(row)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 1)
+	row.add_child(column)
+	for i in Furnace.SLOTS:
+		var slot := ItemSlot.new()
+		slot.slot = i
+		slot.library = library
+		slot.clicked.connect(
+			func(at: int, right: bool, shift: bool) -> void: furnace_clicked.emit(at, right, shift)
+		)
+		_furnace_slots.append(slot)
+	column.add_child(_furnace_slots[Furnace.INPUT])
+	_flame.custom_minimum_size = Vector2(ItemSlot.SIZE, FLAME_ROWS.size() + 2.0)
+	_flame.draw.connect(_draw_flame)
+	column.add_child(_flame)
+	column.add_child(_furnace_slots[Furnace.FUEL])
+	_cooking.custom_minimum_size = Vector2(24.0, 0.0)
+	_cooking.draw.connect(_draw_cooking)
+	row.add_child(_cooking)
+	var output := _furnace_slots[Furnace.OUTPUT]
+	output.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(output)
+	_furnace_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_furnace_hint.custom_minimum_size.x = 76.0
+	_furnace_hint.add_theme_color_override("font_color", UiTheme.WOOD)
+	_furnace_hint.add_theme_font_size_override("font_size", 6)
+	area.add_child(_furnace_hint)
+	return area
+
+
+## The fire: a flame burning down as its fuel goes (dim when out).
+func _draw_flame() -> void:
+	var fire := furnace.fire if furnace != null else 0.0
+	var lit_rows := ceili(fire * FLAME_ROWS.size())
+	var bottom := _flame.size.y - 1.0
+	for row in FLAME_ROWS.size():
+		var width := float(FLAME_ROWS[row])
+		var rect := Rect2(floorf((_flame.size.x - width) * 0.5), bottom - row - 1.0, width, 1.0)
+		var color := Color(UiTheme.WOOD, 0.3)
+		if row < lit_rows:
+			color = FLAME_COLORS[mini(row * FLAME_COLORS.size() / FLAME_ROWS.size(), 2)]
+		_flame.draw_rect(rect, color)
+
+
+## The arrow from the furnace to what it made, filling up as it cooks.
+func _draw_cooking() -> void:
+	var progress := furnace.progress if furnace != null else 0.0
+	var middle := floorf(_cooking.size.y * 0.5)
+	var length := _cooking.size.x - 3.0
+	var head := 7.0
+	for x in int(length):
+		var half := 1.0 if x < length - head else ceilf((length - x) * 5.0 / head)
+		var filled := x < progress * length
+		var color := UiTheme.WOOD if filled else Color(UiTheme.WOOD, 0.3)
+		_cooking.draw_rect(Rect2(1.0 + x, middle - half, 1.0, half * 2.0), color)
+
+
 ## An arrow pointing from the grid to what it makes.
 func _draw_arrow(arrow: Control) -> void:
 	var middle := floorf(arrow.size.y * 0.5)
@@ -205,6 +308,12 @@ func _process(_delta: float) -> void:
 	if chest != null:
 		for i in Inventory.CHEST:
 			_chest_slots[i].show_stack(chest.items[i], chest.counts[i], false, chest.wear[i])
+	if furnace != null:
+		var held := furnace.slots
+		for i in Furnace.SLOTS:
+			_furnace_slots[i].show_stack(held.items[i], held.counts[i], false, held.wear[i])
+		_flame.queue_redraw()
+		_cooking.queue_redraw()
 	var made := inventory.craft_result(craft_width)
 	_result.show_stack(made.x, made.y)
 	_book.visible = book_shown

@@ -257,7 +257,7 @@ ITEM_WORKBENCH,Workbench,Établi
 CRAFTING_TITLE,Crafting,Fabrication
 BOOK_CRAFT_HOW,"Put the ingredients in the grid of your inventory (E): what they make shows on the right. Click it to take it, Shift + click to make as many as possible.","Place les ingrédients dans la grille de ton inventaire (E) : ce qu'ils donnent s'affiche à droite. Clique dessus pour le prendre, Maj + clic pour en faire le plus possible."
 BOOK_CRAFT_PLANKS,Planks  ×%d (from each log),Planches  ×%d (de chaque bûche)
-BOOK_CRAFT_MORE,"Copper, iron and gold are worked as ingots, which will come out of the furnace (soon). The workbench's 5 x 5 grid is ready for the items to come.","Le cuivre, le fer et l'or se travaillent en lingots, qui sortiront du four (bientôt). La grille 5 × 5 de l'établi attend les objets à venir."
+BOOK_CRAFT_MORE,"Copper, iron and gold are worked as ingots, smelted in the factory furnace. The workbench's 5 x 5 grid is ready for the items to come.","Le cuivre, le fer et l'or se travaillent en lingots, fondus dans le four d'usine. La grille 5 × 5 de l'établi attend les objets à venir."
 ITEM_COPPER_INGOT,Copper ingot,Lingot de cuivre
 ITEM_IRON_INGOT,Iron ingot,Lingot de fer
 ITEM_GOLD_INGOT,Gold ingot,Lingot d'or
@@ -272,3 +272,22 @@ BOOK_TOOLS_WEAR,"A tool wears with every block it breaks (the bar under its icon
 ITEM_CHEST,Chest,Coffre
 CHEST_TITLE,Chest,Coffre
 BOOK_TIP_12,"A chest keeps 27 stacks (right click to open it); broken, it spills them.","Un coffre garde 27 piles d'objets (clic droit pour l'ouvrir) ; cassé, il les répand."
+ITEM_FOOD_FURNACE,Food furnace,Four alimentaire
+ITEM_FACTORY_FURNACE,Factory furnace,Four d'usine
+ITEM_DRIED_BERRIES,Dried berries,Baies déshydratées
+ITEM_MUSHROOM_STEW,Mushroom stew,Ragoût de champignons
+ITEM_CHARCOAL,Charcoal,Charbon de bois
+ITEM_CHARRED_FOOD,Charred food,Nourriture carbonisée
+FURNACE_FOOD_HINT,Cooks food. Ore would break it!,Cuit la nourriture. Du minerai le casserait !
+FURNACE_FACTORY_HINT,"Smelts ores, chars logs. Food burns in it!","Fond les minerais, carbonise les bûches. La nourriture y brûle !"
+HUD_FURNACE_BROKE,The food furnace broke: ore melts too hot for it!,Le four alimentaire s'est cassé : le minerai fond trop chaud pour lui !
+BOOK_CHAPTER_FURNACES,Furnaces,Fours
+BOOK_FURNACE_HOW,"Right click a furnace to open it: what to cook goes on top, fuel underneath. While it burns, what it makes comes out on the right.","Clic droit sur un four pour l'ouvrir : ce qu'il faut cuire va en haut, le combustible en dessous. Tant qu'il brûle, ce qu'il donne sort à droite."
+BOOK_FURNACE_FOOD_ORE,"Only food! Ore melts too hot for it: the furnace breaks, the ore is lost and the rest spills.","Seulement de la nourriture ! Le minerai fond trop chaud pour lui : le four se casse, le minerai est perdu et le reste se répand."
+BOOK_FURNACE_FACTORY_FOOD,Food put in it comes out charred.,La nourriture qu'on y met ressort carbonisée.
+BOOK_FURNACE_FUELS,Fuels,Combustibles
+BOOK_FURNACE_FUEL,%s: cooks %s items,%s : cuit %s objets
+BOOK_FURNACE_WOOD,"Logs, planks, wooden things","Bûches, planches, objets en bois"
+BOOK_FURNACE_PACE,"An item takes 10 seconds to cook, a little longer when the days are longer.","Un objet met 10 secondes à cuire, un peu plus quand les journées sont plus longues."
+BOOK_TIP_13,A food furnace is made of 8 stones; the factory furnace needs coal in the middle and a workbench.,Un four alimentaire se fait avec 8 pierres ; le four d'usine demande du charbon au milieu et un établi.
+DECIMAL_SEPARATOR,.,","

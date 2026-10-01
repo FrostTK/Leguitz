@@ -58,12 +58,16 @@ func _process(delta: float) -> void:
 		place()
 
 
-## Puts the block in hand against the side of the target; a workbench or
-## a chest aimed at opens instead, and so does the player's book in hand.
+## Puts the block in hand against the side of the target; a workbench, a
+## chest or a furnace aimed at opens instead, and so does the player's
+## book in hand.
 func place() -> void:
 	if target != null and Mining.opens(target.voxel):
-		if ObjectShapes.is_chest(Voxels.block_of(target.voxel)):
+		var block := Voxels.block_of(target.voxel)
+		if ObjectShapes.is_chest(block):
 			client.open_chest(target.cell)
+		elif ObjectShapes.furnace_kind(block) != -1:
+			client.open_furnace(target.cell)
 		else:
 			client.open_workbench(target.cell)
 		return
@@ -209,6 +213,14 @@ func _predict(cell: Vector3i, voxel: int) -> void:
 ## A voxel just changed on screen: a tree that was cut falls.
 func _on_changed(cell: Vector3i, before: int, after: int) -> void:
 	var block := Voxels.block_of(before)
+	if (
+		ObjectShapes.furnace_kind(block) != -1
+		and ObjectShapes.kind_of(Voxels.block_of(after)) == Tiles.Block.BROKEN_FURNACE
+	):
+		var middle := Vector3(cell.x + 0.5, cell.y - GameConst.SEA_LEVEL + 0.7, cell.z + 0.5)
+		_debris.throw(_world_point(middle), BlockColors.of(before), 24, 0.4)
+		client.furnace_broke(cell)
+		return
 	if after == before or not ObjectShapes.is_tree(block):
 		return
 	var tile := Vector2i(cell.x, cell.z)

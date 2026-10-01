@@ -79,6 +79,12 @@ enum Id {
 	IRON_INGOT,
 	GOLD_INGOT,
 	CHEST,
+	FOOD_FURNACE,
+	FACTORY_FURNACE,
+	DRIED_BERRIES,
+	MUSHROOM_STEW,
+	CHARCOAL,
+	CHARRED_FOOD,
 }
 ## What a tool is made for (Mining.tool_for: what it breaks faster).
 enum Tool { NONE, PICKAXE, AXE, SHOVEL }
@@ -140,6 +146,8 @@ const PLACES_BLOCK := {
 	Id.ACACIA_PLANKS: Tiles.Block.ACACIA_PLANKS,
 	Id.WORKBENCH: Tiles.Block.WORKBENCH,
 	Id.CHEST: Tiles.Block.CHEST,
+	Id.FOOD_FURNACE: Tiles.Block.FOOD_FURNACE,
+	Id.FACTORY_FURNACE: Tiles.Block.FACTORY_FURNACE,
 }
 
 ## What a ground gives (soil gives dirt); grounds left out give nothing.
@@ -213,6 +221,26 @@ const BLOCK_DROPS := {
 	Tiles.Block.CHEST_WEST: [Id.CHEST, 1, 1],
 	Tiles.Block.CHEST_NORTH: [Id.CHEST, 1, 1],
 	Tiles.Block.CHEST_EAST: [Id.CHEST, 1, 1],
+	Tiles.Block.FOOD_FURNACE: [Id.FOOD_FURNACE, 1, 1],
+	Tiles.Block.FOOD_FURNACE_WEST: [Id.FOOD_FURNACE, 1, 1],
+	Tiles.Block.FOOD_FURNACE_NORTH: [Id.FOOD_FURNACE, 1, 1],
+	Tiles.Block.FOOD_FURNACE_EAST: [Id.FOOD_FURNACE, 1, 1],
+	Tiles.Block.FOOD_FURNACE_LIT: [Id.FOOD_FURNACE, 1, 1],
+	Tiles.Block.FOOD_FURNACE_LIT_WEST: [Id.FOOD_FURNACE, 1, 1],
+	Tiles.Block.FOOD_FURNACE_LIT_NORTH: [Id.FOOD_FURNACE, 1, 1],
+	Tiles.Block.FOOD_FURNACE_LIT_EAST: [Id.FOOD_FURNACE, 1, 1],
+	Tiles.Block.FACTORY_FURNACE: [Id.FACTORY_FURNACE, 1, 1],
+	Tiles.Block.FACTORY_FURNACE_WEST: [Id.FACTORY_FURNACE, 1, 1],
+	Tiles.Block.FACTORY_FURNACE_NORTH: [Id.FACTORY_FURNACE, 1, 1],
+	Tiles.Block.FACTORY_FURNACE_EAST: [Id.FACTORY_FURNACE, 1, 1],
+	Tiles.Block.FACTORY_FURNACE_LIT: [Id.FACTORY_FURNACE, 1, 1],
+	Tiles.Block.FACTORY_FURNACE_LIT_WEST: [Id.FACTORY_FURNACE, 1, 1],
+	Tiles.Block.FACTORY_FURNACE_LIT_NORTH: [Id.FACTORY_FURNACE, 1, 1],
+	Tiles.Block.FACTORY_FURNACE_LIT_EAST: [Id.FACTORY_FURNACE, 1, 1],
+	Tiles.Block.BROKEN_FURNACE: [Id.STONE, 2, 4],
+	Tiles.Block.BROKEN_FURNACE_WEST: [Id.STONE, 2, 4],
+	Tiles.Block.BROKEN_FURNACE_NORTH: [Id.STONE, 2, 4],
+	Tiles.Block.BROKEN_FURNACE_EAST: [Id.STONE, 2, 4],
 }
 ## The planks each log is sawn into.
 const PLANKS_OF := {

@@ -25,8 +25,10 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Établi : clic droit dessus pour sa grille 5×5 ; les 18 outils (pioche, hache, pelle en bois, pierre, cuivre, fer, or, diamant) avec les formes de Minecraft ; lingots de cuivre, de fer et d'or (le four viendra) | ✅ |
 | Usure des outils : chaque matériau a sa solidité (l'or rapide mais fragile), barre d'usure sous l'icône, l'outil se casse quand il est usé | ✅ |
 | Coffres : 27 cases, ouverts au clic droit, gardés avec le monde ; cassés, ils répandent leur contenu | ✅ |
-| Four alimentaire et four d'usine | à venir |
+| Four alimentaire (four à pain : baies déshydratées, ragoût de champignons ; du minerai le casse) et four d'usine (lingots de cuivre, fer et or, charbon de bois ; la nourriture y carbonise), combustibles, cuisson au fil du temps, feu qui éclaire | ✅ |
 | Blocs de construction variés (briques, verre, pierre taillée…) | à venir |
+
+![Leguitz : le four alimentaire ouvert (baies et charbon), le chapitre « Fours » du livre, les deux fours éteints, allumés au crépuscule, puis le four alimentaire cassé par du minerai](docs/screenshots/phase4-fours.png)
 
 ![Leguitz : un coffre ouvert (lingots et diamants rangés), deux coffres posés face au joueur](docs/screenshots/phase4-coffres.png)
 
@@ -213,7 +215,7 @@ Pour le multijoueur, il suffira de brancher un transport réseau.
 1. ✅ Génération du monde à la Minecraft (bruits climatiques, biomes, rivières, falaises, grottes, minerais)
 2. ✅ Visuels et lumière en 3D pixel art (ombres, jour/nuit, eau, vent, météo, caméra orbitale)
 3. ✅ Joueur et interactions (minage, construction, objets, inventaire, outils, livre du joueur)
-4. Craft (recettes ✅, établi, usure, coffres, fours, blocs de construction) : en cours
+4. Craft (recettes ✅, établi ✅, usure ✅, coffres ✅, fours ✅, blocs de construction) : en cours
 5. Survie et combat (vie, faim, animaux, monstres, combat, modes de jeu)
 6. Souterrain et structures
 7. Agriculture et élevage

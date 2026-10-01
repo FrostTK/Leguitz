@@ -39,6 +39,8 @@ const WALL_CODE := 64
 const NO_LEVEL := -1000.0
 ## Lava lights are placed per 8x8 quarter of the chunk.
 const LAVA_QUARTER := 8
+## How bright a lit furnace's light is (lava's: 0.8 to 2.2).
+const FIRE_LIGHT := 0.75
 
 const CUBE := Voxels.FLAG_CUBE
 const LIQUID := Voxels.FLAG_LIQUID
@@ -93,7 +95,8 @@ class Result:
 	var parts: Array[Surface] = []
 	## (block, variant) -> [[Transform3D, Color], ...]
 	var props: Dictionary[Vector2i, Array] = {}
-	## Lava lights: local position and whether they are in a cave.
+	## Lava lights (and lit furnaces'): local position, whether they are in
+	## a cave, how bright.
 	var lava_spots: Array[Vector3] = []
 	var lava_deep: Array[bool] = []
 	var lava_strength: Array[float] = []
@@ -225,6 +228,14 @@ static func build(job: Job) -> Result:
 						lava_counts[quarter] += 1
 				else:
 					_add_prop(result, job.variants, voxel, voxels, base, lx, y, lz, origin)
+					var block := Voxels.block_of(voxel)
+					if ObjectShapes.is_lit(block):
+						# The fire shines out of the furnace's front.
+						var front := Vector2(ObjectShapes.front_of(block)) * 0.9
+						var fire := Vector3(lx + 0.5 + front.x, y - SEA + 0.5, lz + 0.5 + front.y)
+						result.lava_spots.append(fire)
+						result.lava_deep.append(y + 1 < tops[column])
+						result.lava_strength.append(FIRE_LIGHT)
 	_add_flats(result, flats)
 	_add_world_bottom(result.parts[Part.DEEP_FACES])
 	for quarter in 8:
@@ -693,7 +704,7 @@ static func _add_prop(
 	var turn := prop_turn(tile)
 	if ObjectShapes.front_of(block) != Vector2i.ZERO:
 		turn = Basis(Vector3.UP, ObjectShapes.turn_of(block))
-	if ObjectShapes.BENCH_FRONTS.has(block):
+	if ObjectShapes.is_bench_left(block):
 		var right := ObjectShapes.bench_right(block)
 		foot += Vector3(right.x, 0.0, right.y) * 0.5
 	var shade := 0.93 + ((h >> 16) & 15) / 15.0 * 0.14

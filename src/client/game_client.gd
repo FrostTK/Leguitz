@@ -46,6 +46,8 @@ const HELD_SIZE := 0.28
 const FIRST_PERSON_HELD_SIZE := 0.16
 const FIRST_PERSON_HELD_AT := Vector3(0.36, -0.3, -0.62)
 const FIRST_PERSON_HELD_TURN := Vector3(-0.15, 0.7, 0.0)
+## A food furnace breaking is told to players within this many tiles.
+const FURNACE_NEWS_RANGE := 12.0
 ## First person: a tool is held by the handle at the bottom right of the
 ## view, the handle going up, forward and a little left (camera space),
 ## its flat side towards the eye; the wrist swings it through strokes
@@ -105,6 +107,10 @@ var craft_width := Inventory.OWN_GRID
 ## where it stands.
 var chest: Inventory
 var chest_cell := Vector3i.MAX
+## The furnace open (as the server last told; null: none), and where it
+## stands.
+var furnace: Furnace
+var furnace_cell := Vector3i.MAX
 var dropped_items := DroppedItemsView.new()
 var item_icons := ItemIcons.new()
 ## What is in hand in first person (a child of the camera).
@@ -165,6 +171,7 @@ func _ready() -> void:
 	inventory_screen.book_requested.connect(_on_book_requested)
 	inventory_screen.craft_clicked.connect(_on_craft_clicked)
 	inventory_screen.chest_clicked.connect(_on_chest_clicked)
+	inventory_screen.furnace_clicked.connect(_on_furnace_clicked)
 	book_screen.library = items
 	book_screen.close_requested.connect(_on_book_closed)
 	dropped_items.library = items
@@ -681,6 +688,32 @@ func _on_chest_clicked(slot: int, right: bool, shift: bool) -> void:
 		transport.send(Msg.chest_click(slot, right, shift))
 
 
+## Opens the furnace standing in `cell`: its slots over the inventory
+## (what it holds and how it burns come from the server).
+func open_furnace(cell: Vector3i) -> void:
+	interaction.stop()
+	local_player.controls_enabled = false
+	craft_width = Inventory.OWN_GRID
+	furnace = Furnace.new(ObjectShapes.furnace_kind(Voxels.block_of(world.voxel_at(cell))))
+	furnace_cell = cell
+	transport.send(Msg.open_furnace(cell))
+	inventory_screen.open_furnace(furnace)
+
+
+func _on_furnace_clicked(slot: int, right: bool, shift: bool) -> void:
+	if furnace != null:
+		inventory.click_furnace(furnace, slot, right, shift)
+		transport.send(Msg.furnace_click(slot, right, shift))
+
+
+## A food furnace near the player melted ore and broke: said over the
+## hotbar (its screen closes if it was open).
+func furnace_broke(cell: Vector3i) -> void:
+	var tile := Coords.tile_to_world_center(Vector2i(cell.x, cell.z))
+	if local_player.position.distance_to(tile) <= FURNACE_NEWS_RANGE * GameConst.TILE_SIZE:
+		hotbar.announce(tr("HUD_FURNACE_BROKE"))
+
+
 ## Opens the workbench standing in `cell`: the inventory with its 5 x 5
 ## crafting grid (the server is told: its grid is used until it closes).
 func open_workbench(cell: Vector3i) -> void:
@@ -692,7 +725,7 @@ func open_workbench(cell: Vector3i) -> void:
 
 
 func _on_slot_clicked(slot: int, right: bool, shift: bool) -> void:
-	inventory.click(slot, right, shift, chest)
+	inventory.click(slot, right, shift, chest, furnace)
 	transport.send(Msg.slot_click(slot, right, shift))
 
 
@@ -706,8 +739,21 @@ func _on_inventory_closed() -> void:
 	local_player.controls_enabled = true
 	chest = null
 	chest_cell = Vector3i.MAX
+	furnace = null
+	furnace_cell = Vector3i.MAX
 	inventory.put_back_all()
 	transport.send(Msg.inventory_close())
+
+
+## The chest or furnace open was broken (or broke): its screen closes.
+func _close_if_gone(cell: Vector3i) -> void:
+	var block := Voxels.block_of(world.voxel_at(cell))
+	var gone := (
+		(chest != null and cell == chest_cell and not ObjectShapes.is_chest(block))
+		or (furnace != null and cell == furnace_cell and ObjectShapes.furnace_kind(block) == -1)
+	)
+	if gone:
+		inventory_screen.close()
 
 
 func _on_craft_clicked(shift: bool) -> void:
@@ -838,6 +884,7 @@ func _handle_message(message: Dictionary) -> void:
 			save_notice.flash()
 		Msg.BLOCK_CHANGED:
 			interaction.on_block_changed(message["cell"], message["voxel"])
+			_close_if_gone(message["cell"])
 		Msg.INVENTORY:
 			var selected := inventory.selected
 			inventory.load_dict(message["inventory"])
@@ -846,6 +893,9 @@ func _handle_message(message: Dictionary) -> void:
 		Msg.CHEST:
 			if chest != null and message["cell"] == chest_cell:
 				chest.load_dict(message["chest"])
+		Msg.FURNACE:
+			if furnace != null and message["cell"] == furnace_cell:
+				furnace.load_dict(message["furnace"])
 		Msg.ITEM_SPAWN:
 			dropped_items.spawn(message["id"], message["item"], message["count"], message["pos"])
 		Msg.ITEM_MOVE:

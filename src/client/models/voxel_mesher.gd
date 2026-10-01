@@ -7,7 +7,7 @@ extends RefCounted
 ## Vertex data, read by voxel.gdshader:
 ## - COLOR.rgb: sRGB color, COLOR.a: ambient occlusion (1 = open),
 ## - UV.x: how much the vertex bends in the wind, UV.y: 1 for foliage
-##   (lets light through).
+##   (lets light through), 2 for glowing voxels (fire...).
 ## Positions are in local units (1 voxel = 1/16, times `scale` for the
 ## coarser copies of far views), standing on y = 0, centered on the grid's
 ## pivot.
@@ -167,6 +167,8 @@ static func _emit(
 	var value := key >> 8
 	var color := VoxelGrid.color_of(value)
 	var foliage := 1.0 if VoxelGrid.kind_of(value) == VoxelGrid.Kind.FOLIAGE else 0.0
+	if VoxelGrid.kind_of(value) == VoxelGrid.Kind.GLOW:
+		foliage = 2.0
 	var plane := slice + (1 if direction > 0 else 0)
 	var corners_uv := [
 		Vector2i(area.position.x, area.position.y),

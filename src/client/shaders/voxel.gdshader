@@ -1,7 +1,8 @@
 shader_type spatial;
 // Voxel models (trees, plants, rocks, the player). Vertex data comes from
 // VoxelMesher: COLOR.rgb sRGB color, COLOR.a ambient occlusion,
-// UV.x wind bending weight, UV.y 1 for foliage. Instances may carry
+// UV.x wind bending weight, UV.y 1 for foliage, 2 for glowing voxels (fire:
+// they light themselves). Instances may carry
 // INSTANCE_CUSTOM = (tint r, g, b, wind phase).
 
 render_mode world_vertex_coords;
@@ -18,6 +19,8 @@ uniform float wet_darkening = 0.22;
 uniform bool cut_out = true;
 // Half width and half height of the hole (world units, on screen).
 uniform vec2 cut_size = vec2(1.5, 2.1);
+// How bright glowing voxels are.
+uniform float glow_strength = 3.0;
 // Dithers the model away (the player's body while the camera dives into
 // its head): 0 = shown, 1 = gone. Its shadow stays.
 uniform float fade = 0.0;
@@ -26,6 +29,7 @@ global uniform vec2 weather_wind;
 global uniform float weather_wetness;
 
 varying float foliage;
+varying float glow;
 varying vec3 tint;
 
 vec3 srgb_to_linear(vec3 c) {
@@ -33,7 +37,8 @@ vec3 srgb_to_linear(vec3 c) {
 }
 
 void vertex() {
-	foliage = UV.y;
+	glow = step(1.5, UV.y);
+	foliage = UV.y * (1.0 - glow);
 	tint = vec3(1.0);
 	float phase = 0.0;
 	if (use_instance_data) {
@@ -74,4 +79,5 @@ void fragment() {
 	SPECULAR = 0.3;
 	// Light shines through leaves (bright edges against the sun).
 	BACKLIGHT = albedo * 0.55 * foliage;
+	EMISSION = srgb_to_linear(COLOR.rgb) * glow * glow_strength;
 }

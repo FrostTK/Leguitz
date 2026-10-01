@@ -101,6 +101,16 @@ static func build(block: int, variant: int) -> VoxelGrid:
 			return WorkbenchModel.build()
 		Tiles.Block.CHEST:
 			return ChestModel.build()
+		Tiles.Block.FOOD_FURNACE:
+			return FurnaceModels.food(false)
+		Tiles.Block.FOOD_FURNACE_LIT:
+			return FurnaceModels.food(true)
+		Tiles.Block.FACTORY_FURNACE:
+			return FurnaceModels.factory(false)
+		Tiles.Block.FACTORY_FURNACE_LIT:
+			return FurnaceModels.factory(true)
+		Tiles.Block.BROKEN_FURNACE:
+			return FurnaceModels.food(false, true)
 	return VoxelGrid.new()
 
 

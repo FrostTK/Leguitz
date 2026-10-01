@@ -277,9 +277,11 @@ func _draw() -> void:
 
 func _draw_tabs(font: Font, book: Rect2) -> void:
 	var shown := _chapter_shown()
-	for i in GuideBook.CHAPTERS.size():
-		var at := book.position + Vector2(12.0 + i * (TAB_SIZE.x + 2.0), 1.0 - TAB_SIZE.y)
-		var rect := Rect2(at, TAB_SIZE + Vector2(0.0, 4.0))
+	var count := GuideBook.CHAPTERS.size()
+	var tab := Vector2(minf(TAB_SIZE.x, (book.size.x - 24.0) / count - 2.0), TAB_SIZE.y)
+	for i in count:
+		var at := book.position + Vector2(12.0 + i * (tab.x + 2.0), 1.0 - tab.y)
+		var rect := Rect2(at, tab + Vector2(0.0, 4.0))
 		var hovered := _hit(rect, "chapter", i)
 		var fill := PAPER_SHADE.darkened(0.12)
 		if i == shown:
@@ -294,7 +296,7 @@ func _draw_tabs(font: Font, book: Rect2) -> void:
 			Vector2(at.x, baseline),
 			tr(GuideBook.CHAPTERS[i]),
 			HORIZONTAL_ALIGNMENT_CENTER,
-			TAB_SIZE.x,
+			tab.x,
 			SMALL_SIZE,
 			UiTheme.INK
 		)

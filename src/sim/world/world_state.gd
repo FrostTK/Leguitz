@@ -60,8 +60,8 @@ func chest_at(cell: Vector3i) -> Inventory:
 	return chunk.chests[cell]
 
 
-## A chest's items changed: its chunk is saved with them.
-func chest_changed(cell: Vector3i) -> void:
+## What a chest or a furnace holds changed: its chunk is saved with it.
+func contents_changed(cell: Vector3i) -> void:
 	var chunk := get_or_create_chunk(Coords.tile_to_chunk(Vector2i(cell.x, cell.z)))
 	chunk.modified = true
 	_changed[chunk.coord] = true
@@ -73,6 +73,24 @@ func take_chest(cell: Vector3i) -> Inventory:
 	var chest: Inventory = chunk.chests.get(cell)
 	chunk.chests.erase(cell)
 	return chest
+
+
+## The furnace standing in a cell (empty the first time; its kind is the
+## voxel's there).
+func furnace_at(cell: Vector3i) -> Furnace:
+	var chunk := get_or_create_chunk(Coords.tile_to_chunk(Vector2i(cell.x, cell.z)))
+	if not chunk.furnaces.has(cell):
+		var block := Voxels.block_of(voxel_at(cell))
+		chunk.furnaces[cell] = Furnace.new(maxi(ObjectShapes.furnace_kind(block), 0))
+	return chunk.furnaces[cell]
+
+
+## Takes away the furnace of a cell (it was broken): the Furnace, or null.
+func take_furnace(cell: Vector3i) -> Furnace:
+	var chunk := get_or_create_chunk(Coords.tile_to_chunk(Vector2i(cell.x, cell.z)))
+	var furnace: Furnace = chunk.furnaces.get(cell)
+	chunk.furnaces.erase(cell)
+	return furnace
 
 
 ## Hands the chunks changed since the last call to the storage.

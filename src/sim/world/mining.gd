@@ -64,6 +64,26 @@ const BLOCK_SECONDS := {
 	Tiles.Block.CHEST_WEST: 2.5,
 	Tiles.Block.CHEST_NORTH: 2.5,
 	Tiles.Block.CHEST_EAST: 2.5,
+	Tiles.Block.FOOD_FURNACE: 3.5,
+	Tiles.Block.FOOD_FURNACE_WEST: 3.5,
+	Tiles.Block.FOOD_FURNACE_NORTH: 3.5,
+	Tiles.Block.FOOD_FURNACE_EAST: 3.5,
+	Tiles.Block.FOOD_FURNACE_LIT: 3.5,
+	Tiles.Block.FOOD_FURNACE_LIT_WEST: 3.5,
+	Tiles.Block.FOOD_FURNACE_LIT_NORTH: 3.5,
+	Tiles.Block.FOOD_FURNACE_LIT_EAST: 3.5,
+	Tiles.Block.FACTORY_FURNACE: 3.5,
+	Tiles.Block.FACTORY_FURNACE_WEST: 3.5,
+	Tiles.Block.FACTORY_FURNACE_NORTH: 3.5,
+	Tiles.Block.FACTORY_FURNACE_EAST: 3.5,
+	Tiles.Block.FACTORY_FURNACE_LIT: 3.5,
+	Tiles.Block.FACTORY_FURNACE_LIT_WEST: 3.5,
+	Tiles.Block.FACTORY_FURNACE_LIT_NORTH: 3.5,
+	Tiles.Block.FACTORY_FURNACE_LIT_EAST: 3.5,
+	Tiles.Block.BROKEN_FURNACE: 3.5,
+	Tiles.Block.BROKEN_FURNACE_WEST: 3.5,
+	Tiles.Block.BROKEN_FURNACE_NORTH: 3.5,
+	Tiles.Block.BROKEN_FURNACE_EAST: 3.5,
 }
 ## Trees by hand: chopping a trunk takes a while.
 const TREE_SECONDS := 3.5
@@ -102,7 +122,30 @@ const AXE_BLOCKS := {
 	Tiles.Block.CHEST_NORTH: true,
 	Tiles.Block.CHEST_EAST: true,
 }
-const PICKAXE_BLOCKS := {Tiles.Block.ROCK: true, Tiles.Block.MOSSY_ROCK: true}
+const PICKAXE_BLOCKS := {
+	Tiles.Block.ROCK: true,
+	Tiles.Block.MOSSY_ROCK: true,
+	Tiles.Block.FOOD_FURNACE: true,
+	Tiles.Block.FOOD_FURNACE_WEST: true,
+	Tiles.Block.FOOD_FURNACE_NORTH: true,
+	Tiles.Block.FOOD_FURNACE_EAST: true,
+	Tiles.Block.FOOD_FURNACE_LIT: true,
+	Tiles.Block.FOOD_FURNACE_LIT_WEST: true,
+	Tiles.Block.FOOD_FURNACE_LIT_NORTH: true,
+	Tiles.Block.FOOD_FURNACE_LIT_EAST: true,
+	Tiles.Block.FACTORY_FURNACE: true,
+	Tiles.Block.FACTORY_FURNACE_WEST: true,
+	Tiles.Block.FACTORY_FURNACE_NORTH: true,
+	Tiles.Block.FACTORY_FURNACE_EAST: true,
+	Tiles.Block.FACTORY_FURNACE_LIT: true,
+	Tiles.Block.FACTORY_FURNACE_LIT_WEST: true,
+	Tiles.Block.FACTORY_FURNACE_LIT_NORTH: true,
+	Tiles.Block.FACTORY_FURNACE_LIT_EAST: true,
+	Tiles.Block.BROKEN_FURNACE: true,
+	Tiles.Block.BROKEN_FURNACE_WEST: true,
+	Tiles.Block.BROKEN_FURNACE_NORTH: true,
+	Tiles.Block.BROKEN_FURNACE_EAST: true,
+}
 
 
 static func can_break(voxel: int, row: int) -> bool:
@@ -114,8 +157,8 @@ static func can_break(voxel: int, row: int) -> bool:
 	)
 
 
-## Voxels a player can place: cubes (grounds and blocks), the workbench
-## and the chest.
+## Voxels a player can place: cubes (grounds and blocks) and the objects
+## placed facing the player (workbench, chest, furnaces).
 static func can_place(voxel: int) -> bool:
 	if voxel == Voxels.UNKNOWN:
 		return false
@@ -125,17 +168,18 @@ static func can_place(voxel: int) -> bool:
 ## The cells a placed voxel takes ({cell: voxel}; empty: no room). A cube
 ## takes the cell aimed at; a workbench faces `front` and takes the cell
 ## aimed at and the one on its right (or else the one on its left), a
-## chest faces `front` in the cell aimed at, all free of anything solid or
-## liquid and standing on cubes.
+## chest or a furnace faces `front` in the cell aimed at, all free of
+## anything solid or liquid and standing on cubes.
 static func placement(
 	cell: Vector3i, voxel: int, front: Vector2i, voxel_at: Callable
 ) -> Dictionary:
 	var block := Voxels.block_of(voxel)
-	if ObjectShapes.is_chest(block):
+	var kind := ObjectShapes.kind_of(block)
+	if kind != -1 and kind != Tiles.Block.WORKBENCH:
 		if not _bench_room(cell, voxel_at):
 			return {}
-		return {cell: Voxels.of_block(ObjectShapes.facing(Tiles.Block.CHEST, front))}
-	if not ObjectShapes.BENCH_FRONTS.has(block):
+		return {cell: Voxels.of_block(ObjectShapes.facing(kind, front))}
+	if not ObjectShapes.is_bench_left(block):
 		return {cell: voxel} if is_replaceable(voxel_at.call(cell)) else {}
 	var left := ObjectShapes.facing(Tiles.Block.WORKBENCH, front)
 	var right := ObjectShapes.bench_right(left)
@@ -153,11 +197,15 @@ static func wears(voxel: int) -> bool:
 	return hand_seconds(voxel) > INSTANT_SECONDS
 
 
-## Whether a voxel opens something when used (right click): a workbench
-## or a chest.
+## Whether a voxel opens something when used (right click): a workbench,
+## a chest or a furnace (not a broken one).
 static func opens(voxel: int) -> bool:
 	var block := Voxels.block_of(voxel)
-	return ObjectShapes.is_bench(block) or ObjectShapes.is_chest(block)
+	return (
+		ObjectShapes.is_bench(block)
+		or ObjectShapes.is_chest(block)
+		or ObjectShapes.furnace_kind(block) != -1
+	)
 
 
 ## Which way a workbench placed at `cell` faces: towards the player's feet
@@ -173,7 +221,7 @@ static func front_towards(cell: Vector3i, feet: Vector2) -> Vector2i:
 ## ends of a workbench, else the cell alone.
 static func object_cells(cell: Vector3i, voxel: int, voxel_at: Callable) -> Array[Vector3i]:
 	var block := Voxels.block_of(voxel)
-	if ObjectShapes.BENCH_FRONTS.has(block):
+	if ObjectShapes.is_bench_left(block):
 		var right := ObjectShapes.bench_right(block)
 		var other := cell + Vector3i(right.x, 0, right.y)
 		if ObjectShapes.BENCH_ENDS.has(Voxels.block_of(voxel_at.call(other))):
@@ -183,7 +231,7 @@ static func object_cells(cell: Vector3i, voxel: int, voxel_at: Callable) -> Arra
 		for side: int in [-1, 1]:
 			var left := cell + Vector3i(along.x, 0, along.y) * side
 			var left_block := Voxels.block_of(voxel_at.call(left))
-			if ObjectShapes.BENCH_FRONTS.has(left_block):
+			if ObjectShapes.is_bench_left(left_block):
 				var right := ObjectShapes.bench_right(left_block)
 				if left + Vector3i(right.x, 0, right.y) == cell:
 					return [left, cell]

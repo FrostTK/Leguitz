@@ -92,7 +92,8 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   moss), meshed by VoxelMesher (greedy faces + AO) and saved by
   `godot --headless --path . -s res://tools/gen_models.gd [-- --only=oak]` into `assets/models/`
   (commit the .res files; rerun after changing a model; all of them take ~15 min). Every non-cube
-  block needs a model (tested). `voxel.gdshader` handles wind, wetness and leaf backlight.
+  block needs a model (tested). `voxel.gdshader` handles wind, wetness and leaf backlight;
+  VoxelGrid.Kind.GLOW voxels (fire) light themselves (VoxelMesher UV.y = 2, EMISSION).
   `see_through.gdshaderinc` (voxel and terrain shaders) dithers away what stands between the
   camera and the player, around them. Each model also has coarser copies (`_lod1` = 2 voxels per
   voxel, `_lod2` = 4). Top-down, the ground in view sets the detail (WorldView3D.lod_for_view)
@@ -193,7 +194,7 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
 - The workbench is a voxel model two tiles long (WorkbenchModel: a carpenter's bench with a
   vise, drawers, a cupboard, and an iron anvil, hammer and saw on top) standing in two object
   voxels: its left end seen from its front (WORKBENCH, _WEST, _NORTH, _EAST: the way it faces,
-  ObjectShapes.BENCH_FRONTS) holds the model, drawn turned and centered on both tiles
+  ObjectShapes.FACING_KINDS) holds the model, drawn turned and centered on both tiles
   (ChunkMesher._add_prop), and its right end (WORKBENCH_END_X / _Z, no model:
   ObjectShapes.model_block -1) lies on its right. `Mining.placement` gives the cells a placed
   voxel takes (a bench faces the player, `front_towards`, and takes the cell aimed at and the
@@ -202,17 +203,40 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   carries the way it faces. Bodies are kept out of both tiles end to end
   (ObjectShapes.footprint_rect); the aiming frame covers the whole bench. The item's icon, the one
   in hand and on the ground use the same model (ItemModels).
-- Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST: ObjectShapes.CHEST_FRONTS; facing
-  objects share `front_of`, `facing`, `turn_of`, `model_block`): placed facing the player, opened by
+- Objects placed facing the player: ObjectShapes.FACING_KINDS gives each kind (its first block,
+  whose model the others share) its four blocks in WAYS order (S, W, N, E); `kind_of`, `front_of`,
+  `facing(kind, front)`, `turn_of`, `model_block`. One-tile ones (chests, furnaces) are BOX_SIZE
+  voxels square and a level high; `Mining.placement` puts them in the cell aimed at.
+- Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened by
   a right click (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made
-  empty the first time; `chest_changed` marks the chunk to save; saved in the region with the
+  empty the first time; `contents_changed` marks the chunk to save; saved in the region with the
   chunk, never sent with it). Msg.OPEN_CHEST (in reach) sets PlayerSession.chest and answers
   Msg.CHEST (its contents; sent again to everyone who has it open when it changes);
   Msg.CHEST_CLICK runs Inventory.click_chest (the player's cursor, Minecraft's rules), and with a
   chest open shift-clicks in the bag move into it (Inventory.click's `chest`). Broken, a chest
-  spills its stacks (GameServer._spill_chest). Client: GameClient.chest (its copy, predicted),
-  InventoryScreen.open_chest (its 27 slots over the bag instead of the crafting grid).
+  spills its stacks (GameServer._spill_contents). Client: GameClient.chest (its copy, predicted),
+  InventoryScreen.open_chest (its 27 slots over the bag instead of the crafting grid); the screen
+  closes when what it shows is broken (GameClient._close_if_gone).
+- Furnaces (`src/sim/items/smelting.gd`, `furnace.gd`; FurnaceModels): the food furnace (a bread
+  oven) only cooks food (Smelting.FOOD: berries -> dried berries, mushrooms -> stew); ore put in it
+  (Smelting.BREAKS) breaks it when it melts: BROKEN_FURNACE (same facing, no use, gives stones),
+  the ore is lost, the rest spills. The factory furnace smelts ores into ingots and logs into
+  charcoal; food comes out CHARRED_FOOD. Each facing kind has an unlit and a lit kind
+  (ObjectShapes.LIT, `furnace_kind`, `is_lit`). A Furnace (kind, slots INPUT/FUEL/OUTPUT in an
+  Inventory, `fire` 1 -> 0 over `fire_seconds`, `progress` 0 -> 1) is kept per cell in
+  ChunkData.furnaces (WorldState.furnace_at / take_furnace, saved with the region); `step(delta,
+  clock)` lights fuel (Smelting.FUEL_SECONDS) while something can cook, cooks
+  Smelting.COOK_SECONDS, both through `clock.scale_duration()`; progress cools back without fire
+  and restarts when another item goes in. The server steps the loaded chunks' furnaces every
+  FURNACE_TICKS, swaps the voxel lit/unlit (`_show_fire`), sends Msg.FURNACE to who opened one
+  (Msg.OPEN_FURNACE, FURNACE_CLICK: Inventory.click_furnace, where items only go where they fit,
+  `Furnace.fits`, and the output only gives; shift from the bag: input, else fuel). Client:
+  GameClient.furnace (shown, not stepped), InventoryScreen.open_furnace (input, a flame burning
+  down, fuel, an arrow filling up, output, a hint); lit furnaces add a light (ChunkMesher, with the
+  lava lights) and glowing voxels; a food furnace breaking near the player is announced
+  (`furnace_broke`). Recipes: food furnace 8 stones; factory furnace 8 stones around coal or
+  charcoal, at the workbench. The book's Furnaces chapter lists what each makes and the fuels.
 - Saves (`src/sim/save/world_storage.gd`, server side only): `user://worlds/<folder>/` holds
   world.cfg (settings, clock, weather), players/<name>.cfg and regions/r.<x>.<z>.bin (the chunks
   players changed, 32x32 per file, zstd voxels; the others are generated again). Change voxels

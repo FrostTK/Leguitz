@@ -102,6 +102,18 @@ static func build(item: int) -> VoxelGrid:
 			return WorkbenchModel.build()
 		Items.Id.CHEST:
 			return ChestModel.build()
+		Items.Id.FOOD_FURNACE:
+			return FurnaceModels.food(false)
+		Items.Id.FACTORY_FURNACE:
+			return FurnaceModels.factory(false)
+		Items.Id.DRIED_BERRIES:
+			return _dried_berries()
+		Items.Id.MUSHROOM_STEW:
+			return _stew()
+		Items.Id.CHARCOAL:
+			return _charcoal()
+		Items.Id.CHARRED_FOOD:
+			return _charred()
 	return null
 
 
@@ -309,6 +321,67 @@ static func _berries() -> VoxelGrid:
 		grid.set_voxel(Vector3i(center) + Vector3i(0, 1, 0), _v("#e2484f"))
 	grid.box(Vector3i(4, 6, 4), Vector3i(4, 7, 4), _v(STEM, VoxelGrid.Kind.FOLIAGE))
 	grid.box(Vector3i(5, 7, 4), Vector3i(6, 7, 4), _v(LEAF, VoxelGrid.Kind.FOLIAGE))
+	return grid
+
+
+## Berries dried in the food furnace: smaller, dark and wrinkled, on a
+## dry stem.
+static func _dried_berries() -> VoxelGrid:
+	var grid := VoxelGrid.new(Vector3i(9, 7, 9))
+	var spots: Array[Vector3] = [
+		Vector3(2.5, 1.2, 3.0),
+		Vector3(5.8, 1.2, 3.4),
+		Vector3(3.6, 1.2, 6.0),
+		Vector3(6.2, 1.2, 6.4),
+		Vector3(4.4, 3.0, 4.6),
+	]
+	for i in spots.size():
+		grid.ellipsoid(spots[i], Vector3(1.4, 1.1, 1.4), _v("#5a1622" if i % 2 else "#6e1d2a"))
+		grid.set_voxel(Vector3i(spots[i]) + Vector3i(0, 1, 0), _v("#8f3442"))
+		grid.set_voxel(Vector3i(spots[i]) + Vector3i(1, 0, 0), _v("#3e0f18"))
+	grid.box(Vector3i(4, 4, 4), Vector3i(4, 5, 4), _v("#7a5a30"))
+	grid.set_voxel(Vector3i(5, 5, 4), _v("#94703c"))
+	return grid
+
+
+## A wooden bowl of mushroom stew, bits of mushroom floating in it.
+static func _stew() -> VoxelGrid:
+	var grid := VoxelGrid.new(Vector3i(11, 6, 11))
+	var middle := Vector2(5.5, 5.5)
+	grid.disc(middle, 3.0, 0, _v("#5c3b1f"))
+	grid.disc(middle, 4.2, 1, _v("#7a5230"))
+	for y in range(2, 5):
+		grid.disc(middle, 5.4, y, _v("#94683d" if y == 4 else "#7a5230"))
+	grid.disc(middle, 4.4, 4, _v("#8a4a2a"))
+	grid.disc(middle, 3.0, 4, _v("#a65f35"))
+	for p: Vector3i in [Vector3i(4, 5, 4), Vector3i(7, 5, 6), Vector3i(5, 5, 7)]:
+		grid.set_voxel(p, _v("#efe6d4"))
+	grid.set_voxel(Vector3i(6, 5, 4), _v("#c7302f"))
+	grid.set_voxel(Vector3i(3, 5, 6), _v("#9c6d46"))
+	return grid
+
+
+## A stub of charred wood: black, its rings still showing at its ends.
+static func _charcoal() -> VoxelGrid:
+	var grid := VoxelGrid.new(Vector3i(10, 5, 6))
+	for x in 10:
+		for y in 5:
+			for z in 6:
+				var d := Vector2(y - 2.0, z - 2.5).length()
+				var bite := HashUtil.unit2(0xC4A2, x, y * 6 + z) * 0.8
+				if d < 2.6 - bite * (1.0 if x == 0 or x == 9 else 0.4):
+					var end := x == 0 or x == 9
+					var ring := end and int(d) % 2 == 1
+					var hex := "#3a302a" if ring else ("#1a1716" if (x + y) % 3 else "#2a2422")
+					grid.set_voxel(Vector3i(x, y, z), _v(hex))
+	return grid
+
+
+## Food burnt black in the factory furnace, a spark still glowing in it.
+static func _charred() -> VoxelGrid:
+	var grid := _lump(["#0e0c0c", "#1f1a19", "#36292a"], Items.Id.CHARRED_FOOD)
+	grid.set_voxel(Vector3i(3, 5, 4), _v("#b8301a", VoxelGrid.Kind.GLOW))
+	grid.set_voxel(Vector3i(5, 4, 6), _v("#7a2016"))
 	return grid
 
 

@@ -24,6 +24,8 @@ const CRAFT := "craft"
 const OPEN_WORKBENCH := "open_workbench"
 const OPEN_CHEST := "open_chest"
 const CHEST_CLICK := "chest_click"
+const OPEN_FURNACE := "open_furnace"
+const FURNACE_CLICK := "furnace_click"
 
 ## map_request() row for a map of the surface.
 const MAP_SURFACE := -1
@@ -44,6 +46,7 @@ const ITEM_SPAWN := "item_spawn"
 const ITEM_MOVE := "item_move"
 const ITEM_REMOVE := "item_remove"
 const CHEST := "chest"
+const FURNACE := "furnace"
 
 
 ## The player broke the voxel at `cell` (tile x, row, tile y) with the
@@ -100,6 +103,24 @@ static func chest_click(slot: int, right: bool, shift: bool) -> Dictionary:
 ## What a chest a player opened holds (Inventory.contents).
 static func chest(cell: Vector3i, chest_items: Inventory) -> Dictionary:
 	return {"t": CHEST, "cell": cell, "chest": chest_items.contents(Inventory.CHEST)}
+
+
+## The player opened the furnace standing in `cell` (until the screen
+## closes, Msg.inventory_close).
+static func open_furnace(cell: Vector3i) -> Dictionary:
+	return {"t": OPEN_FURNACE, "cell": cell}
+
+
+## A click on a slot of the furnace the player opened
+## (Inventory.click_furnace).
+static func furnace_click(slot: int, right: bool, shift: bool) -> Dictionary:
+	return {"t": FURNACE_CLICK, "slot": slot, "right": right, "shift": shift}
+
+
+## A furnace a player opened: its slots, fire and progress
+## (Furnace.to_dict).
+static func furnace(cell: Vector3i, state: Furnace) -> Dictionary:
+	return {"t": FURNACE, "cell": cell, "furnace": state.to_dict()}
 
 
 ## The player takes what their crafting grid makes (shift: as many as

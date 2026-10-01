@@ -89,10 +89,20 @@ func wear_out(slot: int) -> bool:
 ## item or swaps the two (tools, which do not stack, swap); right picks
 ## half a stack up or puts one item down; shift moves the stack between
 ## the hotbar and the bag (from the grid: into the slots; with a chest
-## open, `chest`: into the chest).
-func click(slot: int, right: bool, shift: bool, chest: Inventory = null) -> void:
+## open, `chest`: into the chest; with a furnace open, `furnace`: what it
+## cooks or burns into it).
+func click(
+	slot: int, right: bool, shift: bool, chest: Inventory = null, furnace: Furnace = null
+) -> void:
 	if slot < 0 or slot >= SIZE or slot == CURSOR:
 		return
+	if shift and furnace != null and slot < SLOTS:
+		var before := counts[slot]
+		for into: int in [Furnace.INPUT, Furnace.FUEL]:
+			if items[slot] != Items.Id.NONE and furnace.fits(into, items[slot]):
+				_move(slot, furnace.slots, [into])
+		if counts[slot] != before:
+			return
 	if shift:
 		var others := range(HOTBAR, SLOTS) if slot < HOTBAR else range(HOTBAR)
 		if slot >= CRAFT:
@@ -115,6 +125,30 @@ func click_chest(chest: Inventory, slot: int, right: bool, shift: bool) -> void:
 		chest._move(slot, self, range(SLOTS))
 	else:
 		_click_on(chest, slot, right)
+
+
+## A click on a slot of a furnace with this inventory's cursor: what it
+## cooks and what it burns only go where they belong (Furnace.fits); what
+## it made only comes out, onto the cursor's stack too. Shift moves a
+## stack into this inventory's slots.
+func click_furnace(furnace: Furnace, slot: int, right: bool, shift: bool) -> void:
+	if slot < 0 or slot >= Furnace.SLOTS:
+		return
+	var oven := furnace.slots
+	if shift:
+		oven._move(slot, self, range(SLOTS))
+		return
+	var held_item := items[CURSOR]
+	if slot == Furnace.OUTPUT:
+		var made := oven.items[slot]
+		if held_item == Items.Id.NONE:
+			_click_on(oven, slot, right)
+		elif made == held_item:
+			var amount := mini(oven.counts[slot], Items.max_stack(made) - counts[CURSOR])
+			counts[CURSOR] += oven.take(slot, maxi(amount, 0))
+		return
+	if held_item == Items.Id.NONE or furnace.fits(slot, held_item):
+		_click_on(oven, slot, right)
 
 
 ## The items of the slots (to save a chest: its first CHEST slots).

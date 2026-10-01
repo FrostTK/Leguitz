@@ -31,30 +31,79 @@ const SOLIDS := {
 	Tiles.Block.CACTUS: [8, 2],
 	Tiles.Block.BIG_MUSHROOM: [8, 3],
 }
-## The workbench stands on two tiles: its left end seen from its front
-## (one block for each way it faces, keyed to that way; it holds the
-## model) and its right end beside it (one block per axis it lies along).
-## It is BENCH_DEPTH voxels deep and blocks a level.
-const BENCH_FRONTS := {
-	Tiles.Block.WORKBENCH: Vector2i(0, 1),
-	Tiles.Block.WORKBENCH_WEST: Vector2i(-1, 0),
-	Tiles.Block.WORKBENCH_NORTH: Vector2i(0, -1),
-	Tiles.Block.WORKBENCH_EAST: Vector2i(1, 0),
+## The ways an object placed facing the player can face, in the order of
+## the blocks of each kind in FACING_KINDS.
+const WAYS: Array[Vector2i] = [Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1), Vector2i(1, 0)]
+## Objects placed facing the player: each kind (its first block, whose
+## model the others share) and its block for each of the WAYS. The
+## workbench's are its left end seen from its front; furnaces come unlit
+## and lit, and a food furnace that melted ore is broken.
+const FACING_KINDS := {
+	Tiles.Block.WORKBENCH:
+	[
+		Tiles.Block.WORKBENCH,
+		Tiles.Block.WORKBENCH_WEST,
+		Tiles.Block.WORKBENCH_NORTH,
+		Tiles.Block.WORKBENCH_EAST,
+	],
+	Tiles.Block.CHEST:
+	[
+		Tiles.Block.CHEST,
+		Tiles.Block.CHEST_WEST,
+		Tiles.Block.CHEST_NORTH,
+		Tiles.Block.CHEST_EAST,
+	],
+	Tiles.Block.FOOD_FURNACE:
+	[
+		Tiles.Block.FOOD_FURNACE,
+		Tiles.Block.FOOD_FURNACE_WEST,
+		Tiles.Block.FOOD_FURNACE_NORTH,
+		Tiles.Block.FOOD_FURNACE_EAST,
+	],
+	Tiles.Block.FOOD_FURNACE_LIT:
+	[
+		Tiles.Block.FOOD_FURNACE_LIT,
+		Tiles.Block.FOOD_FURNACE_LIT_WEST,
+		Tiles.Block.FOOD_FURNACE_LIT_NORTH,
+		Tiles.Block.FOOD_FURNACE_LIT_EAST,
+	],
+	Tiles.Block.FACTORY_FURNACE:
+	[
+		Tiles.Block.FACTORY_FURNACE,
+		Tiles.Block.FACTORY_FURNACE_WEST,
+		Tiles.Block.FACTORY_FURNACE_NORTH,
+		Tiles.Block.FACTORY_FURNACE_EAST,
+	],
+	Tiles.Block.FACTORY_FURNACE_LIT:
+	[
+		Tiles.Block.FACTORY_FURNACE_LIT,
+		Tiles.Block.FACTORY_FURNACE_LIT_WEST,
+		Tiles.Block.FACTORY_FURNACE_LIT_NORTH,
+		Tiles.Block.FACTORY_FURNACE_LIT_EAST,
+	],
+	Tiles.Block.BROKEN_FURNACE:
+	[
+		Tiles.Block.BROKEN_FURNACE,
+		Tiles.Block.BROKEN_FURNACE_WEST,
+		Tiles.Block.BROKEN_FURNACE_NORTH,
+		Tiles.Block.BROKEN_FURNACE_EAST,
+	],
 }
+## The workbench stands on two tiles: its left end (FACING_KINDS) holds
+## the model, its right end lies beside it (one block per axis it lies
+## along). It is BENCH_DEPTH voxels deep.
 const BENCH_ENDS := {
 	Tiles.Block.WORKBENCH_END_X: Vector2i(1, 0),
 	Tiles.Block.WORKBENCH_END_Z: Vector2i(0, 1),
 }
 const BENCH_DEPTH := 14
-## Chests face the player too (one block for each way); CHEST_SIZE voxels
-## square, a level high.
-const CHEST_FRONTS := {
-	Tiles.Block.CHEST: Vector2i(0, 1),
-	Tiles.Block.CHEST_WEST: Vector2i(-1, 0),
-	Tiles.Block.CHEST_NORTH: Vector2i(0, -1),
-	Tiles.Block.CHEST_EAST: Vector2i(1, 0),
+## Chests and furnaces: so many voxels square, a level high.
+const BOX_SIZE := 14
+## The furnaces (their unlit kind) and their lit kind.
+const LIT := {
+	Tiles.Block.FOOD_FURNACE: Tiles.Block.FOOD_FURNACE_LIT,
+	Tiles.Block.FACTORY_FURNACE: Tiles.Block.FACTORY_FURNACE_LIT,
 }
-const CHEST_SIZE := 14
 ## Small things stand anywhere in their tile (whole voxels), not centered.
 const WANDERING := {
 	Tiles.Block.TALL_GRASS: true,
@@ -72,52 +121,71 @@ const WANDERING := {
 	Tiles.Block.MOSSY_ROCK: true,
 }
 
+## block -> (kind, way index), for the facing objects.
+static var _facing := _build_facing()
+
 
 static func is_tree(block: int) -> bool:
 	return TREES.has(block)
 
 
 static func variant_count(block: int) -> int:
-	if is_bench(block) or is_chest(block):
+	if _facing.has(block) or BENCH_ENDS.has(block):
 		return 1
 	return TREE_VARIANTS if TREES.has(block) else VARIANTS
 
 
+## The kind of a facing object (see FACING_KINDS; -1: not one).
+static func kind_of(block: int) -> int:
+	return _facing[block].x if _facing.has(block) else -1
+
+
 ## A part of a workbench (either end).
 static func is_bench(block: int) -> bool:
-	return BENCH_FRONTS.has(block) or BENCH_ENDS.has(block)
+	return kind_of(block) == Tiles.Block.WORKBENCH or BENCH_ENDS.has(block)
+
+
+## A workbench's left end (the block holding its model).
+static func is_bench_left(block: int) -> bool:
+	return kind_of(block) == Tiles.Block.WORKBENCH
 
 
 ## A chest, whichever way it faces.
 static func is_chest(block: int) -> bool:
-	return CHEST_FRONTS.has(block)
+	return kind_of(block) == Tiles.Block.CHEST
 
 
-## The block whose model a block shows: the ways a workbench or a chest
-## faces share one; -1 for the blocks showing none (a workbench's right
-## end).
+## A furnace that works, lit or not (its unlit kind; -1: not one).
+static func furnace_kind(block: int) -> int:
+	var kind := kind_of(block)
+	for unlit: int in LIT:
+		if kind == unlit or kind == LIT[unlit]:
+			return unlit
+	return -1
+
+
+## A furnace burning (its lit kind).
+static func is_lit(block: int) -> bool:
+	return _facing.has(block) and kind_of(block) in LIT.values()
+
+
+## The block whose model a block shows: the ways a facing object faces
+## share one; -1 for the blocks showing none (a workbench's right end).
 static func model_block(block: int) -> int:
 	if BENCH_ENDS.has(block):
 		return -1
-	if BENCH_FRONTS.has(block):
-		return Tiles.Block.WORKBENCH
-	return Tiles.Block.CHEST if CHEST_FRONTS.has(block) else block
+	return kind_of(block) if _facing.has(block) else block
 
 
-## Which way an object placed facing the player faces (ZERO: such objects
-## are the workbench's left end and the chest).
+## Which way a facing object faces (ZERO: not one).
 static func front_of(block: int) -> Vector2i:
-	return BENCH_FRONTS.get(block, CHEST_FRONTS.get(block, Vector2i.ZERO))
+	return WAYS[_facing[block].y] if _facing.has(block) else Vector2i.ZERO
 
 
-## The block of a facing object (`kind`: WORKBENCH or CHEST) facing `front`
+## The block of a facing object (`kind`: see FACING_KINDS) facing `front`
 ## (a unit step on the ground).
 static func facing(kind: int, front: Vector2i) -> int:
-	var ways: Dictionary = CHEST_FRONTS if kind == Tiles.Block.CHEST else BENCH_FRONTS
-	for block: int in ways:
-		if ways[block] == front:
-			return block
-	return kind
+	return FACING_KINDS[kind][maxi(WAYS.find(front), 0)]
 
 
 ## How a facing object turns its model (made facing +z), radians about the
@@ -130,7 +198,7 @@ static func turn_of(block: int) -> float:
 ## Where a workbench's right end lies from its left end (on its right,
 ## seen from its front).
 static func bench_right(block: int) -> Vector2i:
-	var front: Vector2i = BENCH_FRONTS[block]
+	var front := front_of(block)
 	return Vector2i(front.y, -front.x)
 
 
@@ -168,8 +236,8 @@ static func trunk(block: int, variant: int) -> Vector2i:
 ## Size of the square an object blocks at its foot (voxels; 0: bodies walk
 ## through it).
 static func footprint(block: int, variant: int) -> int:
-	if is_chest(block):
-		return CHEST_SIZE
+	if _facing.has(block) and not is_bench_left(block):
+		return BOX_SIZE
 	if TREES.has(block):
 		return trunk(block, variant).x
 	if SOLIDS.has(block):
@@ -179,7 +247,7 @@ static func footprint(block: int, variant: int) -> int:
 
 ## Levels an object blocks, from its voxel up.
 static func blocking_levels(block: int, variant: int) -> int:
-	if is_bench(block) or is_chest(block):
+	if _facing.has(block) or BENCH_ENDS.has(block):
 		return 1
 	if TREES.has(block):
 		return ceili(trunk(block, variant).y / float(GameConst.TILE_SIZE))
@@ -194,7 +262,7 @@ static func footprint_rect(block: int, tile: Vector2i) -> Rect2:
 	if is_bench(block):
 		# Its whole tile along the bench, BENCH_DEPTH across.
 		var along: Vector2i = BENCH_ENDS.get(block, Vector2i.ZERO)
-		if BENCH_FRONTS.has(block):
+		if is_bench_left(block):
 			along = bench_right(block).abs()
 		var bench := (
 			Vector2(along) * GameConst.TILE_SIZE + Vector2(Vector2i.ONE - along) * BENCH_DEPTH
@@ -205,3 +273,12 @@ static func footprint_rect(block: int, tile: Vector2i) -> Rect2:
 		return Rect2()
 	var center := Coords.tile_to_world_center(tile) + Vector2(offset_at(block, tile))
 	return Rect2(center - Vector2.ONE * size * 0.5, Vector2.ONE * size)
+
+
+static func _build_facing() -> Dictionary:
+	var lookup := {}
+	for kind: int in FACING_KINDS:
+		var blocks: Array = FACING_KINDS[kind]
+		for way in blocks.size():
+			lookup[blocks[way]] = Vector2i(kind, way)
+	return lookup

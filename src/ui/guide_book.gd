@@ -2,7 +2,7 @@ class_name GuideBook
 extends RefCounted
 ## What the player's book says (the 10th slot, shown by BookScreen): the
 ## controls as they are bound (in the player's keyboard layout), the
-## gamepad, tips, tools and the recipes. A chapter is a list of entries:
+## gamepad, tips, tools, the recipes and the furnaces. A chapter is a list of entries:
 ## Dictionaries with a "kind" (Kind) and their text already translated,
 ## built again when the language changes.
 
@@ -15,9 +15,17 @@ const CHAPTERS: Array[String] = [
 	"BOOK_CHAPTER_TIPS",
 	"BOOK_CHAPTER_TOOLS",
 	"BOOK_CHAPTER_CRAFT",
+	"BOOK_CHAPTER_FURNACES",
 ]
-const TIP_COUNT := 12
+const TIP_COUNT := 13
 ## The tools chapter: what each kind of tool is for, shown with this tool.
+## The fuels shown in the furnaces chapter: an item and its name.
+const FUEL_ROWS := [
+	[Items.Id.COAL, "ITEM_COAL"],
+	[Items.Id.CHARCOAL, "ITEM_CHARCOAL"],
+	[Items.Id.OAK_LOG, "BOOK_FURNACE_WOOD"],
+	[Items.Id.STICK, "ITEM_STICK"],
+]
 const TOOL_ROWS := [
 	[Items.Id.IRON_PICKAXE, "BOOK_TOOLS_PICKAXE"],
 	[Items.Id.IRON_SHOVEL, "BOOK_TOOLS_SHOVEL"],
@@ -27,7 +35,7 @@ const TOOL_ROWS := [
 
 ## The entries of every chapter, in CHAPTERS order.
 static func chapters() -> Array[Array]:
-	return [_controls(), _gamepad(), _tips(), _tools(), _craft()]
+	return [_controls(), _gamepad(), _tips(), _tools(), _craft(), _furnaces()]
 
 
 static func _controls() -> Array:
@@ -115,7 +123,7 @@ static func _tools() -> Array:
 
 ## How to craft, then every recipe (the logs sawn into planks in one
 ## entry going through the woods), the workbench's last (each kind of tool
-## in one entry going through the materials).
+## in one entry going through the materials, the factory furnace).
 static func _craft() -> Array:
 	var entries := [_title(CHAPTERS[4]), _text("BOOK_CRAFT_HOW")]
 	var planks := []
@@ -128,18 +136,48 @@ static func _craft() -> Array:
 			tools.get_or_add(Items.tool_of(made), []).append(recipe)
 	var sawn: int = planks[0]["result"][1]
 	entries.append({"kind": Kind.RECIPE, "text": _t("BOOK_CRAFT_PLANKS") % sawn, "recipes": planks})
+	var at_bench := []
 	for recipe: Dictionary in Recipes.all():
 		if not recipe in planks and not Items.TOOLS.has(recipe["result"][0]):
 			var result: Array = recipe["result"]
 			var made := _t(Items.name_key(result[0]))
 			if result[1] > 1:
 				made += "  ×%d" % result[1]
-			entries.append({"kind": Kind.RECIPE, "text": made, "recipes": [recipe]})
+			var entry := {"kind": Kind.RECIPE, "text": made, "recipes": [recipe]}
+			(at_bench if recipe.get("workbench", false) else entries).append(entry)
 	entries.append(_heading("BOOK_CRAFT_AT_BENCH"))
 	for kind: int in tools:
 		var label := _t("BOOK_CRAFT_" + String(Items.Tool.find_key(kind)))
 		entries.append({"kind": Kind.RECIPE, "text": label, "recipes": tools[kind]})
+	entries.append_array(at_bench)
 	entries.append(_text("BOOK_CRAFT_MORE"))
+	return entries
+
+
+## How furnaces work, what each makes (drawn like recipes: one item in,
+## what comes out), what breaks or chars, and the fuels.
+static func _furnaces() -> Array:
+	var entries := [_title(CHAPTERS[5]), _text("BOOK_FURNACE_HOW")]
+	for kind: int in [Tiles.Block.FOOD_FURNACE, Tiles.Block.FACTORY_FURNACE]:
+		var food := kind == Tiles.Block.FOOD_FURNACE
+		entries.append(_heading("ITEM_FOOD_FURNACE" if food else "ITEM_FACTORY_FURNACE"))
+		# What each makes, items making the same thing in one entry.
+		var made := {}
+		for item: int in Smelting.FOOD if food else Smelting.FACTORY:
+			var result := Smelting.result_of(kind, item)
+			made.get_or_add(result, []).append({"ingredients": [item], "result": [result, 1]})
+		for result: int in made:
+			entries.append(
+				{"kind": Kind.RECIPE, "text": _t(Items.name_key(result)), "recipes": made[result]}
+			)
+		entries.append(_text("BOOK_FURNACE_FOOD_ORE" if food else "BOOK_FURNACE_FACTORY_FOOD"))
+	entries.append(_heading("BOOK_FURNACE_FUELS"))
+	for fuel: Array in FUEL_ROWS:
+		var cooks := Smelting.burn_seconds(fuel[0]) / Smelting.COOK_SECONDS
+		var amount := str(cooks).trim_suffix(".0").replace(".", _t("DECIMAL_SEPARATOR"))
+		var text := _t("BOOK_FURNACE_FUEL") % [_t(fuel[1]), amount]
+		entries.append(_icon(fuel[0], text))
+	entries.append(_text("BOOK_FURNACE_PACE"))
 	return entries
 
 

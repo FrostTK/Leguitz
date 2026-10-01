@@ -23,6 +23,9 @@ var modified := false
 ## Server side: the chests standing in the chunk, by cell (their own
 ## Inventory; see WorldState.chest_at), saved with it, never sent.
 var chests: Dictionary[Vector3i, Inventory] = {}
+## Server side: the furnaces standing in the chunk (see
+## WorldState.furnace_at), saved with it; the server runs them.
+var furnaces: Dictionary[Vector3i, Furnace] = {}
 
 
 func _init(chunk_coord := Vector2i.ZERO) -> void:
