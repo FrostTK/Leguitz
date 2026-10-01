@@ -140,7 +140,8 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   are saved in world.cfg. Client: ItemLibrary (block items are cubes wearing the block's top
   texture, others ItemModels voxel models), ItemIcons renders every icon off screen at start,
   Hotbar, InventoryScreen (E), DroppedItemsView, the item in hand (body and first person). Wheel
-  and 1-9 pick the slot (Ctrl + wheel zooms), Q throws (Ctrl: the stack), shoulders on a gamepad.
+  and 1-9 pick the slot (the wheel zooms with its button held down in the top-down view, or with
+  Ctrl: InputBindings.wheel_zooms), Q throws (Ctrl: the stack), shoulders on a gamepad.
 - Saves (`src/sim/save/world_storage.gd`, server side only): `user://worlds/<folder>/` holds
   world.cfg (settings, clock, weather), players/<name>.cfg and regions/r.<x>.<z>.bin (the chunks
   players changed, 32x32 per file, zstd voxels; the others are generated again). Change voxels

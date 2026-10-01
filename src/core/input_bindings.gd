@@ -33,7 +33,7 @@ const BREAK := &"break"
 const PLACE := &"place"
 ## Items: the inventory screen, throwing what is in hand (with Ctrl: the
 ## whole stack), the hotbar slot in hand (the mouse wheel is handled by
-## GameClient: Ctrl + wheel zooms). Physical keys, next to the movement
+## GameClient, see wheel_zooms). Physical keys, next to the movement
 ## keys whatever the keyboard.
 const INVENTORY := &"inventory"
 const DROP_ITEM := &"drop_item"
@@ -106,6 +106,14 @@ static func register_defaults() -> void:
 	_bind(DEPTH_DOWN, [_key(KEY_PAGEDOWN)])
 	_bind(TOGGLE_NOCLIP, [_key(KEY_F4)])
 	_bind(CYCLE_WEATHER, [_key(KEY_F6)])
+
+
+## Whether a turn of the mouse wheel zooms rather than picking the hotbar
+## slot: with the wheel button held down in the top-down view, or with Ctrl.
+static func wheel_zooms(event: InputEventMouseButton, first_person: bool) -> bool:
+	if event.ctrl_pressed:
+		return true
+	return not first_person and (event.button_mask & MOUSE_BUTTON_MASK_MIDDLE) != 0
 
 
 static func _bind(action: StringName, events: Array[InputEvent]) -> void:

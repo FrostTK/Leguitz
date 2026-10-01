@@ -108,10 +108,11 @@ var _root_orbit := Vector3.INF
 var _dragging := false
 ## The item shown in hand (see _update_held).
 var _shown_held := -1
-## The right button is down: a click places, a drag turns the camera once
-## it moved CLICK_SLOP (how far it moved so far).
-var _right_down := false
-var _right_moved := 0.0
+## The right or middle button is down (MOUSE_BUTTON_NONE: neither): a drag
+## turns the camera once it moved CLICK_SLOP (how far it moved so far), a
+## right click places a block.
+var _drag_button := MOUSE_BUTTON_NONE
+var _drag_moved := 0.0
 ## First-person look angles (radians; pitch > 0 looks up).
 var _look_yaw := 0.0
 var _look_pitch := ENTRY_LOOK_PITCH
@@ -284,6 +285,7 @@ func _update_view_mode(delta: float) -> void:
 		_look_yaw = world_viewport.current_yaw
 		_look_pitch = ENTRY_LOOK_PITCH
 		_dragging = false
+		_drag_button = MOUSE_BUTTON_NONE
 	elif wanted < first_person and first_person == 1.0:
 		# Leaving: the top-down camera faces where the player looked.
 		var pitch_degrees := rad_to_deg(world_viewport.pitch)
@@ -443,7 +445,7 @@ func resume() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not joined or get_tree().paused:
 		_dragging = false
-		_right_down = false
+		_drag_button = MOUSE_BUTTON_NONE
 		return
 	if event.is_action_pressed(InputBindings.TOGGLE_VIEW):
 		view_mode.toggle()
@@ -506,8 +508,9 @@ func _handle_block_input(event: InputEvent) -> bool:
 
 
 ## The hotbar (wheel, 1-9, shoulders), the inventory (E) and throwing
-## (Q, with Ctrl the whole stack). Ctrl + wheel zooms. Returns true when the
-## event was used.
+## (Q, with Ctrl the whole stack). The wheel zooms with its button held
+## down (top-down view) or with Ctrl (InputBindings.wheel_zooms). Returns
+## true when the event was used.
 func _handle_item_input(event: InputEvent) -> bool:
 	var button := event as InputEventMouseButton
 	if (
@@ -516,7 +519,11 @@ func _handle_item_input(event: InputEvent) -> bool:
 		and button.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]
 	):
 		var up := button.button_index == MOUSE_BUTTON_WHEEL_UP
-		if button.ctrl_pressed:
+		if InputBindings.wheel_zooms(button, view_mode.first_person):
+			if _drag_button == MOUSE_BUTTON_MIDDLE and not _dragging:
+				# The wheel button was held to zoom: that press does not
+				# turn the camera when the mouse slips a little.
+				_drag_button = MOUSE_BUTTON_NONE
 			var zoom := world_viewport.world_zoom + (1 if up else -1)
 			Settings.set_world_zoom(clampi(zoom, 1, Settings.MAX_WORLD_ZOOM))
 		else:
@@ -592,26 +599,24 @@ func _update_held() -> void:
 
 ## Mouse drag (right or middle button) orbits the camera around the
 ## player (a right click without dragging places a block); +/- zoom (and
-## Ctrl + wheel). Returns true when the event was used.
+## the wheel, see _handle_item_input). Returns true when the event was
+## used.
 func _handle_camera_input(event: InputEvent) -> bool:
 	var button := event as InputEventMouseButton
-	if button != null and button.button_index == MOUSE_BUTTON_RIGHT:
+	if button != null and button.button_index in [MOUSE_BUTTON_RIGHT, MOUSE_BUTTON_MIDDLE]:
 		if button.pressed:
-			_right_down = true
-			_right_moved = 0.0
-		elif _right_down:
-			_right_down = false
-			if not _dragging:
+			_drag_button = button.button_index
+			_drag_moved = 0.0
+		elif button.button_index == _drag_button:
+			if _drag_button == MOUSE_BUTTON_RIGHT and not _dragging:
 				interaction.place()
+			_drag_button = MOUSE_BUTTON_NONE
 			_dragging = false
 		return true
-	if button != null and button.button_index == MOUSE_BUTTON_MIDDLE:
-		_dragging = button.pressed
-		return true
 	var motion := event as InputEventMouseMotion
-	if motion != null and _right_down and not _dragging:
-		_right_moved += motion.screen_relative.length()
-		_dragging = _right_moved > CLICK_SLOP
+	if motion != null and _drag_button != MOUSE_BUTTON_NONE and not _dragging:
+		_drag_moved += motion.screen_relative.length()
+		_dragging = _drag_moved > CLICK_SLOP
 	if motion != null and _dragging:
 		var drag := motion.screen_relative
 		# Grab the world: dragging right turns it right, dragging down tilts

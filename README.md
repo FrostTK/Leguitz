@@ -121,7 +121,12 @@ du projet, puis appuyer sur F5.
 | Tourner / incliner la caméra | Glisser avec le clic droit (ou la molette enfoncée) | Stick droit |
 | Vue à la 1re personne / vue de dessus | F5 (souris pour regarder autour) | X (stick droit) |
 | Revenir à la vue par défaut | Début (Home) | Clic du stick droit |
-| Zoom | Molette, + / - | RB / LB |
+| Miner (maintenir) | Clic gauche | Gâchette droite |
+| Poser le bloc en main | Clic droit | Gâchette gauche |
+| Choisir l'objet en main | Molette, 1 à 9 | RB / LB |
+| Inventaire | E | |
+| Lancer l'objet en main (avec Ctrl : toute la pile) | A (AZERTY) / Q (QWERTY) | |
+| Zoom (vue de dessus) | Molette en gardant le clic molette enfoncé, Ctrl + molette, + / - | |
 | Carte (debug) : ouvrir, dézoomer, fermer | M | Y |
 | Écran de debug | F3 | Select |
 | Descendre dans la grotte suivante / remonter (debug) | Page ↓ / Page ↑ | |
