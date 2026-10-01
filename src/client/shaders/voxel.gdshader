@@ -14,7 +14,8 @@ uniform float wet_darkening = 0.22;
 // See-through hole around the player when something stands between the
 // camera and them (trees...). Off for the player's own body.
 uniform bool cut_out = true;
-uniform float cut_radius = 2.4;
+// Half width and half height of the hole (world units, on screen).
+uniform vec2 cut_size = vec2(1.5, 2.1);
 
 global uniform vec2 weather_wind;
 global uniform float weather_wetness;
@@ -64,7 +65,7 @@ void fragment() {
 	if (cut_out && !IN_SHADOW_PASS) {
 		// Orthographic view: view-space x/y distances are screen distances.
 		vec3 player_view = (VIEW_MATRIX * vec4(player_position, 1.0)).xyz;
-		float d = length(VERTEX.xy - player_view.xy) / cut_radius;
+		float d = length((VERTEX.xy - player_view.xy) / cut_size);
 		if (d < 1.0 && VERTEX.z > player_view.z + 0.6) {
 			if (dither(FRAGCOORD.xy) > smoothstep(0.6, 1.0, d)) {
 				discard;

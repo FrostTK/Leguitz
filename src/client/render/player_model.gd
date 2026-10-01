@@ -9,9 +9,9 @@ const SHADER := preload("res://src/client/shaders/voxel.gdshader")
 ## Render layer of the body: the lantern it carries must not shadow it
 ## (only the sun and the moon do).
 const PLAYER_LAYER := 2
-const LANTERN_RANGE := 9.0
+const LANTERN_RANGE := 10.0
 ## Lantern height above the feet, in world units.
-const LANTERN_HEIGHT := 3.2
+const LANTERN_HEIGHT := 4.6
 ## The chest (local units above the feet): what must stay visible.
 const CHEST := Vector3(0, 0.9, 0)
 const VOXEL := 1.0 / 16.0

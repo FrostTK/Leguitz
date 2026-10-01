@@ -10,7 +10,7 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 - Plateformes : PC (Windows, Linux, macOS) d'abord, puis iOS et Android
 - Langues : français et anglais (réglable dans le jeu)
 
-![Leguitz : jour, caméra tournée, coucher de soleil, nuit](docs/screenshots/phase2-3d-jour-nuit.png)
+![Leguitz : vue par défaut, fin d'après-midi caméra tournée, neige, nuit à la lanterne](docs/screenshots/phase2-3d-jour-nuit.png)
 
 ## État actuel : phase 2 (visuels et lumière en 3D)
 
@@ -32,7 +32,7 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Qualité graphique Bas / Moyen / Élevé / Ultra et rendu HD dans le menu pause | ✅ |
 | Saut d'un bloc, chutes, blocs de pierre sur lesquels on peut monter (comme Minecraft) | ✅ |
 
-![Leguitz : neige, orage, badlands, grottes](docs/screenshots/phase2-3d-meteo-biomes.png)
+![Leguitz : îles aux champignons (rendu HD), badlands, forêt sombre, grottes](docs/screenshots/phase2-3d-meteo-biomes.png)
 
 ![Biomes de Leguitz (phase 1, carte)](docs/screenshots/phase1-biomes.png)
 
