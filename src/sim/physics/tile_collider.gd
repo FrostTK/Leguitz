@@ -22,16 +22,22 @@ static func move(feet: Vector2, motion: Vector2, box: Vector2, is_solid: Callabl
 
 
 static func overlaps_solid(feet: Vector2, box: Vector2, is_solid: Callable) -> bool:
-	var ts := float(GameConst.TILE_SIZE)
-	var min_tx := floori((feet.x - box.x * 0.5) / ts)
-	var max_tx := floori((feet.x + box.x * 0.5 - EPSILON) / ts)
-	var min_ty := floori((feet.y - box.y) / ts)
-	var max_ty := floori((feet.y - EPSILON) / ts)
-	for ty in range(min_ty, max_ty + 1):
-		for tx in range(min_tx, max_tx + 1):
+	var area := covered_tiles(feet, box)
+	for ty in range(area.position.y, area.end.y):
+		for tx in range(area.position.x, area.end.x):
 			if is_solid.call(Vector2i(tx, ty)):
 				return true
 	return false
+
+
+## The tiles a box at `feet` touches.
+static func covered_tiles(feet: Vector2, box: Vector2) -> Rect2i:
+	var ts := float(GameConst.TILE_SIZE)
+	var min_tile := Vector2i(floori((feet.x - box.x * 0.5) / ts), floori((feet.y - box.y) / ts))
+	var max_tile := Vector2i(
+		floori((feet.x + box.x * 0.5 - EPSILON) / ts), floori((feet.y - EPSILON) / ts)
+	)
+	return Rect2i(min_tile, max_tile - min_tile + Vector2i.ONE)
 
 
 static func _move_axis(feet: Vector2, delta: Vector2, box: Vector2, is_solid: Callable) -> Vector2:

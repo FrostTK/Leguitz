@@ -28,7 +28,7 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Ambiance : brume du matin, brume dans les vallées, lucioles, feuilles au vent, poussière des grottes | ✅ |
 | Eau animée (vagues, écume sur les rives, reflets), lave animée | ✅ |
 | Qualité graphique Bas / Moyen / Élevé / Ultra et rendu HD dans le menu pause | ✅ |
-| Montagnes en grandes terrasses (plateaux larges, hautes falaises) | ✅ |
+| Saut d'un bloc, chutes, blocs de pierre sur lesquels on peut monter (comme Minecraft) | ✅ |
 
 ![Leguitz : neige, orage, badlands, grottes](docs/screenshots/phase2-3d-meteo-biomes.png)
 
@@ -41,7 +41,7 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | 5 paramètres climatiques de Minecraft (continentalité, érosion, bizarrerie, température, humidité) | ✅ |
 | Relief par courbes (océans, côtes, plaines, collines, montagnes enneigées), rivières au fond des vallées | ✅ |
 | 33 biomes de surface choisis comme dans Minecraft (table température × humidité, plateaux, pentes, pics) | ✅ |
-| Paliers de hauteur avec falaises façon Stardew, et rampes pour passer | ✅ |
+| Paliers de hauteur avec falaises, qu'on gravit en sautant d'un niveau à la fois | ✅ |
 | Végétation par biome : 8 sortes d'arbres, fleurs en massifs, cactus, champignons géants, cannes à sucre… | ✅ |
 | Affleurements rocheux en montagne, avec charbon, fer, cuivre et émeraudes visibles | ✅ |
 | 6 niveaux souterrains : grandes salles, tunnels, lacs, lave, pierre puis ardoise profonde | ✅ |
@@ -82,6 +82,7 @@ du projet, puis appuyer sur F5.
 |---|---|---|
 | Se déplacer | ZQSD (AZERTY) / WASD (QWERTY), flèches | Stick gauche, croix |
 | Courir | Maj | Clic du stick gauche |
+| Sauter (1 bloc de haut) | Espace | A |
 | Pause | Échap | Start |
 | Tourner / incliner la caméra | Glisser avec le clic droit (ou la molette enfoncée) | Stick droit |
 | Revenir à la vue par défaut | Début (Home) | Clic du stick droit |

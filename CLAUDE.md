@@ -34,7 +34,10 @@ xvfb-run -a godot --path . --audio-driver Dummy --resolution 1280x720 -- --seed=
   at art resolution (1 texel per art pixel) unless HD. Lights and particles live outside the root
   (no non-uniform scale). Sprites face the camera in `sprite3d.gdshader` (and the light in the
   shadow pass). Faces exist on every side: the camera can look from anywhere.
-  Sprites come from `tools/gen_placeholder_art.py`; its GROUNDS/BLOCKS lists must match the enums.
+  Textures and sprites come from `tools/gen_art.py`; its GROUNDS/BLOCKS lists must match the enums.
+- Movement is Minecraft-like (`src/sim/physics/player_body.gd`, shared client/server): heights in
+  levels from `ChunkData.top_height()` (INF = cannot stand there), walk up to 0.2, jump 1.25,
+  fall off edges. No stairs: terrain levels rise one at a time so they can be climbed.
 - World generation (`src/sim/world/generation/`): ClimateSampler (5 Minecraft climate noises,
   sampled every 4 tiles by ClimateGrid) -> TerrainShaper (splines, rivers, terrace levels) ->
   Biomes.select -> SurfaceBuilder (ground + vegetation) ; CaveGenerator for layers -1..-6.

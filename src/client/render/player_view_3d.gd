@@ -22,7 +22,7 @@ const FRAME_BY_FACING := {
 }
 
 var lantern := OmniLight3D.new()
-## Feet position in local units (see Render3D), smoothed on steps.
+## Feet position in local units (see Render3D).
 var local_position := Vector3.ZERO
 
 var _sprite := MultiMeshInstance3D.new()
@@ -57,17 +57,12 @@ func _ready() -> void:
 	add_child(lantern)
 
 
-## Follows the player: `world_px` is the feet position, `height` the local
-## ground height, `root` the world root's transform, `yaw` the camera's.
+## Follows the player: `world_px` is the feet position, `height` the feet
+## height (levels), `root` the world root's transform, `yaw` the camera's.
 func update_from(
-	world_px: Vector2, height: float, facing: Vector2i, yaw: float, root: Transform3D, delta: float
+	world_px: Vector2, height: float, facing: Vector2i, yaw: float, root: Transform3D
 ) -> void:
-	var target := Render3D.world_px_to_local(world_px, height)
-	# Smooth steps and ramps a little so height changes do not pop.
-	var smoothed := lerpf(local_position.y, height, 1.0 - exp(-18.0 * delta))
-	if absf(smoothed - height) > Render3D.LEVEL_HEIGHT * 2.0:
-		smoothed = height
-	local_position = Vector3(target.x, smoothed, target.z)
+	local_position = Render3D.world_px_to_local(world_px, height)
 	position = root * local_position
 	var on_screen := Render3D.ground_to_screen(Vector2(facing), yaw)
 	var screen_facing := Vector2i.DOWN if on_screen.y > 0.0 else Vector2i.UP
@@ -75,8 +70,3 @@ func update_from(
 		screen_facing = Vector2i.RIGHT if on_screen.x > 0.0 else Vector2i.LEFT
 	var frame: int = FRAME_BY_FACING.get(screen_facing, 0)
 	_sprite.multimesh.set_instance_custom_data(0, Color(frame, 0, 0, 0))
-
-
-func place(world_px: Vector2, height: float, root: Transform3D) -> void:
-	local_position = Render3D.world_px_to_local(world_px, height)
-	position = root * local_position

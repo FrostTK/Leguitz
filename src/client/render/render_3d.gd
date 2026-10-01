@@ -21,9 +21,9 @@ const MAX_PITCH := 78.0
 const PIXELS_PER_UNIT := 16.0
 ## Local height of one terrace level, of rock walls and placed blocks.
 const LEVEL_HEIGHT := 1.0
-const WALL_HEIGHT := LEVEL_HEIGHT
+const WALL_HEIGHT := ChunkData.CUBE_HEIGHT
 ## Water surface sits a little below the ground of its level.
-const WATER_DEPTH := 0.15
+const WATER_DEPTH := ChunkData.WATER_DROP
 
 static var depth_stretch := 1.0 / sin(deg_to_rad(DEFAULT_PITCH))
 static var vertical_scale := 1.0 / cos(deg_to_rad(DEFAULT_PITCH))

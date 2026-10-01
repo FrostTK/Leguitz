@@ -9,8 +9,6 @@ extends RefCounted
 
 const SURFACE_LAYER := 0
 const MIN_LAYER := CaveGenerator.MIN_LAYER
-const SALT_RAMPS := 40
-const RAMP_THRESHOLD := 0.42
 ## Meters of per-tile noise added to decide where water ends (ragged shores).
 const WATER_EDGE_DETAIL := 1.5
 
@@ -31,7 +29,6 @@ var climate: ClimateSampler
 var shaper := TerrainShaper.new()
 var surface: SurfaceBuilder
 var caves: CaveGenerator
-var _ramps: FastNoiseLite
 
 
 class Column:
@@ -54,7 +51,6 @@ func _init(seed_value: int) -> void:
 	climate = ClimateSampler.new(world_seed)
 	surface = SurfaceBuilder.new(world_seed)
 	caves = CaveGenerator.new(world_seed)
-	_ramps = ClimateSampler.make_fbm(world_seed, SALT_RAMPS, 1.0 / 9.0, 1, 0.0)
 
 
 func generate_chunk(coord: Vector2i, layer: int = SURFACE_LAYER) -> ChunkData:
@@ -177,8 +173,6 @@ func _generate_surface(chunk: ChunkData) -> void:
 				shape |= ChunkData.SHAPE_LOWER_S
 			if levels[center - 1] < level:
 				shape |= ChunkData.SHAPE_LOWER_W
-			if shape != 0 and _ramps.get_noise_2d(tx, ty) > RAMP_THRESHOLD:
-				shape |= ChunkData.SHAPE_RAMP
 			if levels[center - span] > level:
 				shape |= ChunkData.SHAPE_SHADOW
 			var block := Tiles.Block.AIR

@@ -110,6 +110,8 @@ func _start_dev_actions() -> void:
 		)
 	if dev.autowalk.y != 0:
 		Input.action_press(InputBindings.MOVE_DOWN if dev.autowalk.y > 0 else InputBindings.MOVE_UP)
+	if dev.hold_jump:
+		Input.action_press(InputBindings.JUMP)
 	if dev.layer != 0:
 		client.transport.send(Msg.debug_change_layer(dev.layer))
 	client.local_player.noclip = dev.noclip

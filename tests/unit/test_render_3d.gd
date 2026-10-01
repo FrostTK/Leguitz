@@ -74,20 +74,6 @@ func test_step_makes_faces() -> void:
 		assert_eq(normal, Vector3.BACK, "the cliff faces south, towards the camera")
 
 
-func test_ramp_height_is_continuous() -> void:
-	var world := ClientWorld.new()
-	var chunk := _flat_chunk(0)
-	var index := 5 * GameConst.CHUNK_SIZE + 5
-	chunk.levels[index] = 1
-	chunk.shapes[index] = ChunkData.SHAPE_LOWER_S | ChunkData.SHAPE_RAMP
-	world.store(chunk)
-	var top := ChunkMesher.height_at(world, Vector2(5.5, 5.01) * GameConst.TILE_SIZE)
-	var bottom := ChunkMesher.height_at(world, Vector2(5.5, 5.99) * GameConst.TILE_SIZE)
-	assert_almost(top, Render3D.LEVEL_HEIGHT, 0.05)
-	assert_true(bottom < top and bottom > 0.0, "the ramp goes down towards the south")
-	assert_almost(ChunkMesher.height_at(world, Vector2(1, 1) * GameConst.TILE_SIZE), 0.0)
-
-
 func test_sky_light_path() -> void:
 	var sunrise := LightingController.sky_direction(LightingController.sun_angle(6.0))
 	var noon := LightingController.sky_direction(LightingController.sun_angle(12.75))
@@ -101,18 +87,14 @@ func test_sky_light_path() -> void:
 	assert_true(night > PI and night < TAU, "the moon's turn at night")
 
 
-func test_mountain_terraces_are_double() -> void:
+func test_terraces_rise_one_level_at_a_time() -> void:
+	# Players climb by jumping one level: the smooth height never skips one.
 	var previous := 0
-	for meters in range(0, 400, 2):
+	for meters in range(0, 600):
 		var level := TerrainShaper.level_for_height(meters)
 		assert_true(level >= previous, "levels never go down with height")
-		assert_true(level - previous <= TerrainShaper.HIGH_LEVELS_PER_STEP, "no big jumps")
+		assert_true(level - previous <= 1, "one level at a time")
 		previous = level
-	var above := TerrainShaper.level_for_height(TerrainShaper.HIGH_LEVELS_FROM + 1.0)
-	var next := TerrainShaper.level_for_height(
-		TerrainShaper.HIGH_LEVELS_FROM + TerrainShaper.HIGH_LEVEL_STEP + 1.0
-	)
-	assert_eq(next - above, TerrainShaper.HIGH_LEVELS_PER_STEP)
 
 
 ## Straightforward 32-bit port of hash2 from terrain3d_common.gdshaderinc.

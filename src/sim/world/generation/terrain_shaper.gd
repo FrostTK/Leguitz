@@ -10,11 +10,11 @@ extends RefCounted
 
 ## Height difference between two terrace levels (one cliff step).
 const LEVEL_STEP := 10.0
-## In the mountains, terraces rise two levels at a time every
-## HIGH_LEVEL_STEP m: wider plateaus between taller cliffs read much better
-## from above than a staircase of one-level steps.
-const HIGH_LEVEL_STEP := 32.0
-const HIGH_LEVELS_PER_STEP := 2
+## In the mountains, one level every HIGH_LEVEL_STEP m (wider steps, so
+## slopes stay readable). Levels rise one at a time so players can climb
+## them by jumping, like Minecraft's blocks; only steep spots make taller
+## cliffs.
+const HIGH_LEVEL_STEP := 16.0
 const HIGH_LEVELS_FROM := 40.0
 const MAX_LEVEL := 31
 
@@ -123,12 +123,11 @@ func height(continentalness: float, erosion: float, weirdness: float) -> float:
 
 
 ## Terrace level of a height: one level every LEVEL_STEP m in the lowlands,
-## then double levels every HIGH_LEVEL_STEP m in the mountains.
+## every HIGH_LEVEL_STEP m in the mountains.
 static func level_for_height(h: float) -> int:
 	if h <= 0.0:
 		return 0
 	if h < HIGH_LEVELS_FROM:
 		return floori(h / LEVEL_STEP)
 	var low_levels := floori(HIGH_LEVELS_FROM / LEVEL_STEP)
-	var steps := floori((h - HIGH_LEVELS_FROM) / HIGH_LEVEL_STEP)
-	return mini(low_levels + steps * HIGH_LEVELS_PER_STEP, MAX_LEVEL)
+	return mini(low_levels + floori((h - HIGH_LEVELS_FROM) / HIGH_LEVEL_STEP), MAX_LEVEL)

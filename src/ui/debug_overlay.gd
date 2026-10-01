@@ -67,6 +67,7 @@ func _lines() -> PackedStringArray:
 		tr("DEBUG_POSITION"),
 		player.position.x,
 		player.position.y,
+		player.height,
 		tr("DEBUG_TILE"),
 		tile.x,
 		tile.y,
@@ -107,7 +108,7 @@ func _lines() -> PackedStringArray:
 	lines.append("Leguitz %s  |  %d FPS" % [version, Engine.get_frames_per_second()])
 	lines.append("GPU: %s  |  %s" % [gpu, renderer])
 	lines.append("%s: %s  |  %s: %s  |  %s" % world_args)
-	lines.append("%s: %.1f, %.1f  |  %s: %d, %d  |  Chunk: %d, %d" % position_args)
+	lines.append("%s: %.1f, %.1f, h %.2f  |  %s: %d, %d  |  Chunk: %d, %d" % position_args)
 	lines.append("%s: %s  |  %s: %s  |  %s %d  |  %s: %s" % ground_args)
 	if player.noclip:
 		lines.append(tr("DEBUG_NOCLIP"))

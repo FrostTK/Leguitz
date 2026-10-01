@@ -29,6 +29,8 @@ class PlayerSession:
 	var position := Vector2.ZERO
 	var layer := WorldGenerator.SURFACE_LAYER
 	var facing := Vector2i.DOWN
+	## Feet height in levels (as reported by the client).
+	var height := 0.0
 	var view_distance := GameConst.DEFAULT_VIEW_DISTANCE
 	var sent_chunks: Dictionary[Vector3i, bool] = {}
 
@@ -174,6 +176,7 @@ func _on_player_move(session: PlayerSession, message: Dictionary) -> void:
 		return
 	session.position = new_pos
 	session.facing = message.get("facing", session.facing)
+	session.height = message.get("h", session.height)
 
 
 func _on_set_time(message: Dictionary) -> void:

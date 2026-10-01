@@ -12,6 +12,7 @@ const MOVE_DOWN := &"move_down"
 const MOVE_LEFT := &"move_left"
 const MOVE_RIGHT := &"move_right"
 const SPRINT := &"sprint"
+const JUMP := &"jump"
 const PAUSE := &"pause"
 const TOGGLE_DEBUG := &"toggle_debug"
 const ZOOM_IN := &"zoom_in"
@@ -56,6 +57,7 @@ static func register_defaults() -> void:
 		]
 	)
 	_bind(SPRINT, [_key(KEY_SHIFT), _button(JOY_BUTTON_LEFT_STICK)])
+	_bind(JUMP, [_key(KEY_SPACE), _button(JOY_BUTTON_A)])
 	_bind(PAUSE, [_key(KEY_ESCAPE), _button(JOY_BUTTON_START)])
 	_bind(TOGGLE_DEBUG, [_key(KEY_F3), _button(JOY_BUTTON_BACK)])
 	_bind(

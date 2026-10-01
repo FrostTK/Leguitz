@@ -9,33 +9,43 @@ const WALK_SPEED := 5.0 * GameConst.TILE_SIZE
 const SPRINT_MULTIPLIER := 1.45
 ## Debug "ghost" mode: flies through everything (creative flight later).
 const NOCLIP_MULTIPLIER := 2.5
-## Collision box (width, height) at the feet, in world pixels.
-const BOX := Vector2(10.0, 6.0)
 const SEND_INTERVAL := GameConst.TICK_DELTA
 
 var client_world: ClientWorld
 var transport: Transport
-## Feet position in world pixels.
-var position := Vector2.ZERO
+var body := PlayerBody.new()
 var active := false
 var noclip := false
 ## Direction the player looks at, on the ground (world axes).
 var facing := Vector2i.DOWN
 ## Camera turn (radians): movement keys follow the screen, not the map.
 var camera_yaw := 0.0
+## Height the camera follows: the ground the player stands on, so jumps do
+## not shake the view (it still follows falls).
+var view_height := 0.0
+
+## Feet position in world pixels.
+var position: Vector2:
+	get:
+		return body.feet
+## Feet height in levels.
+var height: float:
+	get:
+		return body.height
 
 var _send_timer := 0.0
 var _last_sent_position := Vector2.INF
 var _last_sent_facing := Vector2i.ZERO
+var _last_sent_height := INF
 
 
 func spawn_at(world_position: Vector2) -> void:
-	position = world_position
+	body.place(world_position)
 	active = true
 
 
 func apply_correction(world_position: Vector2) -> void:
-	position = world_position
+	body.place(world_position)
 	_last_sent_position = world_position
 
 
@@ -49,6 +59,7 @@ func step(delta: float) -> void:
 		InputBindings.MOVE_UP,
 		InputBindings.MOVE_DOWN
 	)
+	var motion := Vector2.ZERO
 	if input != Vector2.ZERO:
 		input = Render3D.screen_to_ground(input, camera_yaw)
 		_update_facing(input)
@@ -56,15 +67,23 @@ func step(delta: float) -> void:
 		if Input.is_action_pressed(InputBindings.SPRINT):
 			speed *= SPRINT_MULTIPLIER
 		# Cap the step so a frame hitch never tunnels through a tile.
-		var motion := input * speed * minf(delta, 0.1)
-		if noclip:
-			position += motion * NOCLIP_MULTIPLIER
-		else:
-			position = TileCollider.move(position, motion, BOX, client_world.is_solid)
+		motion = input * speed * minf(delta, 0.1)
+	if noclip:
+		body.glide(motion * NOCLIP_MULTIPLIER, client_world.top_at)
+	else:
+		var jump := Input.is_action_pressed(InputBindings.JUMP)
+		body.step(motion, jump, minf(delta, 0.1), client_world.top_at)
+	if body.on_ground or body.height < view_height:
+		view_height = body.height
 	_send_timer += delta
 	if _send_timer >= SEND_INTERVAL:
 		_send_timer = 0.0
 		_send_state()
+
+
+## True until the ground under a new position is known.
+func is_landing() -> bool:
+	return body.needs_landing
 
 
 func current_tile() -> Vector2i:
@@ -79,8 +98,13 @@ func _update_facing(input: Vector2) -> void:
 
 
 func _send_state() -> void:
-	if position == _last_sent_position and facing == _last_sent_facing:
+	if (
+		position == _last_sent_position
+		and facing == _last_sent_facing
+		and height == _last_sent_height
+	):
 		return
 	_last_sent_position = position
 	_last_sent_facing = facing
-	transport.send(Msg.player_move(position, facing))
+	_last_sent_height = height
+	transport.send(Msg.player_move(position, facing, height))

@@ -15,6 +15,7 @@ extends RefCounted
 ## --screenshot=PATH    save a screenshot once the world is ready, then quit
 ## --screenshot-delay=N extra frames to wait before the screenshot (default 10)
 ## --autowalk=DX,DY     hold a movement direction once the world is ready
+## --jump               hold the jump key once the world is ready
 ## --pause-menu         open the pause menu once the world is ready
 ## --layer=N            go to layer N (0 = surface, -1 to -6 underground)
 ## --noclip             start in debug ghost mode
@@ -37,6 +38,7 @@ var zoom := 0
 var screenshot_path := ""
 var screenshot_delay := 10
 var autowalk := Vector2i.ZERO
+var hold_jump := false
 var open_pause_menu := false
 var layer := 0
 var noclip := false
@@ -87,6 +89,8 @@ static func parse(args: PackedStringArray) -> DevOptions:
 				var dxy := value.split(",")
 				if dxy.size() == 2:
 					options.autowalk = Vector2i(dxy[0].to_int(), dxy[1].to_int())
+			"jump":
+				options.hold_jump = true
 			"pause-menu":
 				options.open_pause_menu = true
 			"layer":

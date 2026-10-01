@@ -36,6 +36,14 @@ func is_solid(tile: Vector2i) -> bool:
 	return chunk.is_solid(Coords.tile_to_local(tile))
 
 
+## Height a body stands at on a tile (INF: cannot go there, or unknown).
+func top_at(tile: Vector2i) -> float:
+	var chunk := chunk_at(tile)
+	if chunk == null:
+		return INF
+	return chunk.top_height(Coords.tile_to_local(tile))
+
+
 func ground_at(tile: Vector2i) -> int:
 	var chunk := chunk_at(tile)
 	return Tiles.Ground.NONE if chunk == null else chunk.get_ground(Coords.tile_to_local(tile))

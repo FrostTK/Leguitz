@@ -39,8 +39,8 @@ var debug_map := DebugMap.new()
 var hud_clock := HudClock.new()
 var pause_menu := PauseMenu.new()
 var _loading_label := Label.new()
-## Set on spawn and teleport: place the view without smoothing once the
-## ground under the player is loaded.
+## Set on spawn and teleport: place the camera without smoothing once the
+## player has landed on known ground.
 var _needs_snap := false
 ## Smoothed camera target (local units).
 var _camera_local := Vector3.ZERO
@@ -153,30 +153,32 @@ func _update_orbit(delta: float) -> void:
 
 
 func _update_view(delta: float) -> void:
-	if not joined:
+	if not joined or local_player.is_landing():
 		return
 	var root := world_root.transform
-	var height := ChunkMesher.height_at(world, local_player.position)
 	var yaw := world_viewport.current_yaw
-	if _needs_snap and world.has_tile_chunk(local_player.current_tile()):
+	var feet := local_player.position
+	player_view.update_from(feet, local_player.height, local_player.facing, yaw, root)
+	# The camera follows the ground the player stands on (not each jump).
+	var focus := Render3D.world_px_to_local(feet, local_player.view_height)
+	focus += CAMERA_TARGET_OFFSET
+	if _needs_snap:
 		_needs_snap = false
-		player_view.place(local_player.position, height, root)
-		_camera_local = player_view.local_position + CAMERA_TARGET_OFFSET
-	player_view.update_from(local_player.position, height, local_player.facing, yaw, root, delta)
+		_camera_local = focus
 	var follow := 1.0 - exp(-CAMERA_FOLLOW_SHARPNESS * delta)
-	_camera_local = _camera_local.lerp(player_view.local_position + CAMERA_TARGET_OFFSET, follow)
+	_camera_local = _camera_local.lerp(focus, follow)
 	var target := root * _camera_local
 	world_view.focus = Coords.tile_to_chunk(local_player.current_tile())
 	world_viewport.target = target
 	clouds.target = _camera_local
 	weather_effects.target = target
 	weather_effects.view_size = world_viewport.view_size()
-	lighting.reference_height = player_view.position.y
+	lighting.reference_height = (root * focus).y
 
 
-## True once the player has spawned and the ground under them is loaded.
+## True once the player has spawned and stands on loaded ground.
 func is_ready_to_play() -> bool:
-	return joined and world.has_tile_chunk(local_player.current_tile())
+	return joined and not local_player.is_landing()
 
 
 ## True once everything received is on screen (used for screenshots).

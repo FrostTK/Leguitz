@@ -119,6 +119,23 @@ const WATER_GROUNDS := {
 
 ## Grounds you cannot walk on (for now: lava).
 const SOLID_GROUNDS := {Ground.LAVA: true, Ground.NONE: true}
+## Full cube blocks (stone and the like): one level tall; on the surface a
+## player can jump on top of them. Other solid blocks (trees, boulders...)
+## are obstacles nobody stands on.
+const CUBE_BLOCKS := {
+	Block.STONE: true,
+	Block.DEEPSLATE: true,
+	Block.COAL_ORE: true,
+	Block.COPPER_ORE: true,
+	Block.IRON_ORE: true,
+	Block.GOLD_ORE: true,
+	Block.LAPIS_ORE: true,
+	Block.RUBY_ORE: true,
+	Block.DIAMOND_ORE: true,
+	Block.EMERALD_ORE: true,
+	Block.SANDSTONE: true,
+	Block.PACKED_ICE: true,
+}
 
 const NON_SOLID_BLOCKS := {
 	Block.AIR: true,
@@ -141,6 +158,10 @@ const NON_SOLID_BLOCKS := {
 
 static func is_block_solid(block: int) -> bool:
 	return not NON_SOLID_BLOCKS.has(block)
+
+
+static func is_cube(block: int) -> bool:
+	return CUBE_BLOCKS.has(block)
 
 
 static func is_ground_solid(ground: int) -> bool:

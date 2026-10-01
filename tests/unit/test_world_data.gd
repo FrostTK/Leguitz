@@ -22,14 +22,30 @@ func test_solidity_rules() -> void:
 	assert_true(chunk.is_solid(tile), "trees block")
 	chunk.set_block(tile, Tiles.Block.AIR)
 	chunk.shapes[Coords.local_index(tile)] = ChunkData.SHAPE_LOWER_S
-	assert_true(chunk.is_solid(tile), "cliff edge blocks")
-	chunk.shapes[Coords.local_index(tile)] = ChunkData.SHAPE_LOWER_S | ChunkData.SHAPE_RAMP
-	assert_false(chunk.is_solid(tile), "ramps are walkable")
-	chunk.shapes[Coords.local_index(tile)] = ChunkData.SHAPE_SHADOW
-	assert_false(chunk.is_solid(tile), "shadow is only visual")
+	assert_false(chunk.is_solid(tile), "a cliff edge is ground like any other (heights decide)")
 	chunk.shapes[Coords.local_index(tile)] = 0
 	chunk.set_ground(tile, Tiles.Ground.LAVA)
 	assert_true(chunk.is_solid(tile), "lava blocks for now")
+
+
+func test_top_heights() -> void:
+	var chunk := ChunkData.new()
+	chunk.ground.fill(Tiles.Ground.GRASS)
+	var tile := Vector2i(4, 4)
+	chunk.levels[Coords.local_index(tile)] = 3
+	assert_eq(chunk.top_height(tile), 3.0)
+	chunk.set_block(tile, Tiles.Block.STONE)
+	assert_eq(chunk.top_height(tile), 4.0, "a cube block can be climbed on the surface")
+	chunk.set_block(tile, Tiles.Block.OAK)
+	assert_eq(chunk.top_height(tile), INF, "nobody stands on a tree")
+	chunk.set_block(tile, Tiles.Block.FLOWER_BLUE)
+	assert_eq(chunk.top_height(tile), 3.0, "flowers are walked through")
+	chunk.set_ground(tile, Tiles.Ground.WATER)
+	assert_almost(chunk.top_height(tile), 3.0 - ChunkData.WATER_DROP)
+	var cave := ChunkData.new(Vector2i.ZERO, -2)
+	cave.ground.fill(Tiles.Ground.STONE_FLOOR)
+	cave.set_block(tile, Tiles.Block.STONE)
+	assert_eq(cave.top_height(tile), INF, "underground, rock fills the layer")
 
 
 func test_chunk_duplicate_is_independent() -> void:

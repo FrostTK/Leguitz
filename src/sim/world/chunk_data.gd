@@ -3,21 +3,26 @@ extends RefCounted
 ## Raw content of a 16x16 chunk of one layer (0 = surface, < 0 underground).
 ##
 ## Per tile: ground id, block id, terrace level (surface height step),
-## shape flags (cliff edges, ramps) and biome id.
+## shape flags (cliff edges) and biome id.
+##
+## Heights are in levels: a tile's ground is at its level (water a little
+## lower), a cube block adds one level. Players climb one level by jumping.
 
 const FORMAT_VERSION := 2
 
-## Shape flags: which 4-neighbors are on a lower terrace level. A tile with
-## any of these is a cliff edge (solid) unless it is a ramp.
+## Shape flags: which 4-neighbors are on a lower terrace level (a cliff
+## edge). Flag 16 is free (it marked generated ramps, now gone).
 const SHAPE_LOWER_N := 1
 const SHAPE_LOWER_E := 2
 const SHAPE_LOWER_S := 4
 const SHAPE_LOWER_W := 8
 const SHAPE_EDGE_MASK := 15
-## Walkable slope through a cliff edge.
-const SHAPE_RAMP := 16
 ## The tile right under a south-facing cliff face (drawn in its shadow).
 const SHAPE_SHADOW := 32
+## Water surfaces sit this far (levels) below the ground of their level.
+const WATER_DROP := 0.15
+## Height of a cube block (levels).
+const CUBE_HEIGHT := 1.0
 
 var coord := Vector2i.ZERO
 var layer := 0
@@ -73,13 +78,35 @@ func set_block(local: Vector2i, id: int) -> void:
 	blocks[Coords.local_index(local)] = id
 
 
-## True if the tile blocks movement (solid block, solid ground or cliff).
+## True if something stands on the tile's ground (solid block or ground):
+## nobody can stand there at ground level.
 func is_solid(local: Vector2i) -> bool:
 	var index := Coords.local_index(local)
-	if Tiles.is_block_solid(blocks[index]) or Tiles.is_ground_solid(ground[index]):
-		return true
-	var shape := shapes[index]
-	return shape & SHAPE_EDGE_MASK != 0 and shape & SHAPE_RAMP == 0
+	return Tiles.is_block_solid(blocks[index]) or Tiles.is_ground_solid(ground[index])
+
+
+## Height (levels) of the ground surface of a tile.
+func ground_height(local: Vector2i) -> float:
+	var index := Coords.local_index(local)
+	var height := float(levels[index])
+	if Tiles.is_water(ground[index]):
+		height -= WATER_DROP
+	return height
+
+
+## Height (levels) a body stands at on a tile: its ground, or the top of a
+## cube block. INF where nobody can stand: obstacles (trees, boulders...),
+## lava, and underground the rock mass (cube blocks fill the layer there).
+func top_height(local: Vector2i) -> float:
+	var index := Coords.local_index(local)
+	var block := blocks[index]
+	if Tiles.is_ground_solid(ground[index]):
+		return INF
+	if Tiles.is_cube(block):
+		return INF if layer < WorldGenerator.SURFACE_LAYER else ground_height(local) + CUBE_HEIGHT
+	if Tiles.is_block_solid(block):
+		return INF
+	return ground_height(local)
 
 
 func duplicate_chunk() -> ChunkData:

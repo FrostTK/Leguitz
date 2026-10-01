@@ -27,8 +27,9 @@ static func hello(player_name: String, view_distance: int) -> Dictionary:
 	return {"t": HELLO, "name": player_name, "view_distance": view_distance}
 
 
-static func player_move(position: Vector2, facing: Vector2i) -> Dictionary:
-	return {"t": PLAYER_MOVE, "pos": position, "facing": facing}
+## `height` is the feet height in levels (jumps, falls).
+static func player_move(position: Vector2, facing: Vector2i, height := 0.0) -> Dictionary:
+	return {"t": PLAYER_MOVE, "pos": position, "facing": facing, "h": height}
 
 
 ## `mode` is a WorldClock.Mode; `value` is day minutes (NORMAL) or the
