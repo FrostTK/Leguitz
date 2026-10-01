@@ -16,6 +16,21 @@ func _flat_chunk(level: int) -> ChunkData:
 	return chunk
 
 
+func test_the_aiming_frame_stays_thin_up_close() -> void:
+	var art := BlockHighlight.ART_PIXEL
+	assert_eq(BlockHighlight.thickness_for(false, 70.0, 2.0, 400.0, 800.0), art, "top-down")
+	# First person, HD: about 2 pixels of the screen, 2.5 units away.
+	var near := BlockHighlight.thickness_for(true, 70.0, 2.5, 800.0, 800.0)
+	assert_almost(near, 2.0 * 2.5 * tan(deg_to_rad(35.0)) / 800.0 * 2.0, 0.001)
+	assert_true(near < art / 5.0, "much thinner than an art pixel")
+	var far := BlockHighlight.thickness_for(true, 70.0, 5.0, 800.0, 800.0)
+	assert_true(far > near, "the same on screen: thicker in the world farther away")
+	# Rendered at a quarter of the screen: never thinner than a texel.
+	var low := BlockHighlight.thickness_for(true, 70.0, 2.5, 200.0, 800.0)
+	assert_true(low >= 2.0 * 2.5 * tan(deg_to_rad(35.0)) / 200.0 - 0.001, "a texel at least")
+	assert_eq(BlockHighlight.thickness_for(true, 70.0, 400.0, 800.0, 800.0), art, "at most")
+
+
 func _no_neighbor(_coord: Vector2i) -> ChunkData:
 	return null
 

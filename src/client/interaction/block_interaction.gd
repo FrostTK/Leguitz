@@ -51,7 +51,8 @@ func _process(delta: float) -> void:
 	if not client.joined or client.transport == null:
 		return
 	target = _aim()
-	_highlight.outline(_whole_box(target))
+	var box := _whole_box(target)
+	_highlight.outline(box, _frame_thickness(box))
 	_update_breaking(delta)
 	if place_soon and target != null:
 		place_soon = false
@@ -110,6 +111,21 @@ func on_block_changed(cell: Vector3i, voxel: int) -> void:
 	client.world_view.voxel_changed(cell)
 	if not guessed:
 		_on_changed(cell, before, voxel)
+
+
+## How thick the aiming frame around `box` is seen from the camera now
+## (BlockHighlight.thickness_for: thin in first person).
+func _frame_thickness(box: AABB) -> float:
+	var view := client.world_viewport
+	var camera := view.camera
+	var center := client.world_root.global_transform * box.get_center()
+	return BlockHighlight.thickness_for(
+		camera.projection == Camera3D.PROJECTION_PERSPECTIVE,
+		camera.fov,
+		camera.global_position.distance_to(center),
+		view.viewport.size.y,
+		get_window().size.y
+	)
 
 
 ## Stops breaking (the button was released, the game paused...).

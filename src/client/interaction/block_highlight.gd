@@ -2,14 +2,22 @@ class_name BlockHighlight
 extends MeshInstance3D
 ## A thin dark frame around what the player aims at: the block, or the
 ## body of an object (local units, in the world root: it stretches with
-## the terrain). Its bars are one art pixel thick, in pixel-art and HD
-## views alike.
+## the terrain). Top-down its bars are one art pixel thick, in pixel-art
+## and HD views alike; in first person (close up, in perspective) they
+## are a couple of pixels of the screen (thickness_for).
 
 const COLOR := Color(0.06, 0.05, 0.07, 0.8)
-## Bar thickness (local units: an art pixel).
-const THICKNESS := 1.0 / 16.0
+## Bar thickness top-down (local units: an art pixel).
+const ART_PIXEL := 1.0 / 16.0
+## In perspective: about SCREEN_PIXELS of the screen, never thinner than a
+## texel of the view (nor MIN_THICKNESS), in steps of THICKNESS_STEP (the
+## frame is rebuilt when it changes).
+const SCREEN_PIXELS := 2.0
+const MIN_THICKNESS := 1.0 / 512.0
+const THICKNESS_STEP := 1.0 / 1024.0
 
 var _box := AABB()
+var _thickness := ART_PIXEL
 
 
 func _ready() -> void:
@@ -23,18 +31,35 @@ func _ready() -> void:
 	visible = false
 
 
-## Frames `box` (local units), or hides the frame (empty box).
-func outline(box: AABB) -> void:
+## How thick the bars are (local units): an art pixel for the top-down
+## view; in perspective (`fov` degrees, the frame `distance` away from
+## the camera, the view rendering `texels` rows for a screen `screen` rows
+## tall), SCREEN_PIXELS of the screen, at least a texel, at most an art
+## pixel.
+static func thickness_for(
+	perspective: bool, fov: float, distance: float, texels: float, screen: float
+) -> float:
+	if not perspective:
+		return ART_PIXEL
+	var texel := 2.0 * distance * tan(deg_to_rad(fov) * 0.5) / maxf(texels, 1.0)
+	var pixels := maxf(SCREEN_PIXELS * texels / maxf(screen, 1.0), 1.0)
+	return clampf(snappedf(texel * pixels, THICKNESS_STEP), MIN_THICKNESS, ART_PIXEL)
+
+
+## Frames `box` (local units) with bars `thickness` thick, or hides the
+## frame (empty box).
+func outline(box: AABB, thickness := ART_PIXEL) -> void:
 	if not box.has_volume():
 		visible = false
 		return
 	visible = true
-	if box == _box:
+	if box == _box and thickness == _thickness:
 		return
 	_box = box
+	_thickness = thickness
 	# The bars sit just outside the box, so they show over its faces.
-	var low := box.position - Vector3.ONE * THICKNESS * 0.5
-	var high := box.end + Vector3.ONE * THICKNESS * 0.5
+	var low := box.position - Vector3.ONE * thickness * 0.5
+	var high := box.end + Vector3.ONE * thickness * 0.5
 	var tool := SurfaceTool.new()
 	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for axis in 3:
@@ -45,9 +70,9 @@ func outline(box: AABB) -> void:
 			var from := low
 			from[a] = high[a] if corner & 1 else low[a]
 			from[b] = high[b] if corner & 2 else low[b]
-			var size := Vector3.ONE * THICKNESS
-			size[axis] = high[axis] - low[axis] + THICKNESS
-			_add_bar(tool, from - Vector3.ONE * THICKNESS * 0.5, size)
+			var size := Vector3.ONE * thickness
+			size[axis] = high[axis] - low[axis] + thickness
+			_add_bar(tool, from - Vector3.ONE * thickness * 0.5, size)
 	tool.generate_normals()
 	mesh = tool.commit()
 

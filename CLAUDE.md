@@ -125,7 +125,8 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   local units; objects are met on their body, trees on their trunk). The client's BlockInteraction
   aims (top-down: the mouse ray through the ortho camera, taken back to local units by the root's
   inverse; first person: the crosshair; gamepad: in front of the player), always clamped to the
-  reach sphere, draws the frame (one art pixel thick), cracks, chips and falling trees, and shows
+  reach sphere, draws the frame (one art pixel thick top-down; in perspective about two pixels of
+  the screen, at least a texel: BlockHighlight.thickness_for), cracks, chips and falling trees, and shows
   each change at once (prediction). Msg.BLOCK_BREAK / BLOCK_PLACE go to the server, which checks
   reach, what is there, room and support, changes the voxel through WorldState.set_voxel (objects
   above go with a broken voxel) and sends BLOCK_CHANGED to players having the chunk (also its answer
