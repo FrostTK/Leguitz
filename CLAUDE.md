@@ -5,6 +5,10 @@ Top-down pixel-art open-world sandbox (Stardew visuals, Minecraft mechanics), re
 The owner speaks French: talk to them in French. Code, identifiers and comments are in English;
 player-facing text goes through `i18n/strings.csv` (keys + en + fr), never hard-coded.
 
+**New conversation? Read `CLAUDE-README.md` first**: the owner's decisions, the current state,
+what to do when they say "go" (the next phase) and the detailed remaining roadmap. Work phase by
+phase and wait for "go"; keep that file up to date at the end of each phase.
+
 ## Commands
 
 ```bash

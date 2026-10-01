@@ -2,7 +2,8 @@
 
 Jeu en pixel art, en monde ouvert : **explorer, construire, admirer, survivre et combattre**.
 Visuellement inspiré de *Stardew Valley* (vue du dessus inclinée), et de *Minecraft* pour la logique
-de jeu : monde infini généré procéduralement, blocs, craft, survie, modes Créatif / Survie / Hardcore.
+de jeu : monde infini généré procéduralement, blocs, craft, survie, modes Créatif / Survie / Hardcore,
+et un mode Arcade à scénarios.
 Le monde est rendu en **vraie 3D pixel art** : les blocs sont de vrais cubes texturés en pixel art,
 les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 
@@ -152,5 +153,11 @@ Pour le multijoueur, il suffira de brancher un transport réseau.
 5. Survie et combat (vie, faim, animaux, monstres, combat, modes de jeu)
 6. Souterrain et structures
 7. Agriculture et élevage
-8. Finitions PC (menus, sauvegardes, sons, options graphiques, Steam)
-9. Mobile (iOS, Android)
+8. Mode Arcade : scénario n°1 « Restauration » (restaurer une terre désolée avec éoliennes,
+   irrigateurs et purificateurs, faire revenir forêts, rivières et animaux, puis recycler les
+   bâtiments et continuer en survie)
+9. Finitions PC (menus, sauvegardes, sons, options graphiques, Steam)
+10. Mobile (iOS, Android)
+
+Le détail de chaque étape restante, les décisions prises et la façon de reprendre le projet dans
+une nouvelle conversation avec Claude sont dans [`CLAUDE-README.md`](CLAUDE-README.md).
