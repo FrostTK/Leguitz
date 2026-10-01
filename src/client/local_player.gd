@@ -19,7 +19,10 @@ var transport: Transport
 var position := Vector2.ZERO
 var active := false
 var noclip := false
+## Direction the player looks at, on the ground (world axes).
 var facing := Vector2i.DOWN
+## Camera turn (radians): movement keys follow the screen, not the map.
+var camera_yaw := 0.0
 
 var _send_timer := 0.0
 var _last_sent_position := Vector2.INF
@@ -47,6 +50,7 @@ func step(delta: float) -> void:
 		InputBindings.MOVE_DOWN
 	)
 	if input != Vector2.ZERO:
+		input = Render3D.screen_to_ground(input, camera_yaw)
 		_update_facing(input)
 		var speed := WALK_SPEED * Tiles.ground_speed(client_world.ground_at(current_tile()))
 		if Input.is_action_pressed(InputBindings.SPRINT):

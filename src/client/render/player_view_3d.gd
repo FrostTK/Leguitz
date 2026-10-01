@@ -1,7 +1,8 @@
 class_name PlayerView3D
 extends Node3D
 ## The local player in the 3D world: an upright pixel-art sprite (casting a
-## real shadow), standing on the terrain height, with a lantern.
+## real shadow) standing on the terrain, with a lantern. It lives in world
+## space (outside the stretched world root: lights do not support it).
 
 const TEXTURE := preload("res://assets/textures/entities/player.png")
 const NORMALS := preload("res://assets/textures/entities/player_n.png")
@@ -21,9 +22,10 @@ const FRAME_BY_FACING := {
 }
 
 var lantern := OmniLight3D.new()
+## Feet position in local units (see Render3D), smoothed on steps.
+var local_position := Vector3.ZERO
 
 var _sprite := MultiMeshInstance3D.new()
-var _height := 0.0
 
 
 func _ready() -> void:
@@ -32,20 +34,17 @@ func _ready() -> void:
 	material.set_shader_parameter("atlas", TEXTURE)
 	material.set_shader_parameter("atlas_normals", NORMALS)
 	material.set_shader_parameter("cells", Vector2(FRAMES, 1))
-	material.set_shader_parameter("sprite_width_px", FRAME_PX.x)
+	material.set_shader_parameter("sprite_px", FRAME_PX)
+	material.set_shader_parameter("vertical_scale", Render3D.vertical_scale)
 	var multimesh := MultiMesh.new()
 	multimesh.transform_format = MultiMesh.TRANSFORM_3D
 	multimesh.use_custom_data = true
 	multimesh.mesh = QuadMesh.new()
 	multimesh.instance_count = 1
-	var size := FRAME_PX / Render3D.PIXELS_PER_UNIT
-	var scale := Vector3(size.x, size.y * Render3D.sprite_y_scale, 1.0)
-	multimesh.set_instance_transform(
-		0, Transform3D(Basis.from_scale(scale), Vector3(0, scale.y * 0.5, 0))
-	)
 	_sprite.multimesh = multimesh
 	_sprite.material_override = material
 	_sprite.layers = PLAYER_LAYER
+	_sprite.extra_cull_margin = 4.0
 	add_child(_sprite)
 
 	lantern.light_color = Color(1.0, 0.8, 0.52)
@@ -53,22 +52,31 @@ func _ready() -> void:
 	lantern.omni_attenuation = 1.0
 	lantern.shadow_caster_mask = ~PLAYER_LAYER & 0xFFFFF
 	# Held up high enough to light the tops of nearby walls too.
-	lantern.position = Vector3(0.0, 3.2, 0.6)
+	lantern.position = Vector3(0.0, 3.2, 0.0)
 	lantern.light_energy = 0.0
 	add_child(lantern)
 
 
-## Follows the player: `world_px` is the feet position, `height` the ground.
-func update_from(world_px: Vector2, height: float, facing: Vector2i, delta: float) -> void:
+## Follows the player: `world_px` is the feet position, `height` the local
+## ground height, `root` the world root's transform, `yaw` the camera's.
+func update_from(
+	world_px: Vector2, height: float, facing: Vector2i, yaw: float, root: Transform3D, delta: float
+) -> void:
+	var target := Render3D.world_px_to_local(world_px, height)
 	# Smooth steps and ramps a little so height changes do not pop.
-	_height = lerpf(_height, height, 1.0 - exp(-18.0 * delta))
-	if absf(_height - height) > Render3D.LEVEL_HEIGHT * 2.0:
-		_height = height
-	position = Render3D.world_px_to_3d(world_px, _height)
-	var frame: int = FRAME_BY_FACING.get(facing, 0)
+	var smoothed := lerpf(local_position.y, height, 1.0 - exp(-18.0 * delta))
+	if absf(smoothed - height) > Render3D.LEVEL_HEIGHT * 2.0:
+		smoothed = height
+	local_position = Vector3(target.x, smoothed, target.z)
+	position = root * local_position
+	var on_screen := Render3D.ground_to_screen(Vector2(facing), yaw)
+	var screen_facing := Vector2i.DOWN if on_screen.y > 0.0 else Vector2i.UP
+	if absf(on_screen.x) > absf(on_screen.y):
+		screen_facing = Vector2i.RIGHT if on_screen.x > 0.0 else Vector2i.LEFT
+	var frame: int = FRAME_BY_FACING.get(screen_facing, 0)
 	_sprite.multimesh.set_instance_custom_data(0, Color(frame, 0, 0, 0))
 
 
-func place(world_px: Vector2, height: float) -> void:
-	_height = height
-	position = Render3D.world_px_to_3d(world_px, height)
+func place(world_px: Vector2, height: float, root: Transform3D) -> void:
+	local_position = Render3D.world_px_to_local(world_px, height)
+	position = root * local_position

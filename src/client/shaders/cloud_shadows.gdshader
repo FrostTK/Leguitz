@@ -1,6 +1,6 @@
 shader_type spatial;
 // Cloud shadows: an invisible plane high above the land (it only casts
-// shadows). Clear sky is discarded; clouds are dithered in the shadow map
+// shadows), in the local tile space of the world root. Clear sky is discarded; clouds are dithered in the shadow map
 // (the shadow filter smooths it) so their shadows stay light, with
 // thinner edges.
 
@@ -9,8 +9,8 @@ render_mode unshaded, cull_disabled, shadows_disabled;
 uniform float coverage = 0.35;
 // Wind drift of the clouds, in tiles.
 uniform vec2 drift = vec2(0.0);
-// Horizontal stretch of the world Z axis (tiles are taller than wide in 3D).
-uniform float z_stretch = 1.1547;
+// Local position of the plane (its vertices are relative to it).
+uniform vec2 plane_origin = vec2(0.0);
 uniform float cloud_scale = 0.03;
 // Darkness of the thickest cloud shadows (0..1).
 uniform float max_opacity = 0.5;
@@ -39,9 +39,14 @@ float noise(vec2 p) {
 	return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
 }
 
+varying vec2 tile_pos;
+
+void vertex() {
+	tile_pos = VERTEX.xz + plane_origin;
+}
+
 void fragment() {
-	vec3 world = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz;
-	vec2 tiles = vec2(world.x, world.z / z_stretch) - drift;
+	vec2 tiles = tile_pos - drift;
 	vec2 p = tiles * cloud_scale;
 	float n = noise(p) * 0.55 + noise(p * 2.1 + 5.3) * 0.3 + noise(p * 4.3 + 1.7) * 0.15;
 	float edge = 1.0 - coverage * 0.8 - 0.15;

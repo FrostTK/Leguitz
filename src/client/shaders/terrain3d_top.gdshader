@@ -30,30 +30,22 @@ int top_rank(ivec4 column) {
 	return column.b * 2 + (column.g != 0 ? 2 : 0);
 }
 
-// Terrace edges seen from above. East, west and north cliff faces are
-// hidden from the camera, so their edges are drawn on the tops: a light
-// rim where the ground drops away, a contact shadow at the foot of a
-// higher terrace or wall.
+// Terrace edges seen from above: a light rim where the ground drops away,
+// a contact shadow at the foot of a higher terrace or wall. They outline
+// the terraces whatever the camera angle.
 float edge_shade(ivec4 n[9], ivec2 tx) {
 	int here = top_rank(n[4]);
 	float shade = 1.0;
-	int north = top_rank(n[1]);
-	int west = top_rank(n[3]);
-	int east = top_rank(n[5]);
-	if (north > here) {
-		shade *= tx.y == 0 ? 0.72 : (tx.y == 1 ? 0.88 : 1.0);
-	} else if (north < here && tx.y == 0) {
-		shade *= 1.12;
-	}
-	if (west > here) {
-		shade *= tx.x == 0 ? 0.72 : (tx.x == 1 ? 0.88 : 1.0);
-	} else if (west < here && tx.x == 0) {
-		shade *= 1.14;
-	}
-	if (east > here) {
-		shade *= tx.x == 15 ? 0.72 : (tx.x == 14 ? 0.88 : 1.0);
-	} else if (east < here && tx.x == 15) {
-		shade *= 0.86;
+	// North, west, east, south neighbors and the distance to that edge.
+	int sides[4] = int[](1, 3, 5, 7);
+	int dist[4] = int[](tx.y, tx.x, 15 - tx.x, 15 - tx.y);
+	for (int k = 0; k < 4; k++) {
+		int other = top_rank(n[sides[k]]);
+		if (other > here) {
+			shade *= dist[k] == 0 ? 0.72 : (dist[k] == 1 ? 0.88 : 1.0);
+		} else if (other < here && dist[k] == 0) {
+			shade *= 1.12;
+		}
 	}
 	return shade;
 }

@@ -1,10 +1,11 @@
 class_name ChunkMesher
 extends RefCounted
-## Builds the 3D terrain mesh of a chunk:
+## Builds the 3D terrain mesh of a chunk, in local units (see Render3D):
 ## - surface 0: top faces (the ground of every tile, tops of rock walls,
 ##   stair steps of ramps), UV = chunk pixels / 256 for the top shader,
 ## - surface 1: vertical faces wherever a neighbor is lower (cliffs between
-##   terrace levels, sides of rock walls, banks of water).
+##   terrace levels, sides of rock walls, banks of water), on every side,
+##   since the camera can turn around.
 ## Neighbor chunks give correct faces on chunk borders; a missing neighbor
 ## is treated as level with this chunk (the mesh is rebuilt when it comes).
 
@@ -14,7 +15,7 @@ const SIZE := GameConst.CHUNK_SIZE
 const SPAN := SIZE + 2
 const EPSILON := 0.01
 const RAMP_STEPS := 4
-## Face texture pixels per world unit of height (one level = 16 px).
+## Face texture pixels per local unit of height (one level = 16 px).
 const FACE_PX_PER_UNIT := 16.0 / Render3D.LEVEL_HEIGHT
 ## Face kinds: cliff materials first, then wall kinds.
 const WALL_KIND_OFFSET := 4
@@ -30,6 +31,12 @@ const SIDE_SHAPES := {
 	Side.EAST: ChunkData.SHAPE_LOWER_E,
 	Side.SOUTH: ChunkData.SHAPE_LOWER_S,
 	Side.WEST: ChunkData.SHAPE_LOWER_W,
+}
+const SIDE_NORMALS := {
+	Side.NORTH: Vector3.FORWARD,
+	Side.EAST: Vector3.RIGHT,
+	Side.SOUTH: Vector3.BACK,
+	Side.WEST: Vector3.LEFT,
 }
 
 
@@ -97,6 +104,23 @@ class Surface:
 		return result
 
 
+## Material of a vertical face: atlas kind, the ground hanging over its top
+## (lip, 0 = none) and texture variants.
+class FaceStyle:
+	extends RefCounted
+	var kind := 0
+	var lip := 0
+	var lip_variant := 0
+	var variant := 0.0
+	## Height where the face texture starts (its top row).
+	var texture_top := 0.0
+
+	func _init(face_kind: int, face_variant: float, top: float) -> void:
+		kind = face_kind
+		variant = face_variant
+		texture_top = top
+
+
 ## Returns an ArrayMesh with the top surface (0) and the face surface (1).
 ## `neighbor` is a Callable(coord: Vector2i) -> ChunkData (or null).
 static func build(chunk: ChunkData, neighbor: Callable) -> ArrayMesh:
@@ -114,7 +138,6 @@ static func build_surfaces(chunk: ChunkData, neighbor: Callable) -> Array[Surfac
 	var columns := gather(chunk, neighbor)
 	var tops := Surface.new()
 	var faces := Surface.new()
-	var zs := Render3D.z_stretch
 	var origin_tile := Coords.chunk_origin_tile(chunk.coord)
 	for ly in SIZE:
 		for lx in SIZE:
@@ -125,12 +148,13 @@ static func build_surfaces(chunk: ChunkData, neighbor: Callable) -> Array[Surfac
 			else:
 				_add_top(tops, lx, ly, columns.top[i])
 			for side: int in SIDE_OFFSETS:
-				if side == ramp_side:
+				# Stairs build their own sides (they follow the steps).
+				if ramp_side >= 0 and side != _opposite(ramp_side):
 					continue
 				var offset: Vector2i = SIDE_OFFSETS[side]
 				var j := i + offset.y * SPAN + offset.x
 				if columns.top[j] < columns.top[i] - EPSILON:
-					_add_side(faces, columns, i, j, lx, ly, side, origin_tile, zs)
+					_add_side(faces, columns, i, j, lx, ly, side, origin_tile)
 	return [tops, faces]
 
 
@@ -169,29 +193,36 @@ static func gather(chunk: ChunkData, neighbor: Callable) -> Columns:
 	return columns
 
 
+## Ground texture variant of a tile, as the top shader picks it
+## (ground_atlas_pos in terrain3d_common.gdshaderinc).
+static func ground_variant(tile: Vector2i) -> int:
+	var qx := (tile.x + 16777216) & 0xFFFFFFFF
+	var qy := (tile.y + 16777216) & 0xFFFFFFFF
+	var h := (qx * 374761393 + qy * 668265263) & 0xFFFFFFFF
+	h = ((h ^ (h >> 13)) * 1274126177) & 0xFFFFFFFF
+	h = h ^ (h >> 16)
+	return h & 3
+
+
 static func _add_top(tops: Surface, lx: int, ly: int, height: float) -> void:
-	var zs := Render3D.z_stretch
-	var x0 := float(lx)
-	var z0 := ly * zs
 	var corners: Array[Vector3] = [
-		Vector3(x0, height, z0),
-		Vector3(x0 + 1.0, height, z0),
-		Vector3(x0 + 1.0, height, z0 + zs),
-		Vector3(x0, height, z0 + zs),
+		Vector3(lx, height, ly),
+		Vector3(lx + 1, height, ly),
+		Vector3(lx + 1, height, ly + 1),
+		Vector3(lx, height, ly + 1),
 	]
-	tops.quad(corners, _top_uvs(lx, ly, 0.0, 0.0, 1.0, 1.0), Vector3.UP, Vector3.RIGHT)
+	tops.quad(corners, _top_uvs(lx, ly, Rect2(0, 0, 1, 1)), Vector3.UP, Vector3.RIGHT)
 
 
-## UVs of a (sub-)rectangle of a tile, in chunk pixels / 256.
-static func _top_uvs(
-	lx: int, ly: int, fx0: float, fy0: float, fx1: float, fy1: float
-) -> Array[Vector2]:
+## UVs of a part of a tile (rect in tile units), in chunk pixels / 256.
+static func _top_uvs(lx: int, ly: int, rect: Rect2) -> Array[Vector2]:
 	var scale := 1.0 / GameConst.CHUNK_SIZE
+	var origin := Vector2(lx, ly) + rect.position
 	return [
-		Vector2(lx + fx0, ly + fy0) * scale,
-		Vector2(lx + fx1, ly + fy0) * scale,
-		Vector2(lx + fx1, ly + fy1) * scale,
-		Vector2(lx + fx0, ly + fy1) * scale,
+		origin * scale,
+		(origin + Vector2(rect.size.x, 0)) * scale,
+		(origin + rect.size) * scale,
+		(origin + Vector2(0, rect.size.y)) * scale,
 	]
 
 
@@ -205,8 +236,7 @@ static func _add_side(
 	lx: int,
 	ly: int,
 	side: int,
-	origin_tile: Vector2i,
-	zs: float
+	origin_tile: Vector2i
 ) -> void:
 	var low := columns.top[j]
 	var base := columns.base[i]
@@ -215,82 +245,85 @@ static func _add_side(
 	var variant := float(HashUtil.hash2(0xFACE, world_tile.x * 4 + side, world_tile.y) & 1)
 	var ground := columns.ground[i]
 	var block := columns.block[i]
+	var rect := Rect2(lx, ly, 1, 1)
+	var cliff := FaceStyle.new(TerrainRenderer.cliff_material(ground), variant, base)
+	if not Tiles.is_water(ground):
+		cliff.lip = ground + 1
+		cliff.lip_variant = ground_variant(world_tile)
 	if TileAtlas.is_wall(block):
 		var wall_kind: int = WALL_KIND_OFFSET + TileAtlas.WALL_KINDS[block]
-		var wall_bottom := maxf(low, base)
-		_face_segment(faces, lx, ly, side, wall_bottom, top, top, wall_kind, 0, variant, zs)
+		var wall := FaceStyle.new(wall_kind, variant, top)
+		_wall(faces, rect, side, side, maxf(low, base), top, wall, lx, ly)
 		if low < base - EPSILON:
-			var cliff := TerrainRenderer.cliff_material(ground)
-			_face_segment(faces, lx, ly, side, low, base, base, cliff, ground + 1, variant, zs)
+			_wall(faces, rect, side, side, low, base, cliff, lx, ly)
 	else:
-		var cliff := TerrainRenderer.cliff_material(ground)
-		var lip := ground + 1 if not Tiles.is_water(ground) else 0
-		_face_segment(faces, lx, ly, side, low, top, top, cliff, lip, variant, zs)
+		_wall(faces, rect, side, side, low, top, cliff, lx, ly)
 
 
-static func _face_segment(
+## Vertical quad on the `edge` side of `rect` (local units), facing
+## `facing`, from `bottom` to `top`. Texture u runs left to right as seen
+## from the front, aligned on the tile at (lx, ly).
+static func _wall(
 	faces: Surface,
-	lx: int,
-	ly: int,
-	side: int,
+	rect: Rect2,
+	edge: int,
+	facing: int,
 	bottom: float,
 	top: float,
-	texture_top: float,
-	kind: int,
-	lip: int,
-	variant: float,
-	zs: float
+	style: FaceStyle,
+	lx: int,
+	ly: int
 ) -> void:
-	var x0 := float(lx)
-	var x1 := x0 + 1.0
-	var z0 := ly * zs
-	var z1 := z0 + zs
-	var v_top := (texture_top - top) * FACE_PX_PER_UNIT
-	var v_bottom := (texture_top - bottom) * FACE_PX_PER_UNIT
-	var corners: Array[Vector3]
-	var normal: Vector3
-	var tangent: Vector3
-	match side:
-		Side.SOUTH:
-			corners = [
-				Vector3(x0, top, z1),
-				Vector3(x1, top, z1),
-				Vector3(x1, bottom, z1),
-				Vector3(x0, bottom, z1)
-			]
-			normal = Vector3.BACK
-			tangent = Vector3.RIGHT
+	var x0 := rect.position.x
+	var x1 := rect.end.x
+	var z0 := rect.position.y
+	var z1 := rect.end.y
+	match edge:
 		Side.NORTH:
-			corners = [
-				Vector3(x1, top, z0),
-				Vector3(x0, top, z0),
-				Vector3(x0, bottom, z0),
-				Vector3(x1, bottom, z0)
-			]
-			normal = Vector3.FORWARD
-			tangent = Vector3.LEFT
+			z1 = z0
+		Side.SOUTH:
+			z0 = z1
 		Side.EAST:
-			corners = [
-				Vector3(x1, top, z1),
-				Vector3(x1, top, z0),
-				Vector3(x1, bottom, z0),
-				Vector3(x1, bottom, z1)
-			]
-			normal = Vector3.RIGHT
-			tangent = Vector3.FORWARD
+			x0 = x1
 		_:
-			corners = [
-				Vector3(x0, top, z0),
-				Vector3(x0, top, z1),
-				Vector3(x0, bottom, z1),
-				Vector3(x0, bottom, z0)
-			]
-			normal = Vector3.LEFT
-			tangent = Vector3.BACK
-	var uvs: Array[Vector2] = [
-		Vector2(0.0, v_top), Vector2(16.0, v_top), Vector2(16.0, v_bottom), Vector2(0.0, v_bottom)
+			x1 = x0
+	var a: Vector2
+	var b: Vector2
+	var u0: float
+	match facing:
+		Side.SOUTH:
+			a = Vector2(x0, z0)
+			b = Vector2(x1, z0)
+			u0 = a.x - lx
+		Side.NORTH:
+			a = Vector2(x1, z0)
+			b = Vector2(x0, z0)
+			u0 = lx + 1 - a.x
+		Side.EAST:
+			a = Vector2(x0, z1)
+			b = Vector2(x0, z0)
+			u0 = ly + 1 - a.y
+		_:
+			a = Vector2(x0, z0)
+			b = Vector2(x0, z1)
+			u0 = a.y - ly
+	u0 *= 16.0
+	var u1 := u0 + a.distance_to(b) * 16.0
+	var v_top := (style.texture_top - top) * FACE_PX_PER_UNIT
+	var v_bottom := (style.texture_top - bottom) * FACE_PX_PER_UNIT
+	var corners: Array[Vector3] = [
+		Vector3(a.x, top, a.y),
+		Vector3(b.x, top, b.y),
+		Vector3(b.x, bottom, b.y),
+		Vector3(a.x, bottom, a.y),
 	]
-	faces.quad(corners, uvs, normal, tangent, Vector2(kind, lip), Color(variant, 0, 0))
+	var uvs: Array[Vector2] = [
+		Vector2(u0, v_top), Vector2(u1, v_top), Vector2(u1, v_bottom), Vector2(u0, v_bottom)
+	]
+	var along := b - a
+	var tangent := Vector3(along.x, 0.0, along.y).normalized()
+	var color := Color(style.variant, style.lip_variant / 3.0, 0.0)
+	faces.quad(corners, uvs, SIDE_NORMALS[facing], tangent, Vector2(style.kind, style.lip), color)
 
 
 ## Direction a ramp tile descends towards (-1 if not a walkable ramp).
@@ -307,6 +340,10 @@ static func _ramp_side(columns: Columns, i: int) -> int:
 	return -1
 
 
+static func _opposite(side: int) -> int:
+	return (side + 2) % 4
+
+
 ## Stairs from the tile's height down to its lower neighbor on `side`.
 static func _add_stairs(
 	tops: Surface,
@@ -321,57 +358,45 @@ static func _add_stairs(
 	var offset: Vector2i = SIDE_OFFSETS[side]
 	var high := columns.top[i]
 	var low := columns.top[i + offset.y * SPAN + offset.x]
-	var zs := Render3D.z_stretch
-	var ground := columns.ground[i]
-	var cliff := TerrainRenderer.cliff_material(ground)
 	var world_tile := origin_tile + Vector2i(lx, ly)
 	var variant := float(HashUtil.hash2(0x57A1, world_tile.x, world_tile.y) & 1)
+	var cliff := TerrainRenderer.cliff_material(columns.ground[i])
+	var style := FaceStyle.new(cliff, variant, high)
+	# The two sides along the stairs.
+	var flanks: Array[int] = [(side + 1) % 4, (side + 3) % 4]
 	for step in RAMP_STEPS:
-		# Step `step` spans [a, b] along the descent, at height h.
-		var a := float(step) / RAMP_STEPS
-		var b := float(step + 1) / RAMP_STEPS
-		var h := lerpf(high, low, float(step + 1) / (RAMP_STEPS + 1))
-		var next_h := (
-			lerpf(high, low, float(step + 2) / (RAMP_STEPS + 1)) if step < RAMP_STEPS - 1 else low
-		)
-		var rect := _step_rect(side, a, b)
-		var x0 := lx + rect.position.x
-		var x1 := lx + rect.end.x
-		var z0 := (ly + rect.position.y) * zs
-		var z1 := (ly + rect.end.y) * zs
+		# The first step is flush with the top, the last riser goes down to
+		# `low` on the tile's edge.
+		var h := step_height(high, low, step)
+		var next_h := step_height(high, low, step + 1) if step < RAMP_STEPS - 1 else low
+		var part := _step_rect(side, float(step) / RAMP_STEPS, float(step + 1) / RAMP_STEPS)
+		var rect := Rect2(part.position + Vector2(lx, ly), part.size)
 		var corners: Array[Vector3] = [
-			Vector3(x0, h, z0), Vector3(x1, h, z0), Vector3(x1, h, z1), Vector3(x0, h, z1)
+			Vector3(rect.position.x, h, rect.position.y),
+			Vector3(rect.end.x, h, rect.position.y),
+			Vector3(rect.end.x, h, rect.end.y),
+			Vector3(rect.position.x, h, rect.end.y),
 		]
-		var uvs := _top_uvs(lx, ly, rect.position.x, rect.position.y, rect.end.x, rect.end.y)
-		tops.quad(corners, uvs, Vector3.UP, Vector3.RIGHT)
+		tops.quad(corners, _top_uvs(lx, ly, part), Vector3.UP, Vector3.RIGHT)
 		# Riser of this step, facing down the stairs.
-		var riser := _riser(side, x0, x1, z0, z1)
-		var v_top := (high - h) * FACE_PX_PER_UNIT
-		var v_bottom := (high - next_h) * FACE_PX_PER_UNIT
-		var riser_corners: Array[Vector3] = [
-			Vector3(riser[0].x, h, riser[0].y),
-			Vector3(riser[1].x, h, riser[1].y),
-			Vector3(riser[1].x, next_h, riser[1].y),
-			Vector3(riser[0].x, next_h, riser[0].y),
-		]
-		var riser_uvs: Array[Vector2] = [
-			Vector2(0.0, v_top),
-			Vector2(16.0, v_top),
-			Vector2(16.0, v_bottom),
-			Vector2(0.0, v_bottom)
-		]
-		var normal := Vector3(offset.x, 0.0, offset.y)
-		faces.quad(
-			riser_corners,
-			riser_uvs,
-			normal,
-			Vector3(-offset.y, 0, offset.x),
-			Vector2(cliff, 0),
-			Color(variant, 0, 0)
-		)
+		_wall(faces, rect, side, side, next_h, h, style, lx, ly)
+		# Close the step's ends against the neighbors on both flanks.
+		for flank in flanks:
+			var flank_offset: Vector2i = SIDE_OFFSETS[flank]
+			var beside := columns.top[i + flank_offset.y * SPAN + flank_offset.x]
+			if beside > h + EPSILON:
+				var wall_top := minf(beside, high)
+				_wall(faces, rect, flank, _opposite(flank), h, wall_top, style, lx, ly)
+			elif beside < h - EPSILON:
+				_wall(faces, rect, flank, flank, beside, h, style, lx, ly)
 
 
-## Sub-rectangle (tile units) of step [a, b] along the descent direction.
+## Height of stair step `step` (0 = the top one) between two levels.
+static func step_height(high: float, low: float, step: int) -> float:
+	return lerpf(high, low, float(step) / RAMP_STEPS)
+
+
+## Part of the tile (tile units) covered by step [a, b] along the descent.
 static func _step_rect(side: int, a: float, b: float) -> Rect2:
 	match side:
 		Side.SOUTH:
@@ -384,34 +409,20 @@ static func _step_rect(side: int, a: float, b: float) -> Rect2:
 			return Rect2(1.0 - b, 0.0, b - a, 1.0)
 
 
-## The two ground points (x, z) of a step's riser edge, left to right as seen
-## from below the stairs.
-static func _riser(side: int, x0: float, x1: float, z0: float, z1: float) -> Array[Vector2]:
-	match side:
-		Side.SOUTH:
-			return [Vector2(x0, z1), Vector2(x1, z1)]
-		Side.NORTH:
-			return [Vector2(x1, z0), Vector2(x0, z0)]
-		Side.EAST:
-			return [Vector2(x1, z1), Vector2(x1, z0)]
-		_:
-			return [Vector2(x0, z0), Vector2(x0, z1)]
-
-
 static func _add_degenerate(surface: Surface) -> void:
 	var corners: Array[Vector3] = [Vector3.ZERO, Vector3.ZERO, Vector3.ZERO, Vector3.ZERO]
 	var uvs: Array[Vector2] = [Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO]
 	surface.quad(corners, uvs, Vector3.UP, Vector3.RIGHT)
 
 
-## Height of the ground under a point (world pixels), following ramps.
+## Local height of the ground under a point (world pixels), following the
+## steps of ramps.
 static func height_at(world: ClientWorld, world_px: Vector2) -> float:
 	var tile := Coords.world_to_tile(world_px)
 	var chunk := world.chunk_at(tile)
 	if chunk == null:
 		return 0.0
-	var local := Coords.tile_to_local(tile)
-	var index := Coords.local_index(local)
+	var index := Coords.local_index(Coords.tile_to_local(tile))
 	var height := Render3D.surface_height(chunk.ground[index], chunk.levels[index])
 	var shape := chunk.shapes[index]
 	if shape & ChunkData.SHAPE_RAMP == 0:
@@ -436,5 +447,6 @@ static func height_at(world: ClientWorld, world_px: Vector2) -> float:
 				progress = fraction.x
 			_:
 				progress = 1.0 - fraction.x
-		return lerpf(height, low, clampf(progress, 0.0, 1.0) * RAMP_STEPS / (RAMP_STEPS + 1.0))
+		var step := clampi(floori(progress * RAMP_STEPS), 0, RAMP_STEPS - 1)
+		return step_height(height, low, step)
 	return height

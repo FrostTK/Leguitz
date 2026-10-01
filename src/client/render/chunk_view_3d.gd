@@ -1,10 +1,14 @@
 class_name ChunkView3D
 extends Node3D
-## One chunk in the 3D world: the terrain mesh (tops + faces), its upright
-## sprites (one MultiMesh) and the warm lights of its lava pools.
+## One chunk in the 3D world (local units, under the stretched world root):
+## the terrain mesh (tops + faces), its upright sprites (one MultiMesh) and
+## the warm lights of its lava pools.
 
 const LAVA_LIGHT_COLOR := Color(1.0, 0.45, 0.15)
-const LAVA_LIGHT_RANGE := 6.0
+const LAVA_LIGHT_RANGE := 7.0
+## Sprites reach above their base point: keep them when only their top is
+## in view.
+const SPRITE_CULL_MARGIN := 8.0
 ## Lava lights are placed per 8x8 quarter of the chunk.
 const LAVA_QUARTER := 8
 
@@ -19,6 +23,9 @@ var _data_image := Image.create(
 )
 var _data_texture := ImageTexture.create_from_image(_data_image)
 var _lava_lights: Array[OmniLight3D] = []
+## Local positions of the lava lights in use (lights do not support the
+## root's stretch, so they are placed in world space).
+var _lava_spots: Array[Vector3] = []
 
 
 func _init(base_top_material: ShaderMaterial, faces: ShaderMaterial, sprite_mesh: Mesh) -> void:
@@ -42,7 +49,7 @@ func set_sprite_material(material: ShaderMaterial) -> void:
 ## a neighbor arrives (borders change).
 func build_terrain(chunk: ChunkData, neighbor: Callable) -> void:
 	coord = chunk.coord
-	position = Render3D.world_px_to_3d(Coords.chunk_to_world(coord), 0.0)
+	position = Render3D.world_px_to_local(Coords.chunk_to_world(coord), 0.0)
 	var mesh := ChunkMesher.build(chunk, neighbor)
 	mesh.surface_set_material(0, top_material)
 	mesh.surface_set_material(1, face_material)
@@ -69,15 +76,13 @@ func build_sprites(chunk: ChunkData) -> void:
 		entries.append([index, block])
 	var multimesh := sprites.multimesh
 	multimesh.instance_count = entries.size()
-	var cell_size := Vector2(TileAtlas.BLOCK_CELL) / Render3D.PIXELS_PER_UNIT
-	var scale := Vector3(cell_size.x, cell_size.y * Render3D.sprite_y_scale, 1.0)
 	for n in entries.size():
 		var index: int = entries[n][0]
 		var block: int = entries[n][1]
 		var local := Vector2i(index % GameConst.CHUNK_SIZE, index / GameConst.CHUNK_SIZE)
 		var base := Render3D.surface_height(chunk.ground[index], chunk.levels[index])
-		var position_3d := Render3D.tile_center_3d(local, base + scale.y * 0.5)
-		multimesh.set_instance_transform(n, Transform3D(Basis.from_scale(scale), position_3d))
+		var foot := Render3D.tile_center_local(local, base)
+		multimesh.set_instance_transform(n, Transform3D(Basis.IDENTITY, foot))
 		var cell := TileAtlas.block_cell(block)
 		var sway := 1.0 if TileAtlas.SWAYING.has(block) else 0.0
 		var no_shadow := 1.0 if TileAtlas.NO_SHADOW.has(block) else 0.0
@@ -87,7 +92,7 @@ func build_sprites(chunk: ChunkData) -> void:
 
 ## Lava lights up its surroundings: one warm light per lava-rich quarter.
 func _place_lava_lights(chunk: ChunkData) -> void:
-	var used := 0
+	_lava_spots.clear()
 	for qy in 2:
 		for qx in 2:
 			var sum := Vector2.ZERO
@@ -99,14 +104,24 @@ func _place_lava_lights(chunk: ChunkData) -> void:
 						count += 1
 			if count < 3:
 				continue
-			var light := _lava_light(used)
+			var light := _lava_light(_lava_spots.size())
 			var center := sum / count
-			light.position = Vector3(center.x, Render3D.LEVEL_HEIGHT, center.y * Render3D.z_stretch)
+			var level: int = chunk.levels[int(center.y) * GameConst.CHUNK_SIZE + int(center.x)]
+			_lava_spots.append(Vector3(center.x, level + 1.0, center.y))
 			light.light_energy = clampf(0.8 + count * 0.05, 0.8, 2.2)
 			light.visible = true
-			used += 1
-	for i in range(used, _lava_lights.size()):
+	for i in range(_lava_spots.size(), _lava_lights.size()):
 		_lava_lights[i].visible = false
+	place_lights()
+
+
+## Puts the lava lights at their place in the world (call again when the
+## world root turns).
+func place_lights() -> void:
+	if not is_inside_tree():
+		return
+	for i in _lava_spots.size():
+		_lava_lights[i].global_position = global_transform * _lava_spots[i]
 
 
 func _lava_light(index: int) -> OmniLight3D:
@@ -115,6 +130,7 @@ func _lava_light(index: int) -> OmniLight3D:
 		light.light_color = LAVA_LIGHT_COLOR
 		light.omni_range = LAVA_LIGHT_RANGE
 		light.omni_attenuation = 1.4
+		light.top_level = true
 		add_child(light)
 		_lava_lights.append(light)
 	return _lava_lights[index]

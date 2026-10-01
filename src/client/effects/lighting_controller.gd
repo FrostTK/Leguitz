@@ -28,7 +28,7 @@ const CAVE_FOG := Color(0.05, 0.04, 0.06)
 
 const DAY_AMBIENT_ENERGY := 0.62
 const NIGHT_AMBIENT_ENERGY := 0.3
-const UNDERGROUND_AMBIENT_ENERGY := 0.22
+const UNDERGROUND_AMBIENT_ENERGY := 0.3
 const SUN_ENERGY := 0.95
 const MOON_ENERGY := 0.3
 const MIN_ELEVATION := 12.0
@@ -144,7 +144,7 @@ func _process(_delta: float) -> void:
 	var storm := weather.rain_intensity
 
 	var ambient := NIGHT.lerp(FULL_MOON_NIGHT, moon).lerp(DAY, daylight)
-	ambient = ambient.lerp(TWILIGHT, twilight * 0.45)
+	ambient = ambient.lerp(TWILIGHT, twilight * 0.55)
 	ambient = ambient * Color.WHITE.lerp(STORM_TINT, storm * 0.85)
 	var ambient_energy := lerpf(NIGHT_AMBIENT_ENERGY, DAY_AMBIENT_ENERGY, daylight)
 	ambient_energy *= 1.0 - storm * 0.25
@@ -168,12 +168,13 @@ func _process(_delta: float) -> void:
 func _update_sky_light(angle: float, moon: float, storm: float, underground: bool) -> void:
 	var is_day := angle <= PI
 	var light_angle := angle if is_day else angle - PI
-	var rise := smoothstep(0.0, 0.25, sin(light_angle))
+	var rise := smoothstep(0.0, 0.1, sin(light_angle))
 	var energy: float
 	var color: Color
 	if is_day:
 		energy = SUN_ENERGY * rise
-		color = SUN_WARM.lerp(SUN_NOON, smoothstep(0.1, 0.6, sin(light_angle)))
+		# Golden hour: warm light while the sun is low.
+		color = SUN_WARM.lerp(SUN_NOON, smoothstep(0.15, 0.55, sin(light_angle)))
 	else:
 		energy = MOON_ENERGY * (0.35 + 0.65 * moon) * rise
 		color = MOON_COLOR
@@ -193,7 +194,7 @@ func _update_fog(
 	color = color.lerp(color * STORM_TINT, storm)
 	# Morning mist: rises before dawn, burns off by mid-morning.
 	var mist := smoothstep(SUNRISE - 1.5, SUNRISE, hours) * (1.0 - smoothstep(7.5, 9.5, hours))
-	var amount := maxf(mist * 0.3, storm * 0.1)
+	var amount := maxf(mist * 0.14, storm * 0.1)
 	var haze := VALLEY_HAZE
 	if underground:
 		color = CAVE_FOG

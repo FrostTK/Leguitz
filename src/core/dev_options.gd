@@ -22,6 +22,7 @@ extends RefCounted
 ## --weather=KIND       clear | rain | thunder
 ## --quality=N          graphics quality 0 (low) to 3 (ultra)
 ## --hd                 render the 3D world at full resolution
+## --camera=YAW,PITCH   camera orbit angles in degrees (default 0,60)
 
 var seed_text := ""
 var spawn_override := Vector2i.ZERO
@@ -43,6 +44,7 @@ var open_map := false
 var weather := -1
 var quality := -1
 var hd := false
+var camera_angles := Vector2(0.0, Render3D.DEFAULT_PITCH)
 
 
 static func parse(args: PackedStringArray) -> DevOptions:
@@ -99,6 +101,10 @@ static func parse(args: PackedStringArray) -> DevOptions:
 				options.quality = value.to_int()
 			"hd":
 				options.hd = true
+			"camera":
+				var angles := value.split(",")
+				if angles.size() == 2:
+					options.camera_angles = Vector2(angles[0].to_float(), angles[1].to_float())
 	return options
 
 

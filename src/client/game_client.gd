@@ -6,8 +6,13 @@ extends Node
 
 signal quit_requested
 
-## Point the camera looks at, above the player's feet (units).
-const CAMERA_TARGET_OFFSET := Vector3(0.0, 1.5, 0.0)
+## Point the camera looks at, above the player's feet (local units).
+const CAMERA_TARGET_OFFSET := Vector3(0.0, 0.75, 0.0)
+const CAMERA_FOLLOW_SHARPNESS := 10.0
+## Orbit speed: radians per screen pixel of mouse drag, and per second
+## with a gamepad stick.
+const MOUSE_ORBIT_SPEED := Vector2(0.006, 0.004)
+const STICK_ORBIT_SPEED := Vector2(2.4, 1.3)
 
 var transport: Transport
 var world := ClientWorld.new()
@@ -18,6 +23,9 @@ var joined := false
 var local_player := LocalPlayer.new()
 
 var world_viewport := WorldViewport.new()
+## Holds the terrain in local tile units; its basis stretches them for the
+## camera (see Render3D.root_basis).
+var world_root := Node3D.new()
 var world_view := WorldView3D.new()
 var player_view := PlayerView3D.new()
 var lighting := LightingController.new()
@@ -34,6 +42,10 @@ var _loading_label := Label.new()
 ## Set on spawn and teleport: place the view without smoothing once the
 ## ground under the player is loaded.
 var _needs_snap := false
+## Smoothed camera target (local units).
+var _camera_local := Vector3.ZERO
+var _root_yaw := INF
+var _dragging := false
 
 @onready var _ui_root: Control = $UI/Root
 
@@ -74,9 +86,10 @@ func _setup_world() -> void:
 	world_environment.environment = environment
 	root.add_child(world_environment)
 	root.add_child(sun)
-	root.add_child(world_view)
+	root.add_child(world_root)
+	world_root.add_child(world_view)
+	world_root.add_child(clouds)
 	root.add_child(player_view)
-	root.add_child(clouds)
 	weather_effects.client_world = world
 	weather_effects.local_player = local_player
 	root.add_child(weather_effects)
@@ -113,24 +126,49 @@ func _process(delta: float) -> void:
 		_handle_message(message)
 	if not get_tree().paused:
 		clock.advance(delta)
+		_update_orbit(delta)
 		local_player.step(delta)
 		_update_view(delta)
 	_loading_label.visible = not is_ready_to_play()
 
 
+## Turns the camera (gamepad stick) and the world root with it.
+func _update_orbit(delta: float) -> void:
+	var stick := Input.get_vector(
+		InputBindings.CAMERA_LEFT,
+		InputBindings.CAMERA_RIGHT,
+		InputBindings.CAMERA_UP,
+		InputBindings.CAMERA_DOWN
+	)
+	if stick != Vector2.ZERO:
+		world_viewport.orbit(-stick.x * STICK_ORBIT_SPEED.x * delta, 0.0)
+		world_viewport.orbit(0.0, stick.y * STICK_ORBIT_SPEED.y * delta)
+	world_viewport.update_orbit(delta)
+	var yaw := world_viewport.current_yaw
+	local_player.camera_yaw = yaw
+	if yaw != _root_yaw:
+		_root_yaw = yaw
+		world_root.basis = Render3D.root_basis(yaw)
+		world_view.place_lights()
+
+
 func _update_view(delta: float) -> void:
 	if not joined:
 		return
+	var root := world_root.transform
 	var height := ChunkMesher.height_at(world, local_player.position)
+	var yaw := world_viewport.current_yaw
 	if _needs_snap and world.has_tile_chunk(local_player.current_tile()):
 		_needs_snap = false
-		player_view.place(local_player.position, height)
-		world_viewport.target = player_view.position + CAMERA_TARGET_OFFSET
-		world_viewport.snap_to_target()
-	player_view.update_from(local_player.position, height, local_player.facing, delta)
-	var target := player_view.position + CAMERA_TARGET_OFFSET
+		player_view.place(local_player.position, height, root)
+		_camera_local = player_view.local_position + CAMERA_TARGET_OFFSET
+	player_view.update_from(local_player.position, height, local_player.facing, yaw, root, delta)
+	var follow := 1.0 - exp(-CAMERA_FOLLOW_SHARPNESS * delta)
+	_camera_local = _camera_local.lerp(player_view.local_position + CAMERA_TARGET_OFFSET, follow)
+	var target := root * _camera_local
+	world_view.focus = Coords.tile_to_chunk(local_player.current_tile())
 	world_viewport.target = target
-	clouds.target = target
+	clouds.target = _camera_local
 	weather_effects.target = target
 	weather_effects.view_size = world_viewport.view_size()
 	lighting.reference_height = player_view.position.y
@@ -139,6 +177,11 @@ func _update_view(delta: float) -> void:
 ## True once the player has spawned and the ground under them is loaded.
 func is_ready_to_play() -> bool:
 	return joined and world.has_tile_chunk(local_player.current_tile())
+
+
+## True once everything received is on screen (used for screenshots).
+func is_view_complete() -> bool:
+	return is_ready_to_play() and world_view.is_up_to_date()
 
 
 func pause() -> void:
@@ -154,6 +197,10 @@ func resume() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not joined or get_tree().paused:
+		_dragging = false
+		return
+	if _handle_camera_input(event):
+		get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed(InputBindings.PAUSE):
 		if debug_map.visible:
@@ -174,6 +221,32 @@ func _unhandled_input(event: InputEvent) -> void:
 	else:
 		return
 	get_viewport().set_input_as_handled()
+
+
+## Mouse drag (right or middle button) orbits the camera around the
+## player; the wheel and +/- zoom. Returns true when the event was used.
+func _handle_camera_input(event: InputEvent) -> bool:
+	var button := event as InputEventMouseButton
+	if button != null and button.button_index in [MOUSE_BUTTON_RIGHT, MOUSE_BUTTON_MIDDLE]:
+		_dragging = button.pressed
+		return true
+	var motion := event as InputEventMouseMotion
+	if motion != null and _dragging:
+		var drag := motion.screen_relative
+		# Grab the world: dragging right turns it right, dragging down tilts
+		# the view towards a top-down one.
+		world_viewport.orbit(-drag.x * MOUSE_ORBIT_SPEED.x, drag.y * MOUSE_ORBIT_SPEED.y)
+		return true
+	if event.is_action_pressed(InputBindings.CAMERA_RESET):
+		world_viewport.reset_orbit()
+		return true
+	if event.is_action_pressed(InputBindings.ZOOM_IN):
+		Settings.set_world_zoom(mini(world_viewport.world_zoom + 1, Settings.MAX_WORLD_ZOOM))
+		return true
+	if event.is_action_pressed(InputBindings.ZOOM_OUT):
+		Settings.set_world_zoom(maxi(world_viewport.world_zoom - 1, 1))
+		return true
+	return false
 
 
 func _handle_message(message: Dictionary) -> void:

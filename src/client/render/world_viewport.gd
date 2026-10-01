@@ -8,6 +8,9 @@ extends Node
 ## offset slides the displayed image, so scrolling stays perfectly smooth.
 ## HD mode renders at full screen resolution instead (sharper lighting and
 ## effects, same pixel-art textures).
+##
+## The camera orbits around its target: `yaw` turns around the vertical
+## axis, `pitch` tilts between Render3D.MIN_PITCH and MAX_PITCH.
 
 ## Extra texels rendered around the screen (room for the sub-texel slide).
 const MARGIN := 2
@@ -17,7 +20,8 @@ const CAMERA_DISTANCE := 80.0
 ## the player is out of view anyway).
 const DEPTH_ABOVE := 50.0
 const DEPTH_BELOW := 70.0
-const FOLLOW_SHARPNESS := 10.0
+## How fast the view catches up with orbit changes.
+const ORBIT_SHARPNESS := 18.0
 
 var viewport := SubViewport.new()
 var camera := Camera3D.new()
@@ -25,11 +29,14 @@ var display := Sprite2D.new()
 ## Screen pixels per art pixel.
 var world_zoom := 4
 var hd := false
-## The point the camera looks at (3D).
+## The point the camera looks at (3D world space; the caller smooths it).
 var target := Vector3.ZERO
+## Orbit angles (radians) the camera is heading to, and its current ones.
+var yaw := 0.0
+var pitch := deg_to_rad(Render3D.DEFAULT_PITCH)
+var current_yaw := 0.0
+var current_pitch := deg_to_rad(Render3D.DEFAULT_PITCH)
 
-var _smoothed := Vector3.ZERO
-var _has_position := false
 var _render_scale := 4
 
 
@@ -44,7 +51,7 @@ func _ready() -> void:
 
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
 	camera.keep_aspect = Camera3D.KEEP_HEIGHT
-	camera.rotation = Vector3(deg_to_rad(-Render3D.PITCH_DEGREES), 0.0, 0.0)
+	camera.rotation = Vector3(-current_pitch, current_yaw, 0.0)
 	camera.near = CAMERA_DISTANCE - DEPTH_ABOVE
 	camera.far = CAMERA_DISTANCE + DEPTH_BELOW
 	viewport.add_child(camera)
@@ -85,19 +92,47 @@ func view_size() -> Vector2:
 	return Vector2(camera.size * aspect, camera.size)
 
 
-func snap_to_target() -> void:
-	_smoothed = target
-	_has_position = true
+## Turns the camera around the target (radians).
+func orbit(delta_yaw: float, delta_pitch: float) -> void:
+	yaw = wrapf(yaw + delta_yaw, -PI, PI)
+	# Keep the current angle on the same turn as the target.
+	current_yaw = yaw - wrapf(yaw - current_yaw, -PI, PI)
+	pitch = clampf(
+		pitch + delta_pitch, deg_to_rad(Render3D.MIN_PITCH), deg_to_rad(Render3D.MAX_PITCH)
+	)
 
 
-func _process(delta: float) -> void:
-	if not _has_position:
-		snap_to_target()
-	_smoothed = _smoothed.lerp(target, 1.0 - exp(-FOLLOW_SHARPNESS * delta))
+## Puts the camera at an orbit angle right away (degrees).
+func set_orbit_degrees(yaw_degrees: float, pitch_degrees: float) -> void:
+	yaw = 0.0
+	pitch = deg_to_rad(Render3D.DEFAULT_PITCH)
+	orbit(deg_to_rad(yaw_degrees), deg_to_rad(pitch_degrees) - pitch)
+	current_yaw = yaw
+	current_pitch = pitch
+
+
+## Back to the default view (north up, pixel-perfect angle).
+func reset_orbit() -> void:
+	orbit(-yaw, deg_to_rad(Render3D.DEFAULT_PITCH) - pitch)
+
+
+## Moves the current orbit angles towards the wanted ones. Called by the
+## client before it places the world (the world root follows the yaw).
+func update_orbit(delta: float) -> void:
+	var turn := 1.0 - exp(-ORBIT_SHARPNESS * delta)
+	current_yaw = lerpf(current_yaw, yaw, turn)
+	current_pitch = lerpf(current_pitch, pitch, turn)
+	if absf(current_yaw - yaw) < 0.0005 and absf(current_pitch - pitch) < 0.0005:
+		current_yaw = yaw
+		current_pitch = pitch
+
+
+func _process(_delta: float) -> void:
+	camera.rotation = Vector3(-current_pitch, current_yaw, 0.0)
 	var basis := camera.global_basis
-	var u := _smoothed.dot(basis.x)
-	var v := _smoothed.dot(basis.y)
-	var w := _smoothed.dot(basis.z)
+	var u := target.dot(basis.x)
+	var v := target.dot(basis.y)
+	var w := target.dot(basis.z)
 	var texel := 1.0 / (Render3D.PIXELS_PER_UNIT * world_zoom / _render_scale)
 	var snapped_u := u
 	var snapped_v := v

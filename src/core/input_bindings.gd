@@ -17,6 +17,13 @@ const TOGGLE_DEBUG := &"toggle_debug"
 const ZOOM_IN := &"zoom_in"
 const ZOOM_OUT := &"zoom_out"
 const TOGGLE_MAP := &"toggle_map"
+## Camera: orbit with the gamepad's right stick (the mouse drags it), and
+## back to the default view.
+const CAMERA_LEFT := &"camera_left"
+const CAMERA_RIGHT := &"camera_right"
+const CAMERA_UP := &"camera_up"
+const CAMERA_DOWN := &"camera_down"
+const CAMERA_RESET := &"camera_reset"
 # Debug (creative-only later).
 const LAYER_UP := &"layer_up"
 const LAYER_DOWN := &"layer_down"
@@ -51,8 +58,29 @@ static func register_defaults() -> void:
 	_bind(SPRINT, [_key(KEY_SHIFT), _button(JOY_BUTTON_LEFT_STICK)])
 	_bind(PAUSE, [_key(KEY_ESCAPE), _button(JOY_BUTTON_START)])
 	_bind(TOGGLE_DEBUG, [_key(KEY_F3), _button(JOY_BUTTON_BACK)])
-	_bind(ZOOM_IN, [_key(KEY_EQUAL), _key(KEY_KP_ADD), _button(JOY_BUTTON_RIGHT_SHOULDER)])
-	_bind(ZOOM_OUT, [_key(KEY_MINUS), _key(KEY_KP_SUBTRACT), _button(JOY_BUTTON_LEFT_SHOULDER)])
+	_bind(
+		ZOOM_IN,
+		[
+			_key(KEY_EQUAL),
+			_key(KEY_KP_ADD),
+			_mouse(MOUSE_BUTTON_WHEEL_UP),
+			_button(JOY_BUTTON_RIGHT_SHOULDER),
+		]
+	)
+	_bind(
+		ZOOM_OUT,
+		[
+			_key(KEY_MINUS),
+			_key(KEY_KP_SUBTRACT),
+			_mouse(MOUSE_BUTTON_WHEEL_DOWN),
+			_button(JOY_BUTTON_LEFT_SHOULDER),
+		]
+	)
+	_bind(CAMERA_LEFT, [_axis(JOY_AXIS_RIGHT_X, -1.0)])
+	_bind(CAMERA_RIGHT, [_axis(JOY_AXIS_RIGHT_X, 1.0)])
+	_bind(CAMERA_UP, [_axis(JOY_AXIS_RIGHT_Y, -1.0)])
+	_bind(CAMERA_DOWN, [_axis(JOY_AXIS_RIGHT_Y, 1.0)])
+	_bind(CAMERA_RESET, [_key(KEY_HOME), _button(JOY_BUTTON_RIGHT_STICK)])
 	_bind(TOGGLE_MAP, [_letter(KEY_M), _button(JOY_BUTTON_Y)])
 	_bind(LAYER_UP, [_key(KEY_PAGEUP)])
 	_bind(LAYER_DOWN, [_key(KEY_PAGEDOWN)])
@@ -71,6 +99,12 @@ static func _bind(action: StringName, events: Array[InputEvent]) -> void:
 static func _key(physical_key: Key) -> InputEventKey:
 	var event := InputEventKey.new()
 	event.physical_keycode = physical_key
+	return event
+
+
+static func _mouse(button: MouseButton) -> InputEventMouseButton:
+	var event := InputEventMouseButton.new()
+	event.button_index = button
 	return event
 
 

@@ -15,6 +15,7 @@ var dev: DevOptions
 var _tick_accumulator := 0.0
 var _screenshot_taken := false
 var _ready_frames := 0
+var _seen_chunks := 0
 var _dev_actions_started := false
 
 
@@ -40,6 +41,7 @@ func _ready() -> void:
 	client.debug_overlay.server_stats = _server_stats
 	client.quit_requested.connect(_quit)
 	client.connect_to_server(transports[0], Settings.view_distance)
+	client.world_viewport.set_orbit_degrees(dev.camera_angles.x, dev.camera_angles.y)
 	# Answer the handshake right away so the first frame has terrain.
 	server.process_messages()
 
@@ -118,7 +120,12 @@ func _start_dev_actions() -> void:
 
 
 func _update_screenshot() -> void:
-	if _screenshot_taken or not client.is_ready_to_play():
+	if _screenshot_taken or not client.is_view_complete():
+		return
+	# Wait until chunks stop streaming in (the world around is complete).
+	if client.world.chunks.size() != _seen_chunks:
+		_seen_chunks = client.world.chunks.size()
+		_ready_frames = 0
 		return
 	_ready_frames += 1
 	if _ready_frames < dev.screenshot_delay:

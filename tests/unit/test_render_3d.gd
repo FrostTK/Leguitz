@@ -14,17 +14,31 @@ func _no_neighbor(_coord: Vector2i) -> ChunkData:
 	return null
 
 
-func test_world_to_3d_mapping() -> void:
-	var p := Render3D.world_px_to_3d(Vector2(32, 16), 1.5)
-	assert_almost(p.x, 2.0)
-	assert_almost(p.y, 1.5)
-	assert_almost(p.z, Render3D.z_stretch)
-	var center := Render3D.tile_center_3d(Vector2i(0, 0), 0.0)
-	assert_almost(center.x, 0.5)
-	# A tile top and a one-level face both show 16 px on screen.
-	var pitch := deg_to_rad(Render3D.PITCH_DEGREES)
-	assert_almost(Render3D.z_stretch * sin(pitch), 1.0)
-	assert_almost(Render3D.LEVEL_HEIGHT * cos(pitch), 1.0)
+func test_local_mapping_and_root_stretch() -> void:
+	var p := Render3D.world_px_to_local(Vector2(32, 16), 1.5)
+	assert_eq(p, Vector3(2.0, 1.5, 1.0))
+	assert_eq(Render3D.tile_center_local(Vector2i(0, 0), 0.0), Vector3(0.5, 0.0, 0.5))
+	# At the default angle a tile top and a one-level face both show 16 px.
+	var pitch := deg_to_rad(Render3D.DEFAULT_PITCH)
+	var root := Render3D.root_basis(0.0)
+	assert_almost((root * Vector3.BACK).z * sin(pitch), 1.0)
+	assert_almost((root * Vector3.UP).y * cos(pitch), 1.0)
+	assert_almost((root * Vector3.RIGHT).x, 1.0)
+	# The stretch turns with the camera: tiles stay square on screen.
+	var turned := Render3D.root_basis(PI / 2.0)
+	assert_almost((turned * Vector3.RIGHT).length(), Render3D.depth_stretch)
+	assert_almost((turned * Vector3.BACK).length(), 1.0)
+
+
+func test_screen_directions_follow_the_camera() -> void:
+	var yaw := 0.7
+	var ground := Render3D.screen_to_ground(Vector2(0.3, -0.8), yaw)
+	var back := Render3D.ground_to_screen(ground, yaw)
+	assert_almost(back.x, 0.3)
+	assert_almost(back.y, -0.8)
+	assert_eq(Render3D.screen_to_ground(Vector2.UP, 0.0), Vector2.UP)
+	# Turned a quarter, "up" on screen walks west... or east: never north.
+	assert_almost(absf(Render3D.screen_to_ground(Vector2.UP, PI / 2.0).x), 1.0)
 
 
 func test_flat_chunk_has_only_tops() -> void:
@@ -32,6 +46,21 @@ func test_flat_chunk_has_only_tops() -> void:
 	assert_eq(surfaces[0].vertices.size(), GameConst.CHUNK_AREA * 4, "one quad per tile")
 	assert_true(surfaces[1].is_empty(), "no faces on flat ground")
 	assert_almost(surfaces[0].vertices[0].y, 2.0 * Render3D.LEVEL_HEIGHT)
+
+
+func test_ground_variant_matches_shader_hash() -> void:
+	# Same arithmetic as the shader's hash2(p) & 3 (32-bit unsigned).
+	assert_eq(ChunkMesher.ground_variant(Vector2i(0, 0)), _shader_variant(0, 0))
+	assert_eq(ChunkMesher.ground_variant(Vector2i(-5, 17)), _shader_variant(-5, 17))
+	for tile in [Vector2i(0, 0), Vector2i(-5, 17), Vector2i(123456, -98765)]:
+		var variant := ChunkMesher.ground_variant(tile)
+		assert_true(variant >= 0 and variant <= 3)
+	var counts := [0, 0, 0, 0]
+	for x in 40:
+		for y in 40:
+			counts[ChunkMesher.ground_variant(Vector2i(x, y))] += 1
+	for count: int in counts:
+		assert_true(count > 300, "variants are spread evenly")
 
 
 func test_step_makes_faces() -> void:
@@ -84,3 +113,14 @@ func test_mountain_terraces_are_double() -> void:
 		TerrainShaper.HIGH_LEVELS_FROM + TerrainShaper.HIGH_LEVEL_STEP + 1.0
 	)
 	assert_eq(next - above, TerrainShaper.HIGH_LEVELS_PER_STEP)
+
+
+## Straightforward 32-bit port of hash2 from terrain3d_common.gdshaderinc.
+func _shader_variant(x: int, y: int) -> int:
+	var mask := 0xFFFFFFFF
+	var qx := (x + 16777216) & mask
+	var qy := (y + 16777216) & mask
+	var h := ((qx * 374761393) & mask) + ((qy * 668265263) & mask)
+	h &= mask
+	h = ((h ^ (h >> 13)) * 1274126177) & mask
+	return (h ^ (h >> 16)) & 3

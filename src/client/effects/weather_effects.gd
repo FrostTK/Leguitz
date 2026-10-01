@@ -3,7 +3,9 @@ extends Node3D
 ## Client-side weather and ambience in the 3D world: rain or snow
 ## (depending on the biome under the player), lightning, wet ground,
 ## falling leaves, fireflies at night and dust motes in caves.
-## Particles run on the GPU, in world space, around the camera target.
+## Particles run on the GPU around the camera target, in world space (rain
+## and snow move along with the player: nobody notices, and they stay
+## put when the camera turns).
 
 const RAIN_BY_KIND := {Weather.Kind.CLEAR: 0.0, Weather.Kind.RAIN: 0.8, Weather.Kind.THUNDER: 1.0}
 const FADE_PER_SECOND := 0.12
@@ -42,12 +44,13 @@ const FIREFLY_BIOMES := {
 	Biomes.Id.TAIGA: true,
 	Biomes.Id.RIVER: true,
 }
-const AMOUNTS := {&"rain": 1600, &"snow": 900, &"leaves": 24, &"fireflies": 60, &"dust": 90}
+const AMOUNTS := {&"rain": 2000, &"snow": 1100, &"leaves": 24, &"fireflies": 60, &"dust": 90}
 
 var weather := Weather.new()
 var client_world: ClientWorld
 var local_player: LocalPlayer
-## The point the camera looks at, and the visible size (units) around it.
+## The point the camera looks at (world space), and the visible size
+## (units) around it.
 var target := Vector3.ZERO
 var view_size := Vector2(30.0, 17.0)
 
@@ -158,15 +161,14 @@ func _update_lightning(delta: float, underground: bool) -> void:
 
 
 ## Keeps an emitter around the visible area. Seen from the tilted camera,
-## a particle higher up shows further south, so the box is deeper than the
-## ground actually visible.
+## a particle higher up shows further away, and the camera can turn: the
+## box covers the view in every direction.
 func _place(particles: GPUParticles3D) -> void:
 	particles.global_position = target
-	var depth := view_size.y * Render3D.z_stretch
+	var depth := view_size.y * Render3D.depth_stretch
+	var reach := maxf(view_size.x * 0.5 + 1.0, depth * 0.5 + SLAB_HALF_HEIGHT * 0.6)
 	var material := particles.process_material as ParticleProcessMaterial
-	material.emission_box_extents = Vector3(
-		view_size.x * 0.5 + 1.0, SLAB_HALF_HEIGHT, depth * 0.5 + SLAB_HALF_HEIGHT * 0.6
-	)
+	material.emission_box_extents = Vector3(reach, SLAB_HALF_HEIGHT, reach)
 
 
 static func _base(
@@ -210,26 +212,28 @@ static func _particle_material(color: Color, billboard: bool, lit: bool) -> Stan
 static func _pixel_size(pixels: Vector2, billboard: bool) -> Vector2:
 	var size := pixels / Render3D.PIXELS_PER_UNIT
 	if not billboard:
-		size.y *= Render3D.sprite_y_scale
+		size.y *= Render3D.vertical_scale
 	return size
 
 
 func _make_rain() -> GPUParticles3D:
 	var material := _particle_material(Color(0.75, 0.85, 1.0, 0.6), false, false)
 	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	var particles := _base(1600, SLAB_HALF_HEIGHT * 2.0 / RAIN_SPEED, material)
+	material.billboard_mode = BaseMaterial3D.BILLBOARD_FIXED_Y
+	var particles := _base(2000, SLAB_HALF_HEIGHT * 2.0 / RAIN_SPEED, material)
+	particles.local_coords = true
 	(particles.draw_pass_1 as QuadMesh).size = _pixel_size(Vector2(1, 6), false)
 	var process := particles.process_material as ParticleProcessMaterial
 	process.direction = Vector3(0.1, -1.0, 0.0)
 	process.spread = 2.0
 	process.initial_velocity_min = RAIN_SPEED
 	process.initial_velocity_max = RAIN_SPEED * 1.1
-	process.particle_flag_align_y = true
 	return particles
 
 
 func _make_snow() -> GPUParticles3D:
-	var particles := _base(900, 12.0, _particle_material(Color(1, 1, 1, 0.95), true, false))
+	var particles := _base(1100, 12.0, _particle_material(Color(1, 1, 1, 0.95), true, false))
+	particles.local_coords = true
 	(particles.draw_pass_1 as QuadMesh).size = _pixel_size(Vector2(2, 2), true)
 	var process := particles.process_material as ParticleProcessMaterial
 	process.direction = Vector3(0.2, -1.0, 0.1)

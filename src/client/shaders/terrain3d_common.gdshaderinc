@@ -8,8 +8,6 @@ global uniform float weather_rain;
 global uniform vec2 weather_wind;
 
 const int HASH_OFFSET = 16777216;
-// World Z units per tile (see Render3D.z_stretch: 1 / sin(60 degrees)).
-const float Z_STRETCH = 1.1547005;
 
 uint hash2(ivec2 p) {
 	uvec2 q = uvec2(p + ivec2(HASH_OFFSET));
@@ -34,7 +32,8 @@ float value_noise(vec2 p) {
 	return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
 }
 
-// Texel of a ground in the ground atlas (4 variants chosen per tile).
+// Texel of a ground in the ground atlas (4 variants chosen per tile; see
+// also ChunkMesher.ground_variant).
 ivec2 ground_atlas_pos(int ground, ivec2 world_tile, ivec2 tx) {
 	int variant = int(hash2(world_tile) & 3u);
 	return ivec2(variant * 16 + tx.x, ground * 16 + tx.y);
