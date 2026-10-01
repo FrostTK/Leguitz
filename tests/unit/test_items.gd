@@ -275,3 +275,75 @@ static func _translated_keys() -> Dictionary:
 		if line.size() >= 3 and not line[1].is_empty() and not line[2].is_empty():
 			keys[line[0]] = true
 	return keys
+
+
+func test_a_left_drag_shares_a_stack_evenly() -> void:
+	var own := func(slot: int) -> Vector2i: return Vector2i(Inventory.Holder.OWN, slot)
+	var bag := Inventory.new()
+	bag.add(Items.Id.STONE, 64)
+	bag.items[20] = Items.Id.SAND
+	bag.counts[20] = 5
+	bag.items[21] = Items.Id.STONE
+	bag.counts[21] = 60
+	bag.click(0, false, false)
+	var before := bag.snapshot()
+	bag.spread([own.call(10), own.call(20), own.call(11), own.call(10), own.call(21)])
+	assert_eq(bag.counts[10], 21, "64 between three slots: 21 each")
+	assert_eq(bag.counts[11], 21)
+	assert_eq(bag.counts[21], 64, "as much as fits")
+	assert_eq(bag.counts[20], 5, "sand does not take stones")
+	assert_eq(bag.counts[Inventory.CURSOR], 18, "the rest stays in hand")
+	bag.restore(before)
+	assert_eq(bag.counts[Inventory.CURSOR], 64, "back as it was")
+	assert_eq(bag.items[10], Items.Id.NONE)
+	# More slots crossed than items: one each, as far as they go.
+	bag.take(Inventory.CURSOR, 62)
+	bag.spread([own.call(1), own.call(2), own.call(3), own.call(4)])
+	assert_eq([bag.counts[1], bag.counts[2], bag.counts[3]], [1, 1, 0])
+	assert_eq(bag.items[Inventory.CURSOR], Items.Id.NONE)
+
+
+func test_a_left_drag_reaches_chests_furnaces_and_the_grid() -> void:
+	var bag := Inventory.new()
+	var chest := Inventory.new()
+	var furnace := Furnace.new(Tiles.Block.FACTORY_FURNACE)
+	bag.add(Items.Id.COAL, 10)
+	bag.click(0, false, false)
+	var targets := [
+		Vector2i(Inventory.Holder.CHEST, 4),
+		Vector2i(Inventory.Holder.FURNACE, Furnace.INPUT),
+		Vector2i(Inventory.Holder.FURNACE, Furnace.FUEL),
+		Vector2i(Inventory.Holder.FURNACE, Furnace.OUTPUT),
+		Vector2i(Inventory.Holder.OWN, Inventory.CRAFT + 6),
+		Vector2i(Inventory.Holder.OWN, Inventory.CURSOR),
+	]
+	bag.spread(targets, chest, furnace)
+	assert_eq(chest.counts[4], 3, "the chest")
+	assert_eq(furnace.slots.counts[Furnace.FUEL], 3, "coal burns")
+	assert_eq(furnace.slots.items[Furnace.INPUT], Items.Id.NONE, "but does not cook")
+	assert_eq(furnace.slots.items[Furnace.OUTPUT], Items.Id.NONE, "the output only gives")
+	assert_eq(bag.counts[Inventory.CRAFT + 6], 3, "the crafting grid")
+	assert_eq(bag.counts[Inventory.CURSOR], 1)
+	bag.spread(targets)
+	assert_eq(bag.counts[Inventory.CURSOR], 0, "no chest open: its own slots only")
+	assert_eq(bag.counts[Inventory.CRAFT + 6], 4)
+
+
+func test_the_server_shares_a_stack_like_the_client() -> void:
+	var settings := WorldSettings.create("Test", "42", WorldSettings.GameMode.SURVIVAL)
+	var server := GameServer.new(settings, null, false)
+	var transports := LocalTransport.create_pair()
+	server.connect_client(transports[1])
+	var client: LocalTransport = transports[0]
+	client.send(Msg.hello("Alex", 2))
+	server.process_messages()
+	var session := server.first_session()
+	session.inventory.add(Items.Id.DIRT, 9)
+	client.send(Msg.slot_click(0, false, false))
+	var targets := [Vector2i(Inventory.Holder.OWN, 3), Vector2i(Inventory.Holder.OWN, 4)]
+	client.send(Msg.slot_spread(targets))
+	client.send(Msg.slot_spread(["nonsense", 7]))
+	server.process_messages()
+	assert_eq(session.inventory.counts[3], 4)
+	assert_eq(session.inventory.counts[4], 4)
+	assert_eq(session.inventory.counts[Inventory.CURSOR], 1)

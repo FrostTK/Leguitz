@@ -269,6 +269,8 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 					_chest_changed(session.chest)
 				if oven != null:
 					_furnace_changed(session.furnace)
+		Msg.SLOT_SPREAD:
+			_on_slot_spread(session, message)
 		Msg.OPEN_CHEST:
 			_on_open_chest(session, message)
 		Msg.CHEST_CLICK:
@@ -463,6 +465,24 @@ func _on_block_place(session: PlayerSession, message: Dictionary) -> void:
 		change_voxel(at, cells[at])
 	session.inventory.take(slot, 1)
 	session.transport.send(Msg.inventory(session.inventory))
+
+
+## A player shared the stack in hand between slots (a left drag): theirs,
+## the open chest's, the open furnace's.
+func _on_slot_spread(session: PlayerSession, message: Dictionary) -> void:
+	var targets: Variant = message.get("targets", [])
+	if not session.joined or not targets is Array:
+		return
+	var open := _open_chest(session)
+	var oven := _open_furnace(session)
+	session.inventory.spread(
+		(targets as Array).slice(0, Inventory.SIZE + Inventory.CHEST), open, oven
+	)
+	session.transport.send(Msg.inventory(session.inventory))
+	if open != null:
+		_chest_changed(session.chest)
+	if oven != null:
+		_furnace_changed(session.furnace)
 
 
 ## A player opened a workbench: crafting uses its whole grid, if there is

@@ -7,6 +7,9 @@ extends RefCounted
 ## server keeps the real one; clients run their clicks on a copy at once
 ## (same rules, Minecraft's) and get corrected.
 
+## Who holds a slot a left drag shares a stack over (see spread).
+enum Holder { OWN, CHEST, FURNACE }
+
 const HOTBAR := 9
 const BAG := 27
 const SLOTS := HOTBAR + BAG
@@ -151,6 +154,65 @@ func click_furnace(furnace: Furnace, slot: int, right: bool, shift: bool) -> voi
 		_click_on(oven, slot, right)
 
 
+## Whether a slot can take `item` from a left drag: `target` is
+## Vector2i(Holder, index): one of this inventory's slots or crafting
+## cells, of the open `chest`, or what the open `furnace` cooks or burns
+## (as it fits), empty or holding the same item with room.
+func can_spread_to(
+	target: Vector2i, item: int, chest: Inventory = null, furnace: Furnace = null
+) -> bool:
+	var holder := _holder(target, chest, furnace)
+	if holder == null or item == Items.Id.NONE:
+		return false
+	if target.x == Holder.FURNACE and not furnace.fits(target.y, item):
+		return false
+	var there := holder.items[target.y]
+	if there == Items.Id.NONE:
+		return true
+	return there == item and holder.counts[target.y] < Items.max_stack(item)
+
+
+## Shares the cursor's stack evenly between slots (Minecraft's left drag):
+## the `targets` (Vector2i(Holder, index), in the order crossed) that can
+## take it, no more of them than items in hand; each gets the same share,
+## as much as fits, and the rest stays in hand.
+func spread(targets: Array, chest: Inventory = null, furnace: Furnace = null) -> void:
+	var item := items[CURSOR]
+	var taking: Array[Vector2i] = []
+	for target: Variant in targets:
+		if taking.size() >= counts[CURSOR]:
+			break
+		if target is Vector2i and not taking.has(target):
+			if can_spread_to(target, item, chest, furnace):
+				taking.append(target)
+	if taking.is_empty():
+		return
+	var share := counts[CURSOR] / taking.size()
+	var worn := wear[CURSOR]
+	for target in taking:
+		var holder := _holder(target, chest, furnace)
+		var amount := mini(share, Items.max_stack(item) - holder.counts[target.y])
+		if holder.items[target.y] == Items.Id.NONE:
+			holder.items[target.y] = item
+			holder.wear[target.y] = worn
+		holder.counts[target.y] += amount
+		take(CURSOR, amount)
+
+
+## A copy of the slots (to go back to, see restore).
+func snapshot() -> Inventory:
+	var copy := Inventory.new()
+	copy.restore(self)
+	return copy
+
+
+## Takes back the slots of `from` (a snapshot).
+func restore(from: Inventory) -> void:
+	items = from.items.duplicate()
+	counts = from.counts.duplicate()
+	wear = from.wear.duplicate()
+
+
 ## The items of the slots (to save a chest: its first CHEST slots).
 func contents(slots: int) -> Dictionary:
 	return {
@@ -209,6 +271,23 @@ func _move(slot: int, into: Inventory, slots: Array) -> void:
 		items[slot] = item
 		counts[slot] = left
 		wear[slot] = worn
+
+
+## The inventory holding a left drag's slot (null: none, or a slot it may
+## not fill: the cursor, a furnace's output).
+func _holder(target: Vector2i, chest: Inventory, furnace: Furnace) -> Inventory:
+	var slot := target.y
+	match target.x:
+		Holder.OWN:
+			if (slot >= 0 and slot < SLOTS) or (slot >= CRAFT and slot < SIZE):
+				return self
+		Holder.CHEST:
+			if chest != null and slot >= 0 and slot < CHEST:
+				return chest
+		Holder.FURNACE:
+			if furnace != null and (slot == Furnace.INPUT or slot == Furnace.FUEL):
+				return furnace.slots
+	return null
 
 
 ## The items of the crafting grid `width` cells wide, row by row.

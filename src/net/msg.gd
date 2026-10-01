@@ -17,6 +17,7 @@ const BLOCK_BREAK := "block_break"
 const BLOCK_PLACE := "block_place"
 const SELECT_SLOT := "select_slot"
 const SLOT_CLICK := "slot_click"
+const SLOT_SPREAD := "slot_spread"
 const ITEM_DROP := "item_drop"
 const INVENTORY_CLOSE := "inventory_close"
 const DEBUG_GIVE_TOOLS := "debug_give_tools"
@@ -69,6 +70,12 @@ static func select_slot(slot: int) -> Dictionary:
 ## A click on an inventory slot (see Inventory.click).
 static func slot_click(slot: int, right: bool, shift: bool) -> Dictionary:
 	return {"t": SLOT_CLICK, "slot": slot, "right": right, "shift": shift}
+
+
+## The player shared the cursor's stack between slots with a left drag
+## (Inventory.spread; `targets`: Vector2i(Inventory.Holder, index)).
+static func slot_spread(targets: Array) -> Dictionary:
+	return {"t": SLOT_SPREAD, "targets": targets}
 
 
 ## The player throws one item of a slot (Inventory.CURSOR: what the cursor

@@ -126,6 +126,10 @@ var covered := false
 ## True deep enough under the rock for caves' light and silence.
 var underground := false
 var _loading_label := Label.new()
+## During a left drag: the slots as they were before it (this inventory,
+## the chest's, the furnace's), each new share shown from there; empty
+## when no drag is going on.
+var _spread_base: Array = []
 ## Set on spawn and teleport: place the camera without smoothing once the
 ## player has landed on known ground.
 var _needs_snap := false
@@ -172,6 +176,8 @@ func _ready() -> void:
 	inventory_screen.craft_clicked.connect(_on_craft_clicked)
 	inventory_screen.chest_clicked.connect(_on_chest_clicked)
 	inventory_screen.furnace_clicked.connect(_on_furnace_clicked)
+	inventory_screen.spread_previewed.connect(_on_spread_previewed)
+	inventory_screen.spread_finished.connect(_on_spread_finished)
 	book_screen.library = items
 	book_screen.close_requested.connect(_on_book_closed)
 	dropped_items.library = items
@@ -729,6 +735,30 @@ func _on_slot_clicked(slot: int, right: bool, shift: bool) -> void:
 	transport.send(Msg.slot_click(slot, right, shift))
 
 
+## A left drag crossed one more slot: the stack shared between those so
+## far, shown from the slots as they were before the drag.
+func _on_spread_previewed(targets: Array) -> void:
+	if _spread_base.is_empty():
+		_spread_base = [
+			inventory.snapshot(),
+			chest.snapshot() if chest != null else null,
+			furnace.slots.snapshot() if furnace != null else null,
+		]
+	else:
+		inventory.restore(_spread_base[0])
+		if chest != null and _spread_base[1] != null:
+			chest.restore(_spread_base[1])
+		if furnace != null and _spread_base[2] != null:
+			furnace.slots.restore(_spread_base[2])
+	inventory.spread(targets, chest, furnace)
+
+
+## The left drag is over: what shows is the share, the server is told.
+func _on_spread_finished(targets: Array) -> void:
+	_spread_base = []
+	transport.send(Msg.slot_spread(targets))
+
+
 func _on_cursor_dropped(whole: bool) -> void:
 	var count := inventory.counts[Inventory.CURSOR]
 	inventory.take(Inventory.CURSOR, count if whole else 1)
@@ -741,6 +771,7 @@ func _on_inventory_closed() -> void:
 	chest_cell = Vector3i.MAX
 	furnace = null
 	furnace_cell = Vector3i.MAX
+	_spread_base = []
 	inventory.put_back_all()
 	transport.send(Msg.inventory_close())
 

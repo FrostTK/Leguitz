@@ -9,10 +9,12 @@ extends Control
 ## stacks (Inventory.click: the client shows its guess at once, the server
 ## decides), a click on what the grid makes takes it (shift: as many as
 ## possible); the stack held by the cursor follows the mouse, and dropped
-## outside the panel it is thrown away. Holding the right button with a
-## stack and moving puts one item into each slot crossed (Minecraft's
-## right drag: the bag, the hotbar, the crafting grid, a chest, a
-## furnace). With empty hands, the name of the
+## outside the panel it is thrown away. Holding a button with a stack and
+## moving over slots (the bag, the hotbar, the crafting grid, a chest, a
+## furnace) works as in Minecraft: the right one puts one item into each
+## slot crossed, the left one shares the stack evenly between them (shown
+## as it goes, done when it is let go; let go on the slot it began on, a
+## plain click). With empty hands, the name of the
 ## item under the mouse shows beside it.
 
 signal slot_clicked(slot: int, right: bool, shift: bool)
@@ -25,6 +27,10 @@ signal craft_clicked(shift: bool)
 signal chest_clicked(slot: int, right: bool, shift: bool)
 ## A slot of the open furnace was clicked.
 signal furnace_clicked(slot: int, right: bool, shift: bool)
+## A left drag shares the stack between `targets` (Vector2i(Inventory.Holder,
+## index), two or more): to show, then done.
+signal spread_previewed(targets: Array)
+signal spread_finished(targets: Array)
 
 ## The flame shown under what a furnace cooks: its rows' widths, from the
 ## bottom; and its colors (embers to tip).
@@ -76,6 +82,14 @@ var _pointer := Vector2.ZERO
 var _drop_slots: Array[ItemSlot] = []
 var _dragging := false
 var _dragged: Dictionary[ItemSlot, bool] = {}
+## A left drag: going on, the slot it began on, the item and how many of
+## it were in hand then, and the slots taking a share (in the order
+## crossed).
+var _spreading := false
+var _spread_from: ItemSlot
+var _spread_item := Items.Id.NONE
+var _spread_count := 0
+var _spread: Array[Vector2i] = []
 
 
 func _ready() -> void:
@@ -198,6 +212,8 @@ func close() -> void:
 		visible = false
 		_hovered = null
 		_dragging = false
+		if _spreading:
+			_end_spread(false)
 		close_requested.emit()
 
 
@@ -363,7 +379,7 @@ func _gui_input(event: InputEvent) -> void:
 
 
 ## Follows the mouse (from its own events: the slots keep it while a
-## button is held) and runs right drags.
+## button is held) and runs the drags.
 func _input(event: InputEvent) -> void:
 	var mouse := event as InputEventMouse
 	if not visible or mouse == null:
@@ -371,28 +387,88 @@ func _input(event: InputEvent) -> void:
 	var from := _pointer
 	_pointer = (_cursor.make_input_local(mouse) as InputEventMouse).position
 	var button := event as InputEventMouseButton
-	if button != null and button.button_index == MOUSE_BUTTON_RIGHT:
+	if button != null and button.button_index == MOUSE_BUTTON_RIGHT and not _spreading:
 		_dragged.clear()
 		var start: ItemSlot = _drop_slot_at(_pointer) if button.pressed else null
 		_dragging = start != null and not button.shift_pressed and _holding()
 		if _dragging:
 			# Its own click puts the first item.
 			_dragged[start] = true
-	elif _dragging and event is InputEventMouseMotion:
+	elif button != null and button.button_index == MOUSE_BUTTON_LEFT:
+		_on_left_button(button)
+	elif event is InputEventMouseMotion and (_dragging or _spreading):
 		# Every slot on the way (a fast mouse jumps over some).
 		var steps := maxi(ceili(from.distance_to(_pointer) / 4.0), 1)
 		for i in steps:
 			var slot := _drop_slot_at(from.lerp(_pointer, float(i + 1) / steps))
-			if slot != null and not _dragged.has(slot) and _holding():
+			if slot == null:
+				continue
+			if _spreading:
+				_spread_over(slot)
+			elif not _dragged.has(slot) and _holding():
 				_dragged[slot] = true
-				_right_click(slot)
+				_click(slot, true)
+
+
+## The left button: down over a slot with a stack in hand, a left drag
+## begins (the slot's own click waits for the button to come up).
+func _on_left_button(button: InputEventMouseButton) -> void:
+	if not button.pressed:
+		if _spreading:
+			_end_spread(true)
+			get_viewport().set_input_as_handled()
+		return
+	var start := _drop_slot_at(_pointer)
+	if start == null or button.shift_pressed or _dragging or not _holding():
+		return
+	_spreading = true
+	_spread_from = start
+	_spread_item = inventory.items[Inventory.CURSOR]
+	_spread_count = inventory.counts[Inventory.CURSOR]
+	_spread.clear()
+	_spread_over(start)
+	get_viewport().set_input_as_handled()
+
+
+## A slot a left drag crosses takes a share if it can take the stack and
+## there are items enough for one more slot.
+func _spread_over(slot: ItemSlot) -> void:
+	var target := _target_of(slot)
+	if _spread.has(target) or _spread.size() >= _spread_count:
+		return
+	if not inventory.can_spread_to(target, _spread_item, chest, furnace):
+		return
+	_spread.append(target)
+	if _spread.size() >= 2:
+		spread_previewed.emit(_spread.duplicate())
+
+
+## The left drag is over: shared between the slots crossed, or (one slot)
+## a plain click on the slot it began on (`click`: false when the screen
+## closes meanwhile).
+func _end_spread(click: bool) -> void:
+	_spreading = false
+	if _spread.size() >= 2:
+		spread_finished.emit(_spread.duplicate())
+	elif click and _spread_from != null:
+		_click(_spread_from, false)
+	_spread.clear()
+
+
+## Which slot a slot of the screen is, for a left drag.
+func _target_of(slot: ItemSlot) -> Vector2i:
+	if slot in _chest_slots:
+		return Vector2i(Inventory.Holder.CHEST, slot.slot)
+	if slot in _furnace_slots:
+		return Vector2i(Inventory.Holder.FURNACE, slot.slot)
+	return Vector2i(Inventory.Holder.OWN, slot.slot)
 
 
 func _holding() -> bool:
 	return inventory != null and inventory.items[Inventory.CURSOR] != Items.Id.NONE
 
 
-## The slot a right drag can put an item into at `point` (null: none).
+## The slot a drag can put items into at `point` (null: none).
 func _drop_slot_at(point: Vector2) -> ItemSlot:
 	for slot in _drop_slots:
 		if slot.is_visible_in_tree() and slot.get_global_rect().has_point(point):
@@ -400,14 +476,14 @@ func _drop_slot_at(point: Vector2) -> ItemSlot:
 	return null
 
 
-## A right click on a slot, as if the player clicked it.
-func _right_click(slot: ItemSlot) -> void:
+## A click on a slot, as if the player clicked it.
+func _click(slot: ItemSlot, right: bool) -> void:
 	if slot in _chest_slots:
-		chest_clicked.emit(slot.slot, true, false)
+		chest_clicked.emit(slot.slot, right, false)
 	elif slot in _furnace_slots:
-		furnace_clicked.emit(slot.slot, true, false)
+		furnace_clicked.emit(slot.slot, right, false)
 	else:
-		slot_clicked.emit(slot.slot, true, false)
+		slot_clicked.emit(slot.slot, right, false)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -446,5 +522,5 @@ func _draw_cursor() -> void:
 		var count := inventory.counts[Inventory.CURSOR]
 		var worn := inventory.wear[Inventory.CURSOR]
 		ItemSlot.draw_stack(_cursor, library, item, count, at, worn)
-	elif _hovered != null and _hovered.is_visible_in_tree():
+	elif _hovered != null and _hovered.is_visible_in_tree() and not (_spreading or _dragging):
 		ItemSlot.draw_name(_cursor, _hovered.shown_item(), at)
