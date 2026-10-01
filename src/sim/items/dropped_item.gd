@@ -19,6 +19,8 @@ const LIFETIME := 300.0
 var id := 0
 var item := Items.Id.NONE
 var count := 0
+## A tool's wear (see Inventory.wear).
+var wear := 0
 var position := Vector3.ZERO
 var velocity := Vector3.ZERO
 var age := 0.0
@@ -86,7 +88,7 @@ func is_expired() -> bool:
 
 
 func to_dict() -> Dictionary:
-	return {"item": item, "count": count, "position": position, "age": age}
+	return {"item": item, "count": count, "wear": wear, "position": position, "age": age}
 
 
 static func from_dict(data: Dictionary) -> DroppedItem:
@@ -97,6 +99,7 @@ static func from_dict(data: Dictionary) -> DroppedItem:
 		Vector3.ZERO
 	)
 	dropped.age = data.get("age", 0.0)
+	dropped.wear = int(data.get("wear", 0))
 	return dropped
 
 

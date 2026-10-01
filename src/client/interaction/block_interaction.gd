@@ -160,7 +160,24 @@ func _break(hit: VoxelRay.Hit) -> void:
 		if Mining.needs_support(standing):
 			for piece in Mining.object_cells(above, standing, voxel_at):
 				_predict(piece, Voxels.AIR)
-	client.transport.send(Msg.block_break(hit.cell))
+	var slot := -1 if client.book_in_hand else client.inventory.selected
+	client.transport.send(Msg.block_break(hit.cell, slot))
+	_wear_tool(slot, hit.voxel)
+
+
+## The tool in hand wears when it breaks something (as the server will
+## say); worn out, it breaks in a burst of bits.
+func _wear_tool(slot: int, voxel: int) -> void:
+	if slot < 0 or not Mining.wears(voxel):
+		return
+	var tool := client.inventory.items[slot]
+	if Items.durability(tool) == 0 or not client.inventory.wear_out(slot):
+		return
+	var head: Array = ItemModels.TOOL_HEADS[Items.tier_of(tool)]
+	var heading := client.local_player.heading
+	var hand := _eye() + Vector3(heading.x, -0.5, heading.y) * 0.4
+	_debris.throw(_world_point(hand), Color(head[1]), 14, 0.25)
+	client.tool_broke(tool)
 
 
 ## The frame around what is aimed at: a whole workbench, both its ends.

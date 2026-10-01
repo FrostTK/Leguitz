@@ -158,8 +158,9 @@ func _process(_delta: float) -> void:
 		return
 	var selected := inventory.selected if not book_selected else Inventory.HOTBAR
 	for slot in _slots:
+		var at := slot.slot
 		slot.show_stack(
-			inventory.items[slot.slot], inventory.counts[slot.slot], slot.slot == selected
+			inventory.items[at], inventory.counts[at], at == selected, inventory.wear[at]
 		)
 	var made := inventory.craft_result(craft_width)
 	_result.show_stack(made.x, made.y)
@@ -208,4 +209,6 @@ func _draw_cursor() -> void:
 	var item := inventory.items[Inventory.CURSOR]
 	if item != Items.Id.NONE:
 		var at := _cursor.get_local_mouse_position()
-		ItemSlot.draw_stack(_cursor, library, item, inventory.counts[Inventory.CURSOR], at)
+		var count := inventory.counts[Inventory.CURSOR]
+		var worn := inventory.wear[Inventory.CURSOR]
+		ItemSlot.draw_stack(_cursor, library, item, count, at, worn)

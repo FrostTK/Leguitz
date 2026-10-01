@@ -43,9 +43,10 @@ const ITEM_MOVE := "item_move"
 const ITEM_REMOVE := "item_remove"
 
 
-## The player broke the voxel at `cell` (tile x, row, tile y).
-static func block_break(cell: Vector3i) -> Dictionary:
-	return {"t": BLOCK_BREAK, "cell": cell}
+## The player broke the voxel at `cell` (tile x, row, tile y) with the
+## hotbar slot `slot` in hand (-1: nothing of it, the player's book).
+static func block_break(cell: Vector3i, slot := -1) -> Dictionary:
+	return {"t": BLOCK_BREAK, "cell": cell, "slot": slot}
 
 
 ## The player placed the block of hotbar slot `slot` at `cell` (a

@@ -103,8 +103,11 @@ static func _tools() -> Array:
 	)
 	for tier: int in tiers:
 		var name := _t("TIER_" + String(Items.Tier.find_key(tier)))
-		var speed := "%s  ×%s" % [name, str(Items.TIER_SPEED[tier]).trim_suffix(".0")]
-		entries.append(_icon(Items.tools_of_tier(tier)[0], speed))
+		var speed := str(Items.TIER_SPEED[tier]).trim_suffix(".0")
+		var lasts := Items.TIER_DURABILITY[tier]
+		var text := _t("BOOK_TOOLS_TIER") % [name, speed, lasts]
+		entries.append(_icon(Items.tools_of_tier(tier)[0], text))
+	entries.append(_text("BOOK_TOOLS_WEAR"))
 	entries.append(_text("BOOK_TOOLS_GOLD"))
 	entries.append(_text("BOOK_TOOLS_PLANTS"))
 	return entries

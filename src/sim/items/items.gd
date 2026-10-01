@@ -110,6 +110,9 @@ const TOOLS := {
 ## (Minecraft's, copper between stone and iron; gold is the fastest but
 ## will be the first to wear out once tools wear).
 const TIER_SPEED: Array[float] = [2.0, 4.0, 5.0, 6.0, 12.0, 8.0]
+## How many blocks a tool of each tier breaks before it breaks (Minecraft's;
+## copper between stone and iron).
+const TIER_DURABILITY: Array[int] = [59, 131, 190, 250, 32, 1561]
 
 ## Items that are blocks: the voxel they place.
 const PLACES := {
@@ -255,6 +258,11 @@ static func tier_of(item: int) -> int:
 ## How many times faster an item breaks what it is made for (1: a hand).
 static func tool_speed(item: int) -> float:
 	return TIER_SPEED[TOOLS[item][1]] if TOOLS.has(item) else 1.0
+
+
+## How many uses a tool lasts (0: it does not wear).
+static func durability(item: int) -> int:
+	return TIER_DURABILITY[TOOLS[item][1]] if TOOLS.has(item) else 0
 
 
 ## The tools of a tier: its pickaxe, axe and shovel.

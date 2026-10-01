@@ -133,6 +133,12 @@ static func placement(
 	return {}
 
 
+## Whether breaking a voxel wears the tool in hand (not what breaks at
+## once: small plants).
+static func wears(voxel: int) -> bool:
+	return hand_seconds(voxel) > INSTANT_SECONDS
+
+
 ## Whether a voxel opens something when used (right click): a workbench.
 static func opens(voxel: int) -> bool:
 	return ObjectShapes.is_bench(Voxels.block_of(voxel))

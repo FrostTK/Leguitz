@@ -216,8 +216,8 @@ BOOK_TOOLS_INTRO,"Everything can be mined by hand, slowly. The right tool is muc
 BOOK_TOOLS_PICKAXE,"Pickaxe: stone, ores, ice, terracotta","Pioche : pierre, minerais, glace, terre cuite"
 BOOK_TOOLS_SHOVEL,"Shovel: dirt, grass, sand, snow, mud","Pelle : terre, herbe, sable, neige, boue"
 BOOK_TOOLS_AXE,"Axe: trees, big mushrooms","Hache : arbres, grands champignons"
-BOOK_TOOLS_SPEED,Speed by material,Vitesse selon le matériau
-BOOK_TOOLS_GOLD,"Gold is the fastest, but it will wear out quickly.","L'or est le plus rapide, mais il s'usera vite."
+BOOK_TOOLS_SPEED,Speed and how long they last,Vitesse et solidité
+BOOK_TOOLS_GOLD,"Gold is the fastest, but it wears out quickly.","L'or est le plus rapide, mais il s'use vite."
 BOOK_TOOLS_PLANTS,"Plants break at once, with or without a tool.","Les plantes se cassent d'un coup, avec ou sans outil."
 TIER_WOOD,Wood,Bois
 TIER_STONE,Stone,Pierre
@@ -266,3 +266,6 @@ BOOK_CRAFT_AT_BENCH,At the workbench (right click on it),À l'établi (clic droi
 BOOK_CRAFT_PICKAXE,Pickaxes (every material),Pioches (tous les matériaux)
 BOOK_CRAFT_AXE,Axes (every material),Haches (tous les matériaux)
 BOOK_CRAFT_SHOVEL,Shovels (every material),Pelles (tous les matériaux)
+HUD_TOOL_BROKE,%s broke!,%s cassée !
+BOOK_TOOLS_TIER,"%s: ×%s, %d blocks","%s : ×%s, %d blocs"
+BOOK_TOOLS_WEAR,"A tool wears with every block it breaks (the bar under its icon), and breaks when worn out.",Un outil s'use à chaque bloc cassé (la barre sous son icône) et se casse quand il est usé.

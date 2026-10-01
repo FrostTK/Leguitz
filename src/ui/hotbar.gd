@@ -75,7 +75,9 @@ func _process(delta: float) -> void:
 			part.visible = book_shown
 	var selected := inventory.selected if not book_selected else Inventory.HOTBAR
 	for i in Inventory.HOTBAR:
-		_slots[i].show_stack(inventory.items[i], inventory.counts[i], i == selected)
+		_slots[i].show_stack(
+			inventory.items[i], inventory.counts[i], i == selected, inventory.wear[i]
+		)
 	_book.show_stack(Items.Id.GUIDE_BOOK, 1, book_selected)
 	# The name of what is in hand, when it changes.
 	var held := Items.Id.GUIDE_BOOK if book_selected else inventory.held()

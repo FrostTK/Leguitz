@@ -258,7 +258,7 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 		Msg.INVENTORY_CLOSE:
 			if session.joined:
 				for left in session.inventory.put_back_all():
-					_throw(session, left.x, left.y)
+					_throw(session, left.x, left.y, left.z)
 				session.craft_width = Inventory.OWN_GRID
 				session.transport.send(Msg.inventory(session.inventory))
 		Msg.OPEN_WORKBENCH:
@@ -328,6 +328,13 @@ func _on_block_break(session: PlayerSession, message: Dictionary) -> void:
 	if not Mining.can_break(voxel, cell.y) or near > Mining.REACH + REACH_LEEWAY:
 		session.transport.send(Msg.block_changed(cell, voxel))
 		return
+	# The tool in hand wears (and may break).
+	var slot := int(message.get("slot", -1))
+	if slot >= 0 and slot < Inventory.HOTBAR and Mining.wears(voxel):
+		var bag := session.inventory
+		if Items.durability(bag.items[slot]) > 0:
+			bag.wear_out(slot)
+			session.transport.send(Msg.inventory(bag))
 	# The whole object goes (both ends of a workbench), and what stood on it.
 	var cells := Mining.object_cells(cell, voxel, world.voxel_at)
 	for part in cells:
@@ -409,19 +416,20 @@ func _on_item_drop(session: PlayerSession, message: Dictionary) -> void:
 	if slot < 0 or slot > Inventory.CURSOR:
 		return
 	var item := session.inventory.items[slot]
+	var worn := session.inventory.wear[slot]
 	var whole: bool = message.get("whole", false)
 	var count := session.inventory.take(slot, session.inventory.counts[slot] if whole else 1)
 	if count > 0:
-		_throw(session, item, count)
+		_throw(session, item, count, worn)
 	session.transport.send(Msg.inventory(session.inventory))
 
 
-## Throws items out in front of a player.
-func _throw(session: PlayerSession, item: int, count: int) -> void:
+## Throws items out in front of a player (`wear`: a tool's).
+func _throw(session: PlayerSession, item: int, count: int, wear := 0) -> void:
 	var facing := Vector2(session.facing).normalized()
 	var at := _body_middle(session) + Vector3(facing.x, 0.4, facing.y) * 0.4
 	var speed := Vector3(facing.x * THROW_SPEED.x, THROW_SPEED.y, facing.y * THROW_SPEED.x)
-	spawn_item(item, count, at, speed, DroppedItem.THROWN_DELAY)
+	spawn_item(item, count, at, speed, DroppedItem.THROWN_DELAY).wear = wear
 
 
 ## The middle of a player's body (local units).
@@ -483,7 +491,7 @@ func _picker_for(dropped: DroppedItem) -> PlayerSession:
 
 
 func _collect(session: PlayerSession, dropped: DroppedItem) -> void:
-	var left := session.inventory.add(dropped.item, dropped.count)
+	var left := session.inventory.add(dropped.item, dropped.count, dropped.wear)
 	if left > 0:
 		dropped.count = left
 		dropped.pickup_delay = DroppedItem.THROWN_DELAY

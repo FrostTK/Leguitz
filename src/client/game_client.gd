@@ -639,6 +639,11 @@ func _on_book_closed() -> void:
 	local_player.controls_enabled = true
 
 
+## A tool in hand just broke (worn out): said over the hotbar.
+func tool_broke(tool: int) -> void:
+	hotbar.announce(tr("HUD_TOOL_BROKE") % tr(Items.name_key(tool)))
+
+
 ## Takes a hotbar slot in hand.
 func select_slot(slot: int) -> void:
 	if slot != inventory.selected:

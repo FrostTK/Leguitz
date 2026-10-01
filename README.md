@@ -23,7 +23,7 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Planches des 6 bois : blocs à poser, en pixel art | ✅ |
 | Établi : un vrai établi de menuisier en 3D voxel sur 2 cases (étau, tiroirs, porte, une enclume, un marteau et une scie en fer dessus), posé face au joueur | ✅ |
 | Établi : clic droit dessus pour sa grille 5×5 ; les 18 outils (pioche, hache, pelle en bois, pierre, cuivre, fer, or, diamant) avec les formes de Minecraft ; lingots de cuivre, de fer et d'or (le four viendra) | ✅ |
-| Usure des outils | à venir |
+| Usure des outils : chaque matériau a sa solidité (l'or rapide mais fragile), barre d'usure sous l'icône, l'outil se casse quand il est usé | ✅ |
 | Coffres | à venir |
 | Four alimentaire et four d'usine | à venir |
 | Blocs de construction variés (briques, verre, pierre taillée…) | à venir |

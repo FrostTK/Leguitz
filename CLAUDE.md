@@ -146,6 +146,13 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   `Mining.break_seconds(voxel, held)` divides the hand's time (`hand_seconds`, the voxel's
   hardness) by `Items.TIER_SPEED` when the tool is the one `Mining.tool_for(voxel)` names; real
   seconds (a player's action, not paced by the day), `Mining.BREAK_PAUSE` between two breaks.
+  Tools wear (`Items.durability`: TIER_DURABILITY uses, Minecraft's; gold the shortest): every
+  block that does not break at once (`Mining.wears`) uses the tool in hand once; worn out, it
+  breaks. `Inventory.wear` keeps each slot's wear and moves it with the tool (clicks, shift,
+  add/put back, saves); DroppedItem.wear keeps it on the ground. Msg.BLOCK_BREAK carries the
+  hotbar slot in hand (-1: the player's book); the client wears its copy at once
+  (BlockInteraction._wear_tool: bits of the head and "broke" over the hotbar), the server sends
+  the inventory. ItemSlot draws a worn tool's bar (green to red).
   Models lie on the diagonal of a 16x16 grid like block-game icons (ItemModels; flat items' icons
   face the camera); hands hold them by `ItemModels.TOOL_GRIP` through `ItemLibrary.held_tool` (the
   body: flat, readable from above, the wrist following `PlayerModel.strike_phase`; first person:
