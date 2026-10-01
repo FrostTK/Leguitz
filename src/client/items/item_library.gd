@@ -79,19 +79,30 @@ func _build(item: int) -> void:
 	_fits[item] = 1.0 / maxf(maxf(size.x, size.y), maxf(size.z, 0.001))
 
 
-## A unit cube (standing on y = 0) wearing a block's top texture on every
-## side.
+## A unit cube (standing on y = 0) wearing a block's textures: its top
+## above and below, its face (as on the terrain's sides) around.
 static func _cube(voxel: int) -> Mesh:
-	var tool := SurfaceTool.new()
-	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var faces := [
+	var mesh := ArrayMesh.new()
+	var ends := [
 		[Vector3.UP, Vector3.RIGHT, Vector3.BACK],
 		[Vector3.DOWN, Vector3.RIGHT, Vector3.FORWARD],
+	]
+	var sides := [
 		[Vector3.RIGHT, Vector3.FORWARD, Vector3.UP],
 		[Vector3.LEFT, Vector3.BACK, Vector3.UP],
 		[Vector3.BACK, Vector3.RIGHT, Vector3.UP],
 		[Vector3.FORWARD, Vector3.LEFT, Vector3.UP],
 	]
+	_cube_faces(mesh, ends, block_texture(voxel))
+	_cube_faces(mesh, sides, face_texture(voxel))
+	return mesh
+
+
+## Square faces of a unit cube ([normal, u, v] each) wearing a texture,
+## added to `mesh` as a surface of their own.
+static func _cube_faces(mesh: ArrayMesh, faces: Array, texture: Image) -> void:
+	var tool := SurfaceTool.new()
+	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for face: Array in faces:
 		var normal: Vector3 = face[0]
 		var u: Vector3 = face[1]
@@ -109,12 +120,18 @@ static func _cube(voxel: int) -> Mesh:
 			tool.set_uv(uvs[i])
 			tool.add_vertex(corners[i])
 	var material := StandardMaterial3D.new()
-	material.albedo_texture = ImageTexture.create_from_image(block_texture(voxel))
+	material.albedo_texture = ImageTexture.create_from_image(texture)
 	material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	material.cull_mode = BaseMaterial3D.CULL_DISABLED
 	material.roughness = 0.9
 	tool.set_material(material)
-	return tool.commit()
+	tool.commit(mesh)
+
+
+## The 16 x 16 texture of a block's sides (the terrain's face atlas).
+static func face_texture(voxel: int) -> Image:
+	var row := ChunkMesher.face_kind(voxel)
+	return WorldView3D.FACE_ATLAS.get_image().get_region(Rect2i(0, row * 16, 16, 16))
 
 
 ## The 16 x 16 top texture of a block (from the terrain atlases).

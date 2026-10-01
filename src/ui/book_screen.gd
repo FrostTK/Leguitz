@@ -25,6 +25,10 @@ const SMALL_SIZE := 6
 const GAP := 3.0
 const KEY_PADDING := 3.0
 const ICON := 16.0
+## A recipe's cells, and how often a cell of a group (any planks...) shows
+## its next item.
+const RECIPE_CELL := 12.0
+const CYCLE_MSEC := 1000
 const LEATHER := Color("6e2b1c")
 const LEATHER_DARK := Color("47180e")
 const GOLD := Color("d8a640")
@@ -133,7 +137,8 @@ func _chapter_shown() -> int:
 
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_TRANSLATION_CHANGED and visible:
+	# (Also sent when entering the tree, before _ready hides the book.)
+	if what == NOTIFICATION_TRANSLATION_CHANGED and is_node_ready() and visible:
 		_rebuild()
 	elif what == NOTIFICATION_RESIZED:
 		queue_redraw()
@@ -414,6 +419,11 @@ func _entry_height(entry: Dictionary) -> float:
 			return _text_height(font, text, width, BODY_SIZE) + how + GAP
 		GuideBook.Kind.ICON:
 			return maxf(ICON, _text_height(font, text, width - ICON - 4.0, BODY_SIZE)) + GAP
+		GuideBook.Kind.RECIPE:
+			var grid := _recipe_size(entry["recipes"][0])
+			var text_width := width - _recipe_width(grid) - 4.0
+			var rows := maxf(grid.y, 1.0) * RECIPE_CELL
+			return maxf(rows, _text_height(font, text, text_width, BODY_SIZE)) + GAP + 2.0
 	return 0.0
 
 
@@ -461,6 +471,80 @@ func _draw_entry(font: Font, entry: Dictionary, at: Vector2, width: float) -> vo
 			var text_height := _text_height(font, text, text_width, BODY_SIZE)
 			var beside := Vector2(ICON + 4.0, maxf(0.0, floorf((ICON - text_height) * 0.5)))
 			_paragraph(font, text, at + beside, text_width, BODY_SIZE, UiTheme.INK)
+		GuideBook.Kind.RECIPE:
+			_draw_recipe(font, entry, at, width)
+
+
+## A recipe: its grid of ingredients, an arrow, what it makes and its
+## name. Groups (and entries of several recipes) go through their items.
+func _draw_recipe(font: Font, entry: Dictionary, at: Vector2, width: float) -> void:
+	var recipes: Array = entry["recipes"]
+	var tick := Time.get_ticks_msec() / CYCLE_MSEC
+	var recipe: Dictionary = recipes[tick % recipes.size()]
+	var grid := _recipe_size(recipe)
+	for y in grid.y:
+		for x in grid.x:
+			var ingredient: Variant = _recipe_ingredient(recipe, Vector2i(x, y))
+			var cell := Rect2(at + Vector2(x, y) * RECIPE_CELL, Vector2.ONE * (RECIPE_CELL - 1.0))
+			_draw_cell(cell, _item_of(ingredient, tick))
+	var middle := at.y + floorf(grid.y * RECIPE_CELL * 0.5)
+	var arrow_x := at.x + grid.x * RECIPE_CELL + 2.0
+	draw_rect(Rect2(arrow_x, middle - 1.0, 4.0, 2.0), UiTheme.WOOD)
+	draw_colored_polygon(
+		PackedVector2Array(
+			[
+				Vector2(arrow_x + 4.0, middle - 3.0),
+				Vector2(arrow_x + 7.0, middle),
+				Vector2(arrow_x + 4.0, middle + 3.0)
+			]
+		),
+		UiTheme.WOOD
+	)
+	var result: Array = recipe["result"]
+	var result_at := Vector2(arrow_x + 9.0, middle - floorf(RECIPE_CELL * 0.5))
+	_draw_cell(Rect2(result_at, Vector2.ONE * (RECIPE_CELL - 1.0)), result[0])
+	var text_x := at.x + _recipe_width(grid) + 4.0
+	var text: String = entry["text"]
+	var text_width := at.x + width - text_x
+	var text_top := middle - floorf(_text_height(font, text, text_width, BODY_SIZE) * 0.5)
+	_paragraph(font, text, Vector2(text_x, text_top), text_width, BODY_SIZE, UiTheme.INK)
+
+
+## A cell of a recipe: a frame and the item's icon.
+func _draw_cell(cell: Rect2, item: int) -> void:
+	draw_rect(cell, KEY_FILL)
+	draw_rect(cell, PAPER_SHADE.darkened(0.25), false, 1.0)
+	var icon := library.icon(item) if library != null and item != Items.Id.NONE else null
+	if icon != null:
+		draw_texture_rect(icon, cell.grow(-0.5), false)
+
+
+## The cells of a recipe's grid: its pattern, or a row of its ingredients.
+static func _recipe_size(recipe: Dictionary) -> Vector2i:
+	if recipe.has("pattern"):
+		var pattern: Array = recipe["pattern"]
+		return Vector2i(String(pattern[0]).length(), pattern.size())
+	return Vector2i(recipe["ingredients"].size(), 1)
+
+
+static func _recipe_ingredient(recipe: Dictionary, cell: Vector2i) -> Variant:
+	if recipe.has("pattern"):
+		return Recipes.ingredient_at(recipe, cell)
+	return recipe["ingredients"][cell.x]
+
+
+## The width of a recipe drawn: its grid, the arrow and what it makes.
+static func _recipe_width(grid: Vector2i) -> float:
+	return grid.x * RECIPE_CELL + 9.0 + RECIPE_CELL
+
+
+## The item an ingredient shows now (a group goes through its items).
+static func _item_of(ingredient: Variant, tick: int) -> int:
+	if ingredient == null:
+		return Items.Id.NONE
+	if ingredient is Array:
+		return ingredient[tick % ingredient.size()]
+	return int(ingredient)
 
 
 func _paragraph(

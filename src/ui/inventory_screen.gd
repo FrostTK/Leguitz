@@ -1,15 +1,19 @@
 class_name InventoryScreen
 extends Control
-## The inventory (E): the bag's 27 slots over the hotbar's 9, and the
-## player's book set apart (it stays there: a click opens it). Clicks pick
-## up, put down, split and swap stacks (Inventory.click: the client shows
-## its guess at once, the server decides); the stack held by the cursor
-## follows the mouse, and dropped outside the panel it is thrown away.
+## The inventory (E): the crafting grid (3 x 3) and what it makes, the
+## bag's 27 slots over the hotbar's 9, and the player's book set apart (it
+## stays there: a click opens it). Clicks pick up, put down, split and swap
+## stacks (Inventory.click: the client shows its guess at once, the server
+## decides), a click on what the grid makes takes it (shift: as many as
+## possible); the stack held by the cursor follows the mouse, and dropped
+## outside the panel it is thrown away.
 
 signal slot_clicked(slot: int, right: bool, shift: bool)
 signal cursor_dropped(whole: bool)
 signal close_requested
 signal book_requested
+## What the crafting grid makes was clicked (shift: make as many as possible).
+signal craft_clicked(shift: bool)
 
 var inventory: Inventory
 var library: ItemLibrary
@@ -20,6 +24,8 @@ var book_selected := false
 var _slots: Array[ItemSlot] = []
 var _book := ItemSlot.new()
 var _book_gap := Control.new()
+## What the crafting grid makes.
+var _result := ItemSlot.new()
 ## Draws the cursor's stack over the panel.
 var _cursor := Control.new()
 
@@ -34,9 +40,14 @@ func _ready() -> void:
 	add_child(panel)
 	var box := VBoxContainer.new()
 	panel.add_child(box)
+	var top := HBoxContainer.new()
+	box.add_child(top)
 	var title := Label.new()
 	title.text = "INVENTORY_TITLE"
-	box.add_child(title)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	top.add_child(title)
+	top.add_child(_crafting())
 	var bag := GridContainer.new()
 	bag.columns = Inventory.HOTBAR
 	bag.add_theme_constant_override("h_separation", 1)
@@ -74,6 +85,51 @@ func close() -> void:
 		close_requested.emit()
 
 
+## The inventory's crafting grid, an arrow and what the grid makes.
+func _crafting() -> Control:
+	var area := VBoxContainer.new()
+	area.add_theme_constant_override("separation", 2)
+	var label := Label.new()
+	label.text = "CRAFTING_TITLE"
+	label.add_theme_color_override("font_color", UiTheme.WOOD)
+	area.add_child(label)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 3)
+	area.add_child(row)
+	var grid := GridContainer.new()
+	grid.columns = Inventory.OWN_GRID
+	grid.add_theme_constant_override("h_separation", 1)
+	grid.add_theme_constant_override("v_separation", 1)
+	row.add_child(grid)
+	for cell in Inventory.OWN_GRID * Inventory.OWN_GRID:
+		var column := cell % Inventory.OWN_GRID
+		var line := cell / Inventory.OWN_GRID
+		grid.add_child(_new_slot(Inventory.CRAFT + line * Inventory.GRID + column))
+	var arrow := Control.new()
+	arrow.custom_minimum_size = Vector2(12.0, 0.0)
+	arrow.draw.connect(_draw_arrow.bind(arrow))
+	row.add_child(arrow)
+	_result.library = library
+	_result.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_result.clicked.connect(
+		func(_slot: int, _right: bool, shift: bool) -> void: craft_clicked.emit(shift)
+	)
+	row.add_child(_result)
+	return area
+
+
+## An arrow pointing from the grid to what it makes.
+func _draw_arrow(arrow: Control) -> void:
+	var middle := floorf(arrow.size.y * 0.5)
+	arrow.draw_rect(Rect2(1.0, middle - 1.0, 6.0, 2.0), UiTheme.WOOD)
+	arrow.draw_colored_polygon(
+		PackedVector2Array(
+			[Vector2(6.0, middle - 4.0), Vector2(11.0, middle), Vector2(6.0, middle + 4.0)]
+		),
+		UiTheme.WOOD
+	)
+
+
 func _new_slot(index: int) -> ItemSlot:
 	var slot := ItemSlot.new()
 	slot.slot = index
@@ -93,6 +149,8 @@ func _process(_delta: float) -> void:
 		slot.show_stack(
 			inventory.items[slot.slot], inventory.counts[slot.slot], slot.slot == selected
 		)
+	var made := inventory.craft_result(Inventory.OWN_GRID)
+	_result.show_stack(made.x, made.y)
 	_book.visible = book_shown
 	_book_gap.visible = book_shown
 	_book.show_stack(Items.Id.GUIDE_BOOK, 1, book_selected)

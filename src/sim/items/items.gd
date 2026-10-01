@@ -68,6 +68,13 @@ enum Id {
 	DIAMOND_AXE,
 	DIAMOND_SHOVEL,
 	GUIDE_BOOK,
+	OAK_PLANKS,
+	BIRCH_PLANKS,
+	SPRUCE_PLANKS,
+	DARK_OAK_PLANKS,
+	JUNGLE_PLANKS,
+	ACACIA_PLANKS,
+	WORKBENCH,
 }
 ## What a tool is made for (Mining.tool_for: what it breaks faster).
 enum Tool { NONE, PICKAXE, AXE, SHOVEL }
@@ -118,6 +125,13 @@ const PLACES_BLOCK := {
 	Id.DEEPSLATE: Tiles.Block.DEEPSLATE,
 	Id.SANDSTONE: Tiles.Block.SANDSTONE,
 	Id.PACKED_ICE: Tiles.Block.PACKED_ICE,
+	Id.OAK_PLANKS: Tiles.Block.OAK_PLANKS,
+	Id.BIRCH_PLANKS: Tiles.Block.BIRCH_PLANKS,
+	Id.SPRUCE_PLANKS: Tiles.Block.SPRUCE_PLANKS,
+	Id.DARK_OAK_PLANKS: Tiles.Block.DARK_OAK_PLANKS,
+	Id.JUNGLE_PLANKS: Tiles.Block.JUNGLE_PLANKS,
+	Id.ACACIA_PLANKS: Tiles.Block.ACACIA_PLANKS,
+	Id.WORKBENCH: Tiles.Block.WORKBENCH,
 }
 
 ## What a ground gives (soil gives dirt); grounds left out give nothing.
@@ -175,6 +189,22 @@ const BLOCK_DROPS := {
 	Tiles.Block.MUSHROOM_BROWN: [Id.MUSHROOM_BROWN, 1, 1],
 	Tiles.Block.SUGAR_CANE: [Id.SUGAR_CANE, 1, 1],
 	Tiles.Block.LILY_PAD: [Id.LILY_PAD, 1, 1],
+	Tiles.Block.OAK_PLANKS: [Id.OAK_PLANKS, 1, 1],
+	Tiles.Block.BIRCH_PLANKS: [Id.BIRCH_PLANKS, 1, 1],
+	Tiles.Block.SPRUCE_PLANKS: [Id.SPRUCE_PLANKS, 1, 1],
+	Tiles.Block.DARK_OAK_PLANKS: [Id.DARK_OAK_PLANKS, 1, 1],
+	Tiles.Block.JUNGLE_PLANKS: [Id.JUNGLE_PLANKS, 1, 1],
+	Tiles.Block.ACACIA_PLANKS: [Id.ACACIA_PLANKS, 1, 1],
+	Tiles.Block.WORKBENCH: [Id.WORKBENCH, 1, 1],
+}
+## The planks each log is sawn into.
+const PLANKS_OF := {
+	Id.OAK_LOG: Id.OAK_PLANKS,
+	Id.BIRCH_LOG: Id.BIRCH_PLANKS,
+	Id.SPRUCE_LOG: Id.SPRUCE_PLANKS,
+	Id.DARK_OAK_LOG: Id.DARK_OAK_PLANKS,
+	Id.JUNGLE_LOG: Id.JUNGLE_PLANKS,
+	Id.ACACIA_LOG: Id.ACACIA_PLANKS,
 }
 ## A felled tree gives a log per level of trunk, and a stick or two.
 const TREE_LOGS := {

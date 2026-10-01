@@ -20,6 +20,7 @@ const SLOT_CLICK := "slot_click"
 const ITEM_DROP := "item_drop"
 const INVENTORY_CLOSE := "inventory_close"
 const DEBUG_GIVE_TOOLS := "debug_give_tools"
+const CRAFT := "craft"
 
 ## map_request() row for a map of the surface.
 const MAP_SURFACE := -1
@@ -67,9 +68,16 @@ static func item_drop(slot: int, whole: bool) -> Dictionary:
 	return {"t": ITEM_DROP, "slot": slot, "whole": whole}
 
 
-## The inventory screen closed: the cursor's stack goes back.
+## The inventory screen closed: the cursor's stack and the crafting grid
+## go back.
 static func inventory_close() -> Dictionary:
 	return {"t": INVENTORY_CLOSE}
+
+
+## The player takes what their crafting grid makes (shift: as many as
+## possible, into the slots).
+static func craft(shift: bool) -> Dictionary:
+	return {"t": CRAFT, "shift": shift}
 
 
 ## A player's whole inventory (see Inventory.to_dict).

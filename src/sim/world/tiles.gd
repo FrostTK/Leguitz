@@ -76,6 +76,13 @@ enum Block {
 	BERRY_BUSH,
 	PACKED_ICE,
 	SWAMP_OAK,
+	OAK_PLANKS,
+	BIRCH_PLANKS,
+	SPRUCE_PLANKS,
+	DARK_OAK_PLANKS,
+	JUNGLE_PLANKS,
+	ACACIA_PLANKS,
+	WORKBENCH,
 }
 
 const FLOWERS: Array[Block] = [
@@ -135,6 +142,13 @@ const CUBE_BLOCKS := {
 	Block.EMERALD_ORE: true,
 	Block.SANDSTONE: true,
 	Block.PACKED_ICE: true,
+	Block.OAK_PLANKS: true,
+	Block.BIRCH_PLANKS: true,
+	Block.SPRUCE_PLANKS: true,
+	Block.DARK_OAK_PLANKS: true,
+	Block.JUNGLE_PLANKS: true,
+	Block.ACACIA_PLANKS: true,
+	Block.WORKBENCH: true,
 }
 
 const NON_SOLID_BLOCKS := {

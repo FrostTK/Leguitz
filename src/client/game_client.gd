@@ -157,6 +157,7 @@ func _ready() -> void:
 	inventory_screen.cursor_dropped.connect(_on_cursor_dropped)
 	inventory_screen.close_requested.connect(_on_inventory_closed)
 	inventory_screen.book_requested.connect(_on_book_requested)
+	inventory_screen.craft_clicked.connect(_on_craft_clicked)
 	book_screen.library = items
 	book_screen.close_requested.connect(_on_book_closed)
 	dropped_items.library = items
@@ -662,8 +663,13 @@ func _on_cursor_dropped(whole: bool) -> void:
 
 func _on_inventory_closed() -> void:
 	local_player.controls_enabled = true
-	inventory.put_back_cursor()
+	inventory.put_back_all()
 	transport.send(Msg.inventory_close())
+
+
+func _on_craft_clicked(shift: bool) -> void:
+	inventory.craft(Inventory.OWN_GRID, shift)
+	transport.send(Msg.craft(shift))
 
 
 ## Puts what is in hand in the body's hand and, in first person, at the

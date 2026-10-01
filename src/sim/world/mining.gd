@@ -48,6 +48,13 @@ const BLOCK_SECONDS := {
 	Tiles.Block.BUSH: 0.4,
 	Tiles.Block.BERRY_BUSH: 0.4,
 	Tiles.Block.SUGAR_CANE: 0.2,
+	Tiles.Block.OAK_PLANKS: 2.0,
+	Tiles.Block.BIRCH_PLANKS: 2.0,
+	Tiles.Block.SPRUCE_PLANKS: 2.0,
+	Tiles.Block.DARK_OAK_PLANKS: 2.0,
+	Tiles.Block.JUNGLE_PLANKS: 2.0,
+	Tiles.Block.ACACIA_PLANKS: 2.0,
+	Tiles.Block.WORKBENCH: 2.5,
 }
 ## Trees by hand: chopping a trunk takes a while.
 const TREE_SECONDS := 3.5
@@ -64,10 +71,20 @@ const PICKAXE_GROUNDS := {
 	Tiles.Ground.TERRACOTTA_LIGHT: true,
 	Tiles.Ground.ICE: true,
 }
-## Blocks a pickaxe breaks faster besides the cubes (stone, ores...), and
-## blocks an axe breaks faster besides trees; nothing helps with plants.
+## Blocks an axe breaks faster besides trees (wood), and blocks a pickaxe
+## breaks faster besides the other cubes (stone, ores...); nothing helps
+## with plants.
+const AXE_BLOCKS := {
+	Tiles.Block.BIG_MUSHROOM: true,
+	Tiles.Block.OAK_PLANKS: true,
+	Tiles.Block.BIRCH_PLANKS: true,
+	Tiles.Block.SPRUCE_PLANKS: true,
+	Tiles.Block.DARK_OAK_PLANKS: true,
+	Tiles.Block.JUNGLE_PLANKS: true,
+	Tiles.Block.ACACIA_PLANKS: true,
+	Tiles.Block.WORKBENCH: true,
+}
 const PICKAXE_BLOCKS := {Tiles.Block.ROCK: true, Tiles.Block.MOSSY_ROCK: true}
-const AXE_BLOCKS := {Tiles.Block.BIG_MUSHROOM: true}
 
 
 static func can_break(voxel: int, row: int) -> bool:
@@ -127,10 +144,10 @@ static func tool_for(voxel: int) -> int:
 		if ground == Tiles.Ground.NONE or Voxels.is_liquid(voxel):
 			return Items.Tool.NONE
 		return Items.Tool.PICKAXE if PICKAXE_GROUNDS.has(ground) else Items.Tool.SHOVEL
-	if Tiles.is_cube(block) or PICKAXE_BLOCKS.has(block):
-		return Items.Tool.PICKAXE
 	if ObjectShapes.is_tree(block) or AXE_BLOCKS.has(block):
 		return Items.Tool.AXE
+	if Tiles.is_cube(block) or PICKAXE_BLOCKS.has(block):
+		return Items.Tool.PICKAXE
 	return Items.Tool.NONE
 
 

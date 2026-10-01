@@ -141,7 +141,12 @@ func _start_dev_actions() -> void:
 	var session := server.first_session()
 	for entry in dev.give:
 		session.inventory.add(entry.x, entry.y)
-	if not dev.give.is_empty():
+	for i in mini(dev.grid.size(), Inventory.OWN_GRID * Inventory.OWN_GRID):
+		if dev.grid[i] != Items.Id.NONE:
+			var cell := Inventory.CRAFT + i / Inventory.OWN_GRID * Inventory.GRID
+			session.inventory.items[cell + i % Inventory.OWN_GRID] = dev.grid[i]
+			session.inventory.counts[cell + i % Inventory.OWN_GRID] = 1
+	if not dev.give.is_empty() or not dev.grid.is_empty():
 		session.transport.send(Msg.inventory(session.inventory))
 	if dev.open_inventory:
 		client.open_inventory()

@@ -2,11 +2,11 @@ class_name GuideBook
 extends RefCounted
 ## What the player's book says (the 10th slot, shown by BookScreen): the
 ## controls as they are bound (in the player's keyboard layout), the
-## gamepad, tips, tools and, once crafting comes, the recipes. A chapter
-## is a list of entries: Dictionaries with a "kind" (Kind) and their text
-## already translated, built again when the language changes.
+## gamepad, tips, tools and the recipes. A chapter is a list of entries:
+## Dictionaries with a "kind" (Kind) and their text already translated,
+## built again when the language changes.
 
-enum Kind { TITLE, HEADING, TEXT, TIP, KEYS, COMBO, ICON }
+enum Kind { TITLE, HEADING, TEXT, TIP, KEYS, COMBO, ICON, RECIPE }
 
 ## The chapters (their tab and title), in order.
 const CHAPTERS: Array[String] = [
@@ -110,8 +110,25 @@ static func _tools() -> Array:
 	return entries
 
 
+## How to craft, then every recipe (the logs sawn into planks in one
+## entry going through the woods).
 static func _craft() -> Array:
-	return [_title(CHAPTERS[4]), _text("BOOK_CRAFT_SOON")]
+	var entries := [_title(CHAPTERS[4]), _text("BOOK_CRAFT_HOW")]
+	var planks := []
+	for recipe: Dictionary in Recipes.all():
+		if recipe.has("ingredients") and Items.PLANKS_OF.has(recipe["ingredients"][0]):
+			planks.append(recipe)
+	var sawn: int = planks[0]["result"][1]
+	entries.append({"kind": Kind.RECIPE, "text": _t("BOOK_CRAFT_PLANKS") % sawn, "recipes": planks})
+	for recipe: Dictionary in Recipes.all():
+		if not recipe in planks:
+			var result: Array = recipe["result"]
+			var made := _t(Items.name_key(result[0]))
+			if result[1] > 1:
+				made += "  ×%d" % result[1]
+			entries.append({"kind": Kind.RECIPE, "text": made, "recipes": [recipe]})
+	entries.append(_text("BOOK_CRAFT_MORE"))
+	return entries
 
 
 static func _title(key: String) -> Dictionary:

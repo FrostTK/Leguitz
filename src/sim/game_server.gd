@@ -50,6 +50,9 @@ class PlayerSession:
 	var view_distance := GameConst.DEFAULT_VIEW_DISTANCE
 	var sent_chunks: Dictionary[Vector2i, bool] = {}
 	var inventory := Inventory.new()
+	## Cells across of the crafting grid the player uses (a workbench's is
+	## wider than the inventory's).
+	var craft_width := Inventory.OWN_GRID
 
 
 class MapJob:
@@ -254,9 +257,12 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 			_on_item_drop(session, message)
 		Msg.INVENTORY_CLOSE:
 			if session.joined:
-				var left := session.inventory.put_back_cursor()
-				if left != Vector2i.ZERO:
+				for left in session.inventory.put_back_all():
 					_throw(session, left.x, left.y)
+				session.transport.send(Msg.inventory(session.inventory))
+		Msg.CRAFT:
+			if session.joined:
+				session.inventory.craft(session.craft_width, message.get("shift", false))
 				session.transport.send(Msg.inventory(session.inventory))
 		Msg.SAVE_REQUEST:
 			if session.joined and Time.get_ticks_msec() - _last_save_msec >= SAVE_REQUEST_MSEC:

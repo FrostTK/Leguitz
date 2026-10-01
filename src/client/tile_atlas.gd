@@ -18,6 +18,13 @@ const WALL_KINDS := {
 	Tiles.Block.EMERALD_ORE: 9,
 	Tiles.Block.SANDSTONE: 10,
 	Tiles.Block.PACKED_ICE: 11,
+	Tiles.Block.OAK_PLANKS: 12,
+	Tiles.Block.BIRCH_PLANKS: 13,
+	Tiles.Block.SPRUCE_PLANKS: 14,
+	Tiles.Block.DARK_OAK_PLANKS: 15,
+	Tiles.Block.JUNGLE_PLANKS: 16,
+	Tiles.Block.ACACIA_PLANKS: 17,
+	Tiles.Block.WORKBENCH: 18,
 }
 const GLOWING_WALLS := {
 	Tiles.Block.GOLD_ORE: true,

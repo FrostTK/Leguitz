@@ -12,7 +12,7 @@ Outputs in assets/textures/:
   tiles/ground_atlas.png (+ _n)   4 variants x one 16 px row per ground id
   tiles/wall_atlas.png (+ _n, _e) one row per wall kind: top A, top B, face A, face B
   tiles/face_atlas.png (+ _n, _e) vertical faces: rows 0-3 cliff materials (dirt,
-                                  stone, sand, snow), rows 4-15 wall kinds; 2 variants
+                                  stone, sand, snow), then the wall kinds; 2 variants
 """
 
 from pathlib import Path
@@ -38,7 +38,12 @@ GROUNDS = [
 WALLS = [
     "STONE", "DEEPSLATE", "COAL_ORE", "COPPER_ORE", "IRON_ORE", "GOLD_ORE", "LAPIS_ORE",
     "RUBY_ORE", "DIAMOND_ORE", "EMERALD_ORE", "SANDSTONE", "PACKED_ICE",
+    "OAK_PLANKS", "BIRCH_PLANKS", "SPRUCE_PLANKS", "DARK_OAK_PLANKS", "JUNGLE_PLANKS",
+    "ACACIA_PLANKS", "WORKBENCH",
 ]
+# Walls from this row on draw from random generators of their own, so the
+# textures made before them (and the cliffs after) stay the same.
+FIRST_OWN_SEED_WALL = 12
 
 
 def rgba(value, alpha=255):
@@ -398,6 +403,90 @@ def wall_face(rng, base):
     return c, height
 
 
+PLANKS = {
+    # name: (base, dark, light)
+    "OAK_PLANKS": ("#b8874f", "#8a6034", "#d3a56c"),
+    "BIRCH_PLANKS": ("#dcc68f", "#b39a62", "#efdcab"),
+    "SPRUCE_PLANKS": ("#9c6e42", "#714c29", "#b98a5b"),
+    "DARK_OAK_PLANKS": ("#6e4a2b", "#4a2f19", "#87603b"),
+    "JUNGLE_PLANKS": ("#b9825a", "#8a5c39", "#d29d74"),
+    "ACACIA_PLANKS": ("#c0663a", "#924522", "#d9845a"),
+}
+
+
+def planks(rng, base, dark, light, face):
+    """Four boards across the tile, grained, butted end to end here and there."""
+    c = Canvas(TILE, TILE)
+    height = np.full((TILE, TILE), 0.7, dtype=np.float32)
+    for board in range(4):
+        y0 = board * 4
+        tone = shade(base, float(rng.uniform(-0.07, 0.07)))
+        c.fill(0, y0, TILE, 4, tone)
+        for _ in range(4):
+            x, y = int(rng.integers(0, TILE - 3)), y0 + int(rng.integers(0, 3))
+            streak = shade(tone, -0.12) if rng.random() < 0.65 else shade(tone, 0.1)
+            c.fill(x, y, int(rng.integers(3, 8)), 1, streak)
+        c.fill(0, y0, TILE, 1, shade(tone, 0.08))
+        c.fill(0, y0 + 3, TILE, 1, dark)
+        height[y0 + 3, :] = 0.25
+        joint = (board * 6 + int(rng.integers(2, 6))) % TILE
+        c.fill(joint, y0, 1, 3, dark)
+        height[y0:y0 + 3, joint] = 0.3
+        for nail_x in (joint - 2, joint + 2):
+            if 0 <= nail_x < TILE and rng.random() < 0.7:
+                c.put(nail_x, y0 + 1, shade(dark, -0.25))
+    if face:
+        c.fill(0, TILE - 1, TILE, 1, shade(dark, -0.25))
+    height += luminance(c.img) * 0.15
+    return c, height
+
+
+def workbench_top(rng):
+    """A 5 x 5 grid of cells (2 px, between lines of 1 px) on an oak board."""
+    base, dark, light = PLANKS["OAK_PLANKS"]
+    c = Canvas(TILE, TILE)
+    c.fill(0, 0, TILE, TILE, shade(base, 0.1))
+    speckle(rng, c, [shade(base, 0.02), shade(base, 0.16)], 0.3)
+    height = np.full((TILE, TILE), 0.75, dtype=np.float32)
+    for i in range(6):
+        c.fill(i * 3, 0, 1, TILE, dark)
+        c.fill(0, i * 3, TILE, 1, dark)
+        height[:, i * 3] = 0.35
+        height[i * 3, :] = 0.35
+    c.fill(0, 0, TILE, 1, shade(dark, -0.2))
+    c.fill(0, 0, 1, TILE, shade(dark, -0.2))
+    return c, height
+
+
+def workbench_face(rng, variant):
+    """Oak planks with a tool hung on them: a saw, or a hammer."""
+    base, dark, light = PLANKS["OAK_PLANKS"]
+    c, height = planks(rng, base, dark, light, True)
+    steel, steel_dark, wood = "#c9ccd4", "#7c808c", "#6b4424"
+    if variant == 0:
+        c.fill(3, 5, 9, 3, steel)
+        for x in range(3, 12, 2):
+            c.put(x, 8, steel_dark)
+        c.fill(3, 5, 9, 1, shade(steel, 0.2))
+        c.fill(12, 4, 2, 5, wood)
+        c.put(12, 6, shade(wood, 0.25))
+    else:
+        c.fill(7, 4, 2, 9, wood)
+        c.fill(7, 4, 1, 9, shade(wood, 0.2))
+        c.fill(4, 3, 8, 3, steel_dark)
+        c.fill(4, 3, 8, 1, steel)
+        c.put(11, 4, steel)
+    height += luminance(c.img) * 0.1
+    return c, height
+
+
+def wall_tile(rng, name, is_top, variant):
+    """The tile of a wall added after the first ones (own generator)."""
+    if name == "WORKBENCH":
+        return workbench_top(rng) if is_top else workbench_face(rng, variant)
+    return planks(rng, *PLANKS[name], not is_top)
+
+
 def gems(rng, canvas, emission, gem, gem_light, glow, top):
     spots = [(3, 3), (9, 2), (6, 8), (11, 7), (2, 11)] if top else [(3, 2), (10, 5), (5, 10)]
     for x, y in spots:
@@ -415,6 +504,13 @@ def build_walls(rng):
     heights = np.zeros((TILE * len(WALLS), TILE * 4), dtype=np.float32)
     emission = Canvas(TILE * 4, TILE * len(WALLS))
     for row, name in enumerate(WALLS):
+        if row >= FIRST_OWN_SEED_WALL:
+            own = np.random.default_rng(9000 + row)
+            for column in range(4):
+                tile, height = wall_tile(own, name, column < 2, column % 2)
+                atlas.blit(tile, column * TILE, row * TILE)
+                heights[row * TILE:(row + 1) * TILE, column * TILE:(column + 1) * TILE] = height
+            continue
         if name in ORE_GEMS:
             base, gem, gem_light, glow = ORE_GEMS[name]
         else:
@@ -489,6 +585,13 @@ def build_faces(rng):
             heights[material * TILE:(material + 1) * TILE, variant * TILE:(variant + 1) * TILE] = height
     for index, name in enumerate(WALLS):
         row = len(CLIFF_MATERIALS) + index
+        if index >= FIRST_OWN_SEED_WALL:
+            own = np.random.default_rng(9500 + index)
+            for variant in range(2):
+                tile, height = wall_tile(own, name, False, variant)
+                atlas.blit(tile, variant * TILE, row * TILE)
+                heights[row * TILE:(row + 1) * TILE, variant * TILE:(variant + 1) * TILE] = height
+            continue
         if name in ORE_GEMS:
             base, gem, gem_light, glow = ORE_GEMS[name]
         else:

@@ -162,6 +162,21 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   closed by Esc, E, 0 or a right click. Its text comes from GuideBook (chapters of translated
   entries; the controls named by InputNames as they are bound, in the player's keyboard layout:
   ZQSD on AZERTY). `Items.Id.GUIDE_BOOK` gives it a model and an icon; never in inventories.
+- Crafting (`src/sim/items/recipes.gd`, shared): shaped recipes (a pattern placed anywhere in the
+  grid, mirrored too) and shapeless ones; an ingredient is an item or a group (`Recipes.PLANKS`);
+  `"workbench": true` keeps a recipe to the 5x5 grid. The grid lives in the `Inventory`
+  (GRID x GRID cells from `Inventory.CRAFT`; the inventory's own grid is its top left OWN_GRID,
+  3x3; a workbench will use all 5x5) and is clicked like slots; `craft(width, shift)` takes the
+  result (shift: as many as fit, into the slots), `put_back_all()` empties the cursor and the
+  grid when the screen closes (the server throws what does not fit). Msg.CRAFT; the server uses
+  `PlayerSession.craft_width`. InventoryScreen shows the grid, an arrow and the result; the
+  book's Crafting chapter draws every recipe (GuideBook Kind.RECIPE, groups going through their
+  items). `--grid=ITEM,...` fills the grid for screenshots.
+- New cube blocks (planks, the workbench): append to Tiles.Block and CUBE_BLOCKS, give them a
+  TileAtlas.WALL_KINDS row and a `tools/gen_art.py` WALLS entry (walls from FIRST_OWN_SEED_WALL
+  draw from random generators of their own, so the older textures stay the same), then Items
+  (PLACES_BLOCK, BLOCK_DROPS) and Mining (time, tool). Block items are cubes wearing their top
+  texture above and below and their face texture around (ItemLibrary._cube).
 - Saves (`src/sim/save/world_storage.gd`, server side only): `user://worlds/<folder>/` holds
   world.cfg (settings, clock, weather), players/<name>.cfg and regions/r.<x>.<z>.bin (the chunks
   players changed, 32x32 per file, zstd voxels; the others are generated again). Change voxels

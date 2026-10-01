@@ -38,6 +38,8 @@ extends RefCounted
 ## --inventory          open the inventory once the world is ready
 ## --drop               throw the stack in hand once the world is ready
 ## --book[=SPREAD]      open the player's book (at two pages SPREAD, from 0)
+## --grid=ITEM,...      fill the inventory's crafting grid, row by row
+##                      (oak_planks,none,none,oak_log: "none" leaves a cell)
 
 var seed_text := ""
 var new_world := false
@@ -76,6 +78,8 @@ var open_inventory := false
 var drop_held := false
 ## The spread the player's book opens at (-1: closed).
 var book_spread := -1
+## Items put in the crafting grid's cells, row by row.
+var grid: Array[int] = []
 
 
 static func parse(args: PackedStringArray) -> DevOptions:
@@ -164,6 +168,9 @@ static func parse(args: PackedStringArray) -> DevOptions:
 				options.open_inventory = true
 			"book":
 				options.book_spread = maxi(value.to_int(), 0)
+			"grid":
+				for item_name in value.split(","):
+					options.grid.append(Items.Id.get(item_name.to_upper(), Items.Id.NONE))
 			"drop":
 				options.drop_held = true
 			"place":

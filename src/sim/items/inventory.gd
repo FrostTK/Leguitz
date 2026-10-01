@@ -1,14 +1,23 @@
 class_name Inventory
 extends RefCounted
 ## A player's items: the hotbar (HOTBAR slots, the selected one is in
-## hand), the bag, and the stack the cursor holds while things are moved
-## around (slot CURSOR). The server keeps the real one; clients run their
-## clicks on a copy at once (same rules, Minecraft's) and get corrected.
+## hand), the bag, the stack the cursor holds while things are moved
+## around (slot CURSOR) and the crafting grid. The server keeps the real
+## one; clients run their clicks on a copy at once (same rules,
+## Minecraft's) and get corrected.
 
 const HOTBAR := 9
 const BAG := 27
 const SLOTS := HOTBAR + BAG
 const CURSOR := SLOTS
+## The crafting grid: GRID x GRID cells from CRAFT, row by row. The
+## inventory's own grid is the top left OWN_GRID x OWN_GRID, a
+## workbench's all of it; what lies there goes back when the screen
+## closes (put_back_all).
+const GRID := 5
+const OWN_GRID := 3
+const CRAFT := CURSOR + 1
+const SIZE := CRAFT + GRID * GRID
 
 var items := PackedInt32Array()
 var counts := PackedInt32Array()
@@ -17,8 +26,8 @@ var selected := 0
 
 
 func _init() -> void:
-	items.resize(SLOTS + 1)
-	counts.resize(SLOTS + 1)
+	items.resize(SIZE)
+	counts.resize(SIZE)
 
 
 ## The item in hand.
@@ -54,17 +63,20 @@ func take(slot: int, count: int) -> int:
 	return taken
 
 
-## A click on a slot, Minecraft's rules: left picks a stack up, puts the
-## held one down, adds it onto the same item or swaps the two (tools,
-## which do not stack, swap); right picks half a stack up or puts one
-## item down; shift moves the stack between the hotbar and the bag.
+## A click on a slot (or a cell of the crafting grid), Minecraft's rules:
+## left picks a stack up, puts the held one down, adds it onto the same
+## item or swaps the two (tools, which do not stack, swap); right picks
+## half a stack up or puts one item down; shift moves the stack between
+## the hotbar and the bag (from the grid: into the slots).
 func click(slot: int, right: bool, shift: bool) -> void:
-	if slot < 0 or slot >= SLOTS:
+	if slot < 0 or slot >= SIZE or slot == CURSOR:
 		return
 	if shift:
 		var item := items[slot]
 		var count := take(slot, counts[slot])
 		var others := range(HOTBAR, SLOTS) if slot < HOTBAR else range(HOTBAR)
+		if slot >= CRAFT:
+			others = range(SLOTS)
 		var left := _add_to(item, count, others)
 		if left > 0:
 			items[slot] = item
@@ -99,12 +111,55 @@ func click(slot: int, right: bool, shift: bool) -> void:
 		counts[CURSOR] = count
 
 
-## Puts the cursor's stack back into the slots (the inventory closes);
-## returns what did not fit [item, count] (to drop), clearing the cursor.
-func put_back_cursor() -> Vector2i:
-	var item := items[CURSOR]
-	var left := add(item, take(CURSOR, counts[CURSOR])) if item != Items.Id.NONE else 0
-	return Vector2i(item, left) if left > 0 else Vector2i.ZERO
+## The items of the crafting grid `width` cells wide, row by row.
+func grid(width: int) -> PackedInt32Array:
+	var cells := PackedInt32Array()
+	for row in width:
+		for column in width:
+			cells.append(items[CRAFT + row * GRID + column])
+	return cells
+
+
+## What the crafting grid `width` cells wide makes: [item, count]
+## (Vector2i.ZERO: nothing).
+func craft_result(width: int) -> Vector2i:
+	return Recipes.result_of(grid(width), width)
+
+
+## Takes what the grid makes into the cursor (onto the same item if there
+## is room), using one of each ingredient; with shift, makes as many as
+## the slots can take, straight into them.
+func craft(width: int, shift: bool) -> void:
+	var result := craft_result(width)
+	if result == Vector2i.ZERO:
+		return
+	if shift:
+		var first := result.x
+		while result.x == first and room_for(result.x) >= result.y:
+			add(result.x, result.y)
+			_use_grid(width)
+			result = craft_result(width)
+		return
+	var held := items[CURSOR]
+	if held != Items.Id.NONE:
+		if held != result.x or counts[CURSOR] + result.y > Items.max_stack(held):
+			return
+	items[CURSOR] = result.x
+	counts[CURSOR] += result.y
+	_use_grid(width)
+
+
+## Puts the cursor's stack and the crafting grid back into the slots (the
+## screen closes); returns what did not fit ([item, count]: to throw).
+func put_back_all() -> Array[Vector2i]:
+	var left: Array[Vector2i] = []
+	for slot in [CURSOR] + range(CRAFT, SIZE):
+		var item := items[slot]
+		if item != Items.Id.NONE:
+			var over := add(item, take(slot, counts[slot]))
+			if over > 0:
+				left.append(Vector2i(item, over))
+	return left
 
 
 func to_dict() -> Dictionary:
@@ -114,13 +169,20 @@ func to_dict() -> Dictionary:
 func load_dict(data: Dictionary) -> void:
 	var loaded_items: PackedInt32Array = data.get("items", PackedInt32Array())
 	var loaded_counts: PackedInt32Array = data.get("counts", PackedInt32Array())
-	for slot in mini(loaded_items.size(), SLOTS + 1):
+	for slot in mini(loaded_items.size(), SIZE):
 		var item := loaded_items[slot]
 		var count := loaded_counts[slot] if slot < loaded_counts.size() else 0
 		var valid := Items.is_valid(item) and count > 0
 		items[slot] = item if valid else Items.Id.NONE
 		counts[slot] = mini(count, Items.max_stack(item)) if valid else 0
 	selected = clampi(int(data.get("selected", 0)), 0, HOTBAR - 1)
+
+
+## One of each item in the grid `width` cells wide goes (it was crafted).
+func _use_grid(width: int) -> void:
+	for row in width:
+		for column in width:
+			take(CRAFT + row * GRID + column, 1)
 
 
 func _add_to(item: int, count: int, slots: Array) -> int:

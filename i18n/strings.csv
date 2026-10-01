@@ -219,7 +219,6 @@ BOOK_TOOLS_AXE,"Axe: trees, big mushrooms","Hache : arbres, grands champignons"
 BOOK_TOOLS_SPEED,Speed by material,Vitesse selon le matériau
 BOOK_TOOLS_GOLD,"Gold is the fastest, but it will wear out quickly.","L'or est le plus rapide, mais il s'usera vite."
 BOOK_TOOLS_PLANTS,"Plants break at once, with or without a tool.","Les plantes se cassent d'un coup, avec ou sans outil."
-BOOK_CRAFT_SOON,"Soon you will make planks, tools, chests and furnaces. The recipes will show here.","Bientôt, tu fabriqueras planches, outils, coffres et fours. Les recettes s'afficheront ici."
 TIER_WOOD,Wood,Bois
 TIER_STONE,Stone,Pierre
 TIER_COPPER,Copper,Cuivre
@@ -248,3 +247,14 @@ MOUSE_MIDDLE,Middle click,Clic molette
 PAD_LEFT_STICK,Left stick,Stick gauche
 PAD_RIGHT_STICK,Right stick,Stick droit
 PAD_DPAD,D-pad,Croix
+ITEM_OAK_PLANKS,Oak planks,Planches de chêne
+ITEM_BIRCH_PLANKS,Birch planks,Planches de bouleau
+ITEM_SPRUCE_PLANKS,Spruce planks,Planches d'épicéa
+ITEM_DARK_OAK_PLANKS,Dark oak planks,Planches de chêne noir
+ITEM_JUNGLE_PLANKS,Jungle planks,Planches d'acajou
+ITEM_ACACIA_PLANKS,Acacia planks,Planches d'acacia
+ITEM_WORKBENCH,Workbench,Établi
+CRAFTING_TITLE,Crafting,Fabrication
+BOOK_CRAFT_HOW,"Put the ingredients in the grid of your inventory (E): what they make shows on the right. Click it to take it, Shift + click to make as many as possible.","Place les ingrédients dans la grille de ton inventaire (E) : ce qu'ils donnent s'affiche à droite. Clique dessus pour le prendre, Maj + clic pour en faire le plus possible."
+BOOK_CRAFT_PLANKS,Planks  ×%d (from each log),Planches  ×%d (de chaque bûche)
+BOOK_CRAFT_MORE,"Placed, the workbench will open a bigger grid (5 x 5) for tools and more.","Une fois posé, l'établi ouvrira une plus grande grille (5 × 5) pour les outils et plus encore."

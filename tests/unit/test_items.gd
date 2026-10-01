@@ -118,7 +118,7 @@ func test_clicks_move_stacks_like_minecraft() -> void:
 	bag.click(5, false, false)
 	assert_eq(bag.items[5], Items.Id.SAND, "swapped")
 	assert_eq(bag.items[Inventory.CURSOR], Items.Id.DIRT)
-	assert_eq(bag.put_back_cursor(), Vector2i.ZERO, "back in the slots")
+	assert_true(bag.put_back_all().is_empty(), "back in the slots")
 	assert_eq(bag.items[Inventory.CURSOR], Items.Id.NONE)
 	# Shift moves a stack between the hotbar and the bag.
 	bag.click(5, false, true)

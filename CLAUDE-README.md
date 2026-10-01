@@ -55,13 +55,14 @@ Les questions de goût ou les choix lourds de conséquences sont posés avant de
 | Contrôles (phase 3) | Clic gauche maintenu = miner, clic droit court = poser, clic droit glissé = tourner la caméra ; **molette = objet en main** (zoom en vue de dessus : molette en gardant le clic molette enfoncé, ou Ctrl+molette, et +/-), touches 1 à 9 ; manette : gâchettes miner/poser, LB/RB changer d'objet ; F7 (debug) : outils. |
 | Outils avant le craft | **Tout se mine à la main** (lentement, chaque bloc donne quelque chose) ; les outils (pioche, hache, pelle, en 6 matériaux) minent plus vite ce pour quoi ils sont faits ; en attendant le craft (phase 4), **F7** (debug) donne les outils du matériau suivant. Fait à l'étape 3.5 (vitesses de Minecraft, temps de minage en temps réel, pas adapté au rythme du monde). |
 | Livre du joueur | Une **10e case** à part, à droite de la barre (les 9 restent centrées), tient un **livre ancré** : on ne peut ni le jeter ni le déplacer. 0 le prend en main (0 encore, ou clic droit, l'ouvre) ; il montre les touches (celles du clavier du joueur : ZQSD en AZERTY), la manette, des astuces, les outils et bientôt les recettes. Se désactive dans le menu pause (activé par défaut). |
+| Craft | Recettes comme Minecraft : une forme placée n'importe où dans la grille (en miroir aussi) ou sans forme, ingrédients d'un même groupe interchangeables (n'importe quelles planches). **Grille 3×3 dans l'inventaire (E)**, **établi 5×5** (étape 4.2). Clic sur le résultat pour le prendre, Maj+clic pour en faire le plus possible ; ce qui reste dans la grille revient dans le sac à la fermeture. Les recettes s'affichent dans le livre du joueur. |
 | Chargement | Tout ce qui est visible doit être chargé, même dézoomé au maximum sur l'écran ultra-large du propriétaire (3440×1440, fenêtré). Carte graphique du propriétaire : NVIDIA GeForce RTX 5050 (8 Go). |
 
 ---
 
 ## 3. État actuel : ce qui est fait
 
-Godot **4.7.2** (GDScript), rendu Forward+. 122 tests unitaires, lint propre.
+Godot **4.7.2** (GDScript), rendu Forward+. 127 tests unitaires, lint propre.
 
 | Phase | Contenu | Commits |
 |---|---|---|
@@ -82,9 +83,10 @@ Godot **4.7.2** (GDScript), rendu Forward+. 122 tests unitaires, lint propre.
 | 3.3 Viser, miner, poser | `Mining` (portée 5, temps à la main par bloc, règles de pose, l'eau comble les trous voisins) et `VoxelRay` (rayon voxel par voxel, troncs et plantes atteints sur leur corps) partagés ; `BlockInteraction` côté client : visée à la souris (vue de dessus), au viseur (1re personne) ou devant le joueur (manette), cadre d'un pixel du dessin, fissures (10 stades), éclats, bras qui frappe, arbres qui tombent ; prédiction locale, le serveur vérifie et diffuse `BLOCK_CHANGED` ; `--aim`, `--mine`, `--place` | `0a99322` |
 | 3.4 Objets et inventaire | Registre `Items` (41 objets traduits ; ce que donne chaque bloc : l'herbe de la terre, un arbre une bûche par niveau de tronc et des bâtons…), `Inventory` partagé (barre de 9 + sac de 27 + pile du curseur, règles de Minecraft), objets au sol (tombent, flottent, ramassés en passant, sauvegardés), modèles voxel des objets et icônes rendues hors écran, barre en bas de l'écran (nom de l'objet en main), inventaire (E : clic, clic droit = moitié/un, Maj+clic, lancer en cliquant à côté), molette et 1-9 (clic molette maintenu + molette, ou Ctrl+molette = zoom), Q pour lancer (Ctrl : la pile), LB/RB à la manette, objet tenu en main (corps et 1re personne) ; on pose le bloc en main | `7d2365d` |
 | 3.5 Outils et dureté | 18 outils (`Items.TOOLS` : pioche, hache et pelle en bois, pierre, cuivre, fer, or et diamant ; ils ne s'empilent pas), dureté de chaque bloc et outil qui lui convient (`Mining.break_seconds`, `tool_for` : la pioche pour la pierre, les minerais, la glace et la terre cuite, la pelle pour la terre, l'herbe, le sable, la neige et la boue, la hache pour les arbres et les grands champignons ; rien n'aide pour les plantes) ; vitesses de Minecraft (×2 bois, ×4 pierre, ×5 cuivre, ×6 fer, ×8 diamant, ×12 or), ¼ s entre deux blocs ; modèles voxel en diagonale comme les icônes de Minecraft (icônes face à la caméra, objets plats plus grands au sol), outil tenu par le manche (couché à plat pour se voir de dessus, le poignet frappe ; à la 1re personne en bas à droite, avec le geste) ; **F7** (debug) donne les outils du matériau suivant (annoncé au-dessus de la barre) ; ligne « Visé » de l'écran F3 (bloc, temps de minage avec l'objet en main, outil qui convient) ; une case d'inventaire se redessine quand son icône arrive | `9733d72` |
-| 3.6 Livre du joueur | 10e case à part (réglage « Livre du joueur » du menu pause, activé par défaut), livre ancré (ni jeté ni déplacé ; dans l'inventaire, un clic l'ouvre), touche 0 (encore : l'ouvrir), molette et LB/RB passent par lui, clic droit pour l'ouvrir ; `BookScreen` : livre ouvert sur deux pages (onglets des chapitres, page de titre et sommaire, flèches, numéros de page ; flèches, molette, touches de déplacement pour tourner les pages ; Échap, E, 0 ou clic droit pour fermer), texte de `GuideBook` : touches (noms de `InputNames`, selon le clavier du joueur), manette, 11 astuces, outils (icônes, vitesses), fabrication (à venir) ; modèle voxel du livre (en main, en 1re personne) ; le menu pause défile quand la fenêtre est trop petite ; `--book[=N]` | « Player's book » |
+| 3.6 Livre du joueur | 10e case à part (réglage « Livre du joueur » du menu pause, activé par défaut), livre ancré (ni jeté ni déplacé ; dans l'inventaire, un clic l'ouvre), touche 0 (encore : l'ouvrir), molette et LB/RB passent par lui, clic droit pour l'ouvrir ; `BookScreen` : livre ouvert sur deux pages (onglets des chapitres, page de titre et sommaire, flèches, numéros de page ; flèches, molette, touches de déplacement pour tourner les pages ; Échap, E, 0 ou clic droit pour fermer), texte de `GuideBook` : touches (noms de `InputNames`, selon le clavier du joueur), manette, 11 astuces, outils (icônes, vitesses), fabrication (à venir) ; modèle voxel du livre (en main, en 1re personne) ; le menu pause défile quand la fenêtre est trop petite ; `--book[=N]` | `209f9b7` |
+| 4.1 Recettes et grille 3×3 | Registre `Recipes` (avec forme, placée n'importe où et en miroir, ou sans forme ; groupes d'ingrédients comme « n'importe quelles planches » ; recettes réservées à l'établi possibles), grille de fabrication dans l'`Inventory` (5×5 cases, l'inventaire utilise les 3×3 du haut à gauche), clic sur le résultat (Maj : le plus possible), la grille et le curseur reviennent dans le sac à la fermeture, `Msg.CRAFT` vérifié par le serveur ; recettes : bûche → 4 planches de son bois, 2 planches → 4 bâtons, 4 planches → établi ; planches des 6 bois et établi posables (blocs cubes, textures de `gen_art.py` : planches clouées, établi à grille 5×5 et outils sur les côtés), à la hache ; les objets-blocs montrent leurs côtés ; chapitre « Fabrication » du livre (recettes dessinées, les planches défilent) ; `--grid` | « Recipes and crafting grid » |
 
-**Pas encore fait** (prévu) : craft (phase 4), survie/combat, créatures, structures, agriculture, menus de départ, sons,
+**Pas encore fait** (prévu) : la suite de la phase 4 (établi 5×5, usure, coffres, fours, blocs de construction), survie/combat, créatures, structures, agriculture, menus de départ, sons,
 mode Arcade, mobile.
 
 ---
@@ -99,7 +101,7 @@ mode Arcade, mobile.
 | Serveur | `src/sim/game_server.gd` (sessions, envoi des chunks, messages, météo, temps, sauvegarde), `src/sim/save/world_storage.gd` (fichiers du monde sauvegardé) |
 | Monde | `src/sim/world/` (`voxels.gd` : ids et propriétés des voxels ; `chunk_data.gd` : 16×16×128 voxels, biome et sommet du terrain par colonne ; `world_state.gd` : chunks du serveur, recherche d'un sol pour les déplacements de debug), `generation/` (climat, relief, biomes, surface → colonnes, `cave_generator.gd` : grottes 3D et minerais) |
 | Minage | `src/sim/world/mining.gd` (règles, durée selon le bloc et l'outil : `break_seconds`, `tool_for`), `src/sim/world/voxel_ray.gd` (visée), `src/client/interaction/` (visée et rendu côté client : cadre, fissures, éclats, arbres qui tombent) |
-| Objets | `src/sim/items/` (`items.gd` registre, ce que donne chaque bloc, outils et leurs vitesses, `inventory.gd`, `dropped_item.gd`), `src/client/items/` (modèles, icônes rendues hors écran, objets au sol), `src/ui/hotbar.gd`, `inventory_screen.gd`, `item_slot.gd` |
+| Objets | `src/sim/items/` (`items.gd` registre, ce que donne chaque bloc, outils et leurs vitesses, `recipes.gd` recettes, `inventory.gd`, `dropped_item.gd`), `src/client/items/` (modèles, icônes rendues hors écran, objets au sol), `src/ui/hotbar.gd`, `inventory_screen.gd`, `item_slot.gd` |
 | Physique | `src/sim/physics/player_body.gd` (marche, saut, chute, plafonds, parmi les voxels), `tile_collider.gd` (déplacement parmi des boîtes d'obstacles : case entière, tronc, rocher) ; `src/sim/world/object_shapes.gd` (versions des objets, troncs, emprise au sol : partagé avec les modèles) |
 | Messages | `src/net/msg.gd` (tous les échanges client ⇄ serveur) |
 | Client | `src/client/game_client.gd` (assemble la scène 3D, entrées, caméra), `local_player.gd` |
@@ -126,7 +128,8 @@ pour les captures), `--new-world` (recommencer le monde sauvegardé), `--world=N
 sauvegardé), `--aim=X,Y` (viser ce point, en unités de l'interface depuis le centre : pixels divisés par l'échelle de l'interface, « UI x2 » dans l'écran F3), `--mine` (garder le
 bouton de minage enfoncé), `--place` (poser un bloc une fois), `--give=objet:N,...` (donner des
 objets, noms de `Items.Id` : `dirt:20,diamond:3`), `--inventory` (ouvrir l'inventaire), `--drop`
-(lancer la pile en main), `--book[=N]` (ouvrir le livre du joueur à la double page N) (voir
+(lancer la pile en main), `--book[=N]` (ouvrir le livre du joueur à la double page N),
+`--grid=objet,...` (remplir la grille de fabrication ligne par ligne, `none` = case vide) (voir
 `src/core/dev_options.gd`). **`--seed` seul joue un monde jetable, jamais
 sauvegardé** : les captures ne touchent jamais au monde du propriétaire.
 
@@ -212,17 +215,18 @@ gemmes et plantes ne se posent pas encore (seuls les blocs se posent) : les plan
 fabriqués viennent avec le craft.
 
 But de la phase 4 : fabriquer ses objets comme dans Minecraft, avec les décisions du propriétaire
-(section 6 : **établi 4×4**, **four alimentaire** et **four d'usine**). Découpage proposé, **à
-valider avec le propriétaire avant de commencer**, une étape par « go », chacune avec tests,
-captures, commit et retour :
+(section 6 : **établi 5×5**, **four alimentaire** et **four d'usine**). Découpage proposé, **à
+valider avec le propriétaire avant de commencer** (validé, avec la grille 3×3 et l'établi 5×5), une
+étape par « go », chacune avec tests, captures, commit et retour :
 
-1. **Recettes et grille 2×2** : registre de recettes en données (avec forme, sans forme), grille
-   2×2 dans l'inventaire (E) avec sa case de résultat, le serveur vérifie chaque fabrication ;
+1. ✅ **Recettes et grille 3×3** (voir section 3). Fait comme prévu ci-dessous ; Maj+clic sur le
+   résultat en fait le plus possible. Le plan suivi : registre de recettes en données (avec forme, sans forme), grille
+   3×3 dans l'inventaire (E) avec sa case de résultat, le serveur vérifie chaque fabrication ;
    premières recettes : bûche → planches, planches → bâtons, l'établi ; planches de chaque bois
    posables (nouveaux blocs, textures de `tools/gen_art.py`) ; les recettes s'affichent dans le
    chapitre « Fabrication » du livre du joueur (`GuideBook._craft`).
-2. **Établi 4×4** (au lieu du 3×3 de Minecraft) : bloc posé qui s'ouvre au clic droit sur une
-   grille 4×4 ; recettes des outils (les 18 existent déjà, étape 3.5) et des blocs de construction.
+2. **Établi 5×5** (prochaine étape ; au lieu du 3×3 de Minecraft) : l'établi posé s'ouvre au clic droit sur une
+   grille 5×5 ; recettes des outils (les 18 existent déjà, étape 3.5) et des blocs de construction.
 3. **Usure des outils** : solidité par matériau (l'or rapide mais fragile), barre d'usure dans les
    cases, l'outil casse ; F7 reste une touche de debug (créatif plus tard).
 4. **Coffres** : données de bloc côté serveur (un inventaire par coffre, sauvegardé avec la région),
@@ -236,7 +240,7 @@ captures, commit et retour :
 ## 6. Feuille de route détaillée (phases restantes)
 
 ### Phase 4 — Craft
-- Recettes en données (forme et sans forme), grille 2×2 dans l'inventaire, **établi** 4×4.
+- Recettes en données (forme et sans forme), grille 3×3 dans l'inventaire, **établi** 5×5.
 - **Four alimentaire** : dédié à la nourriture (si du minerais est fondu dans ce four alors il se casse et deviens inutilisable), combustible, cuisson et fonte au fil du temps (durées adaptées au rythme du monde).
 - **Four d'usine** : dédié aux recettes autres que la nourriture (si de la nourriture est placé dans ce four alors elle ressort carbonisée), combustible, cuisson et fonte au fil du temps (durées adaptées au rythme du monde).
 - **Coffres** (stockage par bloc, données de bloc côté serveur), outils par matériau (bois,

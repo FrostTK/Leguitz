@@ -13,7 +13,21 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 
 ![Leguitz : vue par défaut, fin d'après-midi caméra tournée, neige, nuit à la lanterne](docs/screenshots/phase2-3d-jour-nuit.png)
 
-## État actuel : phase 2 (visuels et lumière en 3D)
+## État actuel : phase 4 (craft)
+
+### Phase 4 : craft (en cours)
+
+| Fonction | État |
+|---|---|
+| Recettes comme Minecraft (forme placée n'importe où dans la grille, ou sans forme), grille de fabrication 3×3 dans l'inventaire : bûches → planches (6 bois), bâtons, établi ; Maj + clic pour en faire le plus possible ; les recettes s'affichent dans le livre | ✅ |
+| Planches des 6 bois et établi : blocs à poser, en pixel art | ✅ |
+| Établi : grille 5×5 pour fabriquer les outils et les blocs de construction | à venir |
+| Usure des outils | à venir |
+| Coffres | à venir |
+| Four alimentaire et four d'usine | à venir |
+| Blocs de construction variés (briques, verre, pierre taillée…) | à venir |
+
+![Leguitz : la grille de fabrication de l'inventaire (bâtons, établi), des planches et un établi posés, les recettes dans le livre](docs/screenshots/phase4-recettes.png)
 
 ### Phase 2 : le monde en 3D pixel art
 
@@ -191,8 +205,8 @@ Pour le multijoueur, il suffira de brancher un transport réseau.
 0. ✅ Fondations
 1. ✅ Génération du monde à la Minecraft (bruits climatiques, biomes, rivières, falaises, grottes, minerais)
 2. ✅ Visuels et lumière en 3D pixel art (ombres, jour/nuit, eau, vent, météo, caméra orbitale)
-3. Joueur et interactions (minage, construction, objets, inventaire)
-4. Craft (établi, four, outils, coffres)
+3. ✅ Joueur et interactions (minage, construction, objets, inventaire, outils, livre du joueur)
+4. Craft (recettes ✅, établi, usure, coffres, fours, blocs de construction) : en cours
 5. Survie et combat (vie, faim, animaux, monstres, combat, modes de jeu)
 6. Souterrain et structures
 7. Agriculture et élevage
