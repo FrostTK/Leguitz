@@ -67,11 +67,11 @@ func use_target() -> bool:
 		return false
 	var block := Voxels.block_of(target.voxel)
 	if ObjectShapes.is_chest(block):
-		client.open_chest(target.cell)
+		client.actions.open_chest(target.cell)
 	elif ObjectShapes.furnace_kind(block) != -1:
-		client.open_furnace(target.cell)
+		client.actions.open_furnace(target.cell)
 	else:
-		client.open_workbench(target.cell)
+		client.actions.open_workbench(target.cell)
 	return true
 
 

@@ -107,16 +107,8 @@ var book_screen := BookScreen.new()
 ## The player's book is in hand (its slot: Settings.guide_book). Only the
 ## client knows: the server keeps the hotbar slot chosen before.
 var book_in_hand := false
-## Cells across of the crafting grid in use (a workbench's is wider).
-var craft_width := Inventory.OWN_GRID
-## The chest open (what it holds as the server last told; null: none), and
-## where it stands.
-var chest: Inventory
-var chest_cell := Vector3i.MAX
-## The furnace open (as the server last told; null: none), and where it
-## stands.
-var furnace: Furnace
-var furnace_cell := Vector3i.MAX
+## What the player does in the inventory screen and with what it opens.
+var actions := InventoryActions.new()
 var dropped_items := DroppedItemsView.new()
 var item_icons := ItemIcons.new()
 ## What is in hand in first person (a child of the camera).
@@ -134,10 +126,6 @@ var underground := false
 var _loading_label := Label.new()
 ## The feet were in water or lava last frame (a splash when they go in).
 var _was_in_liquid := false
-## During a left drag: the slots as they were before it (this inventory,
-## the chest's, the furnace's), each new share shown from there; empty
-## when no drag is going on.
-var _spread_base: Array = []
 ## Set on spawn and teleport: place the camera without smoothing once the
 ## player has landed on known ground.
 var _needs_snap := false
@@ -179,15 +167,9 @@ func _ready() -> void:
 	hotbar.library = items
 	inventory_screen.inventory = inventory
 	inventory_screen.library = items
-	inventory_screen.slot_clicked.connect(_on_slot_clicked)
-	inventory_screen.cursor_dropped.connect(_on_cursor_dropped)
-	inventory_screen.close_requested.connect(_on_inventory_closed)
+	actions.client = self
+	actions.connect_screen(inventory_screen)
 	inventory_screen.book_requested.connect(_on_book_requested)
-	inventory_screen.craft_clicked.connect(_on_craft_clicked)
-	inventory_screen.chest_clicked.connect(_on_chest_clicked)
-	inventory_screen.furnace_clicked.connect(_on_furnace_clicked)
-	inventory_screen.spread_previewed.connect(_on_spread_previewed)
-	inventory_screen.spread_finished.connect(_on_spread_finished)
 	book_screen.library = items
 	book_screen.close_requested.connect(_on_book_closed)
 	dropped_items.library = items
@@ -624,7 +606,7 @@ func _handle_item_input(event: InputEvent) -> bool:
 			select_hand(BOOK_SLOT)
 		return true
 	if event.is_action_pressed(InputBindings.INVENTORY):
-		open_inventory()
+		actions.open_inventory()
 		return true
 	if event.is_action_pressed(InputBindings.DROP_ITEM):
 		if book_in_hand:
@@ -703,127 +685,12 @@ func select_slot(slot: int) -> void:
 		transport.send(Msg.select_slot(slot))
 
 
-func open_inventory() -> void:
-	interaction.stop()
-	local_player.controls_enabled = false
-	craft_width = Inventory.OWN_GRID
-	inventory_screen.open(craft_width)
-
-
-## Opens the chest standing in `cell`: its slots over the inventory (what
-## it holds comes from the server).
-func open_chest(cell: Vector3i) -> void:
-	interaction.stop()
-	local_player.controls_enabled = false
-	craft_width = Inventory.OWN_GRID
-	chest = Inventory.new()
-	chest_cell = cell
-	transport.send(Msg.open_chest(cell))
-	inventory_screen.open_chest(chest)
-
-
-func _on_chest_clicked(slot: int, right: bool, shift: bool) -> void:
-	if chest != null:
-		inventory.click_chest(chest, slot, right, shift)
-		transport.send(Msg.chest_click(slot, right, shift))
-
-
-## Opens the furnace standing in `cell`: its slots over the inventory
-## (what it holds and how it burns come from the server).
-func open_furnace(cell: Vector3i) -> void:
-	interaction.stop()
-	local_player.controls_enabled = false
-	craft_width = Inventory.OWN_GRID
-	furnace = Furnace.new(ObjectShapes.furnace_kind(Voxels.block_of(world.voxel_at(cell))))
-	furnace_cell = cell
-	transport.send(Msg.open_furnace(cell))
-	inventory_screen.open_furnace(furnace)
-
-
-func _on_furnace_clicked(slot: int, right: bool, shift: bool) -> void:
-	if furnace != null:
-		inventory.click_furnace(furnace, slot, right, shift)
-		transport.send(Msg.furnace_click(slot, right, shift))
-
-
 ## A food furnace near the player melted ore and broke: said over the
 ## hotbar (its screen closes if it was open).
 func furnace_broke(cell: Vector3i) -> void:
 	var tile := Coords.tile_to_world_center(Vector2i(cell.x, cell.z))
 	if local_player.position.distance_to(tile) <= FURNACE_NEWS_RANGE * GameConst.TILE_SIZE:
 		hotbar.announce(tr("HUD_FURNACE_BROKE"))
-
-
-## Opens the workbench standing in `cell`: the inventory with its 5 x 5
-## crafting grid (the server is told: its grid is used until it closes).
-func open_workbench(cell: Vector3i) -> void:
-	interaction.stop()
-	local_player.controls_enabled = false
-	craft_width = Inventory.GRID
-	transport.send(Msg.open_workbench(cell))
-	inventory_screen.open(craft_width)
-
-
-func _on_slot_clicked(slot: int, right: bool, shift: bool) -> void:
-	inventory.click(slot, right, shift, chest, furnace)
-	transport.send(Msg.slot_click(slot, right, shift))
-
-
-## A left drag crossed one more slot: the stack shared between those so
-## far, shown from the slots as they were before the drag.
-func _on_spread_previewed(targets: Array) -> void:
-	if _spread_base.is_empty():
-		_spread_base = [
-			inventory.snapshot(),
-			chest.snapshot() if chest != null else null,
-			furnace.slots.snapshot() if furnace != null else null,
-		]
-	else:
-		inventory.restore(_spread_base[0])
-		if chest != null and _spread_base[1] != null:
-			chest.restore(_spread_base[1])
-		if furnace != null and _spread_base[2] != null:
-			furnace.slots.restore(_spread_base[2])
-	inventory.spread(targets, chest, furnace)
-
-
-## The left drag is over: what shows is the share, the server is told.
-func _on_spread_finished(targets: Array) -> void:
-	_spread_base = []
-	transport.send(Msg.slot_spread(targets))
-
-
-func _on_cursor_dropped(whole: bool) -> void:
-	var count := inventory.counts[Inventory.CURSOR]
-	inventory.take(Inventory.CURSOR, count if whole else 1)
-	transport.send(Msg.item_drop(Inventory.CURSOR, whole))
-
-
-func _on_inventory_closed() -> void:
-	local_player.controls_enabled = true
-	chest = null
-	chest_cell = Vector3i.MAX
-	furnace = null
-	furnace_cell = Vector3i.MAX
-	_spread_base = []
-	inventory.put_back_all()
-	transport.send(Msg.inventory_close())
-
-
-## The chest or furnace open was broken (or broke): its screen closes.
-func _close_if_gone(cell: Vector3i) -> void:
-	var block := Voxels.block_of(world.voxel_at(cell))
-	var gone := (
-		(chest != null and cell == chest_cell and not ObjectShapes.is_chest(block))
-		or (furnace != null and cell == furnace_cell and ObjectShapes.furnace_kind(block) == -1)
-	)
-	if gone:
-		inventory_screen.close()
-
-
-func _on_craft_clicked(shift: bool) -> void:
-	inventory.craft(craft_width, shift)
-	transport.send(Msg.craft(shift))
 
 
 ## Puts what is in hand in the body's hand and, in first person, at the
@@ -958,7 +825,7 @@ func _handle_message(message: Dictionary) -> void:
 			save_notice.flash()
 		Msg.BLOCK_CHANGED:
 			interaction.on_block_changed(message["cell"], message["voxel"])
-			_close_if_gone(message["cell"])
+			actions.close_if_gone(message["cell"])
 		Msg.VITALS:
 			vitals.on_vitals(message["health"], message["food"], message["hurt"], message["air"])
 		Msg.DIED:
@@ -969,11 +836,11 @@ func _handle_message(message: Dictionary) -> void:
 			# The hand follows the player's own choice (the server may lag).
 			inventory.selected = selected
 		Msg.CHEST:
-			if chest != null and message["cell"] == chest_cell:
-				chest.load_dict(message["chest"])
+			if actions.chest != null and message["cell"] == actions.chest_cell:
+				actions.chest.load_dict(message["chest"])
 		Msg.FURNACE:
-			if furnace != null and message["cell"] == furnace_cell:
-				furnace.load_dict(message["furnace"])
+			if actions.furnace != null and message["cell"] == actions.furnace_cell:
+				actions.furnace.load_dict(message["furnace"])
 		Msg.ITEM_SPAWN:
 			dropped_items.spawn(message["id"], message["item"], message["count"], message["pos"])
 		Msg.ITEM_MOVE:

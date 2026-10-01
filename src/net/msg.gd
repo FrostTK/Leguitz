@@ -18,6 +18,7 @@ const BLOCK_PLACE := "block_place"
 const SELECT_SLOT := "select_slot"
 const SLOT_CLICK := "slot_click"
 const SLOT_SPREAD := "slot_spread"
+const SLOT_COLLECT := "slot_collect"
 const RESPAWN := "respawn"
 const EAT := "eat"
 const ITEM_DROP := "item_drop"
@@ -80,6 +81,12 @@ static func slot_click(slot: int, right: bool, shift: bool) -> Dictionary:
 ## (Inventory.spread; `targets`: Vector2i(Inventory.Holder, index)).
 static func slot_spread(targets: Array) -> Dictionary:
 	return {"t": SLOT_SPREAD, "targets": targets}
+
+
+## The player double-clicked: the same items as the cursor's gather on it
+## (Inventory.collect).
+static func slot_collect() -> Dictionary:
+	return {"t": SLOT_COLLECT}
 
 
 ## The player throws one item of a slot (Inventory.CURSOR: what the cursor

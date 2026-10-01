@@ -347,3 +347,32 @@ func test_the_server_shares_a_stack_like_the_client() -> void:
 	assert_eq(session.inventory.counts[3], 4)
 	assert_eq(session.inventory.counts[4], 4)
 	assert_eq(session.inventory.counts[Inventory.CURSOR], 1)
+
+
+func test_a_double_click_gathers_the_same_items() -> void:
+	var bag := Inventory.new()
+	var chest := Inventory.new()
+	bag.add(Items.Id.STONE, 10)
+	bag.items[Inventory.CRAFT + 1] = Items.Id.STONE
+	bag.counts[Inventory.CRAFT + 1] = 3
+	bag.items[Inventory.CRAFT + 6] = Items.Id.STONE
+	bag.counts[Inventory.CRAFT + 6] = 3
+	bag.items[Inventory.CRAFT + 7] = Items.Id.COAL
+	bag.counts[Inventory.CRAFT + 7] = 33
+	bag.items[20] = Items.Id.STONE
+	bag.counts[20] = 64
+	chest.items[4] = Items.Id.STONE
+	chest.counts[4] = 5
+	bag.click(0, false, false)
+	bag.collect(chest)
+	assert_eq(bag.counts[Inventory.CURSOR], 64, "10 + 3 + 3 + 5, topped up from the full stack")
+	assert_eq(bag.items[Inventory.CRAFT + 1], Items.Id.NONE, "the grid gave its stones")
+	assert_eq(chest.items[4], Items.Id.NONE, "so did the chest")
+	assert_eq(bag.counts[Inventory.CRAFT + 7], 33, "coal stays")
+	assert_eq(bag.counts[20], 64 - 43, "the full stack last, only what was missing")
+	var tools := Inventory.new()
+	tools.add(Items.Id.IRON_AXE, 1)
+	tools.add(Items.Id.IRON_AXE, 1)
+	tools.click(0, false, false)
+	tools.collect()
+	assert_eq(tools.counts[Inventory.CURSOR], 1, "tools do not stack")

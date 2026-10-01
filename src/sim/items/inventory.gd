@@ -199,6 +199,37 @@ func spread(targets: Array, chest: Inventory = null, furnace: Furnace = null) ->
 		take(CURSOR, amount)
 
 
+## Gathers into the cursor's stack the same items lying elsewhere
+## (Minecraft's double click): from the crafting grid, the open `chest`, the
+## open `furnace`, the bag and the hotbar, part stacks before full ones, as
+## many as the stack takes.
+func collect(chest: Inventory = null, furnace: Furnace = null) -> void:
+	var item := items[CURSOR]
+	var stack := Items.max_stack(item)
+	if item == Items.Id.NONE or stack <= 1:
+		return
+	var sources: Array[Array] = []
+	for slot in range(CRAFT, SIZE):
+		sources.append([self, slot])
+	if chest != null:
+		for slot in CHEST:
+			sources.append([chest, slot])
+	if furnace != null:
+		for slot in Furnace.SLOTS:
+			sources.append([furnace.slots, slot])
+	for slot in range(HOTBAR, SLOTS) + range(HOTBAR):
+		sources.append([self, slot])
+	for full_ones in [false, true]:
+		for source in sources:
+			var holder: Inventory = source[0]
+			var slot: int = source[1]
+			if counts[CURSOR] >= stack:
+				return
+			if holder.items[slot] != item or (holder.counts[slot] >= stack) != full_ones:
+				continue
+			counts[CURSOR] += holder.take(slot, mini(stack - counts[CURSOR], holder.counts[slot]))
+
+
 ## A copy of the slots (to go back to, see restore).
 func snapshot() -> Inventory:
 	var copy := Inventory.new()

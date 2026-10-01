@@ -160,9 +160,12 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   Minecraft: the right button puts one item into each slot crossed, once per drag (right clicks,
   sent like any click); the left one shares the stack evenly between the slots crossed
   (`Inventory.spread`, targets Vector2i(Inventory.Holder, index), no more slots than items, each
-  share as much as fits): GameClient shows each new share from a snapshot of the slots
+  share as much as fits): the client shows each new share from a snapshot of the slots
   (`snapshot`/`restore`) and sends Msg.SLOT_SPREAD when the button comes up; down and up on one
-  slot is a plain click. Wheel
+  slot is a plain click. A double click gathers on the cursor's stack the same items lying in
+  the crafting grid, the open chest or furnace, the bag and the hotbar (`Inventory.collect`, part
+  stacks first; Msg.SLOT_COLLECT). What the screen's clicks and drags do, opening a workbench,
+  a chest or a furnace and closing, lives in InventoryActions (GameClient.actions). Wheel
   and 1-9 pick the slot (the wheel zooms with its button held down in the top-down view, or with
   Ctrl: InputBindings.wheel_zooms), Q throws (Ctrl: the stack), shoulders on a gamepad.
 - Tools (`Items.TOOLS`: pickaxe, axe and shovel in 6 materials, `Items.Tier`; they do not stack):

@@ -15,7 +15,8 @@ extends Control
 ## furnace) works as in Minecraft: the right one puts one item into each
 ## slot crossed, the left one shares the stack evenly between them (shown
 ## as it goes, done when it is let go; let go on the slot it began on, a
-## plain click). With empty hands, the name of the
+## plain click). A double click gathers on the cursor the same items as
+## its stack lying elsewhere (Inventory.collect). With empty hands, the name of the
 ## item under the mouse shows beside it.
 
 signal slot_clicked(slot: int, right: bool, shift: bool)
@@ -32,6 +33,8 @@ signal furnace_clicked(slot: int, right: bool, shift: bool)
 ## index), two or more): to show, then done.
 signal spread_previewed(targets: Array)
 signal spread_finished(targets: Array)
+## A double click: the cursor's stack gathers its kind (Inventory.collect).
+signal collect_requested
 
 ## The flame shown under what a furnace cooks: its rows' widths, from the
 ## bottom; and its colors (embers to tip).
@@ -419,6 +422,11 @@ func _on_left_button(button: InputEventMouseButton) -> void:
 			_end_spread(true)
 			get_viewport().set_input_as_handled()
 		return
+	if button.double_click and not button.shift_pressed and _holding() and _over_a_slot():
+		# The first click took the stack up: the second gathers its kind.
+		collect_requested.emit()
+		get_viewport().set_input_as_handled()
+		return
 	var start := _drop_slot_at(_pointer)
 	if start == null or button.shift_pressed or _dragging or not _holding():
 		return
@@ -467,6 +475,16 @@ func _target_of(slot: ItemSlot) -> Vector2i:
 
 func _holding() -> bool:
 	return inventory != null and inventory.items[Inventory.CURSOR] != Items.Id.NONE
+
+
+## Whether the mouse is over a slot (one a drag reaches, or a furnace's
+## output).
+func _over_a_slot() -> bool:
+	var output := _furnace_slots[Furnace.OUTPUT]
+	return (
+		_drop_slot_at(_pointer) != null
+		or (output.is_visible_in_tree() and output.get_global_rect().has_point(_pointer))
+	)
 
 
 ## The slot a drag can put items into at `point` (null: none).

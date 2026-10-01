@@ -295,6 +295,8 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 					_furnace_changed(session.furnace)
 		Msg.SLOT_SPREAD:
 			_on_slot_spread(session, message)
+		Msg.SLOT_COLLECT:
+			_on_slot_collect(session)
 		Msg.RESPAWN:
 			Survival.get_up(self, session)
 		Msg.EAT:
@@ -515,6 +517,21 @@ func _on_slot_spread(session: PlayerSession, message: Dictionary) -> void:
 	session.inventory.spread(
 		(targets as Array).slice(0, Inventory.SIZE + Inventory.CHEST), open, oven
 	)
+	session.transport.send(Msg.inventory(session.inventory))
+	if open != null:
+		_chest_changed(session.chest)
+	if oven != null:
+		_furnace_changed(session.furnace)
+
+
+## A player gathered the same items as their cursor's (a double click):
+## theirs, the open chest's, the open furnace's.
+func _on_slot_collect(session: PlayerSession) -> void:
+	if not session.joined:
+		return
+	var open := _open_chest(session)
+	var oven := _open_furnace(session)
+	session.inventory.collect(open, oven)
 	session.transport.send(Msg.inventory(session.inventory))
 	if open != null:
 		_chest_changed(session.chest)

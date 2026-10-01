@@ -41,7 +41,7 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Coffres : 27 cases, ouverts au clic droit, gardés avec le monde ; cassés, ils répandent leur contenu | ✅ |
 | Four alimentaire (four à pain : baies déshydratées, ragoût de champignons ; du minerai le casse) et four d'usine (lingots de cuivre, fer et or, charbon de bois ; la nourriture y carbonise), combustibles, cuisson au fil du temps, feu qui éclaire | ✅ |
 | Blocs de construction : briques de pierre, briques d'ardoise, grès taillé, briques (brique cuite au four), pierre lisse, verre transparent (sable au four d'usine) | ✅ |
-| Confort : nom de l'objet survolé (inventaire et livre), glisser une pile au clic droit (un par case) ou gauche (parts égales), monter sur les meubles, cadre de visée fin en 1re personne | ✅ |
+| Confort : nom de l'objet survolé (inventaire et livre), glisser une pile au clic droit (un par case) ou gauche (parts égales), double-clic pour rassembler une ressource éparpillée, monter sur les meubles, cadre de visée fin en 1re personne | ✅ |
 
 ![Leguitz : les blocs de construction à la 1re personne (une fenêtre en verre dans un mur de briques), l'inventaire avec les nouveaux blocs, et vus de dessus (le verre laisse voir le sol et une fleur)](docs/screenshots/phase4-construction.png)
 

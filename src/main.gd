@@ -150,7 +150,7 @@ func _start_dev_actions() -> void:
 	if not dev.give.is_empty() or not dev.grid.is_empty():
 		session.transport.send(Msg.inventory(session.inventory))
 	if dev.open_inventory:
-		client.open_inventory()
+		client.actions.open_inventory()
 	if dev.book_spread >= 0:
 		client.select_hand(GameClient.BOOK_SLOT)
 		client.open_book()
