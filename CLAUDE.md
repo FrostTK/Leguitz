@@ -134,7 +134,9 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   above go with a broken voxel) and sends BLOCK_CHANGED to players having the chunk (also its answer
   to a refused guess). WorldView3D.voxel_changed rebuilds the chunk and the neighbors whose border
   the voxel lies on. Left button held breaks, right click places (a right drag still turns the
-  camera), gamepad triggers; placing uses the block in hand.
+  camera), gamepad triggers; placing uses the block in hand. E (gamepad B, InputBindings.USE)
+  uses what is aimed at: opens a workbench, a chest or a furnace (`Mining.opens`,
+  BlockInteraction.use_target); the right click never opens them.
 - Items (`src/sim/items/`): `Items` is the registry (ids saved: only append; name key ITEM_<ID>
   in i18n, stack size, the voxel a block item places, what each broken voxel gives: grass gives
   dirt, a tree a log per level of trunk). `Inventory` (hotbar 9 + bag 27 + the cursor's stack,
@@ -143,7 +145,7 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   them into players nearby (from a level under the feet) and sends ITEM_SPAWN/MOVE/REMOVE; they
   are saved in world.cfg. Client: ItemLibrary (block items are cubes wearing the block's top
   texture, others ItemModels voxel models), ItemIcons renders every icon off screen at start,
-  Hotbar, InventoryScreen (E), DroppedItemsView, the item in hand (body and first person). With
+  Hotbar, InventoryScreen (Tab; closed by Tab, E or Esc), DroppedItemsView, the item in hand (body and first person). With
   empty hands, the name of the item under the mouse shows beside it (ItemSlot.draw_name; the
   inventory screen and the book follow the mouse from its own events, `make_input_local`;
   BookScreen records the items it draws in `_named`). Drags with a stack in hand
@@ -180,7 +182,7 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   opens it), the wheel and the shoulders go through it, Q does nothing, a right click
   (BlockInteraction.place) opens BookScreen: two pages drawn in UI units (tabs, title page and
   contents, arrows; `BookScreen.paginate`), turned by the arrows, the wheel or the movement keys,
-  closed by Esc, E, 0 or a right click. Its text comes from GuideBook (chapters of translated
+  closed by Esc, Tab, E, 0 or a right click. Its text comes from GuideBook (chapters of translated
   entries; the controls named by InputNames as they are bound, in the player's keyboard layout:
   ZQSD on AZERTY). `Items.Id.GUIDE_BOOK` gives it a model and an icon; never in inventories.
 - Crafting (`src/sim/items/recipes.gd`, shared): shaped recipes (a pattern placed anywhere in the
@@ -193,8 +195,8 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   result (shift: as many as fit, into the slots), `put_back_all()` empties the cursor and the
   grid when the screen closes (the server throws what does not fit). Msg.CRAFT; the server uses
   `PlayerSession.craft_width`: OWN_GRID, or GRID once Msg.OPEN_WORKBENCH names a workbench
-  within reach, until the screen closes. A right click on a workbench (`Mining.opens`,
-  BlockInteraction.place) opens it: `GameClient.open_workbench`, InventoryScreen.open(width)
+  within reach, until the screen closes. E on a workbench (`Mining.opens`,
+  BlockInteraction.use_target) opens it: `GameClient.open_workbench`, InventoryScreen.open(width)
   showing the grid that wide (titled Workbench), an arrow and the result; the book's Crafting
   chapter draws every recipe (GuideBook Kind.RECIPE, groups and each kind of tool going through
   their items). `--grid=ROW/ROW` fills the grid for screenshots; `--place` aimed at a workbench
@@ -228,8 +230,8 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   whose model the others share) its four blocks in WAYS order (S, W, N, E); `kind_of`, `front_of`,
   `facing(kind, front)`, `turn_of`, `model_block`. One-tile ones (chests, furnaces) are BOX_SIZE
   voxels square and a level high; `Mining.placement` puts them in the cell aimed at.
-- Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened by
-  a right click (`Mining.opens`). What a chest holds is its own Inventory (first
+- Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
+  E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made
   empty the first time; `contents_changed` marks the chunk to save; saved in the region with the
   chunk, never sent with it). Msg.OPEN_CHEST (in reach) sets PlayerSession.chest and answers

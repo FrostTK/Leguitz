@@ -535,8 +535,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	get_viewport().set_input_as_handled()
 
 
-## Breaking (left button held, right trigger) and placing (right click,
-## left trigger). Returns true when the event was used.
+## Breaking (left button held, right trigger), placing (right click, left
+## trigger) and using what is aimed at (E, B). Returns true when the event
+## was used.
 func _handle_block_input(event: InputEvent) -> bool:
 	if event is InputEventJoypadButton or event is InputEventJoypadMotion:
 		interaction.pad_aiming = true
@@ -560,10 +561,13 @@ func _handle_block_input(event: InputEvent) -> bool:
 	if event.is_action_pressed(InputBindings.PLACE):
 		interaction.place()
 		return true
+	if event.is_action_pressed(InputBindings.USE):
+		interaction.use_target()
+		return true
 	return false
 
 
-## The hotbar (wheel, 1-9, shoulders), the inventory (E) and throwing
+## The hotbar (wheel, 1-9, shoulders), the inventory (Tab) and throwing
 ## (Q, with Ctrl the whole stack). The wheel zooms with its button held
 ## down (top-down view) or with Ctrl (InputBindings.wheel_zooms). Returns
 ## true when the event was used.

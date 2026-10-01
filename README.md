@@ -154,8 +154,9 @@ du projet, puis appuyer sur F5.
 | Revenir à la vue par défaut | Début (Home) | Clic du stick droit |
 | Miner (maintenir) | Clic gauche | Gâchette droite |
 | Poser le bloc en main | Clic droit | Gâchette gauche |
+| Utiliser le bloc visé (ouvrir un établi, un coffre, un four) | E | B |
 | Choisir l'objet en main | Molette, 1 à 9 | RB / LB |
-| Inventaire | E | |
+| Inventaire | Tab | |
 | Prendre le livre du joueur, puis l'ouvrir | 0, puis 0 ou clic droit | LB / RB, puis LT |
 | Lancer l'objet en main (avec Ctrl : toute la pile) | A (AZERTY) / Q (QWERTY) | |
 | Zoom (vue de dessus) | Molette en gardant le clic molette enfoncé, Ctrl + molette, + / - | |

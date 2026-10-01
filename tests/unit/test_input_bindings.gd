@@ -16,3 +16,21 @@ func test_wheel_zooms_with_its_button_held_in_the_top_down_view() -> void:
 	wheel.ctrl_pressed = true
 	assert_true(InputBindings.wheel_zooms(wheel, false), "Ctrl + wheel zooms")
 	assert_true(InputBindings.wheel_zooms(wheel, true), "in first person too")
+
+
+func test_tab_opens_the_inventory_and_e_uses_what_is_aimed_at() -> void:
+	InputBindings.register_defaults()
+	var tab := InputEventKey.new()
+	tab.physical_keycode = KEY_TAB
+	assert_true(InputMap.event_is_action(tab, InputBindings.INVENTORY), "Tab: the inventory")
+	var e := InputEventKey.new()
+	e.physical_keycode = KEY_E
+	assert_true(InputMap.event_is_action(e, InputBindings.USE), "E: use what is aimed at")
+	assert_false(InputMap.event_is_action(e, InputBindings.INVENTORY))
+	var b := InputEventJoypadButton.new()
+	b.button_index = JOY_BUTTON_B
+	assert_true(InputMap.event_is_action(b, InputBindings.USE), "B on a gamepad")
+	var used := GuideBook.chapters()[0].filter(
+		func(entry: Dictionary) -> bool: return entry["text"] == tr("BOOK_USE")
+	)
+	assert_eq(used.size(), 1, "the book tells it")

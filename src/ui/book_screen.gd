@@ -4,7 +4,7 @@ extends Control
 ## between leather covers, chapter tabs along the top, a title page and
 ## the contents first, page numbers and arrows. Pages turn with the arrows,
 ## the wheel, the movement keys or a stick; LB/RB jump between chapters;
-## Esc, E, the book's key (0) or a right click close it. The name of an
+## Esc, Tab, E, the book's key (0) or a right click close it. The name of an
 ## item drawn (recipes, tools, fuels) shows beside the mouse over it. The
 ## world goes on behind it. Drawn in UI units.
 
@@ -165,6 +165,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if (
 		event.is_action_pressed(InputBindings.PAUSE)
 		or event.is_action_pressed(InputBindings.INVENTORY)
+		or event.is_action_pressed(InputBindings.USE)
 		or event.is_action_pressed(InputBindings.HOTBAR_BOOK)
 		or event.is_action_pressed(&"ui_cancel")
 	):

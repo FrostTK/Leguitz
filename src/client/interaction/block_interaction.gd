@@ -56,22 +56,28 @@ func _process(delta: float) -> void:
 	_update_breaking(delta)
 	if place_soon and target != null:
 		place_soon = false
-		place()
+		if not use_target():
+			place()
 
 
-## Puts the block in hand against the side of the target; a workbench, a
-## chest or a furnace aimed at opens instead, and so does the player's
-## book in hand.
+## Uses what is aimed at (InputBindings.USE): opens a workbench, a chest
+## or a furnace. Returns whether there was something to use.
+func use_target() -> bool:
+	if target == null or not Mining.opens(target.voxel):
+		return false
+	var block := Voxels.block_of(target.voxel)
+	if ObjectShapes.is_chest(block):
+		client.open_chest(target.cell)
+	elif ObjectShapes.furnace_kind(block) != -1:
+		client.open_furnace(target.cell)
+	else:
+		client.open_workbench(target.cell)
+	return true
+
+
+## Puts the block in hand against the side of the target (a right click);
+## the player's book in hand opens instead.
 func place() -> void:
-	if target != null and Mining.opens(target.voxel):
-		var block := Voxels.block_of(target.voxel)
-		if ObjectShapes.is_chest(block):
-			client.open_chest(target.cell)
-		elif ObjectShapes.furnace_kind(block) != -1:
-			client.open_furnace(target.cell)
-		else:
-			client.open_workbench(target.cell)
-		return
 	if client.held_item() == Items.Id.GUIDE_BOOK:
 		client.open_book()
 		return

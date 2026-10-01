@@ -1,6 +1,7 @@
 class_name InventoryScreen
 extends Control
-## The inventory (E): the crafting grid (3 x 3; a workbench's, 5 x 5, when
+## The inventory (Tab; a workbench, a chest or a furnace used with E): the
+## crafting grid (3 x 3; a workbench's, 5 x 5, when
 ## one is opened) and what it makes (or an open chest's slots, or a
 ## furnace: what it cooks, its fire, its fuel, an arrow filling up as it
 ## cooks and what it made), the
@@ -491,6 +492,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		visible
 		and (
 			event.is_action_pressed(InputBindings.INVENTORY)
+			or event.is_action_pressed(InputBindings.USE)
 			or event.is_action_pressed(InputBindings.PAUSE)
 		)
 	):

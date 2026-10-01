@@ -46,6 +46,7 @@ static func _controls() -> Array:
 		_keys("BOOK_JUMP", InputNames.keys(InputBindings.JUMP)),
 		_keys("BOOK_BREAK", [_t("MOUSE_LEFT")]),
 		_keys("BOOK_PLACE", [_t("MOUSE_RIGHT")]),
+		_keys("BOOK_USE", InputNames.keys(InputBindings.USE)),
 		_combo("BOOK_CAMERA", "BOOK_CAMERA_MOUSE"),
 		_combo("BOOK_ZOOM", "BOOK_ZOOM_MOUSE"),
 		_combo("BOOK_HAND", "BOOK_HAND_KEYS"),
@@ -75,6 +76,7 @@ static func _gamepad() -> Array:
 		_keys("BOOK_JUMP", InputNames.pad(InputBindings.JUMP)),
 		_keys("BOOK_BREAK", InputNames.pad(InputBindings.BREAK)),
 		_keys("BOOK_PLACE", InputNames.pad(InputBindings.PLACE)),
+		_keys("BOOK_USE", InputNames.pad(InputBindings.USE)),
 		_keys(
 			"BOOK_HAND",
 			(
@@ -207,5 +209,14 @@ static func _icon(item: int, text: String) -> Dictionary:
 	return {"kind": Kind.ICON, "item": item, "text": text}
 
 
+## A translated text; {use} and {inventory} in it name the keys of those
+## controls as they are bound.
 static func _t(key: String) -> String:
-	return String(TranslationServer.translate(key))
+	var text := String(TranslationServer.translate(key))
+	if not "{" in text:
+		return text
+	var keys := {
+		"use": " / ".join(InputNames.keys(InputBindings.USE)),
+		"inventory": " / ".join(InputNames.keys(InputBindings.INVENTORY)),
+	}
+	return text.format(keys)

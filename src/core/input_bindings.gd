@@ -31,6 +31,9 @@ const TOGGLE_VIEW := &"toggle_view"
 ## by GameClient: a right click places, a right drag turns the camera).
 const BREAK := &"break"
 const PLACE := &"place"
+## Using what is aimed at: opening a workbench, a chest, a furnace
+## (Mining.opens; the right click places blocks).
+const USE := &"use"
 ## Items: the inventory screen, throwing what is in hand (with Ctrl: the
 ## whole stack), the hotbar slot in hand (the mouse wheel is handled by
 ## GameClient, see wheel_zooms). Physical keys, next to the movement
@@ -91,7 +94,8 @@ static func register_defaults() -> void:
 	_bind(TOGGLE_DEBUG, [_key(KEY_F3), _button(JOY_BUTTON_BACK)])
 	_bind(ZOOM_IN, [_key(KEY_EQUAL), _key(KEY_KP_ADD)])
 	_bind(ZOOM_OUT, [_key(KEY_MINUS), _key(KEY_KP_SUBTRACT)])
-	_bind(INVENTORY, [_key(KEY_E)])
+	_bind(INVENTORY, [_key(KEY_TAB)])
+	_bind(USE, [_key(KEY_E), _button(JOY_BUTTON_B)])
 	_bind(DROP_ITEM, [_key(KEY_Q)])
 	_bind(HOTBAR_NEXT, [_button(JOY_BUTTON_RIGHT_SHOULDER)])
 	_bind(HOTBAR_PREVIOUS, [_button(JOY_BUTTON_LEFT_SHOULDER)])
