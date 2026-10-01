@@ -15,6 +15,10 @@ const SET_VIEW_DISTANCE := "set_view_distance"
 const SAVE_REQUEST := "save_request"
 const BLOCK_BREAK := "block_break"
 const BLOCK_PLACE := "block_place"
+const SELECT_SLOT := "select_slot"
+const SLOT_CLICK := "slot_click"
+const ITEM_DROP := "item_drop"
+const INVENTORY_CLOSE := "inventory_close"
 
 ## map_request() row for a map of the surface.
 const MAP_SURFACE := -1
@@ -30,6 +34,10 @@ const MAP_DATA := "map_data"
 const WEATHER_STATE := "weather_state"
 const WORLD_SAVED := "world_saved"
 const BLOCK_CHANGED := "block_changed"
+const INVENTORY := "inventory"
+const ITEM_SPAWN := "item_spawn"
+const ITEM_MOVE := "item_move"
+const ITEM_REMOVE := "item_remove"
 
 
 ## The player broke the voxel at `cell` (tile x, row, tile y).
@@ -37,9 +45,55 @@ static func block_break(cell: Vector3i) -> Dictionary:
 	return {"t": BLOCK_BREAK, "cell": cell}
 
 
-## The player placed `voxel` at `cell`.
-static func block_place(cell: Vector3i, voxel: int) -> Dictionary:
-	return {"t": BLOCK_PLACE, "cell": cell, "voxel": voxel}
+## The player placed the block of hotbar slot `slot` at `cell`.
+static func block_place(cell: Vector3i, slot: int) -> Dictionary:
+	return {"t": BLOCK_PLACE, "cell": cell, "slot": slot}
+
+
+## The player took hotbar slot `slot` in hand.
+static func select_slot(slot: int) -> Dictionary:
+	return {"t": SELECT_SLOT, "slot": slot}
+
+
+## A click on an inventory slot (see Inventory.click).
+static func slot_click(slot: int, right: bool, shift: bool) -> Dictionary:
+	return {"t": SLOT_CLICK, "slot": slot, "right": right, "shift": shift}
+
+
+## The player throws one item of a slot (Inventory.CURSOR: what the cursor
+## holds), or the whole stack.
+static func item_drop(slot: int, whole: bool) -> Dictionary:
+	return {"t": ITEM_DROP, "slot": slot, "whole": whole}
+
+
+## The inventory screen closed: the cursor's stack goes back.
+static func inventory_close() -> Dictionary:
+	return {"t": INVENTORY_CLOSE}
+
+
+## A player's whole inventory (see Inventory.to_dict).
+static func inventory(items: Inventory) -> Dictionary:
+	return {"t": INVENTORY, "inventory": items.to_dict()}
+
+
+## An item lies in the world (new, or its count changed).
+static func item_spawn(dropped: DroppedItem) -> Dictionary:
+	return {
+		"t": ITEM_SPAWN,
+		"id": dropped.id,
+		"item": dropped.item,
+		"count": dropped.count,
+		"pos": dropped.position,
+	}
+
+
+static func item_move(dropped: DroppedItem) -> Dictionary:
+	return {"t": ITEM_MOVE, "id": dropped.id, "pos": dropped.position}
+
+
+## An item is gone: picked up by player `by` (0: it vanished).
+static func item_remove(id: int, by: int) -> Dictionary:
+	return {"t": ITEM_REMOVE, "id": id, "by": by}
 
 
 ## A voxel is now `voxel` (also the answer to a refused break or place:

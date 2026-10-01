@@ -16,6 +16,8 @@ var transport: Transport
 var body := PlayerBody.new()
 var active := false
 var noclip := false
+## False while a screen takes the keys (the inventory): the player stands.
+var controls_enabled := true
 ## Direction the player looks at, on the ground (world axes): exact, and
 ## rounded to the nearest side.
 var heading := Vector2.DOWN
@@ -65,6 +67,8 @@ func step(delta: float) -> void:
 		InputBindings.MOVE_UP,
 		InputBindings.MOVE_DOWN
 	)
+	if not controls_enabled:
+		input = Vector2.ZERO
 	var motion := Vector2.ZERO
 	if input != Vector2.ZERO:
 		input = Render3D.screen_to_ground(input, camera_yaw)
@@ -80,7 +84,7 @@ func step(delta: float) -> void:
 	if noclip:
 		body.glide(motion * NOCLIP_MULTIPLIER, client_world.voxel_at)
 	else:
-		var jump := Input.is_action_pressed(InputBindings.JUMP)
+		var jump := controls_enabled and Input.is_action_pressed(InputBindings.JUMP)
 		body.step(motion, jump, minf(delta, 0.1), client_world.voxel_at)
 	speed = before.distance_to(body.feet) / maxf(delta, 0.001) / GameConst.TILE_SIZE
 	if body.on_ground or body.height < view_height:

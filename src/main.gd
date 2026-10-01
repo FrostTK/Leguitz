@@ -138,6 +138,15 @@ func _start_dev_actions() -> void:
 	client.interaction.aim_override = dev.aim
 	client.interaction.breaking = dev.hold_break
 	client.interaction.place_soon = dev.place_once
+	var session := server.first_session()
+	for entry in dev.give:
+		session.inventory.add(entry.x, entry.y)
+	if not dev.give.is_empty():
+		session.transport.send(Msg.inventory(session.inventory))
+	if dev.open_inventory:
+		client.open_inventory()
+	if dev.drop_held:
+		client.transport.send(Msg.item_drop(0, true))
 	if dev.open_map:
 		client.debug_map.cycle(client.local_player.current_tile(), client.map_row())
 	if dev.open_pause_menu:

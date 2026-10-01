@@ -130,8 +130,17 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   (objects above go with a broken voxel) and sends BLOCK_CHANGED to players having the chunk
   (also its answer to a refused guess). WorldView3D.voxel_changed rebuilds the chunk and the
   neighbors whose border the voxel lies on. Left button held breaks, right click places (a right
-  drag still turns the camera), gamepad triggers; placing uses the last block broken until the
-  inventory exists.
+  drag still turns the camera), gamepad triggers; placing uses the block in hand.
+- Items (`src/sim/items/`): `Items` is the registry (ids saved: only append; name key ITEM_<ID>
+  in i18n, stack size, the voxel a block item places, what each broken voxel gives: grass gives
+  dirt, a tree a log per level of trunk). `Inventory` (hotbar 9 + bag 27 + the cursor's stack,
+  Minecraft's click rules) is shared: the server keeps it (saved in the player's state), the
+  client predicts clicks on its copy. `DroppedItem`s fall, rest, float on water; the server pulls
+  them into players nearby (from a level under the feet) and sends ITEM_SPAWN/MOVE/REMOVE; they
+  are saved in world.cfg. Client: ItemLibrary (block items are cubes wearing the block's top
+  texture, others ItemModels voxel models), ItemIcons renders every icon off screen at start,
+  Hotbar, InventoryScreen (E), DroppedItemsView, the item in hand (body and first person). Wheel
+  and 1-9 pick the slot (Ctrl + wheel zooms), Q throws (Ctrl: the stack), shoulders on a gamepad.
 - Saves (`src/sim/save/world_storage.gd`, server side only): `user://worlds/<folder>/` holds
   world.cfg (settings, clock, weather), players/<name>.cfg and regions/r.<x>.<z>.bin (the chunks
   players changed, 32x32 per file, zstd voxels; the others are generated again). Change voxels

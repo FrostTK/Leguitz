@@ -1,0 +1,114 @@
+class_name DroppedItem
+extends RefCounted
+## An item lying in the world (broken blocks drop theirs, players throw
+## them): it falls, rests on the ground or floats up in water, and players
+## walking by pick it up. Positions in local units (tiles across, levels
+## up), the item's center.
+
+## Levels per second squared, and the speed water lifts an item at.
+const GRAVITY := 22.0
+const FLOAT_SPEED := 0.8
+## Half the item's size: it rests this high over the ground.
+const RADIUS := 0.15
+## Seconds before players can pick it up (thrown: longer, for the
+## thrower), and before it vanishes.
+const PICKUP_DELAY := 0.4
+const THROWN_DELAY := 1.5
+const LIFETIME := 300.0
+
+var id := 0
+var item := Items.Id.NONE
+var count := 0
+var position := Vector3.ZERO
+var velocity := Vector3.ZERO
+var age := 0.0
+var pickup_delay := PICKUP_DELAY
+## Lies still on the ground (or floats): no need to move it.
+var resting := false
+
+
+static func create(item_id: int, amount: int, at: Vector3, speed: Vector3) -> DroppedItem:
+	var dropped := DroppedItem.new()
+	dropped.item = item_id
+	dropped.count = amount
+	dropped.position = at
+	dropped.velocity = speed
+	return dropped
+
+
+## Moves it for `delta` seconds among the voxels. Returns true if it moved.
+func step(delta: float, voxel_at: Callable) -> bool:
+	age += delta
+	pickup_delay = maxf(pickup_delay - delta, 0.0)
+	if resting and _supported(voxel_at):
+		return false
+	resting = false
+	var cell := _cell(position)
+	var inside: int = voxel_at.call(cell)
+	if Voxels.is_cube(inside):
+		# Buried (a block was placed on it): it pops out on top.
+		position.y = float(cell.y + 1 - GameConst.SEA_LEVEL) + RADIUS
+		velocity = Vector3.ZERO
+		return true
+	if Voxels.is_liquid(inside):
+		# Water lifts it to the surface and slows it down.
+		velocity.y = move_toward(velocity.y, FLOAT_SPEED, 8.0 * delta)
+		velocity.x *= exp(-3.0 * delta)
+		velocity.z *= exp(-3.0 * delta)
+		var above: int = voxel_at.call(cell + Vector3i.UP)
+		var surface := float(cell.y + 1 - GameConst.SEA_LEVEL) - ChunkData.WATER_DROP
+		if not Voxels.is_liquid(above) and position.y >= surface:
+			position.y = surface
+			velocity = Vector3.ZERO
+			resting = true
+			return true
+	else:
+		velocity.y -= GRAVITY * delta
+	var start := position
+	var next := position + velocity * delta
+	# Sideways into a cube: it stops there.
+	if Voxels.is_cube(voxel_at.call(_cell(Vector3(next.x, position.y, next.z)))):
+		next.x = position.x
+		next.z = position.z
+		velocity.x = 0.0
+		velocity.z = 0.0
+	var below := _cell(Vector3(next.x, next.y - RADIUS, next.z))
+	if velocity.y <= 0.0 and Voxels.is_cube(voxel_at.call(below)):
+		next.y = float(below.y + 1 - GameConst.SEA_LEVEL) + RADIUS
+		velocity = Vector3.ZERO
+		resting = true
+	position = next
+	return position.distance_squared_to(start) > 1e-8
+
+
+func is_expired() -> bool:
+	return age >= LIFETIME
+
+
+func to_dict() -> Dictionary:
+	return {"item": item, "count": count, "position": position, "age": age}
+
+
+static func from_dict(data: Dictionary) -> DroppedItem:
+	var dropped := create(
+		int(data.get("item", Items.Id.NONE)),
+		int(data.get("count", 0)),
+		data.get("position", Vector3.ZERO),
+		Vector3.ZERO
+	)
+	dropped.age = data.get("age", 0.0)
+	return dropped
+
+
+func _supported(voxel_at: Callable) -> bool:
+	var cell := _cell(position)
+	var inside: int = voxel_at.call(cell)
+	if Voxels.is_cube(inside):
+		return false
+	if Voxels.is_liquid(inside):
+		return true
+	return Voxels.is_cube(voxel_at.call(_cell(position - Vector3(0.0, RADIUS + 0.01, 0.0))))
+
+
+static func _cell(at: Vector3) -> Vector3i:
+	return Vector3i(floori(at.x), floori(at.y) + GameConst.SEA_LEVEL, floori(at.z))

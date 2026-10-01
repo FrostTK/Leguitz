@@ -54,7 +54,9 @@ func erase() -> void:
 
 
 ## What world.cfg holds: "settings", "clock" and "weather" (dictionaries,
-## see their to_dict) and "saved_unix"; empty if the world was never saved.
+## see their to_dict), "items" (the items lying around, see
+## DroppedItem.to_dict) and "saved_unix"; empty if the world was never
+## saved.
 func read_world() -> Dictionary:
 	var file := _load_config(WORLD_FILE)
 	if file == null:
@@ -63,16 +65,20 @@ func read_world() -> Dictionary:
 		"settings": file.get_value("world", "settings", {}),
 		"clock": file.get_value("world", "clock", {}),
 		"weather": file.get_value("world", "weather", {}),
+		"items": file.get_value("world", "items", []),
 		"saved_unix": file.get_value("world", "saved_unix", 0.0),
 	}
 
 
-func save_world(settings: WorldSettings, clock: WorldClock, weather: Weather) -> bool:
+func save_world(
+	settings: WorldSettings, clock: WorldClock, weather: Weather, items: Array = []
+) -> bool:
 	var file := ConfigFile.new()
 	file.set_value("world", "format", FORMAT_VERSION)
 	file.set_value("world", "settings", settings.to_dict())
 	file.set_value("world", "clock", clock.to_dict())
 	file.set_value("world", "weather", weather.to_dict())
+	file.set_value("world", "items", items)
 	file.set_value("world", "saved_unix", Time.get_unix_time_from_system())
 	return _save_config(file, WORLD_FILE)
 

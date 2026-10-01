@@ -31,6 +31,25 @@ const TOGGLE_VIEW := &"toggle_view"
 ## by GameClient: a right click places, a right drag turns the camera).
 const BREAK := &"break"
 const PLACE := &"place"
+## Items: the inventory screen, throwing what is in hand (with Ctrl: the
+## whole stack), the hotbar slot in hand (the mouse wheel is handled by
+## GameClient: Ctrl + wheel zooms). Physical keys, next to the movement
+## keys whatever the keyboard.
+const INVENTORY := &"inventory"
+const DROP_ITEM := &"drop_item"
+const HOTBAR_NEXT := &"hotbar_next"
+const HOTBAR_PREVIOUS := &"hotbar_previous"
+const HOTBAR_SLOTS: Array[StringName] = [
+	&"hotbar_1",
+	&"hotbar_2",
+	&"hotbar_3",
+	&"hotbar_4",
+	&"hotbar_5",
+	&"hotbar_6",
+	&"hotbar_7",
+	&"hotbar_8",
+	&"hotbar_9",
+]
 # Debug (creative-only later).
 const DEPTH_UP := &"depth_up"
 const DEPTH_DOWN := &"depth_down"
@@ -66,24 +85,14 @@ static func register_defaults() -> void:
 	_bind(JUMP, [_key(KEY_SPACE), _button(JOY_BUTTON_A)])
 	_bind(PAUSE, [_key(KEY_ESCAPE), _button(JOY_BUTTON_START)])
 	_bind(TOGGLE_DEBUG, [_key(KEY_F3), _button(JOY_BUTTON_BACK)])
-	_bind(
-		ZOOM_IN,
-		[
-			_key(KEY_EQUAL),
-			_key(KEY_KP_ADD),
-			_mouse(MOUSE_BUTTON_WHEEL_UP),
-			_button(JOY_BUTTON_RIGHT_SHOULDER),
-		]
-	)
-	_bind(
-		ZOOM_OUT,
-		[
-			_key(KEY_MINUS),
-			_key(KEY_KP_SUBTRACT),
-			_mouse(MOUSE_BUTTON_WHEEL_DOWN),
-			_button(JOY_BUTTON_LEFT_SHOULDER),
-		]
-	)
+	_bind(ZOOM_IN, [_key(KEY_EQUAL), _key(KEY_KP_ADD)])
+	_bind(ZOOM_OUT, [_key(KEY_MINUS), _key(KEY_KP_SUBTRACT)])
+	_bind(INVENTORY, [_key(KEY_E)])
+	_bind(DROP_ITEM, [_key(KEY_Q)])
+	_bind(HOTBAR_NEXT, [_button(JOY_BUTTON_RIGHT_SHOULDER)])
+	_bind(HOTBAR_PREVIOUS, [_button(JOY_BUTTON_LEFT_SHOULDER)])
+	for i in HOTBAR_SLOTS.size():
+		_bind(HOTBAR_SLOTS[i], [_key(KEY_1 + i)])
 	_bind(CAMERA_LEFT, [_axis(JOY_AXIS_RIGHT_X, -1.0)])
 	_bind(CAMERA_RIGHT, [_axis(JOY_AXIS_RIGHT_X, 1.0)])
 	_bind(CAMERA_UP, [_axis(JOY_AXIS_RIGHT_Y, -1.0)])

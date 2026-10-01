@@ -60,7 +60,7 @@ Les questions de goût ou les choix lourds de conséquences sont posés avant de
 
 ## 3. État actuel : ce qui est fait
 
-Godot **4.7.2** (GDScript), rendu Forward+. 104 tests unitaires, lint propre.
+Godot **4.7.2** (GDScript), rendu Forward+. 113 tests unitaires, lint propre.
 
 | Phase | Contenu | Commits |
 |---|---|---|
@@ -78,9 +78,10 @@ Godot **4.7.2** (GDScript), rendu Forward+. 104 tests unitaires, lint propre.
 | 3.1c Arbres | Arbres procéduraux détaillés (`TreeModels`, 8 espèces × 8 versions de tailles différentes), forêts plus denses ; `ObjectShapes` partagé physique/modèles : seul le tronc bloque (boîtes d'obstacles), objets solides jamais voisins ; feuillages jamais sous 2 niveaux (la caméra à la 1re personne reste sous les couronnes) ; détail des objets : hors de l'écran (ombres seules) toujours simplifiés, en 1re personne selon la distance au joueur, réduit en qualité Bas/Moyen ; F3 affiche le temps GPU et les triangles | `1f26962` |
 | 3.1d Eau transparente | Surface de l'eau à part (shader `water.gdshader` : textures d'écran et de profondeur), fonds et berges sous l'eau maillés et fondus comme la terre ferme, fondu par paliers selon l'épaisseur d'eau traversée, ondulation du fond par pixels entiers, caustiques dans les bas-fonds, écume et vagues conservées ; lacs des grottes aussi | `7ad0662` |
 | 3.2 Sauvegardes | `WorldStorage` (côté serveur) : `user://worlds/world_1/` = world.cfg (réglages, horloge, météo), players/<nom>.cfg, regions/ (chunks modifiés, 32×32 par fichier, compressés) ; écriture à côté puis échange (copie .bak) ; `WorldState.set_voxel` marque le chunk à sauvegarder, chargé au lieu d'être régénéré ; sauvegarde toutes les 2 min, en pause et en quittant ; joueur remis où il était (jamais dans le sol) ; `--seed` seul = monde jetable jamais sauvegardé, `--new-world`, `--world=NOM` | `0ff00bb` |
-| 3.3 Viser, miner, poser | `Mining` (portée 5, temps à la main par bloc, règles de pose, l'eau comble les trous voisins) et `VoxelRay` (rayon voxel par voxel, troncs et plantes atteints sur leur corps) partagés ; `BlockInteraction` côté client : visée à la souris (vue de dessus), au viseur (1re personne) ou devant le joueur (manette), cadre d'un pixel du dessin, fissures (10 stades), éclats, bras qui frappe, arbres qui tombent ; prédiction locale, le serveur vérifie et diffuse `BLOCK_CHANGED` ; on pose le dernier bloc cassé en attendant l'inventaire ; `--aim`, `--mine`, `--place` | « Mine and place » |
+| 3.3 Viser, miner, poser | `Mining` (portée 5, temps à la main par bloc, règles de pose, l'eau comble les trous voisins) et `VoxelRay` (rayon voxel par voxel, troncs et plantes atteints sur leur corps) partagés ; `BlockInteraction` côté client : visée à la souris (vue de dessus), au viseur (1re personne) ou devant le joueur (manette), cadre d'un pixel du dessin, fissures (10 stades), éclats, bras qui frappe, arbres qui tombent ; prédiction locale, le serveur vérifie et diffuse `BLOCK_CHANGED` ; `--aim`, `--mine`, `--place` | `0a99322` |
+| 3.4 Objets et inventaire | Registre `Items` (41 objets traduits ; ce que donne chaque bloc : l'herbe de la terre, un arbre une bûche par niveau de tronc et des bâtons…), `Inventory` partagé (barre de 9 + sac de 27 + pile du curseur, règles de Minecraft), objets au sol (tombent, flottent, ramassés en passant, sauvegardés), modèles voxel des objets et icônes rendues hors écran, barre en bas de l'écran (nom de l'objet en main), inventaire (E : clic, clic droit = moitié/un, Maj+clic, lancer en cliquant à côté), molette et 1-9 (Ctrl+molette = zoom), Q pour lancer (Ctrl : la pile), LB/RB à la manette, objet tenu en main (corps et 1re personne) ; on pose le bloc en main | « Items and inventory » |
 
-**Pas encore fait** (prévu) : le reste de la phase 3 (objets et inventaire, outils), craft, survie/combat, créatures, structures, agriculture, menus de départ, sons,
+**Pas encore fait** (prévu) : la fin de la phase 3 (outils), craft, survie/combat, créatures, structures, agriculture, menus de départ, sons,
 mode Arcade, mobile.
 
 ---
@@ -95,6 +96,7 @@ mode Arcade, mobile.
 | Serveur | `src/sim/game_server.gd` (sessions, envoi des chunks, messages, météo, temps, sauvegarde), `src/sim/save/world_storage.gd` (fichiers du monde sauvegardé) |
 | Monde | `src/sim/world/` (`voxels.gd` : ids et propriétés des voxels ; `chunk_data.gd` : 16×16×128 voxels, biome et sommet du terrain par colonne ; `world_state.gd` : chunks du serveur, recherche d'un sol pour les déplacements de debug), `generation/` (climat, relief, biomes, surface → colonnes, `cave_generator.gd` : grottes 3D et minerais) |
 | Minage | `src/sim/world/mining.gd` (règles), `src/sim/world/voxel_ray.gd` (visée), `src/client/interaction/` (visée et rendu côté client : cadre, fissures, éclats, arbres qui tombent) |
+| Objets | `src/sim/items/` (`items.gd` registre et ce que donne chaque bloc, `inventory.gd`, `dropped_item.gd`), `src/client/items/` (modèles, icônes rendues hors écran, objets au sol), `src/ui/hotbar.gd`, `inventory_screen.gd`, `item_slot.gd` |
 | Physique | `src/sim/physics/player_body.gd` (marche, saut, chute, plafonds, parmi les voxels), `tile_collider.gd` (déplacement parmi des boîtes d'obstacles : case entière, tronc, rocher) ; `src/sim/world/object_shapes.gd` (versions des objets, troncs, emprise au sol : partagé avec les modèles) |
 | Messages | `src/net/msg.gd` (tous les échanges client ⇄ serveur) |
 | Client | `src/client/game_client.gd` (assemble la scène 3D, entrées, caméra), `local_player.gd` |
@@ -119,7 +121,9 @@ Options de développement (après `--`) : `--seed`, `--spawn=X,Y`, `--time`, `--
 `--first-person`, `--look=INCLINAISON` (1re personne), `--dive=T` (plongée figée à T entre 0 et 1,
 pour les captures), `--new-world` (recommencer le monde sauvegardé), `--world=NOM` (un autre monde
 sauvegardé), `--aim=X,Y` (viser ce point, en unités d'écran depuis le centre), `--mine` (garder le
-bouton de minage enfoncé), `--place` (poser un bloc une fois) (voir `src/core/dev_options.gd`). **`--seed` seul joue un monde jetable, jamais
+bouton de minage enfoncé), `--place` (poser un bloc une fois), `--give=objet:N,...` (donner des
+objets, noms de `Items.Id` : `dirt:20,diamond:3`), `--inventory` (ouvrir l'inventaire), `--drop`
+(lancer la pile en main) (voir `src/core/dev_options.gd`). **`--seed` seul joue un monde jetable, jamais
 sauvegardé** : les captures ne touchent jamais au monde du propriétaire.
 
 Lieux utiles avec la graine 42 : rivière `4,-6` ; plaine `-12,21` ; montagnes `76,123` ;
@@ -210,13 +214,15 @@ captures, commit et retour du propriétaire :
    chunk et ses voisins touchés (prédiction locale annulée si le serveur refuse). Miner prend du
    temps (fissures dessinées sur le bloc, petits débris voxel) ; miner le pied d'un arbre l'abat.
    Contrôles : clic gauche maintenu, clic droit court (le glissé tourne toujours la caméra).
-4. **Objets et inventaire** (prochaine étape) : chaque bloc cassé donne son objet (« chaque bloc
-   donne quelque chose » : l'herbe donne de la terre…), qui remplace le « dernier bloc cassé » de
-   l'étape 3 pour poser ; registre des objets en données (id, nom traduit, pile max, type),
+4. ✅ **Objets et inventaire** (voir section 3). Fait comme prévu ci-dessous ; les bûches, minerais,
+   gemmes et plantes ne se posent pas encore (planches, blocs de bois, plantations : phase 4 et
+   suivantes), seuls les blocs se posent. Le plan suivi : chaque bloc cassé donne son objet (« chaque
+   bloc donne quelque chose » : l'herbe donne de la terre…), qui remplace le « dernier bloc cassé »
+   de l'étape 3 pour poser ; registre des objets en données (id, nom traduit, pile max, type),
    modèles voxel des objets et icônes rendues hors écran ; objets lâchés qui flottent, tournent et se
    ramassent ; barre de 9 cases + sac de 27 (E), glisser-déposer, séparer les piles, molette et
    1-9 pour l'objet en main (zoom sur Ctrl+molette), Q pour lâcher ; le serveur fait foi.
-5. **Outils et dureté** : temps de minage selon le bloc et l'outil (main, hache, pioche, pelle),
+5. **Outils et dureté** (prochaine étape) : temps de minage selon le bloc et l'outil (main, hache, pioche, pelle),
    durées passées par `WorldClock.scale_duration()` si elles dépendent du temps de jeu ; touche de
    debug donnant des outils en attendant le craft.
 

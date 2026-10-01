@@ -40,6 +40,11 @@ const LANTERN_IN_HAND := Vector3(0.35, -0.3, -0.25)
 ## A right click moving less than this (screen pixels) places a block; more
 ## is a drag turning the camera.
 const CLICK_SLOP := 6.0
+## Size (local units) of what the player holds: in the hand of the body,
+## and in first person, where it sits at the bottom right of the view.
+const HELD_SIZE := 0.28
+const FIRST_PERSON_HELD_SIZE := 0.16
+const FIRST_PERSON_HELD_AT := Vector3(0.36, -0.3, -0.62)
 
 var transport: Transport
 var world := ClientWorld.new()
@@ -48,6 +53,10 @@ var world_info := {}
 var player_id := -1
 var joined := false
 var local_player := LocalPlayer.new()
+## The player's items, as the server last told (clicks are predicted on it).
+var inventory := Inventory.new()
+## How items look (models, icons).
+var items := ItemLibrary.new()
 ## Radius (chunks) last asked to the server.
 var view_distance := 0
 
@@ -71,6 +80,12 @@ var pause_menu := PauseMenu.new()
 var crosshair := Crosshair.new()
 ## Aiming, breaking and placing blocks.
 var interaction := BlockInteraction.new()
+var hotbar := Hotbar.new()
+var inventory_screen := InventoryScreen.new()
+var dropped_items := DroppedItemsView.new()
+var item_icons := ItemIcons.new()
+## What is in hand in first person (a child of the camera).
+var first_person_held := MeshInstance3D.new()
 ## Chooses between the top-down view and first person (caves, F5).
 var view_mode := ViewMode.new()
 ## 0 = top-down view, 1 = first person, in between during the dive.
@@ -91,6 +106,8 @@ var _camera_local := Vector3.ZERO
 ## Camera yaw, pitch and stretch the world root is set for.
 var _root_orbit := Vector3.INF
 var _dragging := false
+## The item shown in hand (see _update_held).
+var _shown_held := -1
 ## The right button is down: a click places, a drag turns the camera once
 ## it moved CLICK_SLOP (how far it moved so far).
 var _right_down := false
@@ -110,6 +127,22 @@ func _ready() -> void:
 	_setup_world()
 	interaction.client = self
 	add_child(interaction)
+	item_icons.library = items
+	add_child(item_icons)
+	hotbar.inventory = inventory
+	hotbar.library = items
+	inventory_screen.inventory = inventory
+	inventory_screen.library = items
+	inventory_screen.slot_clicked.connect(_on_slot_clicked)
+	inventory_screen.cursor_dropped.connect(_on_cursor_dropped)
+	inventory_screen.close_requested.connect(_on_inventory_closed)
+	dropped_items.library = items
+	dropped_items.local_player = local_player
+	world_root.add_child(dropped_items)
+	first_person_held.position = FIRST_PERSON_HELD_AT
+	first_person_held.rotation = Vector3(-0.15, 0.7, 0.0)
+	first_person_held.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	world_viewport.camera.add_child(first_person_held)
 	hud_clock.clock = clock
 	pause_menu.clock = clock
 	debug_overlay.client = self
@@ -123,8 +156,10 @@ func _ready() -> void:
 	_ui_root.add_child(hud_clock)
 	save_notice.anchor = hud_clock
 	_ui_root.add_child(save_notice)
+	_ui_root.add_child(hotbar)
 	_ui_root.add_child(debug_overlay)
 	_ui_root.add_child(debug_map)
+	_ui_root.add_child(inventory_screen)
 	_ui_root.add_child(pause_menu)
 
 	pause_menu.resume_requested.connect(resume)
@@ -224,6 +259,7 @@ func _process(delta: float) -> void:
 		_update_orbit(delta)
 		local_player.step(delta)
 		_update_view(delta)
+		_update_held()
 	_loading_label.visible = not is_ready_to_play()
 
 
@@ -255,7 +291,8 @@ func _update_view_mode(delta: float) -> void:
 	first_person = move_toward(first_person, wanted, delta / DIVE_TIME)
 	if dive_hold >= 0.0:
 		first_person = dive_hold
-	var mouse := Input.MOUSE_MODE_CAPTURED if view_mode.first_person else Input.MOUSE_MODE_VISIBLE
+	var captured := view_mode.first_person and not inventory_screen.visible
+	var mouse := Input.MOUSE_MODE_CAPTURED if captured else Input.MOUSE_MODE_VISIBLE
 	if Input.mouse_mode != mouse:
 		Input.mouse_mode = mouse
 	crosshair.visible = first_person >= 1.0
@@ -387,6 +424,7 @@ func is_view_complete() -> bool:
 
 func pause() -> void:
 	debug_map.close()
+	inventory_screen.close()
 	interaction.stop()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if joined:
@@ -411,7 +449,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		view_mode.toggle()
 		get_viewport().set_input_as_handled()
 		return
-	if _handle_block_input(event):
+	if _handle_block_input(event) or _handle_item_input(event):
 		get_viewport().set_input_as_handled()
 		return
 	var used := _handle_look_input(event) if view_mode.first_person else _handle_camera_input(event)
@@ -467,9 +505,94 @@ func _handle_block_input(event: InputEvent) -> bool:
 	return false
 
 
+## The hotbar (wheel, 1-9, shoulders), the inventory (E) and throwing
+## (Q, with Ctrl the whole stack). Ctrl + wheel zooms. Returns true when the
+## event was used.
+func _handle_item_input(event: InputEvent) -> bool:
+	var button := event as InputEventMouseButton
+	if (
+		button != null
+		and button.pressed
+		and button.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]
+	):
+		var up := button.button_index == MOUSE_BUTTON_WHEEL_UP
+		if button.ctrl_pressed:
+			var zoom := world_viewport.world_zoom + (1 if up else -1)
+			Settings.set_world_zoom(clampi(zoom, 1, Settings.MAX_WORLD_ZOOM))
+		else:
+			select_slot(posmod(inventory.selected + (-1 if up else 1), Inventory.HOTBAR))
+		return true
+	if event.is_action_pressed(InputBindings.HOTBAR_NEXT):
+		select_slot(posmod(inventory.selected + 1, Inventory.HOTBAR))
+		return true
+	if event.is_action_pressed(InputBindings.HOTBAR_PREVIOUS):
+		select_slot(posmod(inventory.selected - 1, Inventory.HOTBAR))
+		return true
+	for i in Inventory.HOTBAR:
+		if event.is_action_pressed(InputBindings.HOTBAR_SLOTS[i]):
+			select_slot(i)
+			return true
+	if event.is_action_pressed(InputBindings.INVENTORY):
+		open_inventory()
+		return true
+	if event.is_action_pressed(InputBindings.DROP_ITEM):
+		var key := event as InputEventKey
+		var whole := key != null and key.ctrl_pressed
+		if inventory.held() != Items.Id.NONE:
+			inventory.take(inventory.selected, inventory.counts[inventory.selected] if whole else 1)
+			transport.send(Msg.item_drop(inventory.selected, whole))
+		return true
+	return false
+
+
+## Takes a hotbar slot in hand.
+func select_slot(slot: int) -> void:
+	if slot != inventory.selected:
+		inventory.selected = slot
+		transport.send(Msg.select_slot(slot))
+
+
+func open_inventory() -> void:
+	interaction.stop()
+	local_player.controls_enabled = false
+	inventory_screen.open()
+
+
+func _on_slot_clicked(slot: int, right: bool, shift: bool) -> void:
+	inventory.click(slot, right, shift)
+	transport.send(Msg.slot_click(slot, right, shift))
+
+
+func _on_cursor_dropped(whole: bool) -> void:
+	var count := inventory.counts[Inventory.CURSOR]
+	inventory.take(Inventory.CURSOR, count if whole else 1)
+	transport.send(Msg.item_drop(Inventory.CURSOR, whole))
+
+
+func _on_inventory_closed() -> void:
+	local_player.controls_enabled = true
+	inventory.put_back_cursor()
+	transport.send(Msg.inventory_close())
+
+
+## Puts what is in hand in the body's hand and, in first person, at the
+## bottom right of the view.
+func _update_held() -> void:
+	var held := inventory.held()
+	var model := items.mesh(held) if held != Items.Id.NONE else null
+	first_person_held.visible = model != null and first_person >= 1.0
+	if held == _shown_held:
+		return
+	_shown_held = held
+	player_model.hold(model, HELD_SIZE * items.fit(held) if model != null else 0.0)
+	first_person_held.mesh = model
+	if model != null:
+		first_person_held.scale = Vector3.ONE * FIRST_PERSON_HELD_SIZE * items.fit(held)
+
+
 ## Mouse drag (right or middle button) orbits the camera around the
-## player (a right click without dragging places a block); the wheel and
-## +/- zoom. Returns true when the event was used.
+## player (a right click without dragging places a block); +/- zoom (and
+## Ctrl + wheel). Returns true when the event was used.
 func _handle_camera_input(event: InputEvent) -> bool:
 	var button := event as InputEventMouseButton
 	if button != null and button.button_index == MOUSE_BUTTON_RIGHT:
@@ -525,6 +648,7 @@ func _handle_message(message: Dictionary) -> void:
 	match message.get("t"):
 		Msg.WELCOME:
 			player_id = message["player_id"]
+			dropped_items.player_id = player_id
 			world_info = message["world"]
 			local_player.spawn_at(message["spawn"], message["h"])
 			joined = true
@@ -553,6 +677,17 @@ func _handle_message(message: Dictionary) -> void:
 			save_notice.flash()
 		Msg.BLOCK_CHANGED:
 			interaction.on_block_changed(message["cell"], message["voxel"])
+		Msg.INVENTORY:
+			var selected := inventory.selected
+			inventory.load_dict(message["inventory"])
+			# The hand follows the player's own choice (the server may lag).
+			inventory.selected = selected
+		Msg.ITEM_SPAWN:
+			dropped_items.spawn(message["id"], message["item"], message["count"], message["pos"])
+		Msg.ITEM_MOVE:
+			dropped_items.move(message["id"], message["pos"])
+		Msg.ITEM_REMOVE:
+			dropped_items.remove(message["id"], message["by"])
 		var unknown:
 			push_warning("Client: unknown message type %s" % unknown)
 

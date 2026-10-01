@@ -34,6 +34,9 @@ extends RefCounted
 ## --aim=X,Y            aim at this point (screen units from its center)
 ## --mine               hold the break button once the world is ready
 ## --place              place a block at what is aimed at, once
+## --give=ITEM:N,...    put items in the inventory (dirt:20,diamond:3...)
+## --inventory          open the inventory once the world is ready
+## --drop               throw the stack in hand once the world is ready
 
 var seed_text := ""
 var new_world := false
@@ -66,6 +69,10 @@ var dive := -1.0
 var aim := Vector2.INF
 var hold_break := false
 var place_once := false
+## [[item, count], ...]
+var give: Array[Vector2i] = []
+var open_inventory := false
+var drop_held := false
 
 
 static func parse(args: PackedStringArray) -> DevOptions:
@@ -143,6 +150,17 @@ static func parse(args: PackedStringArray) -> DevOptions:
 					options.aim = Vector2(point[0].to_float(), point[1].to_float())
 			"mine":
 				options.hold_break = true
+			"give":
+				for entry in value.split(","):
+					var parts_of := entry.split(":")
+					var item: int = Items.Id.get(parts_of[0].to_upper(), Items.Id.NONE)
+					if item != Items.Id.NONE:
+						var count := parts_of[1].to_int() if parts_of.size() > 1 else 1
+						options.give.append(Vector2i(item, maxi(count, 1)))
+			"inventory":
+				options.open_inventory = true
+			"drop":
+				options.drop_held = true
 			"place":
 				options.place_once = true
 			"camera":

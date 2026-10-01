@@ -7,7 +7,7 @@ extends Node
 ## its breaking time, then breaks it (a tree falls); the place button puts
 ## the held block against the side aimed at. Changes show at once
 ## (predicted) and go to the server, whose answer (Msg.BLOCK_CHANGED) has
-## the last word.
+## the last word. The block placed is the one in hand (GameClient.inventory).
 
 ## Seconds between two chips flying off what is being broken.
 const CHIP_INTERVAL := 0.16
@@ -19,9 +19,6 @@ var client: GameClient
 var target: VoxelRay.Hit
 ## The break button is held.
 var breaking := false
-## The block placed for now: the last block broken (the inventory comes
-## next).
-var held_voxel := Voxels.of_ground(Tiles.Ground.DIRT)
 ## Aim at what is in front of the player (gamepad) instead of the mouse.
 var pad_aiming := false
 ## Dev: aim at this point (screen units from its center) instead of the
@@ -57,21 +54,24 @@ func _process(delta: float) -> void:
 		place()
 
 
-## Puts the held block against the side of the target.
+## Puts the block in hand against the side of the target.
 func place() -> void:
 	if target == null or target.normal == Vector3i.ZERO:
 		return
 	var cell := target.cell + target.normal
 	var player := client.local_player
+	var slot := client.inventory.selected
+	var voxel := Items.placed_voxel(client.inventory.items[slot])
 	if (
-		not Mining.can_place(held_voxel)
+		not Mining.can_place(voxel)
 		or not Mining.is_replaceable(client.world.voxel_at(cell))
 		or Mining.overlaps_body(cell, player.position, player.height)
 		or Mining.reach_to(player.position, player.height, cell) > Mining.REACH
 	):
 		return
-	_predict(cell, held_voxel)
-	client.transport.send(Msg.block_place(cell, held_voxel))
+	_predict(cell, voxel)
+	client.inventory.take(slot, 1)
+	client.transport.send(Msg.block_place(cell, slot))
 	client.player_model.swing()
 
 
@@ -125,8 +125,6 @@ func _reset_breaking() -> void:
 
 
 func _break(hit: VoxelRay.Hit) -> void:
-	if Mining.can_place(hit.voxel):
-		held_voxel = hit.voxel
 	var center := _world_point(hit.box.get_center())
 	_debris.throw(center, BlockColors.of(hit.voxel), 16, 0.3)
 	_predict(hit.cell, Mining.left_after_break(hit.cell, client.world.voxel_at))

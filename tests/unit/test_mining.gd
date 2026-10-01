@@ -111,10 +111,12 @@ func test_breaking_within_reach_and_what_stood_on_it() -> void:
 	assert_eq(server.world.voxel_at(cell), Voxels.AIR, "broken")
 	assert_eq(server.world.voxel_at(cell + Vector3i.UP), Voxels.AIR, "the flower falls with it")
 	var said := client.poll()
-	assert_eq(said.size(), 2)
-	assert_eq(said[0]["t"], Msg.BLOCK_CHANGED)
-	assert_eq(said[0]["cell"], cell)
-	assert_eq(said[0]["voxel"], Voxels.AIR)
+	var changed := said.filter(func(m: Dictionary) -> bool: return m["t"] == Msg.BLOCK_CHANGED)
+	assert_eq(changed.size(), 2)
+	assert_eq(changed[0]["cell"], cell)
+	assert_eq(changed[0]["voxel"], Voxels.AIR)
+	var dropped := said.filter(func(m: Dictionary) -> bool: return m["t"] == Msg.ITEM_SPAWN)
+	assert_eq(dropped.size(), 2, "the soil and the flower fall where they were")
 	var chunk := server.world.chunks[Coords.tile_to_chunk(Vector2i(cell.x, cell.z))]
 	assert_true(chunk.modified, "saved with the world from now on")
 	# Out of reach: refused, the player is told what is there.
@@ -133,28 +135,34 @@ func test_placing_against_the_terrain_and_out_of_the_way() -> void:
 	var client: LocalTransport = setup[1]
 	var session: GameServer.PlayerSession = setup[2]
 	var dirt := Voxels.of_ground(Tiles.Ground.DIRT)
+	session.inventory.add(Items.Id.DIRT, 5)
+	session.inventory.items[1] = Items.Id.SEEDS
+	session.inventory.counts[1] = 3
 	var cell := _ground_cell(server, session, Vector2i(2, 0)) + Vector3i.UP
 	server.world.set_voxel(cell, Voxels.AIR)
-	client.send(Msg.block_place(cell, dirt))
+	client.send(Msg.block_place(cell, 0))
 	server.process_messages()
 	assert_eq(server.world.voxel_at(cell), dirt, "placed on the ground")
+	assert_eq(session.inventory.counts[0], 4, "it left the hand")
 	client.poll()
 	# In the player's own body: refused.
 	var feet := Coords.world_to_tile(session.position)
 	var row := floori(session.height + 0.01) + SEA
 	var inside := Vector3i(feet.x, row, feet.y)
 	var before := server.world.voxel_at(inside)
-	client.send(Msg.block_place(inside, dirt))
+	client.send(Msg.block_place(inside, 0))
 	server.process_messages()
 	assert_eq(server.world.voxel_at(inside), before)
 	assert_eq(client.poll()[0]["voxel"], before, "the guess is undone")
-	# Floating in the air, or not a block: refused.
+	# Floating in the air, or not a block (seeds): refused.
 	var floating := cell + Vector3i(0, 3, 0)
-	client.send(Msg.block_place(floating, dirt))
-	client.send(Msg.block_place(cell + Vector3i.UP, Voxels.of_block(Tiles.Block.TALL_GRASS)))
+	client.send(Msg.block_place(floating, 0))
+	client.send(Msg.block_place(cell + Vector3i.UP, 1))
 	server.process_messages()
 	assert_eq(server.world.voxel_at(floating), Voxels.AIR)
 	assert_eq(server.world.voxel_at(cell + Vector3i.UP), Voxels.AIR)
+	assert_eq(session.inventory.counts[0], 4, "nothing used")
+	assert_eq(session.inventory.counts[1], 3)
 
 
 func test_water_fills_what_is_broken_next_to_it() -> void:

@@ -28,6 +28,8 @@ var lantern_override := Vector3.INF
 var swinging := false
 
 var _body := Node3D.new()
+## What the right hand holds (an item's model; see hold).
+var _held := MeshInstance3D.new()
 var _arms: Array[Node3D] = []
 var _legs: Array[Node3D] = []
 var _yaw := 0.0
@@ -59,6 +61,10 @@ func _ready() -> void:
 		_body.add_child(shoulder)
 		_part("arm", Vector3(0, -8, 0), shoulder, material)
 		_arms.append(shoulder)
+	# In the right hand, at the end of the arm.
+	_held.position = Vector3(0, -8.5, 2) * VOXEL
+	_held.rotation.x = -0.5
+	_arms[0].add_child(_held)
 
 	lantern.top_level = true
 	lantern.light_color = Color(1.0, 0.8, 0.52)
@@ -101,6 +107,15 @@ func animate(feet: Vector3, heading: Vector2, speed: float, airborne: bool, delt
 		var root := get_parent_node_3d().global_transform
 		RenderingServer.global_shader_parameter_set(&"player_position", root * (feet + CHEST))
 		RenderingServer.global_shader_parameter_set(&"player_feet", root * feet)
+
+
+## Puts an item's model in the right hand (null: empty hand), `size` its
+## size (local units).
+func hold(model: Mesh, size: float) -> void:
+	_held.mesh = model
+	if model != null:
+		_held.scale = Vector3.ONE * size
+		_held.position.y = -8.5 * VOXEL - model.get_aabb().size.y * size * 0.5
 
 
 ## One stroke of the right arm (placing a block).

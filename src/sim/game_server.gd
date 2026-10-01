@@ -17,6 +17,18 @@ const SAVE_REQUEST_MSEC := 5000
 ## Leeway (local units) on the reach of a player breaking or placing (they
 ## move while their messages travel).
 const REACH_LEEWAY := 1.5
+## Items lying around: players pick them up within PICKUP_RANGE (local
+## units from the body, from a level under the feet, where a hole just dug
+## is, to over the head; they fly in at ATTRACT_SPEED), take them within
+## COLLECT_RANGE of its middle; their moves are sent every ITEM_SYNC_TICKS.
+const PICKUP_RANGE := 2.0
+const PICKUP_BELOW := 1.1
+const COLLECT_RANGE := 0.5
+const ATTRACT_SPEED := 7.0
+const ITEM_SYNC_TICKS := 2
+## A thrown item leaves the hand this fast (levels per second), forwards
+## and up.
+const THROW_SPEED := Vector2(6.0, 4.0)
 ## Max distance (world px) a player may move between two updates before
 ## the server corrects them. Generous: real validation comes with Phase 3.
 const MAX_MOVE_PER_UPDATE := 96.0
@@ -37,6 +49,7 @@ class PlayerSession:
 	var height := 0.0
 	var view_distance := GameConst.DEFAULT_VIEW_DISTANCE
 	var sent_chunks: Dictionary[Vector2i, bool] = {}
+	var inventory := Inventory.new()
 
 
 class MapJob:
@@ -61,12 +74,16 @@ var spawn_forced := false
 ## Where the world is saved (null: a throwaway world, see use_storage).
 var storage: WorldStorage
 var tick_count := 0
+## Items lying in the world, by id.
+var items: Dictionary[int, DroppedItem] = {}
 ## Debug commands (moving between caves, world map). Restricted to
 ## creative mode and server operators once those exist.
 var allow_debug_commands := true
 
 var _sessions: Array[PlayerSession] = []
 var _last_save_msec := -SAVE_REQUEST_MSEC
+var _next_item_id := 1
+var _rng := RandomNumberGenerator.new()
 var _next_player_id := 1
 var _map_jobs: Array[MapJob] = []
 
@@ -90,8 +107,14 @@ func use_storage(world_storage: WorldStorage, saved: Dictionary) -> void:
 	world.storage = world_storage
 	if saved.is_empty():
 		save()
-	else:
-		weather.load_dict(saved.get("weather", {}))
+		return
+	weather.load_dict(saved.get("weather", {}))
+	for data: Dictionary in saved.get("items", []):
+		var dropped := DroppedItem.from_dict(data)
+		if Items.is_valid(dropped.item) and dropped.count > 0:
+			dropped.id = _next_item_id
+			_next_item_id += 1
+			items[dropped.id] = dropped
 
 
 ## Writes the world to its storage: settings, clock, weather, players and
@@ -102,7 +125,10 @@ func save() -> bool:
 		return false
 	_last_save_msec = Time.get_ticks_msec()
 	world.store_changed()
-	var ok := storage.save_world(settings, clock, weather)
+	var lying: Array[Dictionary] = []
+	for dropped: DroppedItem in items.values():
+		lying.append(dropped.to_dict())
+	var ok := storage.save_world(settings, clock, weather, lying)
 	for session in _sessions:
 		if session.joined:
 			ok = storage.save_player(session.player_name, player_state(session)) and ok
@@ -116,7 +142,25 @@ func save() -> bool:
 
 ## What is saved of a player.
 static func player_state(session: PlayerSession) -> Dictionary:
-	return {"position": session.position, "height": session.height, "facing": session.facing}
+	return {
+		"position": session.position,
+		"height": session.height,
+		"facing": session.facing,
+		"inventory": session.inventory.to_dict(),
+	}
+
+
+## Puts an item in the world (it falls, then waits to be picked up).
+func spawn_item(
+	item: int, count: int, at: Vector3, speed: Vector3, delay := DroppedItem.PICKUP_DELAY
+) -> DroppedItem:
+	var dropped := DroppedItem.create(item, count, at, speed)
+	dropped.id = _next_item_id
+	_next_item_id += 1
+	dropped.pickup_delay = delay
+	items[dropped.id] = dropped
+	_broadcast(Msg.item_spawn(dropped))
+	return dropped
 
 
 ## Waits for background work; call before quitting.
@@ -166,6 +210,7 @@ func tick() -> void:
 	if tick_count % TIME_BROADCAST_TICKS == 0:
 		_broadcast(Msg.time_state(clock))
 		_broadcast(Msg.weather_state(weather))
+	_update_items(GameConst.TICK_DELTA)
 	if tick_count % UNLOAD_CHECK_TICKS == 0:
 		_unload_unused_chunks()
 	if storage != null and tick_count % AUTOSAVE_TICKS == 0:
@@ -192,6 +237,25 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 			_on_block_break(session, message)
 		Msg.BLOCK_PLACE:
 			_on_block_place(session, message)
+		Msg.SELECT_SLOT:
+			session.inventory.selected = clampi(
+				int(message.get("slot", 0)), 0, Inventory.HOTBAR - 1
+			)
+		Msg.SLOT_CLICK:
+			if session.joined:
+				var slot := int(message.get("slot", -1))
+				session.inventory.click(
+					slot, message.get("right", false), message.get("shift", false)
+				)
+				session.transport.send(Msg.inventory(session.inventory))
+		Msg.ITEM_DROP:
+			_on_item_drop(session, message)
+		Msg.INVENTORY_CLOSE:
+			if session.joined:
+				var left := session.inventory.put_back_cursor()
+				if left != Vector2i.ZERO:
+					_throw(session, left.x, left.y)
+				session.transport.send(Msg.inventory(session.inventory))
 		Msg.SAVE_REQUEST:
 			if session.joined and Time.get_ticks_msec() - _last_save_msec >= SAVE_REQUEST_MSEC:
 				save()
@@ -215,6 +279,9 @@ func _on_hello(session: PlayerSession, message: Dictionary) -> void:
 	)
 	session.transport.send(Msg.time_state(clock))
 	session.transport.send(Msg.weather_state(weather))
+	session.transport.send(Msg.inventory(session.inventory))
+	for dropped: DroppedItem in items.values():
+		session.transport.send(Msg.item_spawn(dropped))
 	# Start generating the whole initial view right away.
 	_stream_chunks(session, CHUNKS_SENT_PER_TICK)
 	_collect_generated()
@@ -224,6 +291,7 @@ func _on_hello(session: PlayerSession, message: Dictionary) -> void:
 ## Where a joining player starts: where they were saved, or at the spawn.
 func _place_player(session: PlayerSession) -> void:
 	var saved := storage.load_player(session.player_name) if storage != null else {}
+	session.inventory.load_dict(saved.get("inventory", {}))
 	if saved.has("position") and not spawn_forced:
 		session.position = saved["position"]
 		session.height = saved.get("height", 0.0)
@@ -250,19 +318,33 @@ func _on_block_break(session: PlayerSession, message: Dictionary) -> void:
 		session.transport.send(Msg.block_changed(cell, voxel))
 		return
 	change_voxel(cell, Mining.left_after_break(cell, world.voxel_at))
+	_drop_from(cell, voxel)
 	var above := cell + Vector3i.UP
-	if Mining.needs_support(world.voxel_at(above)):
+	var standing := world.voxel_at(above)
+	if Mining.needs_support(standing):
 		change_voxel(above, Voxels.AIR)
+		_drop_from(above, standing)
 
 
-## A player placed a block: kept if it is a block, within reach, against
-## the terrain, into air, water or a small plant, and in nobody's way.
-## Refused, the player is told what is there.
+## What a broken voxel gives falls where it was.
+func _drop_from(cell: Vector3i, voxel: int) -> void:
+	var tile := Vector2i(cell.x, cell.z)
+	var middle := Vector3(cell.x + 0.5, cell.y - GameConst.SEA_LEVEL + 0.5, cell.z + 0.5)
+	for drop in Items.drops(voxel, tile, _rng):
+		var speed := Vector3(_rng.randf_range(-1.0, 1.0), 3.0, _rng.randf_range(-1.0, 1.0))
+		spawn_item(drop.x, drop.y, middle, speed)
+
+
+## A player placed the block of a hotbar slot: kept if it is a block,
+## within reach, against the terrain, into air, water or a small plant, and
+## in nobody's way; it leaves the slot. Refused, the player is told what is
+## there (and what they hold).
 func _on_block_place(session: PlayerSession, message: Dictionary) -> void:
 	if not session.joined:
 		return
 	var cell: Vector3i = message.get("cell", Vector3i.ZERO)
-	var voxel := int(message.get("voxel", Voxels.AIR))
+	var slot := clampi(int(message.get("slot", 0)), 0, Inventory.HOTBAR - 1)
+	var voxel := Items.placed_voxel(session.inventory.items[slot])
 	var there := world.voxel_at(cell)
 	var near := Mining.reach_to(session.position, session.height, cell)
 	var ok := (
@@ -278,8 +360,104 @@ func _on_block_place(session: PlayerSession, message: Dictionary) -> void:
 			ok = false
 	if not ok:
 		session.transport.send(Msg.block_changed(cell, there))
+		session.transport.send(Msg.inventory(session.inventory))
 		return
 	change_voxel(cell, voxel)
+	session.inventory.take(slot, 1)
+	session.transport.send(Msg.inventory(session.inventory))
+
+
+## A player throws one item of a slot, or its whole stack.
+func _on_item_drop(session: PlayerSession, message: Dictionary) -> void:
+	if not session.joined:
+		return
+	var slot := int(message.get("slot", -1))
+	if slot < 0 or slot > Inventory.CURSOR:
+		return
+	var item := session.inventory.items[slot]
+	var whole: bool = message.get("whole", false)
+	var count := session.inventory.take(slot, session.inventory.counts[slot] if whole else 1)
+	if count > 0:
+		_throw(session, item, count)
+	session.transport.send(Msg.inventory(session.inventory))
+
+
+## Throws items out in front of a player.
+func _throw(session: PlayerSession, item: int, count: int) -> void:
+	var facing := Vector2(session.facing).normalized()
+	var at := _body_middle(session) + Vector3(facing.x, 0.4, facing.y) * 0.4
+	var speed := Vector3(facing.x * THROW_SPEED.x, THROW_SPEED.y, facing.y * THROW_SPEED.x)
+	spawn_item(item, count, at, speed, DroppedItem.THROWN_DELAY)
+
+
+## The middle of a player's body (local units).
+static func _body_middle(session: PlayerSession) -> Vector3:
+	var feet := session.position / GameConst.TILE_SIZE
+	return Vector3(feet.x, session.height + PlayerBody.BODY_HEIGHT * 0.5, feet.y)
+
+
+## Items fall and rest; players nearby pull them in and pick them up; old
+## ones vanish. Their moves go out every ITEM_SYNC_TICKS.
+func _update_items(delta: float) -> void:
+	var sync := tick_count % ITEM_SYNC_TICKS == 0
+	for id: int in items.keys():
+		var dropped: DroppedItem = items[id]
+		if not world.has_chunk(
+			Coords.tile_to_chunk(Vector2i(floori(dropped.position.x), floori(dropped.position.z)))
+		):
+			continue
+		var moved := false
+		var picker := _picker_for(dropped)
+		if picker != null:
+			var target := _body_middle(picker)
+			dropped.position = dropped.position.move_toward(target, ATTRACT_SPEED * delta)
+			dropped.resting = false
+			moved = true
+			if dropped.position.distance_to(target) <= COLLECT_RANGE:
+				_collect(picker, dropped)
+				continue
+		else:
+			moved = dropped.step(delta, world.voxel_at)
+		if dropped.is_expired():
+			items.erase(id)
+			_broadcast(Msg.item_remove(id, 0))
+		elif moved and sync:
+			_broadcast(Msg.item_move(dropped))
+
+
+## The player pulling an item in: the nearest one within reach with room
+## for it (null if none).
+func _picker_for(dropped: DroppedItem) -> PlayerSession:
+	if dropped.pickup_delay > 0.0:
+		return null
+	var best: PlayerSession = null
+	var best_distance := PICKUP_RANGE
+	for session in _sessions:
+		if not session.joined or session.inventory.room_for(dropped.item) <= 0:
+			continue
+		var feet := session.position / GameConst.TILE_SIZE
+		var height := clampf(
+			dropped.position.y,
+			session.height - PICKUP_BELOW,
+			session.height + PlayerBody.BODY_HEIGHT
+		)
+		var distance := dropped.position.distance_to(Vector3(feet.x, height, feet.y))
+		if distance <= best_distance:
+			best = session
+			best_distance = distance
+	return best
+
+
+func _collect(session: PlayerSession, dropped: DroppedItem) -> void:
+	var left := session.inventory.add(dropped.item, dropped.count)
+	if left > 0:
+		dropped.count = left
+		dropped.pickup_delay = DroppedItem.THROWN_DELAY
+		_broadcast(Msg.item_spawn(dropped))
+	else:
+		items.erase(dropped.id)
+		_broadcast(Msg.item_remove(dropped.id, session.id))
+	session.transport.send(Msg.inventory(session.inventory))
 
 
 ## Sets a voxel and tells every player who has its chunk.

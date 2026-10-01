@@ -100,3 +100,45 @@ BIOME_STONY_PEAKS,Stony peaks,Pics rocheux
 BIOME_MUSHROOM_FIELDS,Mushroom fields,Champs de champignons
 BIOME_CAVES,Caves,Grottes
 BIOME_DEEP_CAVES,Deep caves,Grottes profondes
+ITEM_DIRT,Dirt,Terre
+ITEM_SAND,Sand,Sable
+ITEM_RED_SAND,Red sand,Sable rouge
+ITEM_GRAVEL,Gravel,Gravier
+ITEM_SNOW_BLOCK,Snow block,Bloc de neige
+ITEM_MUD,Mud,Boue
+ITEM_ICE,Ice,Glace
+ITEM_TERRACOTTA,Terracotta,Terre cuite
+ITEM_LIGHT_TERRACOTTA,Light terracotta,Terre cuite claire
+ITEM_STONE,Stone,Pierre
+ITEM_DEEPSLATE,Deepslate,Ardoise des abîmes
+ITEM_SANDSTONE,Sandstone,Grès
+ITEM_PACKED_ICE,Packed ice,Glace compacte
+ITEM_COAL,Coal,Charbon
+ITEM_RAW_COPPER,Raw copper,Cuivre brut
+ITEM_RAW_IRON,Raw iron,Fer brut
+ITEM_RAW_GOLD,Raw gold,Or brut
+ITEM_LAPIS,Lapis lazuli,Lapis-lazuli
+ITEM_RUBY,Ruby,Rubis
+ITEM_DIAMOND,Diamond,Diamant
+ITEM_EMERALD,Emerald,Émeraude
+ITEM_OAK_LOG,Oak log,Bûche de chêne
+ITEM_BIRCH_LOG,Birch log,Bûche de bouleau
+ITEM_SPRUCE_LOG,Spruce log,Bûche d'épicéa
+ITEM_DARK_OAK_LOG,Dark oak log,Bûche de chêne noir
+ITEM_JUNGLE_LOG,Jungle log,Bûche d'acajou
+ITEM_ACACIA_LOG,Acacia log,Bûche d'acacia
+ITEM_STICK,Stick,Bâton
+ITEM_SEEDS,Seeds,Graines
+ITEM_BERRIES,Berries,Baies
+ITEM_FLOWER_RED,Red flower,Fleur rouge
+ITEM_FLOWER_YELLOW,Yellow flower,Fleur jaune
+ITEM_FLOWER_BLUE,Blue flower,Fleur bleue
+ITEM_FLOWER_WHITE,White flower,Fleur blanche
+ITEM_FLOWER_PINK,Pink flower,Fleur rose
+ITEM_MUSHROOM_RED,Red mushroom,Champignon rouge
+ITEM_MUSHROOM_BROWN,Brown mushroom,Champignon brun
+ITEM_CACTUS,Cactus,Cactus
+ITEM_SUGAR_CANE,Sugar cane,Canne à sucre
+ITEM_LILY_PAD,Lily pad,Nénuphar
+ITEM_FERN,Fern,Fougère
+INVENTORY_TITLE,Inventory,Inventaire
