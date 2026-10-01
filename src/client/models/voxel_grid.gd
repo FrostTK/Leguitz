@@ -1,0 +1,112 @@
+class_name VoxelGrid
+extends RefCounted
+## A small 3D grid of colored voxels: the building material of every 3D
+## model (trees, plants, rocks, the player...). One voxel is one art pixel
+## (1/16 of a tile), so models look like the pixel-art world around them.
+##
+## A voxel value packs an sRGB color (24 bits) with a kind (see Kind);
+## 0 is empty. Models stand on y = 0, centered on x and z.
+
+enum Kind { SOLID, FOLIAGE, GLOW }
+
+var size := Vector3i.ONE
+var voxels := PackedInt32Array()
+## Bending in the wind: amplitude (0 = never moves) and the voxel height
+## where bending starts (the trunk below stays put).
+var sway := 0.0
+var sway_from := 0
+
+
+func _init(grid_size := Vector3i.ONE) -> void:
+	size = grid_size
+	voxels.resize(size.x * size.y * size.z)
+
+
+## Packs a color and a kind into a voxel value.
+static func voxel(color: Color, kind := Kind.SOLID) -> int:
+	return (color.to_rgba32() >> 8) | ((kind + 1) << 24)
+
+
+static func color_of(value: int) -> Color:
+	return Color.hex(((value & 0xFFFFFF) << 8) | 0xFF)
+
+
+static func kind_of(value: int) -> int:
+	return (value >> 24) - 1
+
+
+func has(p: Vector3i) -> bool:
+	return p.x >= 0 and p.y >= 0 and p.z >= 0 and p.x < size.x and p.y < size.y and p.z < size.z
+
+
+func get_voxel(p: Vector3i) -> int:
+	if not has(p):
+		return 0
+	return voxels[p.x + size.x * (p.y + size.y * p.z)]
+
+
+func set_voxel(p: Vector3i, value: int) -> void:
+	if has(p):
+		voxels[p.x + size.x * (p.y + size.y * p.z)] = value
+
+
+func is_empty() -> bool:
+	for value in voxels:
+		if value != 0:
+			return false
+	return true
+
+
+## Fills a box (inclusive corners) with `paint`: a voxel value, or a
+## Callable(p: Vector3i) -> int (0 leaves the voxel unchanged).
+func box(from: Vector3i, to: Vector3i, paint: Variant) -> void:
+	for z in range(mini(from.z, to.z), maxi(from.z, to.z) + 1):
+		for y in range(mini(from.y, to.y), maxi(from.y, to.y) + 1):
+			for x in range(mini(from.x, to.x), maxi(from.x, to.x) + 1):
+				_paint(Vector3i(x, y, z), paint)
+
+
+## Fills an ellipsoid (center and radii in voxels).
+func ellipsoid(center: Vector3, radii: Vector3, paint: Variant) -> void:
+	var low := Vector3i((center - radii).floor())
+	var high := Vector3i((center + radii).ceil())
+	for z in range(low.z, high.z + 1):
+		for y in range(low.y, high.y + 1):
+			for x in range(low.x, high.x + 1):
+				var d := (Vector3(x, y, z) + Vector3.ONE * 0.5 - center) / radii
+				if d.length_squared() <= 1.0:
+					_paint(Vector3i(x, y, z), paint)
+
+
+## Fills a vertical cylinder: base center (x, z), from y0 to y1 inclusive.
+func cylinder(center: Vector2, radius: float, y0: int, y1: int, paint: Variant) -> void:
+	for y in range(y0, y1 + 1):
+		disc(center, radius, y, paint)
+
+
+## Fills a horizontal disc at height y.
+func disc(center: Vector2, radius: float, y: int, paint: Variant) -> void:
+	for z in range(floori(center.y - radius), ceili(center.y + radius) + 1):
+		for x in range(floori(center.x - radius), ceili(center.x + radius) + 1):
+			var d := Vector2(x + 0.5, z + 0.5) - center
+			if d.length_squared() <= radius * radius:
+				_paint(Vector3i(x, y, z), paint)
+
+
+## A thick line between two points (branches, stems).
+func line(from: Vector3, to: Vector3, radius: float, paint: Variant) -> void:
+	var steps := maxi(1, ceili(from.distance_to(to) * 2.0))
+	for i in steps + 1:
+		var p := from.lerp(to, float(i) / steps)
+		if radius <= 0.5:
+			_paint(Vector3i(p.floor()), paint)
+		else:
+			ellipsoid(p, Vector3.ONE * radius, paint)
+
+
+func _paint(p: Vector3i, paint: Variant) -> void:
+	if not has(p):
+		return
+	var value: int = paint.call(p) if paint is Callable else paint
+	if value != 0:
+		voxels[p.x + size.x * (p.y + size.y * p.z)] = value

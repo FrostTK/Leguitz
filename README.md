@@ -18,10 +18,12 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 
 | Fonction | État |
 |---|---|
-| Rendu 3D : blocs, falaises, murs de roche et escaliers en vrais cubes texturés en pixel art | ✅ |
+| Rendu 3D : blocs, falaises et murs de roche en vrais cubes texturés en pixel art | ✅ |
+| Tout en 3D voxel (1 voxel = 1 pixel) : joueur animé, 8 sortes d'arbres, buissons, herbes, fleurs, cannes à sucre, champignons, cactus, rochers | ✅ |
 | Vue par défaut « pixel parfait » : chaque pixel du dessin = un pixel à l'écran, défilement fluide | ✅ |
 | Caméra orbitale : tourner et incliner la vue autour du joueur à la souris ou à la manette | ✅ |
-| Arbres, plantes et joueur en sprites qui projettent de vraies ombres (et ondulent au vent) | ✅ |
+| Vraies ombres, occlusion ambiante, feuillages translucents qui ondulent au vent | ✅ |
+| Le feuillage devient transparent autour du joueur quand il passe sous les arbres | ✅ |
 | Soleil et lune qui traversent le ciel, ombres longues le matin et le soir, phases de la lune | ✅ |
 | Lanterne du joueur la nuit et sous terre, lave lumineuse, minerais brillants | ✅ |
 | Météo : pluie, orage avec éclairs, neige selon le biome, sol mouillé, ombres des nuages | ✅ |
@@ -104,7 +106,8 @@ export PATH="$HOME/godot:$PATH"
 godot --headless --path . --import                # prépare le projet
 godot --headless --path . -s res://tests/run_tests.gd   # tests unitaires
 gdlint src tests && gdformat --check src tests    # style (pip install "gdtoolkit==4.*")
-python3 tools/gen_art.py                          # régénère les textures et sprites (+ normales)
+python3 tools/gen_art.py                          # régénère les textures du terrain (+ normales)
+godot --headless --path . -s res://tools/gen_models.gd  # régénère les modèles 3D voxel
 
 # Carte d'un monde en PNG + statistiques des biomes (+ vitesse de génération)
 godot --headless --path . -s res://tools/render_world_map.gd -- --seed=42 --size=512 --scale=8 --out=/tmp/carte.png --bench

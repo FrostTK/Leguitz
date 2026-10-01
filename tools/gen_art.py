@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Leguitz art pipeline (phase 2).
+"""Leguitz art pipeline: terrain textures.
 
-Generates every sprite atlas procedurally, plus a normal map for each
-atlas (so 2D lights reveal the relief) and emission maps for glowing
+Generates the terrain texture atlases procedurally, plus a normal map for
+each atlas (so lights reveal the relief) and emission maps for glowing
 pixels. The layouts must match src/client/tile_atlas.gd and the terrain
-shader (src/client/shaders/terrain.gdshader).
+shaders (src/client/shaders/terrain3d_*.gdshader). Trees, plants, rocks
+and the player are 3D voxel models instead (tools/gen_models.gd).
 
 Usage: python3 tools/gen_art.py
 Outputs in assets/textures/:
@@ -12,8 +13,6 @@ Outputs in assets/textures/:
   tiles/wall_atlas.png (+ _n, _e) one row per wall kind: top A, top B, face A, face B
   tiles/face_atlas.png (+ _n, _e) vertical faces: rows 0-3 cliff materials (dirt,
                                   stone, sand, snow), rows 4-15 wall kinds; 2 variants
-  tiles/block_atlas.png (+ _n)    16 columns of 32x48 cells, cell index = block id
-  entities/player.png (+ _n)      4 frames of 16x24 (down, left, right, up)
 """
 
 from pathlib import Path
@@ -25,8 +24,6 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "assets" / "textures"
 TILE = 16
 VARIANTS = 4
-BLOCK_W, BLOCK_H = 32, 48
-BLOCK_COLUMNS = 16
 # Godot 2D normal maps use the OpenGL convention (green = up).
 FLIP_NORMAL_Y = False
 
@@ -36,14 +33,6 @@ GROUNDS = [
     "DIRT", "PODZOL", "DRY_GRASS", "JUNGLE_GRASS", "SWAMP_GRASS", "MEADOW_GRASS", "TAIGA_GRASS",
     "RED_SAND", "TERRACOTTA", "TERRACOTTA_LIGHT", "GRAVEL", "ICE", "MUD", "MYCELIUM",
     "DEEPSLATE_FLOOR", "LAVA", "SWAMP_WATER", "WARM_WATER",
-]
-BLOCKS = [
-    "AIR", "OAK", "ROCK", "BUSH", "SPRUCE", "STONE", "DEEPSLATE", "COAL_ORE", "COPPER_ORE",
-    "IRON_ORE", "GOLD_ORE", "LAPIS_ORE", "RUBY_ORE", "DIAMOND_ORE", "EMERALD_ORE", "BIRCH",
-    "DARK_OAK", "JUNGLE_TREE", "ACACIA", "SNOWY_SPRUCE", "CACTUS", "DEAD_BUSH", "TALL_GRASS",
-    "FERN", "FLOWER_RED", "FLOWER_YELLOW", "FLOWER_BLUE", "FLOWER_WHITE", "FLOWER_PINK",
-    "MUSHROOM_RED", "MUSHROOM_BROWN", "BIG_MUSHROOM", "SUGAR_CANE", "LILY_PAD", "MOSSY_ROCK",
-    "SANDSTONE", "BERRY_BUSH", "PACKED_ICE", "SWAMP_OAK",
 ]
 # Solid terrain blocks drawn by the terrain shader (order = wall atlas row).
 WALLS = [
@@ -520,370 +509,11 @@ def build_faces(rng):
     save(emission.img, OUT / "tiles/face_atlas_e.png")
 
 
-# ------------------------------------------------------------------ blocks (32x48 cells)
-
-LEAVES = {
-    "oak": ("#24542c", "#31733a", "#46963f", "#7cc255", "#1a3d22"),
-    "birch": ("#4a7d2c", "#63a03b", "#86c24f", "#b8e27a", "#2f5a24"),
-    "dark": ("#15341e", "#1d4a28", "#2a6331", "#3f7f3a", "#0e2414"),
-    "jungle": ("#175a28", "#227a36", "#34a046", "#6ccc5a", "#0f4020"),
-    "acacia": ("#50682a", "#6a8a32", "#8aab44", "#b8cf66", "#33451a"),
-    "swamp": ("#2c4526", "#3b5a30", "#50753c", "#779652", "#1c2e19"),
-}
-
-
-def contact_shadow(c, cx, cy, rx, ry):
-    ys, xs = np.mgrid[0:c.h, 0:c.w]
-    d = ((xs + 0.5 - cx) / rx) ** 2 + ((ys + 0.5 - cy) / ry) ** 2
-    mask = (d <= 1.0) & (c.img[:, :, 3] == 0)
-    c.img[mask] = (15, 25, 20, 60)
-
-
-def canopy(rng, c, cx, cy, rx, ry, palette, clusters=7):
-    """Leafy canopy: overlapping lit clusters with a dark rim."""
-    dark, mid, lit, highlight, rim = palette
-    mask = np.zeros((c.h, c.w), dtype=bool)
-    blobs = [(cx, cy, rx * 0.95, ry * 0.95)]
-    for _ in range(clusters):
-        a = rng.uniform(0, 2 * np.pi)
-        r = rng.uniform(0.35, 0.6)
-        blobs.append((cx + np.cos(a) * rx * r, cy + np.sin(a) * ry * r, rx * rng.uniform(0.4, 0.55),
-                      ry * rng.uniform(0.4, 0.55)))
-    # Bottom clusters first so upper ones overlap them (depth).
-    blobs.sort(key=lambda b: b[1] + b[3], reverse=True)
-    for bx, by, brx, bry in blobs:
-        mask |= c.disc(bx, by, brx, bry, (dark, mid, lit, highlight))
-    ys, xs = np.nonzero(mask)
-    for y, x in zip(ys, xs):
-        if rng.random() < 0.12:
-            c.put(int(x), int(y), shade(lit, 0.15) if y < cy else shade(mid, -0.15))
-    c.outline(rim)
-
-
-def trunk(c, x0, top, width, bark, bottom=46):
-    color, light, dark = bark
-    c.fill(x0, top, width, bottom - top, color)
-    c.fill(x0, top, 1, bottom - top, light)
-    c.fill(x0 + width - 1, top, 1, bottom - top, dark)
-    c.put(x0 - 1, bottom - 1, dark)
-    c.put(x0 + width, bottom - 1, dark)
-
-
-BARK = ("#6e4326", "#8e5c35", "#4a2d1a")
-
-
-def tree(kind, rx, ry, cy, trunk_top, trunk_w=4, clusters=7, bark=BARK, extra=None):
-    def make(rng):
-        c = Canvas(BLOCK_W, BLOCK_H)
-        contact_shadow(c, 16, 45.5, 8, 2.5)
-        trunk(c, 16 - trunk_w // 2, trunk_top, trunk_w, bark)
-        canopy(rng, c, 16, cy, rx, ry, LEAVES[kind], clusters)
-        if extra:
-            extra(rng, c)
-        return c, "dome"
-    return make
-
-
-def birch_marks(rng, c):
-    for y in range(33, 45, 3):
-        c.put(15, y, "#2e2a26")
-        c.put(16, y + 1, "#2e2a26")
-
-
-def vines(rng, c):
-    for x in (9, 13, 20, 23):
-        length = int(rng.integers(5, 11))
-        for y in range(24, 24 + length):
-            c.put(x, y, "#3f7a2a" if y % 2 else "#2c5a1e")
-
-
-def spruce(snowy):
-    def make(rng):
-        c = Canvas(BLOCK_W, BLOCK_H)
-        contact_shadow(c, 16, 45.5, 7, 2.5)
-        trunk(c, 15, 38, 3, ("#5a3620", "#744a2c", "#3d2414"))
-        tiers = [(4, 4), (10, 7), (17, 9), (24, 11), (31, 12)]
-        for top, half in tiers:
-            for row in range(8):
-                span = max(1, int(half * (row + 1) / 8))
-                for x in range(16 - span, 16 + span):
-                    left = x < 16
-                    color = "#2f6f48" if left else "#1f5236"
-                    if row >= 6:
-                        color = "#1a4630" if left else "#143a28"
-                    if snowy and row <= 2:
-                        color = "#f4f8fc" if left else "#d8e4f0"
-                    c.put(x, top + row, color)
-        c.put(16, 3, "#f4f8fc" if snowy else "#2f6f48")
-        c.outline("#0e2a1c")
-        return c, "dome"
-    return make
-
-
-def acacia(rng):
-    c = Canvas(BLOCK_W, BLOCK_H)
-    contact_shadow(c, 16, 45.5, 8, 2.5)
-    trunk(c, 15, 26, 3, ("#8a7a6a", "#a89886", "#65584a"))
-    for i in range(8):
-        c.fill(18 + i // 2, 26 - i, 2, 1, "#8a7a6a")
-    canopy(rng, c, 14, 17, 14, 6.5, LEAVES["acacia"], 6)
-    return c, "dome"
-
-
-def rock(colors=("#5c5b66", "#7c7b87", "#9d9ca7", "#c3c2cb"), rim="#393843", moss=False):
-    def make(rng):
-        c = Canvas(BLOCK_W, BLOCK_H)
-        contact_shadow(c, 16, 45.5, 8, 2.5)
-        c.disc(16, 40, 7.5, 6.5, colors)
-        c.disc(12, 42, 4, 3.5, colors)
-        if moss:
-            for x in range(10, 22):
-                if rng.random() < 0.6:
-                    c.put(x, 34 + int(rng.integers(0, 2)), "#5e9a3a")
-        c.outline(rim)
-        return c, "dome"
-    return make
-
-
-def bush(colors=("#2c6a2c", "#3f8c38", "#5daf48", "#95d566"), berries=None, rim="#173d1c"):
-    def make(rng):
-        c = Canvas(BLOCK_W, BLOCK_H)
-        contact_shadow(c, 16, 45.5, 8, 2.5)
-        c.disc(12, 39, 6, 5.5, colors)
-        c.disc(20, 39, 6, 5.5, colors)
-        c.disc(16, 36, 6.5, 6, colors)
-        if berries:
-            for i, (x, y) in enumerate(((12, 37), (19, 35), (16, 40), (22, 40), (14, 33))):
-                c.put(x, y, berries[i % len(berries)])
-        c.outline(rim)
-        return c, "dome"
-    return make
-
-
-def plant(draw):
-    def make(rng):
-        c = Canvas(BLOCK_W, BLOCK_H)
-        draw(rng, c)
-        return c, "flat"
-    return make
-
-
-def draw_tall_grass(rng, c):
-    for x, h, color in ((11, 8, "#4b8f33"), (13, 11, "#5fa83d"), (15, 7, "#4b8f33"),
-                        (17, 12, "#6fbd48"), (19, 9, "#5fa83d"), (21, 7, "#4b8f33")):
-        for y in range(h):
-            c.put(x + (1 if y > h - 3 else 0), 46 - y, color)
-
-
-def draw_fern(rng, c):
-    for side in (-1, 1):
-        for i in range(8):
-            c.put(16 + side * i, 45 - i // 1, "#3f7f3a")
-            c.put(16 + side * i, 44 - i, "#5a9f48")
-    c.fill(16, 34, 1, 12, "#3f7f3a")
-
-
-def draw_dead_bush(rng, c):
-    for x, y in ((16, 46), (16, 45), (15, 44), (14, 43), (17, 44), (18, 43), (19, 42), (13, 42),
-                 (16, 43), (16, 42), (17, 41), (12, 41), (20, 41)):
-        c.put(x, y, "#8a6a3e")
-
-
-def flower(petal, center="#f7d74a"):
-    def draw(rng, c):
-        for cx, cy in ((14, 38), (19, 40)):
-            c.fill(cx, cy + 2, 1, 46 - cy - 2, "#4b8f33")
-            c.put(cx - 1, cy + 5, "#5fa83d")
-            for x, y in ((cx - 1, cy), (cx + 1, cy), (cx, cy - 1), (cx, cy + 1)):
-                c.put(x, y, petal)
-            c.put(cx, cy, center)
-    return plant(draw)
-
-
-def small_mushroom(cap, dots):
-    def draw(rng, c):
-        c.fill(15, 42, 2, 4, "#efe6d4")
-        c.fill(13, 39, 6, 3, cap)
-        c.fill(14, 38, 4, 1, cap)
-        c.put(14, 39, dots)
-        c.put(17, 40, dots)
-    return plant(draw)
-
-
-def big_mushroom(rng):
-    c = Canvas(BLOCK_W, BLOCK_H)
-    contact_shadow(c, 16, 45.5, 7, 2.5)
-    c.fill(13, 28, 6, 18, "#efe6d4")
-    c.fill(13, 28, 1, 18, "#ffffff")
-    c.fill(18, 28, 1, 18, "#cfc3ad")
-    c.disc(16, 22, 13, 9, ("#9c1f24", "#c7302f", "#e0483f", "#f07a6a"))
-    for x, y in ((8, 20), (15, 16), (21, 19), (11, 25), (19, 25), (25, 23)):
-        c.fill(x, y, 2, 2, "#ffffff")
-    c.outline("#5a1014")
-    return c, "dome"
-
-
-def cactus(rng):
-    c = Canvas(BLOCK_W, BLOCK_H)
-    contact_shadow(c, 16, 45.5, 6, 2)
-    c.fill(13, 20, 6, 26, "#4f9a3a")
-    c.fill(13, 20, 1, 26, "#6fbd4c")
-    c.fill(18, 20, 1, 26, "#357028")
-    c.fill(9, 27, 4, 2, "#4f9a3a")
-    c.fill(9, 23, 2, 5, "#4f9a3a")
-    c.fill(19, 30, 4, 2, "#4f9a3a")
-    c.fill(21, 26, 2, 5, "#4f9a3a")
-    for y in range(21, 45, 3):
-        c.put(12, y, "#e8e2b0")
-        c.put(19, y + 1, "#e8e2b0")
-    c.put(15, 19, "#f07aa0")
-    c.put(16, 19, "#f07aa0")
-    c.outline("#244f1c")
-    return c, "dome"
-
-
-def sugar_cane(rng):
-    c = Canvas(BLOCK_W, BLOCK_H)
-    for x, top in ((12, 20), (16, 16), (20, 23)):
-        c.fill(x, top, 2, 46 - top, "#7fc45a")
-        c.fill(x, top, 1, 46 - top, "#a5dc7a")
-        for y in range(top + 3, 46, 5):
-            c.fill(x, y, 2, 1, "#5a9a3f")
-        c.put(x + 2, top + 4, "#7fc45a")
-        c.put(x + 3, top + 3, "#7fc45a")
-    return c, "flat"
-
-
-def lily_pad(rng):
-    c = Canvas(BLOCK_W, BLOCK_H)
-    c.disc(16, 40, 7, 5, ("#2f7a2f", "#3f9a3a", "#5fb84a", "#8fd66a"))
-    for x, y in ((16, 40), (17, 39), (18, 38), (19, 37)):
-        c.put(x, y, (0, 0, 0, 0))
-    c.put(12, 39, "#f2a0c0")
-    c.put(13, 38, "#f7c6da")
-    c.outline("#1f5222")
-    return c, "dome"
-
-
-BLOCK_MAKERS = {
-    "OAK": tree("oak", 13, 12, 17, 26),
-    "SWAMP_OAK": tree("swamp", 13, 11, 18, 26, extra=vines),
-    "BIRCH": tree("birch", 10, 13, 16, 26, trunk_w=3, bark=("#e9e4d8", "#ffffff", "#bdb6a6"),
-                  extra=birch_marks),
-    "DARK_OAK": tree("dark", 15, 14, 17, 28, trunk_w=6, clusters=9,
-                     bark=("#4a3121", "#5e3f2a", "#33221a")),
-    "JUNGLE_TREE": tree("jungle", 14, 12, 14, 22, bark=("#7a5a33", "#957246", "#584023"),
-                        extra=vines),
-    "ACACIA": acacia,
-    "SPRUCE": spruce(False),
-    "SNOWY_SPRUCE": spruce(True),
-    "ROCK": rock(),
-    "MOSSY_ROCK": rock(moss=True),
-    "BUSH": bush(),
-    "BERRY_BUSH": bush(("#2a5a3a", "#3a7048", "#4f8a58", "#78b07a"), ("#d8304a", "#4f62d8")),
-    "CACTUS": cactus,
-    "DEAD_BUSH": plant(draw_dead_bush),
-    "TALL_GRASS": plant(draw_tall_grass),
-    "FERN": plant(draw_fern),
-    "FLOWER_RED": flower("#e0404f"),
-    "FLOWER_YELLOW": flower("#f7d74a", "#e08a2a"),
-    "FLOWER_BLUE": flower("#5a7ae8"),
-    "FLOWER_WHITE": flower("#f4f4f4"),
-    "FLOWER_PINK": flower("#f29ac0"),
-    "MUSHROOM_RED": small_mushroom("#d23a36", "#ffffff"),
-    "MUSHROOM_BROWN": small_mushroom("#9a6a45", "#c79a70"),
-    "BIG_MUSHROOM": big_mushroom,
-    "SUGAR_CANE": sugar_cane,
-    "LILY_PAD": lily_pad,
-}
-
-
-def build_blocks(rng):
-    rows = (len(BLOCKS) + BLOCK_COLUMNS - 1) // BLOCK_COLUMNS
-    atlas = Canvas(BLOCK_W * BLOCK_COLUMNS, BLOCK_H * rows)
-    normals = np.zeros_like(atlas.img)
-    normals[:, :, 0:3] = (128, 128, 255)
-    for block_id, name in enumerate(BLOCKS):
-        if name not in BLOCK_MAKERS:
-            continue  # air and walls (walls are drawn by the terrain shader)
-        sprite, mode = BLOCK_MAKERS[name](rng)
-        x = (block_id % BLOCK_COLUMNS) * BLOCK_W
-        y = (block_id // BLOCK_COLUMNS) * BLOCK_H
-        atlas.blit(sprite, x, y)
-        normals[y:y + BLOCK_H, x:x + BLOCK_W] = normal_image(sprite.img, mode, strength=2.2)
-    save(atlas.img, OUT / "tiles/block_atlas.png")
-    save(normals, OUT / "tiles/block_atlas_n.png")
-
-
-# ------------------------------------------------------------------ player
-
-SKIN, SKIN_SHADE = "#f3c49b", "#d99c77"
-HAIR, HAIR_SHADE = "#7a4524", "#56301a"
-SHIRT, SHIRT_SHADE = "#d6524a", "#a63a37"
-PANTS, PANTS_SHADE = "#3f5f9e", "#2d467a"
-SHOES = "#3b2a22"
-OUTLINE = "#2a1b17"
-
-
-def player_frame(direction):
-    c = Canvas(TILE, 24)
-    c.fill(5, 17, 6, 4, PANTS)
-    c.fill(8, 17, 3, 4, PANTS_SHADE)
-    c.fill(7, 18, 2, 3, PANTS_SHADE)
-    c.fill(5, 21, 2, 1, SHOES)
-    c.fill(9, 21, 2, 1, SHOES)
-    c.fill(4, 11, 8, 6, SHIRT)
-    c.fill(4, 15, 8, 2, SHIRT_SHADE)
-    if direction in ("down", "up"):
-        c.fill(3, 12, 1, 4, SHIRT_SHADE)
-        c.fill(12, 12, 1, 4, SHIRT_SHADE)
-        c.put(3, 16, SKIN)
-        c.put(12, 16, SKIN)
-    c.fill(4, 3, 8, 8, SKIN)
-    c.fill(4, 9, 8, 2, SKIN_SHADE)
-    c.fill(4, 2, 8, 3, HAIR)
-    c.fill(3, 3, 1, 5, HAIR)
-    c.fill(12, 3, 1, 5, HAIR)
-    if direction == "down":
-        c.fill(5, 5, 6, 1, HAIR_SHADE)
-        c.put(6, 7, OUTLINE)
-        c.put(9, 7, OUTLINE)
-        c.put(7, 9, "#c9776a")
-        c.put(8, 9, "#c9776a")
-    elif direction == "up":
-        c.fill(4, 3, 8, 7, HAIR)
-        c.fill(4, 8, 8, 2, HAIR_SHADE)
-    else:
-        c.fill(4, 3, 8, 4, HAIR)
-        c.fill(4, 3, 4, 7, HAIR)
-        c.fill(4, 8, 4, 2, HAIR_SHADE)
-        c.put(10, 7, OUTLINE)
-        c.fill(12, 12, 1, 4, SHIRT_SHADE)
-        c.put(12, 16, SKIN)
-        if direction == "left":
-            c.img = c.img[:, ::-1].copy()
-    c.outline(OUTLINE)
-    return c
-
-
-def build_player():
-    sheet = Canvas(TILE * 4, 24)
-    normals = np.zeros_like(sheet.img)
-    for i, direction in enumerate(("down", "left", "right", "up")):
-        frame = player_frame(direction)
-        sheet.blit(frame, i * TILE, 0)
-        normals[:, i * TILE:(i + 1) * TILE] = normal_image(frame.img, "dome", 2.0, dome_radius=3.0)
-    save(sheet.img, OUT / "entities/player.png")
-    save(normals, OUT / "entities/player_n.png")
-
-
 def main():
     rng = np.random.default_rng(1234)
     build_grounds(rng)
     build_walls(rng)
     build_faces(rng)
-    build_blocks(rng)
-    build_player()
     print("Art generated in", OUT)
 
 

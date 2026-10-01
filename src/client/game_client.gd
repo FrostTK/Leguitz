@@ -27,7 +27,7 @@ var world_viewport := WorldViewport.new()
 ## camera (see Render3D.root_basis).
 var world_root := Node3D.new()
 var world_view := WorldView3D.new()
-var player_view := PlayerView3D.new()
+var player_model := PlayerModel.new()
 var lighting := LightingController.new()
 var weather_effects := WeatherEffects.new()
 var clouds := CloudShadows3D.new()
@@ -89,7 +89,7 @@ func _setup_world() -> void:
 	root.add_child(world_root)
 	world_root.add_child(world_view)
 	world_root.add_child(clouds)
-	root.add_child(player_view)
+	world_root.add_child(player_model)
 	weather_effects.client_world = world
 	weather_effects.local_player = local_player
 	root.add_child(weather_effects)
@@ -100,7 +100,7 @@ func _setup_world() -> void:
 	lighting.weather = weather_effects
 	lighting.clouds = clouds
 	lighting.sun = sun
-	lighting.lantern = player_view.lantern
+	lighting.lantern = player_model.lantern
 	lighting.environment = environment
 	lighting.camera_distance = WorldViewport.CAMERA_DISTANCE
 	add_child(lighting)
@@ -156,9 +156,14 @@ func _update_view(delta: float) -> void:
 	if not joined or local_player.is_landing():
 		return
 	var root := world_root.transform
-	var yaw := world_viewport.current_yaw
 	var feet := local_player.position
-	player_view.update_from(feet, local_player.height, local_player.facing, yaw, root)
+	player_model.animate(
+		Render3D.world_px_to_local(feet, local_player.height),
+		local_player.heading,
+		local_player.speed,
+		not local_player.body.on_ground,
+		delta
+	)
 	# The camera follows the ground the player stands on (not each jump).
 	var focus := Render3D.world_px_to_local(feet, local_player.view_height)
 	focus += CAMERA_TARGET_OFFSET

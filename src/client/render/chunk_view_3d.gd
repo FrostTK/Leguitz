@@ -1,20 +1,34 @@
 class_name ChunkView3D
 extends Node3D
 ## One chunk in the 3D world (local units, under the stretched world root):
-## the terrain mesh (tops + faces), its upright sprites (one MultiMesh) and
-## the warm lights of its lava pools.
+## the terrain mesh (tops + faces), its 3D props (trees, plants, rocks...:
+## one MultiMesh per model) and the warm lights of its lava pools.
 
 const LAVA_LIGHT_COLOR := Color(1.0, 0.45, 0.15)
 const LAVA_LIGHT_RANGE := 7.0
-## Sprites reach above their base point: keep them when only their top is
-## in view.
-const SPRITE_CULL_MARGIN := 8.0
+## Small plants stand anywhere in their tile (whole voxels), not centered.
+const WANDERING := {
+	Tiles.Block.TALL_GRASS: true,
+	Tiles.Block.FERN: true,
+	Tiles.Block.DEAD_BUSH: true,
+	Tiles.Block.FLOWER_RED: true,
+	Tiles.Block.FLOWER_YELLOW: true,
+	Tiles.Block.FLOWER_BLUE: true,
+	Tiles.Block.FLOWER_WHITE: true,
+	Tiles.Block.FLOWER_PINK: true,
+	Tiles.Block.MUSHROOM_RED: true,
+	Tiles.Block.MUSHROOM_BROWN: true,
+	Tiles.Block.LILY_PAD: true,
+	Tiles.Block.ROCK: true,
+	Tiles.Block.MOSSY_ROCK: true,
+}
+## Flat on the water: no shadow worth drawing.
+const NO_SHADOW := {Tiles.Block.LILY_PAD: true}
 ## Lava lights are placed per 8x8 quarter of the chunk.
 const LAVA_QUARTER := 8
 
 var coord := Vector2i.ZERO
 var terrain := MeshInstance3D.new()
-var sprites := MultiMeshInstance3D.new()
 var top_material: ShaderMaterial
 var face_material: ShaderMaterial
 
@@ -22,27 +36,18 @@ var _data_image := Image.create(
 	TerrainRenderer.DATA_SIZE, TerrainRenderer.DATA_SIZE, false, Image.FORMAT_RGBAF
 )
 var _data_texture := ImageTexture.create_from_image(_data_image)
+var _props: Array[MultiMeshInstance3D] = []
 var _lava_lights: Array[OmniLight3D] = []
 ## Local positions of the lava lights in use (lights do not support the
 ## root's stretch, so they are placed in world space).
 var _lava_spots: Array[Vector3] = []
 
 
-func _init(base_top_material: ShaderMaterial, faces: ShaderMaterial, sprite_mesh: Mesh) -> void:
+func _init(base_top_material: ShaderMaterial, faces: ShaderMaterial) -> void:
 	top_material = base_top_material.duplicate()
 	top_material.set_shader_parameter("chunk_data", _data_texture)
 	face_material = faces
 	add_child(terrain)
-	var multimesh := MultiMesh.new()
-	multimesh.transform_format = MultiMesh.TRANSFORM_3D
-	multimesh.use_custom_data = true
-	multimesh.mesh = sprite_mesh
-	sprites.multimesh = multimesh
-	add_child(sprites)
-
-
-func set_sprite_material(material: ShaderMaterial) -> void:
-	sprites.material_override = material
 
 
 ## Rebuilds the terrain (mesh + transition data). Cheap enough to redo when
@@ -66,28 +71,69 @@ func build_terrain(chunk: ChunkData, neighbor: Callable) -> void:
 	top_material.set_shader_parameter("chunk_origin_px", Coords.chunk_to_world(coord))
 
 
-## Places the upright sprites (plants, trees, props) of the chunk.
-func build_sprites(chunk: ChunkData) -> void:
-	var entries: Array[Array] = []
+## Places the 3D props (trees, plants, rocks...) of the chunk, grouped by
+## model. Each gets a variant, a quarter turn and a slight tint from its
+## tile, so the same seed always grows the same forest.
+func build_props(chunk: ChunkData, library: PropLibrary) -> void:
+	var groups: Dictionary[Vector2i, Array] = {}
+	var origin := Coords.chunk_origin_tile(coord)
 	for index in GameConst.CHUNK_AREA:
 		var block := chunk.blocks[index]
-		if block == Tiles.Block.AIR or TileAtlas.is_wall(block):
+		var variants := library.variant_count(block)
+		if variants == 0:
 			continue
-		entries.append([index, block])
-	var multimesh := sprites.multimesh
-	multimesh.instance_count = entries.size()
-	for n in entries.size():
-		var index: int = entries[n][0]
-		var block: int = entries[n][1]
 		var local := Vector2i(index % GameConst.CHUNK_SIZE, index / GameConst.CHUNK_SIZE)
-		var base := Render3D.surface_height(chunk.ground[index], chunk.levels[index])
-		var foot := Render3D.tile_center_local(local, base)
-		multimesh.set_instance_transform(n, Transform3D(Basis.IDENTITY, foot))
-		var cell := TileAtlas.block_cell(block)
-		var sway := 1.0 if TileAtlas.SWAYING.has(block) else 0.0
-		var no_shadow := 1.0 if TileAtlas.NO_SHADOW.has(block) else 0.0
-		multimesh.set_instance_custom_data(n, Color(cell.x, cell.y, sway, no_shadow))
+		var tile := origin + local
+		var h := HashUtil.hash2(0x9A0B, tile.x, tile.y)
+		var foot := Render3D.tile_center_local(
+			local, Render3D.surface_height(chunk.ground[index], chunk.levels[index])
+		)
+		if WANDERING.has(block):
+			foot.x += ((h >> 8) % 7 - 3) / 16.0
+			foot.z += ((h >> 12) % 7 - 3) / 16.0
+		var turn := Basis(Vector3.UP, ((h >> 4) & 3) * PI * 0.5)
+		var shade := 0.93 + ((h >> 16) & 15) / 15.0 * 0.14
+		var warmth := 0.97 + ((h >> 20) & 7) / 7.0 * 0.06
+		var custom := Color(shade * warmth, shade, shade / warmth, ((h >> 24) & 255) / 255.0)
+		var key := Vector2i(block, h % variants)
+		if not groups.has(key):
+			groups[key] = []
+		groups[key].append([Transform3D(turn, foot), custom])
+	var used := 0
+	for key: Vector2i in groups:
+		var node := _prop_node(used, library)
+		used += 1
+		var entries: Array = groups[key]
+		var multimesh := node.multimesh
+		multimesh.instance_count = 0
+		multimesh.mesh = library.mesh(key.x, key.y)
+		multimesh.instance_count = entries.size()
+		for n in entries.size():
+			multimesh.set_instance_transform(n, entries[n][0])
+			multimesh.set_instance_custom_data(n, entries[n][1])
+		node.cast_shadow = (
+			GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			if NO_SHADOW.has(key.x)
+			else GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+		)
+		node.visible = true
+	for i in range(used, _props.size()):
+		_props[i].visible = false
+		_props[i].multimesh.instance_count = 0
 	_place_lava_lights(chunk)
+
+
+func _prop_node(index: int, library: PropLibrary) -> MultiMeshInstance3D:
+	while _props.size() <= index:
+		var node := MultiMeshInstance3D.new()
+		var multimesh := MultiMesh.new()
+		multimesh.transform_format = MultiMesh.TRANSFORM_3D
+		multimesh.use_custom_data = true
+		node.multimesh = multimesh
+		node.material_override = library.material
+		add_child(node)
+		_props.append(node)
+	return _props[index]
 
 
 ## Lava lights up its surroundings: one warm light per lava-rich quarter.

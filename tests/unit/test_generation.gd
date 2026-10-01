@@ -195,8 +195,13 @@ func test_threaded_generation_matches_sync() -> void:
 func test_every_tile_has_an_atlas_cell() -> void:
 	var ground_rows := TerrainRenderer.GROUND_ATLAS.get_height() / GameConst.TILE_SIZE
 	assert_true(Tiles.Ground.size() <= ground_rows, "ground atlas has a row per ground")
-	for block in range(1, Tiles.Block.size()):
-		var cell := TileAtlas.block_cell(block)
-		assert_true(TileAtlas.block_rows() > cell.y, "block %d has an atlas cell" % block)
+	for block in VoxelModels.modeled_blocks():
+		for variant in VoxelModels.VARIANTS:
+			var path := VoxelModels.block_path(block, variant)
+			assert_true(ResourceLoader.exists(path), "%s exists (tools/gen_models.gd)" % path)
+	for part in VoxelModels.PLAYER_PARTS:
+		assert_true(ResourceLoader.exists(VoxelModels.player_path(part)), part)
+	for block: int in Tiles.CUBE_BLOCKS:
+		assert_true(TileAtlas.WALL_KINDS.has(block), "cube block %d has a wall atlas row" % block)
 	var wall_rows := TerrainRenderer.WALL_ATLAS.get_height() / GameConst.TILE_SIZE
 	assert_eq(wall_rows, TileAtlas.WALL_KINDS.size(), "one wall atlas row per wall kind")

@@ -2,14 +2,14 @@ class_name Render3D
 extends RefCounted
 ## How the tile world maps to the 3D scene.
 ##
-## Terrain, sprites and clouds are built in *local* units: one tile is one
+## Terrain, voxel models and clouds are built in *local* units: one tile is one
 ## unit in X (east) and Z (south), one terrace level is one unit in Y (up).
 ## They live under a world root whose basis (root_basis) stretches that
 ## space for the camera, which looks down at DEFAULT_PITCH:
 ## - depth is stretched by 1 / sin(pitch) along the camera's horizontal
 ##   forward axis, so a tile top shows 16x16 px,
 ## - height is stretched by 1 / cos(pitch), so a level shows a 16 px face
-##   and upright sprites keep their pixel height.
+##   and a voxel (1/16 unit) shows as one art pixel.
 ## At the default angle every art pixel lands on exactly one screen pixel
 ## (at 1x). The stretch turns with the camera, so tiles stay square when
 ## the player orbits around; tilting the camera changes the look like in

@@ -2,7 +2,7 @@ class_name LocalPlayer
 extends RefCounted
 ## The player controlled on this machine. Movement is predicted locally
 ## (instant response) and reported to the server, which may correct it.
-## Logic only: PlayerView3D draws it.
+## Logic only: PlayerModel draws it.
 
 ## Walking speed in tiles per second (Stardew-like pace).
 const WALK_SPEED := 5.0 * GameConst.TILE_SIZE
@@ -16,8 +16,12 @@ var transport: Transport
 var body := PlayerBody.new()
 var active := false
 var noclip := false
-## Direction the player looks at, on the ground (world axes).
+## Direction the player looks at, on the ground (world axes): exact, and
+## rounded to the nearest side.
+var heading := Vector2.DOWN
 var facing := Vector2i.DOWN
+## Walking speed right now, in tiles per second.
+var speed := 0.0
 ## Camera turn (radians): movement keys follow the screen, not the map.
 var camera_yaw := 0.0
 ## Height the camera follows: the ground the player stands on, so jumps do
@@ -62,17 +66,20 @@ func step(delta: float) -> void:
 	var motion := Vector2.ZERO
 	if input != Vector2.ZERO:
 		input = Render3D.screen_to_ground(input, camera_yaw)
+		heading = input.normalized()
 		_update_facing(input)
 		var speed := WALK_SPEED * Tiles.ground_speed(client_world.ground_at(current_tile()))
 		if Input.is_action_pressed(InputBindings.SPRINT):
 			speed *= SPRINT_MULTIPLIER
 		# Cap the step so a frame hitch never tunnels through a tile.
 		motion = input * speed * minf(delta, 0.1)
+	var before := body.feet
 	if noclip:
 		body.glide(motion * NOCLIP_MULTIPLIER, client_world.top_at)
 	else:
 		var jump := Input.is_action_pressed(InputBindings.JUMP)
 		body.step(motion, jump, minf(delta, 0.1), client_world.top_at)
+	speed = before.distance_to(body.feet) / maxf(delta, 0.001) / GameConst.TILE_SIZE
 	if body.on_ground or body.height < view_height:
 		view_height = body.height
 	_send_timer += delta

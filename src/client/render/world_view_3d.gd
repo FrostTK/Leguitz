@@ -7,7 +7,6 @@ extends Node3D
 
 const TOP_SHADER := preload("res://src/client/shaders/terrain3d_top.gdshader")
 const FACE_SHADER := preload("res://src/client/shaders/terrain3d_faces.gdshader")
-const SPRITE_SHADER := preload("res://src/client/shaders/sprite3d.gdshader")
 const FACE_ATLAS := preload("res://assets/textures/tiles/face_atlas.png")
 const FACE_NORMALS := preload("res://assets/textures/tiles/face_atlas_n.png")
 const FACE_EMISSION := preload("res://assets/textures/tiles/face_atlas_e.png")
@@ -20,12 +19,11 @@ var client_world: ClientWorld
 var focus := Vector2i.ZERO
 var top_material := ShaderMaterial.new()
 var face_material := ShaderMaterial.new()
-var sprite_material := ShaderMaterial.new()
+var props := PropLibrary.new()
 
-var _sprite_mesh := QuadMesh.new()
 var _views: Dictionary[Vector2i, ChunkView3D] = {}
 var _pool: Array[ChunkView3D] = []
-## Chunks waiting for a build: true = terrain and sprites, false = terrain
+## Chunks waiting for a build: true = terrain and props, false = terrain
 ## only (a neighbor changed its borders).
 var _pending: Dictionary[Vector2i, bool] = {}
 
@@ -39,14 +37,6 @@ func _ready() -> void:
 	face_material.set_shader_parameter("face_emission", FACE_EMISSION)
 	face_material.set_shader_parameter("ground_atlas", TerrainRenderer.GROUND_ATLAS)
 	face_material.set_shader_parameter("ground_normals", TerrainRenderer.GROUND_NORMALS)
-	sprite_material.shader = SPRITE_SHADER
-	sprite_material.set_shader_parameter("atlas", TileAtlas.BLOCK_TEXTURE)
-	sprite_material.set_shader_parameter("atlas_normals", TileAtlas.BLOCK_NORMALS)
-	sprite_material.set_shader_parameter(
-		"cells", Vector2(TileAtlas.BLOCK_COLUMNS, TileAtlas.block_rows())
-	)
-	sprite_material.set_shader_parameter("sprite_px", Vector2(TileAtlas.BLOCK_CELL))
-	sprite_material.set_shader_parameter("vertical_scale", Render3D.vertical_scale)
 
 
 func show_chunk(chunk: ChunkData) -> void:
@@ -108,7 +98,7 @@ func _process(_delta: float) -> void:
 		if view != null and chunk != null:
 			view.build_terrain(chunk, _chunk)
 			if full:
-				view.build_sprites(chunk)
+				view.build_props(chunk, props)
 			view.visible = true
 		if Time.get_ticks_msec() - started > REBUILD_BUDGET_MS:
 			break
@@ -130,7 +120,6 @@ func _chunk(coord: Vector2i) -> ChunkData:
 
 
 func _new_view() -> ChunkView3D:
-	var view := ChunkView3D.new(top_material, face_material, _sprite_mesh)
-	view.set_sprite_material(sprite_material)
+	var view := ChunkView3D.new(top_material, face_material)
 	add_child(view)
 	return view

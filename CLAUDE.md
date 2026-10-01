@@ -1,7 +1,7 @@
 # Leguitz — notes for Claude
 
-Top-down pixel-art open-world sandbox (Stardew visuals, Minecraft mechanics), rendered in real 3D
-(cubes textured in pixel art, upright sprites, orbit camera). Godot 4.7, GDScript.
+Top-down pixel-art open-world sandbox (Stardew visuals, Minecraft mechanics), rendered in full 3D
+(terrain cubes textured in pixel art, voxel models for everything else, orbit camera). Godot 4.7.
 The owner speaks French: talk to them in French. Code, identifiers and comments are in English;
 player-facing text goes through `i18n/strings.csv` (keys + en + fr), never hard-coded.
 
@@ -32,9 +32,13 @@ xvfb-run -a godot --path . --audio-driver Dummy --resolution 1280x720 -- --seed=
   1 unit) under a world root whose basis (`Render3D.root_basis(yaw)`) stretches it so the default
   camera (pitch 60°) is pixel-perfect; the stretch turns with the camera yaw. The SubViewport renders
   at art resolution (1 texel per art pixel) unless HD. Lights and particles live outside the root
-  (no non-uniform scale). Sprites face the camera in `sprite3d.gdshader` (and the light in the
-  shadow pass). Faces exist on every side: the camera can look from anywhere.
-  Textures and sprites come from `tools/gen_art.py`; its GROUNDS/BLOCKS lists must match the enums.
+  (no non-uniform scale). Faces exist on every side: the camera can look from anywhere.
+  Terrain textures come from `tools/gen_art.py`; its GROUNDS list must match the enum.
+- Trees, plants, rocks and the player are voxel models (1 voxel = 1 art pixel = 1/16 tile):
+  generators in `src/client/models/voxel_models.gd`, meshed by VoxelMesher (greedy faces + AO) and
+  saved by `godot --headless --path . -s res://tools/gen_models.gd` into `assets/models/` (commit
+  the .res files; rerun after changing a model). Every non-cube block needs a model (tested).
+  `voxel.gdshader` handles wind, wetness, leaf backlight and the see-through hole around the player.
 - Movement is Minecraft-like (`src/sim/physics/player_body.gd`, shared client/server): heights in
   levels from `ChunkData.top_height()` (INF = cannot stand there), walk up to 0.2, jump 1.25,
   fall off edges. No stairs: terrain levels rise one at a time so they can be climbed.
