@@ -105,7 +105,8 @@ func test_obstacles_and_unknown_ground_block() -> void:
 	var body := _body_at(1.5)
 	for i in 60:
 		body.step(Vector2(0.0, 5.0 * TS * DT), true, DT, _voxel_at)
-	assert_true(body.feet.y <= 3.0 * TS, "a tree cannot be jumped over")
+	var trunk := ObjectShapes.footprint_rect(Tiles.Block.OAK, Vector2i(1, 3))
+	assert_true(body.feet.y <= trunk.position.y + 0.1, "a tree cannot be jumped over")
 	var edge := _body_at(19.5, 2.0)
 	_walk(edge, 5.0 * TS, 1.0)
 	assert_true(edge.feet.x <= 21.0 * TS, "unknown terrain blocks")
@@ -113,6 +114,26 @@ func test_obstacles_and_unknown_ground_block() -> void:
 	nowhere.place(Vector2(30 * TS, 0.0), 0.0)
 	nowhere.step(Vector2.ZERO, false, DT, _voxel_at)
 	assert_true(nowhere.needs_landing, "waits for the ground to be known")
+
+
+func test_walks_between_trees_but_not_through_trunks() -> void:
+	# Two oaks two tiles apart, the body between them, walking north.
+	_extra[Vector3i(0, SEA, 8)] = Voxels.of_block(Tiles.Block.OAK)
+	_extra[Vector3i(2, SEA, 8)] = Voxels.of_block(Tiles.Block.OAK)
+	var body := PlayerBody.new()
+	body.place(Vector2(1.5 * TS, 10.5 * TS), 0.0)
+	for i in 60:
+		body.step(Vector2(0.0, -5.0 * TS * DT), false, DT, _voxel_at)
+	assert_true(body.feet.y < 7.0 * TS, "went between the trunks")
+	# Straight into a trunk: stopped, even jumping (trees rise too high).
+	var walker := PlayerBody.new()
+	walker.place(Vector2(2.5 * TS, 10.5 * TS), 0.0)
+	for i in 60:
+		walker.step(Vector2(0.0, -5.0 * TS * DT), true, DT, _voxel_at)
+	var trunk := ObjectShapes.footprint_rect(Tiles.Block.OAK, Vector2i(2, 8))
+	assert_true(walker.feet.y >= trunk.end.y, "the trunk stops it")
+	var whole_tile := 9.0 * TS + PlayerBody.BOX.y
+	assert_true(walker.feet.y < whole_tile - 1.0, "only at the trunk, not at the tile's edge")
 
 
 func test_wades_in_water_and_stays_out_of_lava() -> void:

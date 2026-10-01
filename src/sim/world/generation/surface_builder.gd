@@ -15,16 +15,18 @@ const FILLER_DEPTH := 3
 ## Mountains above this height get rock outcrops (solid stone and ores).
 const OUTCROP_HEIGHT := 42.0
 
-## Plants per biome: [[block, chance per tile], ...], tried in order.
+## Plants per biome: [[block, chance per tile], ...], tried in order. Trees
+## and other solid objects are then thinned out so they never touch (see
+## WorldGenerator._spaced): their chances are higher than what remains.
 const VEGETATION := {
 	Biomes.Id.PLAINS:
-	[[Tiles.Block.TALL_GRASS, 0.1], [Tiles.Block.OAK, 0.006], [Tiles.Block.BUSH, 0.006]],
-	Biomes.Id.SNOWY_PLAINS: [[Tiles.Block.SNOWY_SPRUCE, 0.004], [Tiles.Block.ROCK, 0.002]],
+	[[Tiles.Block.TALL_GRASS, 0.1], [Tiles.Block.OAK, 0.008], [Tiles.Block.BUSH, 0.006]],
+	Biomes.Id.SNOWY_PLAINS: [[Tiles.Block.SNOWY_SPRUCE, 0.006], [Tiles.Block.ROCK, 0.002]],
 	Biomes.Id.DESERT:
 	[[Tiles.Block.CACTUS, 0.006], [Tiles.Block.DEAD_BUSH, 0.01], [Tiles.Block.SANDSTONE, 0.002]],
 	Biomes.Id.SWAMP:
 	[
-		[Tiles.Block.SWAMP_OAK, 0.05],
+		[Tiles.Block.SWAMP_OAK, 0.09],
 		[Tiles.Block.TALL_GRASS, 0.08],
 		[Tiles.Block.FERN, 0.03],
 		[Tiles.Block.MUSHROOM_BROWN, 0.01],
@@ -32,20 +34,20 @@ const VEGETATION := {
 	],
 	Biomes.Id.FOREST:
 	[
-		[Tiles.Block.OAK, 0.16],
-		[Tiles.Block.BIRCH, 0.03],
+		[Tiles.Block.OAK, 0.3],
+		[Tiles.Block.BIRCH, 0.06],
 		[Tiles.Block.TALL_GRASS, 0.07],
 		[Tiles.Block.BUSH, 0.02],
 		[Tiles.Block.FERN, 0.01],
 		[Tiles.Block.MUSHROOM_BROWN, 0.004],
 	],
 	Biomes.Id.FLOWER_FOREST:
-	[[Tiles.Block.OAK, 0.07], [Tiles.Block.BIRCH, 0.03], [Tiles.Block.TALL_GRASS, 0.05]],
+	[[Tiles.Block.OAK, 0.12], [Tiles.Block.BIRCH, 0.05], [Tiles.Block.TALL_GRASS, 0.05]],
 	Biomes.Id.BIRCH_FOREST:
-	[[Tiles.Block.BIRCH, 0.18], [Tiles.Block.TALL_GRASS, 0.06], [Tiles.Block.BUSH, 0.01]],
+	[[Tiles.Block.BIRCH, 0.34], [Tiles.Block.TALL_GRASS, 0.06], [Tiles.Block.BUSH, 0.01]],
 	Biomes.Id.DARK_FOREST:
 	[
-		[Tiles.Block.DARK_OAK, 0.3],
+		[Tiles.Block.DARK_OAK, 0.55],
 		[Tiles.Block.BIG_MUSHROOM, 0.012],
 		[Tiles.Block.MUSHROOM_RED, 0.01],
 		[Tiles.Block.MUSHROOM_BROWN, 0.012],
@@ -53,36 +55,36 @@ const VEGETATION := {
 	],
 	Biomes.Id.TAIGA:
 	[
-		[Tiles.Block.SPRUCE, 0.16],
+		[Tiles.Block.SPRUCE, 0.3],
 		[Tiles.Block.FERN, 0.08],
 		[Tiles.Block.BERRY_BUSH, 0.012],
 		[Tiles.Block.ROCK, 0.004],
 	],
-	Biomes.Id.SNOWY_TAIGA: [[Tiles.Block.SNOWY_SPRUCE, 0.14], [Tiles.Block.FERN, 0.02]],
+	Biomes.Id.SNOWY_TAIGA: [[Tiles.Block.SNOWY_SPRUCE, 0.26], [Tiles.Block.FERN, 0.02]],
 	Biomes.Id.OLD_GROWTH_TAIGA:
 	[
-		[Tiles.Block.SPRUCE, 0.24],
+		[Tiles.Block.SPRUCE, 0.42],
 		[Tiles.Block.FERN, 0.1],
 		[Tiles.Block.MOSSY_ROCK, 0.012],
 		[Tiles.Block.MUSHROOM_BROWN, 0.008],
 		[Tiles.Block.BERRY_BUSH, 0.008],
 	],
 	Biomes.Id.SAVANNA:
-	[[Tiles.Block.ACACIA, 0.015], [Tiles.Block.TALL_GRASS, 0.2], [Tiles.Block.BUSH, 0.004]],
-	Biomes.Id.SAVANNA_PLATEAU: [[Tiles.Block.ACACIA, 0.02], [Tiles.Block.TALL_GRASS, 0.15]],
+	[[Tiles.Block.ACACIA, 0.02], [Tiles.Block.TALL_GRASS, 0.2], [Tiles.Block.BUSH, 0.004]],
+	Biomes.Id.SAVANNA_PLATEAU: [[Tiles.Block.ACACIA, 0.025], [Tiles.Block.TALL_GRASS, 0.15]],
 	Biomes.Id.JUNGLE:
 	[
-		[Tiles.Block.JUNGLE_TREE, 0.28],
+		[Tiles.Block.JUNGLE_TREE, 0.5],
 		[Tiles.Block.BUSH, 0.08],
 		[Tiles.Block.FERN, 0.08],
 		[Tiles.Block.TALL_GRASS, 0.05],
 	],
 	Biomes.Id.SPARSE_JUNGLE:
-	[[Tiles.Block.JUNGLE_TREE, 0.08], [Tiles.Block.BUSH, 0.05], [Tiles.Block.TALL_GRASS, 0.1]],
+	[[Tiles.Block.JUNGLE_TREE, 0.12], [Tiles.Block.BUSH, 0.05], [Tiles.Block.TALL_GRASS, 0.1]],
 	Biomes.Id.BADLANDS: [[Tiles.Block.DEAD_BUSH, 0.012], [Tiles.Block.CACTUS, 0.004]],
 	Biomes.Id.MEADOW:
 	[[Tiles.Block.TALL_GRASS, 0.2], [Tiles.Block.BIRCH, 0.004], [Tiles.Block.OAK, 0.002]],
-	Biomes.Id.GROVE: [[Tiles.Block.SNOWY_SPRUCE, 0.12]],
+	Biomes.Id.GROVE: [[Tiles.Block.SNOWY_SPRUCE, 0.22]],
 	Biomes.Id.SNOWY_SLOPES: [[Tiles.Block.ROCK, 0.004]],
 	Biomes.Id.FROZEN_PEAKS: [[Tiles.Block.PACKED_ICE, 0.01]],
 	Biomes.Id.STONY_PEAKS: [[Tiles.Block.ROCK, 0.01]],
@@ -250,6 +252,19 @@ func block_for(
 		if roll < cumulative:
 			return entry[0]
 	return Tiles.Block.AIR
+
+
+## What grows on a tile where a tree was thinned out: the biome's small
+## plants (grass, ferns, bushes...), or nothing.
+func undergrowth_for(biome: int, tx: int, ty: int) -> int:
+	var plants: Array[int] = []
+	for entry: Array in VEGETATION.get(biome, []):
+		if not Tiles.is_block_solid(entry[0]):
+			plants.append(entry[0])
+	var roll := HashUtil.unit2(_decoration_seed ^ 0x3C6EF372, tx, ty)
+	if plants.is_empty() or roll > 0.5:
+		return Tiles.Block.AIR
+	return plants[int(roll * 2.0 * plants.size()) % plants.size()]
 
 
 ## Mountain rock: solid stone patches with visible ore veins.

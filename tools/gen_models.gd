@@ -18,7 +18,7 @@ func _initialize() -> void:
 		var name := String(Tiles.Block.find_key(block)).to_lower()
 		if not only.is_empty() and name != only:
 			continue
-		for variant in VoxelModels.VARIANTS:
+		for variant in ObjectShapes.variant_count(block):
 			triangles += _save_lods(block, variant)
 	if only.is_empty() or only == "player":
 		for part in VoxelModels.PLAYER_PARTS:
@@ -29,23 +29,21 @@ func _initialize() -> void:
 	quit()
 
 
-## Saves a model and its coarser copies, coarsest first: the middle one
-## casts its shadows with the coarsest (zoomed out, nobody sees the
-## difference; up close the full model casts its own).
+## Saves a model and its coarser copies; returns the full model's triangles.
+## (No ArrayMesh.shadow_mesh: Godot ignores it with voxel.gdshader, which
+## moves vertices and discards fragments.)
 func _save_lods(block: int, variant: int) -> int:
 	var grid := VoxelModels.build(block, variant)
-	var coarser: ArrayMesh = null
-	for lod in range(VoxelModels.LODS - 1, -1, -1):
+	var count := 0
+	for lod in VoxelModels.LODS:
 		var factor := 1 << lod
 		var lod_grid := grid if lod == 0 else grid.downsampled(factor)
-		var mesh := VoxelMesher.build(lod_grid, factor)
-		if lod == 1:
-			mesh.shadow_mesh = coarser
-		var count := _save_mesh(mesh, VoxelModels.block_path(block, variant, lod))
-		coarser = mesh
+		var triangles := _save_mesh(
+			VoxelMesher.build(lod_grid, factor), VoxelModels.block_path(block, variant, lod)
+		)
 		if lod == 0:
-			return count
-	return 0
+			count = triangles
+	return count
 
 
 func _save(grid: VoxelGrid, path: String) -> int:

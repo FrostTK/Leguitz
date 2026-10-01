@@ -18,6 +18,10 @@ var sway_from := 0
 ## Point (x, z, in voxels) the model stands centered on; negative = the
 ## middle of the grid. Coarser copies keep the original's center.
 var pivot := Vector2(-1.0, -1.0)
+## Corner shading on foliage. Off for tree crowns: their faces merge far
+## better (a much lighter mesh) and the light painted on the leaves
+## already darkens the inside.
+var foliage_ao := true
 
 
 func _init(grid_size := Vector3i.ONE) -> void:
@@ -54,8 +58,9 @@ func set_voxel(p: Vector3i, value: int) -> void:
 
 
 ## A coarser copy for far views: each factor x factor x factor block
-## becomes one voxel of its most common color, kept when enough of the
-## block is filled (thin stems and blades survive at factor 2).
+## becomes one voxel of its most common color (the top one on a tie: snow
+## stays on the leaves), kept when enough of the block is filled (thin
+## stems and blades survive at factor 2).
 func downsampled(factor: int) -> VoxelGrid:
 	var out := VoxelGrid.new(
 		Vector3i(
@@ -66,6 +71,7 @@ func downsampled(factor: int) -> VoxelGrid:
 	)
 	out.sway = sway
 	out.sway_from = sway_from / factor
+	out.foliage_ao = foliage_ao
 	out.pivot = Vector2(size.x, size.z) * 0.5 / factor
 	var needed := 2 if factor <= 2 else factor * factor * factor / 10
 	for z in out.size.z:
@@ -74,7 +80,7 @@ func downsampled(factor: int) -> VoxelGrid:
 				var counts := {}
 				var filled := 0
 				for dz in factor:
-					for dy in factor:
+					for dy in range(factor - 1, -1, -1):
 						for dx in factor:
 							var value := get_voxel(
 								Vector3i(x, y, z) * factor + Vector3i(dx, dy, dz)
@@ -89,6 +95,37 @@ func downsampled(factor: int) -> VoxelGrid:
 					if best == 0 or counts[value] > counts[best]:
 						best = value
 				out.set_voxel(Vector3i(x, y, z), best)
+	return out
+
+
+## A copy trimmed to the filled voxels (sides and top); the model keeps
+## standing on the same point (the pivot follows).
+func cropped() -> VoxelGrid:
+	var low := size
+	var high := Vector3i(-1, -1, -1)
+	for z in size.z:
+		for y in size.y:
+			var row := size.x * (y + size.y * z)
+			for x in size.x:
+				if voxels[row + x] != 0:
+					low = Vector3i(mini(low.x, x), mini(low.y, y), mini(low.z, z))
+					high = Vector3i(maxi(high.x, x), maxi(high.y, y), maxi(high.z, z))
+	if high.x < 0:
+		return self
+	# Models stand on y = 0: what is under them stays.
+	low.y = 0
+	var out := VoxelGrid.new(high - low + Vector3i.ONE)
+	for z in out.size.z:
+		for y in out.size.y:
+			for x in out.size.x:
+				out.voxels[x + out.size.x * (y + out.size.y * z)] = get_voxel(
+					low + Vector3i(x, y, z)
+				)
+	var center := pivot if pivot.x >= 0.0 else Vector2(size.x, size.z) * 0.5
+	out.pivot = center - Vector2(low.x, low.z)
+	out.sway = sway
+	out.sway_from = sway_from
+	out.foliage_ao = foliage_ao
 	return out
 
 

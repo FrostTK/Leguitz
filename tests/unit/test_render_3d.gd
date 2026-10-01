@@ -87,6 +87,27 @@ func test_screen_directions_follow_the_camera() -> void:
 	assert_almost(absf(Render3D.screen_to_ground(Vector2.UP, PI / 2.0).x), 1.0)
 
 
+func test_props_out_of_view_only_cast_shadows() -> void:
+	# A view 28 x 18 tiles around the middle of chunk (0, 0).
+	var middle := Vector2(8, 8)
+	var half := Vector2(14, 9)
+	assert_true(WorldView3D.chunk_in_view(Vector2i(0, 0), middle, half, 0.0))
+	assert_true(WorldView3D.chunk_in_view(Vector2i(1, -1), middle, half, 0.0), "next to it")
+	assert_false(WorldView3D.chunk_in_view(Vector2i(2, 0), middle, half, 0.0), "farther")
+	assert_false(WorldView3D.chunk_in_view(Vector2i(0, -2), middle, half, 0.0), "farther up")
+	# Tall trees rise into view from below the screen: more margin there.
+	var top := Vector2(8, 0)
+	var low := Vector2(14, 6)
+	assert_true(WorldView3D.chunk_in_view(Vector2i(0, 1), top, low, 0.0), "24 tiles below")
+	assert_false(WorldView3D.chunk_in_view(Vector2i(0, -2), top, low, 0.0), "24 tiles above")
+	# A wide view turned a quarter: its width lies along the map's y.
+	var wide := Vector2(20, 2)
+	assert_true(WorldView3D.chunk_in_view(Vector2i(2, 0), middle, wide, 0.0))
+	assert_false(WorldView3D.chunk_in_view(Vector2i(0, 2), middle, wide, 0.0))
+	assert_false(WorldView3D.chunk_in_view(Vector2i(2, 0), middle, wide, PI / 2.0))
+	assert_true(WorldView3D.chunk_in_view(Vector2i(0, 2), middle, wide, PI / 2.0))
+
+
 func test_flat_chunk_has_only_tops() -> void:
 	var result := _build(_flat_chunk(2))
 	var tops := result.parts[ChunkMesher.Part.TOPS]

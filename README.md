@@ -32,7 +32,7 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Ambiance : brume du matin, brume dans les vallées, lucioles, feuilles au vent, poussière des grottes | ✅ |
 | Eau animée (vagues, écume sur les rives, reflets), lave animée | ✅ |
 | Qualité graphique Bas / Moyen / Élevé / Ultra, rendu HD et limite d'images par seconde dans le menu pause | ✅ |
-| Modèles simplifiés quand on dézoome très loin, rendu suspendu pendant la pause | ✅ |
+| Modèles simplifiés quand on dézoome très loin, hors de l'écran et au loin (plus tôt en qualité Bas/Moyen), rendu suspendu pendant la pause | ✅ |
 | Saut d'un bloc, chutes, blocs de pierre sur lesquels on peut monter (comme Minecraft) | ✅ |
 
 ![Leguitz : îles aux champignons (rendu HD), badlands, forêt sombre, grottes](docs/screenshots/phase2-3d-meteo-biomes.png)
@@ -46,6 +46,8 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Monde en vrais voxels 3D comme Minecraft : 128 blocs de haut, grottes 3D sous la surface (salles, tunnels, lacs, lave, filons de minerai) | ✅ |
 | Vue en coupe sous terre : tout ce qui dépasse la tête du joueur est coupé, la roche coupée en sombre | ✅ |
 | 1re personne dans les grottes (ou avec F5) : plongée de la caméra, ciel, brume au loin, lanterne à la main | ✅ |
+| Grands arbres détaillés, tous différents (8 versions par espèce, troncs plus ou moins hauts et épais) : troncs penchés sur leurs racines, branches fourchues, feuillage éclairé par le haut, écorce sillonnée et moussue | ✅ |
+| On circule toujours entre les arbres, même en forêt dense : seul le tronc bloque, jamais deux arbres ou rochers côte à côte | ✅ |
 | Sauvegarde du monde et du joueur | à venir |
 | Viser, miner, poser des blocs | à venir |
 | Objets, inventaire, outils | à venir |
@@ -53,6 +55,8 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 ![Leguitz : le monde en voxels en surface, une grotte vue en coupe, un lac souterrain](docs/screenshots/phase3-voxels-grottes.png)
 
 ![Leguitz : la plongée de la caméra vers la 1re personne, une grotte à la lanterne, la rivière la nuit, la savane au soleil couchant](docs/screenshots/phase3-premiere-personne.png)
+
+![Leguitz : les nouveaux arbres, en forêt vue de dessus, à la 1re personne, et dans plusieurs biomes](docs/screenshots/phase3-arbres.png)
 
 ![Biomes de Leguitz (phase 1, carte)](docs/screenshots/phase1-biomes.png)
 

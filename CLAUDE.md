@@ -78,18 +78,31 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   In first person: caves always shown, props' detail by distance, haze, split sun shadows, a
   procedural sky, 6 chunks loaded; the mouse is captured (released by the pause menu).
 - Trees, plants, rocks and the player are voxel models (1 voxel = 1 art pixel = 1/16 tile):
-  generators in `src/client/models/voxel_models.gd`, meshed by VoxelMesher (greedy faces + AO) and
-  saved by `godot --headless --path . -s res://tools/gen_models.gd` into `assets/models/` (commit
-  the .res files; rerun after changing a model). Every non-cube block needs a model (tested).
-  `voxel.gdshader` handles wind, wetness and leaf backlight. `see_through.gdshaderinc` (voxel and
-  terrain shaders) dithers away what stands between the camera and the player, around them.
-  Each model also has coarser copies (`_lod1` = 2 voxels per voxel, `_lod2` = 4) used when the
-  ground in view is large (WorldView3D.lod_for_view); lod1 casts its shadows with lod2.
+  generators in `src/client/models/voxel_models.gd` (trees: `tree_models.gd`, detailed procedural
+  trees: tapering, leaning trunks on roots, forking limbs, lit leaf clusters, bark grooves and
+  moss), meshed by VoxelMesher (greedy faces + AO) and saved by
+  `godot --headless --path . -s res://tools/gen_models.gd [-- --only=oak]` into `assets/models/`
+  (commit the .res files; rerun after changing a model; all of them take ~15 min). Every non-cube
+  block needs a model (tested). `voxel.gdshader` handles wind, wetness and leaf backlight.
+  `see_through.gdshaderinc` (voxel and terrain shaders) dithers away what stands between the
+  camera and the player, around them. Each model also has coarser copies (`_lod1` = 2 voxels per
+  voxel, `_lod2` = 4). Top-down, the ground in view sets the detail (WorldView3D.lod_for_view)
+  and chunks out of view (they only cast shadows into it) use lod2; in first person it follows
+  the distance from the player to each chunk's middle (FIRST_PERSON_FULL/HALF_DETAIL). Low and
+  Medium graphics qualities shrink the detail's reach (DETAIL_BY_QUALITY). Shadows are most of the cost; ArrayMesh.shadow_mesh does not help (Godot ignores
+  it with this shader: vertex code, discard). Trees are 4-75k triangles (jungle and dark
+  oaks the heaviest): watch the triangle count and GPU time in the F3 overlay.
+- Objects in voxels (`ObjectShapes`, shared by physics and models): each block has a few
+  versions (trees 8, of different trunk sizes) picked by tile hash, wandering small things get an
+  offset in their tile. Only a tree's trunk blocks bodies (TileCollider moves among obstacle
+  boxes, PlayerBody.obstacle); generation never puts two solid objects on neighboring tiles
+  (WorldGenerator._spaced), so bodies can always walk between them.
 - Keep the GPU cool: Settings.max_fps (default 60, 15 in the background), the world SubViewport
   stops rendering while paused, and the client only asks for the chunks its view needs.
 - Movement is Minecraft-like (`src/sim/physics/player_body.gd`, shared client/server) among voxels
   (`voxel_at` callable, Voxels.UNKNOWN = not loaded = solid): body 1.7 levels tall, walk up 0.2,
-  jump 1.25, bump ceilings, fall off edges; solid objects (trees, rocks) block 3 levels up; water
+  jump 1.25, bump ceilings, fall off edges; solid objects block their footprint up their height
+  (trees: the trunk, see ObjectShapes); water
   is walked on for now (swimming comes with survival), lava blocks. No stairs: terrain levels rise
   one at a time so they can be climbed.
 - World generation (`src/sim/world/generation/`): ClimateSampler (5 Minecraft climate noises,

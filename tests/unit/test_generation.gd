@@ -86,6 +86,29 @@ func test_surface_chunks_are_coherent() -> void:
 					assert_true(Voxels.is_cube(surface), "plants grow on ground")
 
 
+func test_trees_and_rocks_leave_room_to_walk() -> void:
+	var generator := WorldGenerator.new(SEED)
+	# A forest by a river (the spawn of seed 42) and a dark forest, across
+	# chunk borders.
+	for center in [Vector2i(4, -6), Vector2i(-123, 261)]:
+		var base := Coords.tile_to_chunk(center)
+		var solid: Dictionary[Vector2i, bool] = {}
+		for dy in range(-1, 1):
+			for dx in range(-1, 1):
+				var coord := base + Vector2i(dx, dy)
+				var chunk := generator.generate_chunk(coord)
+				var origin := Coords.chunk_origin_tile(coord)
+				for lz in GameConst.CHUNK_SIZE:
+					for lx in GameConst.CHUNK_SIZE:
+						var thing := chunk.object_on_surface(Vector2i(lx, lz))
+						if Voxels.is_object(thing) and Voxels.is_solid(thing):
+							solid[origin + Vector2i(lx, lz)] = true
+		assert_true(solid.size() > 30, "a forest at %s" % center)
+		for tile in solid:
+			for side in [Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, -1)]:
+				assert_false(solid.has(tile + side), "nothing solid next to %s" % tile)
+
+
 func test_terrain_heights_match_the_columns() -> void:
 	var generator := WorldGenerator.new(SEED)
 	# A hilly area, across a chunk border.
@@ -202,7 +225,7 @@ func test_every_tile_has_an_atlas_cell() -> void:
 	var ground_rows := TerrainRenderer.GROUND_ATLAS.get_height() / GameConst.TILE_SIZE
 	assert_true(Tiles.Ground.size() <= ground_rows, "ground atlas has a row per ground")
 	for block in VoxelModels.modeled_blocks():
-		for variant in VoxelModels.VARIANTS:
+		for variant in ObjectShapes.variant_count(block):
 			for lod in VoxelModels.LODS:
 				var path := VoxelModels.block_path(block, variant, lod)
 				assert_true(ResourceLoader.exists(path), "%s exists (tools/gen_models.gd)" % path)

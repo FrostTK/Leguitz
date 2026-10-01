@@ -16,7 +16,7 @@ func _init() -> void:
 	material.shader = SHADER
 	for block in VoxelModels.modeled_blocks():
 		var variants: Array[Array] = []
-		for variant in VoxelModels.VARIANTS:
+		for variant in ObjectShapes.variant_count(block):
 			var lods: Array[Mesh] = []
 			for lod in VoxelModels.LODS:
 				var path := VoxelModels.block_path(block, variant, lod)

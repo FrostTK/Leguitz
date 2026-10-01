@@ -56,7 +56,7 @@ const FIRST_PERSON_HAZE := 0.6
 const FIRST_PERSON_HAZE_DISTANCE := 80.0
 const FIRST_PERSON_CAVE_FOG := 0.5
 const FIRST_PERSON_CAVE_FOG_DISTANCE := 28.0
-const FIRST_PERSON_SHADOW_DISTANCE := 70.0
+const FIRST_PERSON_SHADOW_DISTANCE := 45.0
 
 var clock: WorldClock
 var client_world: ClientWorld

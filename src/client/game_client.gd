@@ -147,15 +147,20 @@ func _setup_world() -> void:
 	lighting.lantern = player_model.lantern
 	lighting.environment = environment
 	add_child(lighting)
-	lighting.apply_quality(Settings.graphics_quality)
+	_apply_quality()
 	Settings.changed.connect(_on_settings_changed)
 
 
 func _on_settings_changed(key: StringName) -> void:
 	if key == &"graphics_quality":
-		lighting.apply_quality(Settings.graphics_quality)
+		_apply_quality()
 	elif key == &"cave_first_person":
 		view_mode.set_automatic(Settings.cave_first_person)
+
+
+func _apply_quality() -> void:
+	lighting.apply_quality(Settings.graphics_quality)
+	world_view.set_detail(WorldView3D.DETAIL_BY_QUALITY[Settings.graphics_quality])
 
 
 ## `min_view_distance` is the smallest radius (chunks) to load around the
@@ -304,6 +309,7 @@ func _update_view(delta: float) -> void:
 	_camera_local = _camera_local.lerp(focus, follow)
 	var target := root * _camera_local
 	world_view.focus = Coords.tile_to_chunk(local_player.current_tile())
+	world_view.focus_tile = local_player.position / GameConst.TILE_SIZE
 	_update_cut(root)
 	world_viewport.target = target
 	world_viewport.eye = eye
@@ -325,7 +331,10 @@ func _update_view(delta: float) -> void:
 	lighting.camera_distance = world_viewport.camera_distance
 	lighting.view_depth = world_viewport.far_ground_distance()
 	world_view.set_lod_by_distance(first_person > 0.5)
-	world_view.set_lod(WorldView3D.lod_for_view(world_viewport.ground_size()))
+	var ground := world_viewport.ground_size()
+	world_view.set_lod(WorldView3D.lod_for_view(ground, world_view.detail))
+	var center := Vector2(_camera_local.x, _camera_local.z)
+	world_view.set_view_area(center, ground * 0.5, world_viewport.current_yaw)
 	_update_view_distance()
 
 

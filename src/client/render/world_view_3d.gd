@@ -17,8 +17,20 @@ const FACE_NORMALS := preload("res://assets/textures/tiles/face_atlas_n.png")
 const FACE_EMISSION := preload("res://assets/textures/tiles/face_atlas_e.png")
 const MAX_POOLED_VIEWS := 48
 ## Ground area (tiles²) up to which props keep full detail, then half.
-const FULL_DETAIL_AREA := 8000.0
-const HALF_DETAIL_AREA := 26000.0
+const FULL_DETAIL_AREA := 2500.0
+const HALF_DETAIL_AREA := 12000.0
+## Top-down view: props this far (tiles) out of the ground in view can
+## still show in it: crowns spread over the sides, and the tallest trees
+## rise into it from below the screen.
+const VIEW_MARGIN_SIDES := 4.0
+const VIEW_MARGIN_BELOW := 9.0
+## First person: props keep full detail up to this distance (tiles, from
+## the eye to the middle of their chunk), then half up to the next one.
+const FIRST_PERSON_FULL_DETAIL := 20.0
+const FIRST_PERSON_HALF_DETAIL := 40.0
+## Reach of the props' detail per graphics quality (Low to Ultra): small
+## graphics cards switch to the coarser copies sooner.
+const DETAIL_BY_QUALITY: Array[float] = [0.5, 0.75, 1.0, 1.0]
 ## Milliseconds per frame spent showing finished builds.
 const APPLY_BUDGET_MS := 6
 ## Builds running at once on the worker threads.
@@ -30,11 +42,19 @@ const NEIGHBOR_WAIT_FRAMES := 20
 var client_world: ClientWorld
 ## Chunk the camera is over: pending builds closest to it go first.
 var focus := Vector2i.ZERO
+## Where the player stands (tiles): first-person detail follows it.
+var focus_tile := Vector2.ZERO
+## Reach of the props' detail (see DETAIL_BY_QUALITY and set_detail).
+var detail := 1.0
 ## Level of detail of the props (0 = full voxels, see set_lod).
 var lod := 0
 ## First-person view: the props' detail follows each chunk's distance
 ## instead (see set_lod_by_distance).
 var lod_by_distance := false
+## Top-down view: the ground in view (tiles, see set_view_area).
+var view_center := Vector2.ZERO
+var view_half_size := Vector2.INF
+var view_yaw := 0.0
 ## Row the top shader's surface maps are cut at (ChunkData.HEIGHT: none),
 ## and whether caves show (see set_view).
 var cut_row := ChunkData.HEIGHT
@@ -56,8 +76,10 @@ var _serials: Dictionary[Vector2i, int] = {}
 var _results: Array[ChunkMesher.Result] = []
 var _results_mutex := Mutex.new()
 var _variants := PackedByteArray()
-## Focus the props' distance-based detail was last set for.
-var _lod_focus := Vector2i.MAX
+## Position the props' distance-based detail was last set for.
+var _lod_focus := Vector2.INF
+## View area the props' detail was last set for (rounded, see set_view_area).
+var _lod_area := PackedInt32Array()
 
 
 func _ready() -> void:
@@ -131,6 +153,14 @@ func set_lod(value: int) -> void:
 	_refresh_lods()
 
 
+## Reach of the props' detail (1 = normal, less = coarser copies sooner).
+func set_detail(value: float) -> void:
+	if value == detail:
+		return
+	detail = value
+	_refresh_lods()
+
+
 ## In first person, near props keep full detail and far ones (small on
 ## screen) get coarser.
 func set_lod_by_distance(enabled: bool) -> void:
@@ -140,19 +170,62 @@ func set_lod_by_distance(enabled: bool) -> void:
 	_refresh_lods()
 
 
+## Top-down view: the ground in view, a rectangle of `half_size` (tiles,
+## across the screen and up it) around `center`, turned by the camera
+## `yaw`. Props of chunks out of it only cast shadows into the view: they
+## use their coarsest copies.
+func set_view_area(center: Vector2, half_size: Vector2, yaw: float) -> void:
+	view_center = center
+	view_half_size = half_size
+	view_yaw = yaw
+	var area := PackedInt32Array(
+		[
+			roundi(center.x / 4.0),
+			roundi(center.y / 4.0),
+			roundi(half_size.x / 4.0),
+			roundi(half_size.y / 4.0),
+			roundi(yaw * 8.0)
+		]
+	)
+	if area != _lod_area and not lod_by_distance:
+		_lod_area = area
+		_refresh_lods()
+
+
 ## Level of detail of the props of a chunk.
 func lod_of(coord: Vector2i) -> int:
-	if not lod_by_distance:
-		return lod
-	var distance := Coords.chunk_distance(coord, focus)
-	return 0 if distance <= 2 else (1 if distance <= 4 else 2)
+	if lod_by_distance:
+		var size := float(GameConst.CHUNK_SIZE)
+		var middle := (Vector2(coord) + Vector2.ONE * 0.5) * size
+		var distance := middle.distance_to(focus_tile) / detail
+		if distance <= FIRST_PERSON_FULL_DETAIL:
+			return 0
+		return 1 if distance <= FIRST_PERSON_HALF_DETAIL else VoxelModels.LODS - 1
+	if not chunk_in_view(coord, view_center, view_half_size, view_yaw):
+		return VoxelModels.LODS - 1
+	return lod
+
+
+## Whether props of a chunk can show in a top-down view of the ground
+## around `center` (see set_view_area).
+static func chunk_in_view(coord: Vector2i, center: Vector2, half_size: Vector2, yaw: float) -> bool:
+	var size := float(GameConst.CHUNK_SIZE)
+	var middle := (Vector2(coord) + Vector2.ONE * 0.5) * size
+	var on_screen := Render3D.ground_to_screen(middle - center, yaw)
+	# The chunk's own extent, whatever the turn.
+	var extent := size * 0.71
+	var sides := half_size.x + VIEW_MARGIN_SIDES + extent
+	var above := half_size.y + VIEW_MARGIN_SIDES + extent
+	var below := half_size.y + VIEW_MARGIN_BELOW + extent
+	return absf(on_screen.x) <= sides and on_screen.y >= -above and on_screen.y <= below
 
 
 ## Level of detail for the ground in view (tiles x tiles): full voxels
 ## for normal views, coarser copies when zoomed far out on a big screen
 ## (that many props at full detail would be tens of millions of triangles).
-static func lod_for_view(ground: Vector2) -> int:
-	var area := ground.x * ground.y
+## `reach` (see DETAIL_BY_QUALITY) shrinks the views kept at full detail.
+static func lod_for_view(ground: Vector2, reach := 1.0) -> int:
+	var area := ground.x * ground.y / (reach * reach)
 	if area <= FULL_DETAIL_AREA:
 		return 0
 	return 1 if area <= HALF_DETAIL_AREA else 2
@@ -188,7 +261,7 @@ func wait_for_builds() -> void:
 
 
 func _process(_delta: float) -> void:
-	if lod_by_distance and focus != _lod_focus:
+	if lod_by_distance and focus_tile.distance_squared_to(_lod_focus) > 4.0:
 		_refresh_lods()
 	_start_jobs()
 	_apply_results()
@@ -281,7 +354,7 @@ func _nearest_pending(count: int) -> Array[Vector2i]:
 
 
 func _refresh_lods() -> void:
-	_lod_focus = focus
+	_lod_focus = focus_tile
 	for coord: Vector2i in _views:
 		_views[coord].set_props_lod(props, lod_of(coord))
 

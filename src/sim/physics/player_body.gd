@@ -15,9 +15,9 @@ const BOX := Vector2(10.0, 6.0)
 const BODY_HEIGHT := 1.7
 ## Small rises (a water bank) are walked up without jumping.
 const STEP_UP := 0.2
-## Solid objects (trees, rocks, cacti...) stand this tall for bodies: their
-## models rise far above their voxel, nobody jumps over them.
-const OBJECT_HEIGHT := 3
+## Tallest object (levels, see ObjectShapes.blocking_levels): how far down
+## to look for a trunk rising into the body.
+const MAX_OBJECT_LEVELS := 8
 ## Minecraft's numbers, in levels: gravity 32 /s^2, jumps 1.25 high.
 const GRAVITY := 32.0
 const JUMP_HEIGHT := 1.25
@@ -49,23 +49,30 @@ static func support(at: Vector2, limit: float, voxel_at: Callable) -> float:
 	return best
 
 
-## True if a body standing at `height` cannot enter a tile: something
-## solid between its knees (above STEP_UP) and the top of its head, a solid
-## object standing a little lower, or lava right under its feet.
-static func is_blocked(tile: Vector2i, height: float, voxel_at: Callable) -> bool:
+## The box (world pixels) keeping a body standing at `height` out of a
+## tile: the whole tile (something solid between its knees, above STEP_UP,
+## and the top of its head, or lava under its feet), the foot of an object
+## rising into it (a trunk, a rock: ObjectShapes), or nothing (an empty
+## Rect2). Bodies walk between trees and under their crowns.
+static func obstacle(tile: Vector2i, height: float, voxel_at: Callable) -> Rect2:
 	var low := floori(height + STEP_UP + EPSILON) + GameConst.SEA_LEVEL
 	var high := ceili(height + BODY_HEIGHT - EPSILON) + GameConst.SEA_LEVEL
+	var whole := Rect2(Vector2(tile * GameConst.TILE_SIZE), Vector2.ONE * GameConst.TILE_SIZE)
 	var under: int = voxel_at.call(Vector3i(tile.x, low - 1, tile.y))
 	if Voxels.is_liquid(under) and Voxels.is_solid(under):
-		return true
-	for row in range(low - OBJECT_HEIGHT + 1, low):
-		var below: int = voxel_at.call(Vector3i(tile.x, row, tile.y))
-		if Voxels.is_object(below) and Voxels.is_solid(below):
-			return true
-	for row in range(low, high):
-		if Voxels.is_solid(voxel_at.call(Vector3i(tile.x, row, tile.y))):
-			return true
-	return false
+		return whole
+	for row in range(low - MAX_OBJECT_LEVELS, high):
+		var voxel: int = voxel_at.call(Vector3i(tile.x, row, tile.y))
+		if not Voxels.is_solid(voxel):
+			continue
+		if Voxels.is_object(voxel):
+			var block := Voxels.block_of(voxel)
+			var levels := ObjectShapes.blocking_levels(block, ObjectShapes.variant_at(block, tile))
+			if row + levels > low:
+				return ObjectShapes.footprint_rect(block, tile)
+		elif row >= low:
+			return whole
+	return Rect2()
 
 
 ## Height of the first voxel to stand on below `limit` in a column.
@@ -105,8 +112,8 @@ func step(motion: Vector2, jump: bool, delta: float, voxel_at: Callable) -> void
 		needs_landing = false
 	if motion != Vector2.ZERO:
 		var current := height
-		var blocked := func(tile: Vector2i) -> bool: return is_blocked(tile, current, voxel_at)
-		feet = TileCollider.move(feet, motion, BOX, blocked)
+		var obstacle_at := func(tile: Vector2i) -> Rect2: return obstacle(tile, current, voxel_at)
+		feet = TileCollider.move(feet, motion, BOX, obstacle_at)
 	var below := support(feet, height + STEP_UP, voxel_at)
 	if below == -INF:
 		return
@@ -151,6 +158,6 @@ func _ceiling_above(next_height: float, voxel_at: Callable) -> float:
 	var area := TileCollider.covered_tiles(feet, BOX)
 	for ty in range(area.position.y, area.end.y):
 		for tx in range(area.position.x, area.end.x):
-			if Voxels.is_solid(voxel_at.call(Vector3i(tx, row, ty))):
+			if Voxels.is_cube(voxel_at.call(Vector3i(tx, row, ty))):
 				return float(row - GameConst.SEA_LEVEL) - BODY_HEIGHT
 	return INF

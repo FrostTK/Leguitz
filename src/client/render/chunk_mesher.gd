@@ -45,23 +45,6 @@ const TERRAIN := CUBE | LIQUID
 ## into rectangles: tops, or undersides (see _record_flat).
 const FLAT_UNDERSIDE := 1
 
-## Small plants stand anywhere in their tile (whole voxels), not centered.
-const WANDERING := {
-	Tiles.Block.TALL_GRASS: true,
-	Tiles.Block.FERN: true,
-	Tiles.Block.DEAD_BUSH: true,
-	Tiles.Block.FLOWER_RED: true,
-	Tiles.Block.FLOWER_YELLOW: true,
-	Tiles.Block.FLOWER_BLUE: true,
-	Tiles.Block.FLOWER_WHITE: true,
-	Tiles.Block.FLOWER_PINK: true,
-	Tiles.Block.MUSHROOM_RED: true,
-	Tiles.Block.MUSHROOM_BROWN: true,
-	Tiles.Block.LILY_PAD: true,
-	Tiles.Block.ROCK: true,
-	Tiles.Block.MOSSY_ROCK: true,
-}
-
 ## Face kind and top material code of every voxel id (see face_kind).
 static var _face_kinds := _build_face_kinds()
 static var _top_codes := _build_top_codes()
@@ -634,19 +617,18 @@ static func _add_prop(
 	if count == 0:
 		return
 	var tile := origin + Vector2i(lx, lz)
-	var h := HashUtil.hash2(0x9A0B, tile.x, tile.y)
+	var h := HashUtil.hash2(ObjectShapes.SALT, tile.x, tile.y)
 	var height := float(y - SEA)
 	if y > 0 and Voxels.is_liquid(voxels[base + y - 1]):
 		height -= ChunkData.WATER_DROP
-	var foot := Vector3(lx + 0.5, height, lz + 0.5)
-	if WANDERING.has(block):
-		foot.x += ((h >> 8) % 7 - 3) / 16.0
-		foot.z += ((h >> 12) % 7 - 3) / 16.0
+	# Where it stands and which version: the same as physics (ObjectShapes).
+	var offset := Vector2(ObjectShapes.offset_at(block, tile)) / 16.0
+	var foot := Vector3(lx + 0.5 + offset.x, height, lz + 0.5 + offset.y)
 	var turn := Basis(Vector3.UP, ((h >> 4) & 3) * PI * 0.5)
 	var shade := 0.93 + ((h >> 16) & 15) / 15.0 * 0.14
 	var warmth := 0.97 + ((h >> 20) & 7) / 7.0 * 0.06
 	var custom := Color(shade * warmth, shade, shade / warmth, ((h >> 24) & 255) / 255.0)
-	var key := Vector2i(block, h % count)
+	var key := Vector2i(block, ObjectShapes.variant_at(block, tile) % count)
 	if not result.props.has(key):
 		result.props[key] = []
 	result.props[key].append([Transform3D(turn, foot), custom])

@@ -49,7 +49,7 @@ Les questions de goût ou les choix lourds de conséquences sont posés avant de
 | Déplacements | **Pas d'escaliers générés** : le joueur **saute d'un bloc** (1,25 niveau, comme Minecraft), tombe des bords. |
 | Monde | **Vrais voxels 3D** comme Minecraft (choix de la phase 3) : chunks de 16×16 colonnes sur **128 blocs de haut** (64 sous le niveau de la mer, le relief jusqu'à +32, de la place pour construire au-dessus). Grottes 3D sous la surface, plus de « couches » séparées. **L'eau ne coule pas encore** (on y marche ; coulées en phase 6, nage en phase 5). |
 | Sous terre | **Vue en coupe** : dès qu'il y a un plafond au-dessus du joueur (grotte, galerie, toit), tout ce qui dépasse sa tête est coupé, la roche coupée s'affiche en sombre. |
-| Arbres, plantes | Restent des **modèles voxel détaillés** posés dans une case (pas des troncs en blocs) : miner le pied abattra l'arbre entier. |
+| Arbres, plantes | Restent des **modèles voxel détaillés** posés dans une case (pas des troncs en blocs) : miner le pied abattra l'arbre entier. Arbres **grands, épais et tous différents** (8 versions par espèce, troncs de hauteurs et d'épaisseurs variées), **réalistes en restant en pixel art** (1 voxel = 1 pixel : troncs penchés sur racines, branches fourchues, grappes de feuilles éclairées, écorce sillonnée, mousse). **Seul le tronc bloque**, et jamais deux objets solides côte à côte : on passe toujours entre les arbres. |
 | Sauvegardes | **Dès la phase 3** : chunks modifiés + joueur, sauvegarde auto toutes les 2 min et à la fermeture ; un seul monde en attendant l'écran titre. |
 | Contrôles (phase 3) | Clic gauche maintenu = miner, clic droit court = poser, clic droit glissé = tourner la caméra ; **molette = objet en main** (zoom sur Ctrl+molette et +/-), touches 1 à 9 ; manette : gâchettes miner/poser, LB/RB changer d'objet. |
 | Outils avant le craft | **Tout se mine à la main** (lentement, chaque bloc donne quelque chose) ; une touche de debug donne des outils pour tester, en attendant le craft (phase 4). |
@@ -59,7 +59,7 @@ Les questions de goût ou les choix lourds de conséquences sont posés avant de
 
 ## 3. État actuel : ce qui est fait
 
-Godot **4.7.2** (GDScript), rendu Forward+. 78 tests unitaires, lint propre.
+Godot **4.7.2** (GDScript), rendu Forward+. 87 tests unitaires, lint propre.
 
 | Phase | Contenu | Commits |
 |---|---|---|
@@ -74,6 +74,7 @@ Godot **4.7.2** (GDScript), rendu Forward+. 78 tests unitaires, lint propre.
 | 2+ Caméra basse | Caméra jusqu'à 15° sans étirer les objets (étirement selon l'inclinaison), trou transparent aussi dans les falaises, ombres et pluie qui suivent la vue, reflets du soleil adoucis sur l'eau, options de dev jamais enregistrées dans les réglages | `8e1ed5d` |
 | 3.1 Monde en voxels | Chunks 16×16×128 (ids : sols < 64, blocs 64+), génération remplissant les colonnes + grottes 3D (salles, tunnels, lacs, lave, filons de minerai), physique 3D (plafonds, objets hauts de 3), maillage sur les cœurs (faces fusionnées, grottes à part), vue en coupe sous terre, Page ↓/↑ = grotte suivante (`--descend=N`), carte de debug en coupe, chargement aussi rapide qu'avant | `493ff38` |
 | 3.1b 1re personne | Automatique dans les grottes (réglage), F5 partout, plongée de la caméra (perspective qui s'ouvre, étirement qui s'efface, corps qui disparaît en tramé, roche traversée transparente), souris capturée, viseur, lanterne à la main, ciel procédural, brume au loin, ombres en cascades, détail des objets selon la distance, plafonds texturés (`--first-person`, `--look`, `--dive`) | « First-person view » |
+| 3.1c Arbres | Arbres procéduraux détaillés (`TreeModels`, 8 espèces × 8 versions de tailles différentes), forêts plus denses ; `ObjectShapes` partagé physique/modèles : seul le tronc bloque (boîtes d'obstacles), objets solides jamais voisins ; feuillages jamais sous 2 niveaux (la caméra à la 1re personne reste sous les couronnes) ; détail des objets : hors de l'écran (ombres seules) toujours simplifiés, en 1re personne selon la distance au joueur, réduit en qualité Bas/Moyen ; F3 affiche le temps GPU et les triangles | « Big detailed trees » |
 
 **Pas encore fait** (prévu) : le reste de la phase 3 (sauvegardes, miner/poser, objets et
 inventaire, outils), craft, survie/combat, créatures, structures, agriculture, menus de départ, sons,
@@ -90,11 +91,11 @@ mode Arcade, mobile.
 | Point d'entrée | `src/main.gd` (crée le serveur, le client, options de développement, captures) |
 | Serveur | `src/sim/game_server.gd` (sessions, envoi des chunks, messages, météo, temps) |
 | Monde | `src/sim/world/` (`voxels.gd` : ids et propriétés des voxels ; `chunk_data.gd` : 16×16×128 voxels, biome et sommet du terrain par colonne ; `world_state.gd` : chunks du serveur, recherche d'un sol pour les déplacements de debug), `generation/` (climat, relief, biomes, surface → colonnes, `cave_generator.gd` : grottes 3D et minerais) |
-| Physique | `src/sim/physics/player_body.gd` (marche, saut, chute, plafonds, parmi les voxels), `tile_collider.gd` |
+| Physique | `src/sim/physics/player_body.gd` (marche, saut, chute, plafonds, parmi les voxels), `tile_collider.gd` (déplacement parmi des boîtes d'obstacles : case entière, tronc, rocher) ; `src/sim/world/object_shapes.gd` (versions des objets, troncs, emprise au sol : partagé avec les modèles) |
 | Messages | `src/net/msg.gd` (tous les échanges client ⇄ serveur) |
 | Client | `src/client/game_client.gd` (assemble la scène 3D, entrées, caméra), `local_player.gd` |
 | Rendu 3D | `src/client/render/` : `world_viewport.gd` (SubViewport pixel parfait, caméra orbitale), `render_3d.gd` (repères, étirement de la racine du monde), `chunk_mesher.gd` (maillage des voxels sur les fils de travail, carte de surface du shader), `chunk_view_3d.gd` (terrain, grottes, objets 3D, lave d'un chunk) / `world_view_3d.gd` (tâches de maillage, coupe sous terre, niveaux de détail), `player_model.gd`, `prop_library.gd` |
-| Modèles voxel | `src/client/models/` : `voxel_grid.gd`, `voxel_mesher.gd` (faces fusionnées + occlusion), `voxel_models.gd` (tous les modèles procéduraux) |
+| Modèles voxel | `src/client/models/` : `voxel_grid.gd`, `voxel_mesher.gd` (faces fusionnées + occlusion), `voxel_models.gd` (tous les modèles procéduraux), `tree_models.gd` (les arbres détaillés) |
 | Shaders | `src/client/shaders/` : `terrain3d_top`, `terrain3d_faces`, `voxel`, `cloud_shadows`, `see_through.gdshaderinc` (trou transparent, coupe sous terre, roche en coupe) |
 | Lumière, météo | `src/client/effects/lighting_controller.gd`, `weather_effects.gd`, `cloud_shadows_3d.gd` |
 | Interface | `src/ui/` (menu pause, F3, horloge, carte) ; textes dans `i18n/strings.csv` |
@@ -127,7 +128,14 @@ vraie carte graphique (pas de xvfb) et ouvrent brièvement une fenêtre ; elles 
 propriétaire (HD, qualité Ultra, écran F3 affiché : `--hide-debug` pour des captures propres). Une
 fenêtre en arrière-plan tourne à 15 images/s : le compteur d'images de l'écran F3 n'y veut rien
 dire. Mesurer le chargement : graine 42 en 1920×1080, monde affiché vers 3,5 s (zoom 3) et 4,3 s
-(zoom 1), démarrage de Godot compris (~1,7 s).
+(zoom 1), démarrage de Godot compris (~1,7 s). Mesurer le rendu : l'écran F3 (`--debug`) affiche le
+temps GPU du monde et les triangles dessinés ; `--quality=0` (sans ombres du soleil) montre la part
+des ombres (60 à 70 % des triangles en forêt). Repères (1280×720, RTX 5050, Ultra) : forêt de la
+rivière `4,-6` vue de dessus zoom 3 ≈ 7,7 M triangles, 5,5 ms, 1re personne ≈ 10 M, 9 ms ; jungle
+`-334,-498` (le pire cas) ≈ 14 M, 7 ms vue de dessus, ≈ 29 M, 17 ms en 1re personne.
+Régénérer tous les modèles prend ~15 min (`-- --only=oak` pour une espèce, ~1 min 45). Les
+modèles d'arbres pèsent ~25 Mo et sont committés : ne les régénérer que quand un modèle change
+(chaque régénération alourdit l'historique git).
 
 ### Captures d'écran dans le conteneur cloud
 
@@ -156,6 +164,8 @@ xvfb-run -a -s "-screen 0 960x540x24" godot --path . --audio-driver Dummy --reso
 - Caméra orthographique : la direction de vue est la même partout, un reflet du soleil couvre
   donc toute l'eau d'un coup (d'où la rugosité de l'eau qui augmente à angle rasant).
 - `return` est interdit dans `fragment()` : écraser les sorties à la fin (voir la roche en coupe).
+- `ArrayMesh.shadow_mesh` est ignoré avec un shader qui déplace les sommets ou utilise `discard`
+  (c'est le cas de `voxel.gdshader`) : pas d'ombres simplifiées par ce moyen.
 - L'import (`--import`) et les lancements réécrivent `project.godot` (réglages par défaut retirés,
   sections déplacées) : avant un commit, repartir de la version du dépôt et n'y ajouter que les
   vrais changements.

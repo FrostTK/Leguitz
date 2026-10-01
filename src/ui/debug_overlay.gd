@@ -35,6 +35,10 @@ func _unhandled_input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
 	if not visible or client == null:
 		return
+	# Measure the 3D world's GPU time (from the first time the overlay shows).
+	RenderingServer.viewport_set_measure_render_time(
+		client.world_viewport.viewport.get_viewport_rid(), true
+	)
 	_refresh_timer -= delta
 	if _refresh_timer > 0.0:
 		return
@@ -107,7 +111,17 @@ func _lines() -> PackedStringArray:
 	]
 
 	var lines := PackedStringArray()
-	lines.append("Leguitz %s  |  %d FPS" % [version, Engine.get_frames_per_second()])
+	var world_rid := client.world_viewport.viewport.get_viewport_rid()
+	var performance_args := [
+		version,
+		Engine.get_frames_per_second(),
+		RenderingServer.viewport_get_measured_render_time_gpu(world_rid),
+		Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME) / 1000.0,
+		Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),
+	]
+	lines.append(
+		"Leguitz %s  |  %d FPS  |  GPU %.1f ms  |  %.0fk tris, %d draws" % performance_args
+	)
 	lines.append("GPU: %s  |  %s" % [gpu, renderer])
 	lines.append("%s: %s  |  %s: %s  |  %s" % world_args)
 	lines.append("%s: %.1f, %.1f, h %.2f  |  %s: %d, %d  |  Chunk: %d, %d" % position_args)

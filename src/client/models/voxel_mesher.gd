@@ -16,6 +16,9 @@ const VOXEL := 1.0 / 16.0
 ## Light left in a corner by 0..3 occluding neighbors.
 const AO := [0.45, 0.65, 0.83, 1.0]
 const AXES: Array[Vector3i] = [Vector3i(1, 0, 0), Vector3i(0, 1, 0), Vector3i(0, 0, 1)]
+## Kind bits of a foliage voxel, and the occlusion bits of an open face.
+const FOLIAGE_TAG := VoxelGrid.Kind.FOLIAGE + 1
+const OPEN := 0xFF
 
 
 class Builder:
@@ -73,18 +76,32 @@ static func _mesh_direction(grid: VoxelGrid, axis: int, direction: int, out: Bui
 	var height := grid.size[v_axis]
 	var mask := PackedInt64Array()
 	mask.resize(width * height)
+	# Direct indexing (models can hold millions of voxels).
+	var data := grid.voxels
+	var strides := Vector3i(1, grid.size.x, grid.size.x * grid.size.y)
+	var step_u := strides[u_axis]
+	var step_v := strides[v_axis]
+	var step_front := strides[axis] * direction
+	var plain_foliage := not grid.foliage_ao
 	for slice in grid.size[axis]:
 		var any := false
+		var front_inside := slice + direction >= 0 and slice + direction < grid.size[axis]
+		var slice_index := slice * strides[axis]
 		for b in height:
+			var row := slice_index + b * step_v
 			for a in width:
-				var p := Vector3i.ZERO
-				p[axis] = slice
-				p[u_axis] = a
-				p[v_axis] = b
-				var value := grid.get_voxel(p)
+				var index := row + a * step_u
+				var value := data[index]
 				var key := 0
-				if value != 0 and grid.get_voxel(p + normal) == 0:
-					key = (value << 8) | _ao_bits(grid, p + normal, e_u, e_v)
+				if value != 0 and (not front_inside or data[index + step_front] == 0):
+					if plain_foliage and value >> 24 == FOLIAGE_TAG:
+						key = (value << 8) | OPEN
+					else:
+						var p := Vector3i.ZERO
+						p[axis] = slice
+						p[u_axis] = a
+						p[v_axis] = b
+						key = (value << 8) | _ao_bits(grid, p + normal, e_u, e_v)
 					any = true
 				mask[a + b * width] = key
 		if any:
