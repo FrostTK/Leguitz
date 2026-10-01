@@ -36,7 +36,7 @@ const CUT_UNTIL := 0.95
 const FIRST_PERSON_VIEW_DISTANCE := 6
 ## Where the lantern is carried in first person (right, up, back of the
 ## eye, in its frame).
-const LANTERN_IN_HAND := Vector3(0.35, -0.3, -0.25)
+const LANTERN_IN_HAND := Vector3(-0.5, -0.3, 0.05)
 ## A right click moving less than this (screen pixels) places a block; more
 ## is a drag turning the camera.
 const CLICK_SLOP := 6.0
@@ -49,12 +49,14 @@ const FIRST_PERSON_HELD_TURN := Vector3(-0.15, 0.7, 0.0)
 ## A food furnace breaking is told to players within this many tiles.
 const FURNACE_NEWS_RANGE := 12.0
 ## First person: a tool is held by the handle at the bottom right of the
-## view, the handle going up, forward and a little left (camera space),
-## its flat side towards the eye; the wrist swings it through strokes
-## (radians: arm raised, striking; see PlayerModel), its size in local
-## units per unit of the model.
+## view, upright (the handle going up, a little forward and left, camera
+## space), turned FIRST_PERSON_TOOL_ROLL about it from facing the eye so
+## it shows its depth; the wrist swings it through strokes (radians: arm
+## raised, striking; see PlayerModel), its size in local units per unit of
+## the model.
 const FIRST_PERSON_TOOL_AT := Vector3(0.3, -0.36, -0.5)
-const FIRST_PERSON_TOOL_HANDLE := Vector3(-0.35, 0.85, -0.4)
+const FIRST_PERSON_TOOL_HANDLE := Vector3(-0.2, 0.95, -0.3)
+const FIRST_PERSON_TOOL_ROLL := -0.6
 const FIRST_PERSON_TOOL_STROKE := Vector2(-0.35, 1.0)
 const FIRST_PERSON_TOOL_SIZE := 0.3
 ## The hand's "slot" of the player's book (beside the hotbar's 9).
@@ -824,7 +826,11 @@ func _update_held() -> void:
 		if stroke >= 0.0:
 			pitch = lerpf(FIRST_PERSON_TOOL_STROKE.x, FIRST_PERSON_TOOL_STROKE.y, stroke)
 		first_person_held.transform = ItemLibrary.held_tool(
-			_first_person_tool_frame(), FIRST_PERSON_TOOL_AT, pitch, FIRST_PERSON_TOOL_SIZE
+			_first_person_tool_frame(),
+			FIRST_PERSON_TOOL_AT,
+			pitch,
+			FIRST_PERSON_TOOL_SIZE,
+			FIRST_PERSON_TOOL_ROLL
 		)
 	else:
 		var dip := maxf(stroke, 0.0)

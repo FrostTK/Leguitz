@@ -40,7 +40,9 @@ func fit(item: int) -> float:
 ## goes along its z; the tool lies flat across its y, the axe's blade
 ## towards its -x), `hand`: where it holds it, `pitch`: the wrist (radians,
 ## > 0 tilts the head towards y), `size`: local units per unit of the model.
-static func held_tool(frame: Basis, hand: Vector3, pitch: float, size: float) -> Transform3D:
+static func held_tool(
+	frame: Basis, hand: Vector3, pitch: float, size: float, roll := 0.0
+) -> Transform3D:
 	# The model's handle along z, its flat side facing -y.
 	var to_hand := Basis(
 		Vector3(ItemModels.SQRT_HALF, 0.0, ItemModels.SQRT_HALF),
@@ -48,7 +50,11 @@ static func held_tool(frame: Basis, hand: Vector3, pitch: float, size: float) ->
 		Vector3(0.0, -1.0, 0.0)
 	)
 	var basis := (
-		frame * Basis(Vector3.RIGHT, -pitch) * to_hand * Basis.from_scale(Vector3.ONE * size)
+		frame
+		* Basis(Vector3.RIGHT, -pitch)
+		* Basis(Vector3.BACK, roll)
+		* to_hand
+		* Basis.from_scale(Vector3.ONE * size)
 	)
 	var grid := ItemModels.TOOL_SIZE
 	var grip := (

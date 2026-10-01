@@ -19,14 +19,16 @@ const TURN_SHARPNESS := 14.0
 ## Strides per tile walked, and how far the limbs swing (radians).
 const STRIDE := 0.9
 const SWING := 0.75
-## Tools are held by the handle at TOOL_HAND, the head forward, lying flat
-## (seen from above, the axe's blade outwards), a voxel of the model being
-## TOOL_SCALE of a voxel of the world; the wrist lifts the head TOOL_REST
-## (radians) at rest, and through a stroke from the first angle (arm
-## raised) to the second (striking down).
+## Tools are held by the handle at TOOL_HAND, upright (turned TOOL_ROLL
+## about the handle: their flat side to the side, the axe's blade
+## forward), a voxel of the model being TOOL_SCALE of a voxel of the
+## world; the wrist lifts the head TOOL_REST (radians) at rest, and
+## through a stroke from the first angle (arm raised) to the second
+## (striking down).
 const TOOL_HAND := Vector3(0.0, -7.5, 0.5) * VOXEL
 const TOOL_SCALE := 0.75
-const TOOL_REST := 1.0
+const TOOL_ROLL := PI * 0.25
+const TOOL_REST := 1.25
 const TOOL_STROKE := Vector2(0.35, -0.8)
 
 var lantern := OmniLight3D.new()
@@ -76,6 +78,9 @@ func _ready() -> void:
 		_part("arm", Vector3(0, -8, 0), shoulder, material)
 		_arms.append(shoulder)
 	# In the right hand, at the end of the arm.
+	# Like the body, out of the lantern's shadows (held close to it, what is
+	# in hand would throw a huge one); the sun's and the moon's stay.
+	_held.layers = PLAYER_LAYER
 	_arms[0].add_child(_held)
 
 	lantern.top_level = true
@@ -117,7 +122,7 @@ func animate(feet: Vector3, heading: Vector2, speed: float, airborne: bool, delt
 		var pitch := TOOL_REST
 		if strike_phase >= 0.0:
 			pitch = lerpf(TOOL_STROKE.x, TOOL_STROKE.y, strike_phase)
-		_held.transform = ItemLibrary.held_tool(Basis(), TOOL_HAND, pitch, TOOL_SCALE)
+		_held.transform = ItemLibrary.held_tool(Basis(), TOOL_HAND, pitch, TOOL_SCALE, TOOL_ROLL)
 	_body.position.y = absf(sin(_phase)) * _swing * VOXEL * 1.2
 	if is_inside_tree():
 		var above := global_position + Vector3(0, LANTERN_HEIGHT, 0)

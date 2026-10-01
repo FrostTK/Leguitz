@@ -82,7 +82,7 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   time): WorldViewport.dive_frame blends the ortho top-down camera into a perspective one at the
   eye (a 1° perspective from far away opening to 70°), the world root stretch fades to identity
   (`Render3D.root_basis(yaw, pitch, amount)`), the body dithers away (shadow kept), the lantern is
-  carried in hand. No cut, no see-through hole (globals `cut_height`, `see_through_on`); during the
+  carried in the left hand. No cut, no see-through hole (globals `cut_height`, `see_through_on`); during the
   dive the backs of faces vanish (`section_on`) so the camera sees through the rock it crosses.
   In first person: caves always shown, props' detail by distance, haze, split sun shadows, a
   procedural sky, 6 chunks loaded; the mouse is captured (released by the pause menu).
@@ -171,9 +171,12 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   (BlockInteraction._wear_tool: bits of the head and "broke" over the hotbar), the server sends
   the inventory. ItemSlot draws a worn tool's bar (green to red).
   Models lie on the diagonal of a 16x16 grid like block-game icons (ItemModels; flat items' icons
-  face the camera); hands hold them by `ItemModels.TOOL_GRIP` through `ItemLibrary.held_tool` (the
-  body: flat, readable from above, the wrist following `PlayerModel.strike_phase`; first person:
-  bottom right of the view, the body's copy only casts its shadow). F7 (debug) asks the server
+  face the camera); hands hold them by `ItemModels.TOOL_GRIP` through `ItemLibrary.held_tool`,
+  upright and turned about the handle (`roll`; the body: PlayerModel.TOOL_ROLL 45°, readable from
+  the front, a side and the back, the wrist following `PlayerModel.strike_phase`; first person:
+  bottom right of the view, turned to show its depth, the body's copy only casts its shadow).
+  What is in hand is on PlayerModel.PLAYER_LAYER like the body: the lantern (left hand in first
+  person, LANTERN_IN_HAND) throws no shadow of it, the sun and the moon do. F7 (debug) asks the server
   for the next material's tools (Msg.DEBUG_GIVE_TOOLS, announced over the hotbar); the F3 screen
   shows what is aimed at, its breaking time with what is in hand and the tool made for it.
 - The player's book (`Settings.guide_book`, on by default, in the pause menu): a 10th slot set
