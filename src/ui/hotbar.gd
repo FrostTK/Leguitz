@@ -4,7 +4,7 @@ extends VBoxContainer
 ## highlighted, and the player's book in a 10th slot set apart (when
 ## shown: the 9 slots stay centered); the name of what is in hand shows
 ## above for a moment when it changes, and so do short messages
-## (announce).
+## (announce). The player's vitality shows over the slots (vitals).
 
 const NAME_SECONDS := 1.6
 const ANNOUNCE_SECONDS := 2.5
@@ -13,6 +13,8 @@ const BOOK_GAP := 4.0
 
 var inventory: Inventory
 var library: ItemLibrary
+## The vitality gauge over the slots.
+var vitals := VitalsBar.new()
 ## The book's slot shows, and the book is in hand (set by GameClient).
 var book_shown := false
 var book_selected := false
@@ -38,6 +40,7 @@ func _ready() -> void:
 	_name.add_theme_constant_override("shadow_offset_x", 1)
 	_name.add_theme_constant_override("shadow_offset_y", 1)
 	add_child(_name)
+	add_child(vitals)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 1)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE

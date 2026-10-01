@@ -136,14 +136,33 @@ func test_walks_between_trees_but_not_through_trunks() -> void:
 	assert_true(walker.feet.y < whole_tile - 1.0, "only at the trunk, not at the tile's edge")
 
 
-func test_wades_in_water_and_stays_out_of_lava() -> void:
+func test_wades_in_water_and_walks_into_lava() -> void:
 	_extra[Vector3i(1, SEA - 1, 1)] = Voxels.of_ground(Tiles.Ground.WATER)
 	var body := _body_at(1.5)
 	assert_almost(body.height, -ChunkData.WATER_DROP, 0.001, "walks on the water surface")
 	_extra[Vector3i(2, SEA - 1, 1)] = Voxels.of_ground(Tiles.Ground.LAVA)
 	var walker := _body_at(0.5)
 	_walk(walker, 5.0 * TS, 1.0)
-	assert_true(walker.feet.x < 2.0 * TS, "lava blocks the way")
+	assert_true(walker.feet.x > 2.0 * TS, "lava does not stop bodies (it burns them)")
+	_extra.clear()
+
+
+func test_falls_are_measured_from_their_highest_point() -> void:
+	# Off a pillar three levels over the two-level wall (x >= 6).
+	for row in range(SEA + 2, SEA + 5):
+		_extra[Vector3i(10, row, 1)] = Voxels.of_block(Tiles.Block.STONE)
+	var body := _body_at(10.5, 5.0)
+	body.take_fall()
+	_walk(body, 3.0 * TS, 1.2)
+	assert_eq(body.height, 2.0)
+	assert_almost(body.take_fall(), 3.0, 0.05, "three levels down")
+	_extra.clear()
+	assert_eq(body.take_fall(), 0.0, "told once")
+	_walk(body, 0.0, 1.0, true)
+	assert_almost(body.take_fall(), PlayerBody.JUMP_HEIGHT, 0.05, "a jump falls from its top")
+	assert_eq(Vitals.fall_damage(3.0), 0, "three levels are harmless")
+	assert_eq(Vitals.fall_damage(4.0), 1)
+	assert_eq(Vitals.fall_damage(10.5), 7)
 
 
 func test_jumps_onto_furniture_and_stands_on_it() -> void:

@@ -61,6 +61,17 @@ class PlayerSession:
 	var chest := NO_CELL
 	## The furnace the player has open (NO_CELL: none).
 	var furnace := NO_CELL
+	## Vitality (Vitals); 0: passed out, until they get up (Msg.RESPAWN).
+	var health := Vitals.MAX_HEALTH
+	## Seconds left of the immunity after a hurt, since the last hurt, and
+	## in lava (towards the next burn) and getting better (the next point).
+	var immune := 0.0
+	var since_hurt := INF
+	var burning := 0.0
+	var healing := 0.0
+
+	func alive() -> bool:
+		return health > 0
 
 
 class MapJob:
@@ -90,11 +101,12 @@ var items: Dictionary[int, DroppedItem] = {}
 ## Debug commands (moving between caves, world map). Restricted to
 ## creative mode and server operators once those exist.
 var allow_debug_commands := true
+## Draws what breaks drop and where things fly.
+var rng := RandomNumberGenerator.new()
 
 var _sessions: Array[PlayerSession] = []
 var _last_save_msec := -SAVE_REQUEST_MSEC
 var _next_item_id := 1
-var _rng := RandomNumberGenerator.new()
 var _next_player_id := 1
 var _map_jobs: Array[MapJob] = []
 
@@ -158,6 +170,7 @@ static func player_state(session: PlayerSession) -> Dictionary:
 		"height": session.height,
 		"facing": session.facing,
 		"inventory": session.inventory.to_dict(),
+		"health": session.health,
 	}
 
 
@@ -222,6 +235,7 @@ func tick() -> void:
 		_broadcast(Msg.time_state(clock))
 		_broadcast(Msg.weather_state(weather))
 	_update_items(GameConst.TICK_DELTA)
+	Survival.update(self, _sessions, GameConst.TICK_DELTA)
 	if tick_count % FURNACE_TICKS == 0:
 		_update_furnaces(GameConst.TICK_DELTA * FURNACE_TICKS)
 	if tick_count % UNLOAD_CHECK_TICKS == 0:
@@ -271,6 +285,8 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 					_furnace_changed(session.furnace)
 		Msg.SLOT_SPREAD:
 			_on_slot_spread(session, message)
+		Msg.RESPAWN:
+			Survival.get_up(self, session)
 		Msg.OPEN_CHEST:
 			_on_open_chest(session, message)
 		Msg.CHEST_CLICK:
@@ -296,7 +312,7 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 		Msg.INVENTORY_CLOSE:
 			if session.joined:
 				for left in session.inventory.put_back_all():
-					_throw(session, left.x, left.y, left.z)
+					throw_item(session, left.x, left.y, left.z)
 				session.craft_width = Inventory.OWN_GRID
 				session.chest = NO_CELL
 				session.furnace = NO_CELL
@@ -331,6 +347,7 @@ func _on_hello(session: PlayerSession, message: Dictionary) -> void:
 	session.transport.send(Msg.time_state(clock))
 	session.transport.send(Msg.weather_state(weather))
 	session.transport.send(Msg.inventory(session.inventory))
+	session.transport.send(Msg.health(session.health))
 	for dropped: DroppedItem in items.values():
 		session.transport.send(Msg.item_spawn(dropped))
 	# Start generating the whole initial view right away.
@@ -343,6 +360,11 @@ func _on_hello(session: PlayerSession, message: Dictionary) -> void:
 func _place_player(session: PlayerSession) -> void:
 	var saved := storage.load_player(session.player_name) if storage != null else {}
 	session.inventory.load_dict(saved.get("inventory", {}))
+	session.health = clampi(int(saved.get("health", Vitals.MAX_HEALTH)), 0, Vitals.MAX_HEALTH)
+	if session.health == 0:
+		# They left while passed out: they get up at the spawn.
+		session.health = Vitals.MAX_HEALTH
+		saved.erase("position")
 	if saved.has("position") and not spawn_forced:
 		session.position = saved["position"]
 		session.height = saved.get("height", 0.0)
@@ -364,7 +386,7 @@ func _place_player(session: PlayerSession) -> void:
 ## A player broke a voxel: gone if it can be broken and is within reach,
 ## and what stood on it with it. Refused, the player is told what is there.
 func _on_block_break(session: PlayerSession, message: Dictionary) -> void:
-	if not session.joined:
+	if not session.joined or not session.alive():
 		return
 	var cell: Vector3i = message.get("cell", Vector3i.ZERO)
 	var voxel := world.voxel_at(cell)
@@ -414,7 +436,7 @@ func _spill(cell: Vector3i, holder: Inventory, slots: int) -> void:
 	var middle := Vector3(cell.x + 0.5, cell.y - GameConst.SEA_LEVEL + 0.5, cell.z + 0.5)
 	for slot in slots:
 		if holder.items[slot] != Items.Id.NONE:
-			var speed := Vector3(_rng.randf_range(-1.5, 1.5), 3.0, _rng.randf_range(-1.5, 1.5))
+			var speed := Vector3(rng.randf_range(-1.5, 1.5), 3.0, rng.randf_range(-1.5, 1.5))
 			var dropped := spawn_item(holder.items[slot], holder.counts[slot], middle, speed)
 			dropped.wear = holder.wear[slot]
 
@@ -423,8 +445,8 @@ func _spill(cell: Vector3i, holder: Inventory, slots: int) -> void:
 func _drop_from(cell: Vector3i, voxel: int) -> void:
 	var tile := Vector2i(cell.x, cell.z)
 	var middle := Vector3(cell.x + 0.5, cell.y - GameConst.SEA_LEVEL + 0.5, cell.z + 0.5)
-	for drop in Items.drops(voxel, tile, _rng):
-		var speed := Vector3(_rng.randf_range(-1.0, 1.0), 3.0, _rng.randf_range(-1.0, 1.0))
+	for drop in Items.drops(voxel, tile, rng):
+		var speed := Vector3(rng.randf_range(-1.0, 1.0), 3.0, rng.randf_range(-1.0, 1.0))
 		spawn_item(drop.x, drop.y, middle, speed)
 
 
@@ -433,7 +455,7 @@ func _drop_from(cell: Vector3i, voxel: int) -> void:
 ## in nobody's way; it leaves the slot. Refused, the player is told what is
 ## there (and what they hold).
 func _on_block_place(session: PlayerSession, message: Dictionary) -> void:
-	if not session.joined:
+	if not session.joined or not session.alive():
 		return
 	var cell: Vector3i = message.get("cell", Vector3i.ZERO)
 	var slot := clampi(int(message.get("slot", 0)), 0, Inventory.HOTBAR - 1)
@@ -620,20 +642,20 @@ func _on_item_drop(session: PlayerSession, message: Dictionary) -> void:
 	var whole: bool = message.get("whole", false)
 	var count := session.inventory.take(slot, session.inventory.counts[slot] if whole else 1)
 	if count > 0:
-		_throw(session, item, count, worn)
+		throw_item(session, item, count, worn)
 	session.transport.send(Msg.inventory(session.inventory))
 
 
 ## Throws items out in front of a player (`wear`: a tool's).
-func _throw(session: PlayerSession, item: int, count: int, wear := 0) -> void:
+func throw_item(session: PlayerSession, item: int, count: int, wear := 0) -> void:
 	var facing := Vector2(session.facing).normalized()
-	var at := _body_middle(session) + Vector3(facing.x, 0.4, facing.y) * 0.4
+	var at := body_middle(session) + Vector3(facing.x, 0.4, facing.y) * 0.4
 	var speed := Vector3(facing.x * THROW_SPEED.x, THROW_SPEED.y, facing.y * THROW_SPEED.x)
 	spawn_item(item, count, at, speed, DroppedItem.THROWN_DELAY).wear = wear
 
 
 ## The middle of a player's body (local units).
-static func _body_middle(session: PlayerSession) -> Vector3:
+static func body_middle(session: PlayerSession) -> Vector3:
 	var feet := session.position / GameConst.TILE_SIZE
 	return Vector3(feet.x, session.height + PlayerBody.BODY_HEIGHT * 0.5, feet.y)
 
@@ -651,7 +673,7 @@ func _update_items(delta: float) -> void:
 		var moved := false
 		var picker := _picker_for(dropped)
 		if picker != null:
-			var target := _body_middle(picker)
+			var target := body_middle(picker)
 			dropped.position = dropped.position.move_toward(target, ATTRACT_SPEED * delta)
 			dropped.resting = false
 			moved = true
@@ -675,7 +697,11 @@ func _picker_for(dropped: DroppedItem) -> PlayerSession:
 	var best: PlayerSession = null
 	var best_distance := PICKUP_RANGE
 	for session in _sessions:
-		if not session.joined or session.inventory.room_for(dropped.item) <= 0:
+		if (
+			not session.joined
+			or not session.alive()
+			or session.inventory.room_for(dropped.item) <= 0
+		):
 			continue
 		var feet := session.position / GameConst.TILE_SIZE
 		var height := clampf(
@@ -735,7 +761,7 @@ static func _clamp_view_distance(value: Variant) -> int:
 
 
 func _on_player_move(session: PlayerSession, message: Dictionary) -> void:
-	if not session.joined:
+	if not session.joined or not session.alive():
 		return
 	var new_pos: Vector2 = message.get("pos", session.position)
 	if new_pos.distance_to(session.position) > MAX_MOVE_PER_UPDATE:
@@ -744,6 +770,14 @@ func _on_player_move(session: PlayerSession, message: Dictionary) -> void:
 	session.position = new_pos
 	session.facing = message.get("facing", session.facing)
 	session.height = message.get("h", session.height)
+	var fell := float(message.get("fell", 0.0))
+	if fell > 0.0:
+		Survival.landed(self, session, fell)
+
+
+## A player loses vitality (see Survival.hurt).
+func hurt(session: PlayerSession, points: int, cause: int) -> void:
+	Survival.hurt(self, session, points, cause)
 
 
 func _on_set_time(message: Dictionary) -> void:
@@ -784,7 +818,7 @@ func _on_debug_give_tools(session: PlayerSession, message: Dictionary) -> void:
 	var tier := clampi(int(message.get("tier", 0)), 0, Items.Tier.size() - 1)
 	for item in Items.tools_of_tier(tier):
 		if session.inventory.add(item, 1) > 0:
-			_throw(session, item, 1)
+			throw_item(session, item, 1)
 	session.transport.send(Msg.inventory(session.inventory))
 
 

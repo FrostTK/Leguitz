@@ -24,6 +24,8 @@ uniform float glow_strength = 3.0;
 // Dithers the model away (the player's body while the camera dives into
 // its head): 0 = shown, 1 = gone. Its shadow stays.
 uniform float fade = 0.0;
+// Reddens the model (the player hurt): 0 = not at all, 1 = most.
+uniform float hurt = 0.0;
 
 global uniform vec2 weather_wind;
 global uniform float weather_wetness;
@@ -71,6 +73,7 @@ void fragment() {
 		discard;
 	}
 	vec3 albedo = srgb_to_linear(COLOR.rgb) * tint;
+	albedo = mix(albedo, vec3(0.75, 0.04, 0.03), hurt * 0.6);
 	albedo *= 1.0 - wet_darkening * weather_wetness * (1.0 - foliage * 0.5);
 	ALBEDO = albedo;
 	AO = COLOR.a;

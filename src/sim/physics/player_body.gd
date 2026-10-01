@@ -34,6 +34,11 @@ var on_ground := true
 ## the ground there is known (its chunk may still be on its way).
 var needs_landing := true
 
+## The highest point since the body left the ground, and how far it fell
+## from there when it last landed (see take_fall).
+var _fall_peak := 0.0
+var _fallen := 0.0
+
 
 static func jump_speed() -> float:
 	return sqrt(2.0 * GRAVITY * JUMP_HEIGHT)
@@ -55,7 +60,7 @@ static func support(at: Vector2, limit: float, voxel_at: Callable) -> float:
 
 ## The box (world pixels) keeping a body standing at `height` out of a
 ## tile: the whole tile (something solid between its knees, above STEP_UP,
-## and the top of its head, or lava under its feet), the foot of an object
+## and the top of its head), the foot of an object
 ## rising into it (a trunk, a rock, furniture up to its top: ObjectShapes),
 ## or nothing (an empty Rect2). Bodies walk between trees and under their
 ## crowns, and onto furniture once they are as high as its top.
@@ -63,9 +68,6 @@ static func obstacle(tile: Vector2i, height: float, voxel_at: Callable) -> Rect2
 	var low := floori(height + STEP_UP + EPSILON) + GameConst.SEA_LEVEL
 	var high := ceili(height + BODY_HEIGHT - EPSILON) + GameConst.SEA_LEVEL
 	var whole := Rect2(Vector2(tile * GameConst.TILE_SIZE), Vector2.ONE * GameConst.TILE_SIZE)
-	var under: int = voxel_at.call(Vector3i(tile.x, low - 1, tile.y))
-	if Voxels.is_liquid(under) and Voxels.is_solid(under):
-		return whole
 	for row in range(low - MAX_OBJECT_LEVELS, high):
 		var voxel: int = voxel_at.call(Vector3i(tile.x, row, tile.y))
 		if not Voxels.is_solid(voxel):
@@ -127,6 +129,16 @@ func place(at: Vector2, at_height: float) -> void:
 	height = at_height
 	vertical_speed = 0.0
 	needs_landing = true
+	_fall_peak = at_height
+	_fallen = 0.0
+
+
+## How far (levels) the body fell before landing since the last call, from
+## the highest point of its jump or of the edge it walked off.
+func take_fall() -> float:
+	var fallen := _fallen
+	_fallen = 0.0
+	return fallen
 
 
 ## One frame of movement: `motion` on the map (world pixels), `jump` held.
@@ -145,6 +157,8 @@ func step(motion: Vector2, jump: bool, delta: float, voxel_at: Callable) -> void
 	var below := support(feet, height + STEP_UP, voxel_at)
 	if below == -INF:
 		return
+	var was_airborne := not on_ground
+	var start_height := height
 	if on_ground and jump:
 		vertical_speed = jump_speed()
 		on_ground = false
@@ -167,6 +181,10 @@ func step(motion: Vector2, jump: bool, delta: float, voxel_at: Callable) -> void
 	else:
 		# Standing: follow small rises of the ground.
 		height = below
+	if not on_ground:
+		_fall_peak = maxf(_fall_peak if was_airborne else start_height, height)
+	elif was_airborne:
+		_fallen = maxf(_fallen, _fall_peak - height)
 
 
 ## Ghost movement (debug): through everything, onto the highest ground.

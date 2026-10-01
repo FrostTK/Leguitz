@@ -37,6 +37,7 @@ Les questions de goût ou les choix lourds de conséquences sont posés avant de
 |---|---|
 | Concept | Monde ouvert inspiré de **Minecraft** pour la logique (blocs, construction, craft, survie, combat, génération procédurale comme Minecraft) et de **Stardew Valley** pour le visuel (vue de dessus inclinée, pixel art chaleureux). |
 | Rendu | D'abord en 2D, puis **vraie 3D pixel art** (phase 2), puis **full 3D** : le terrain en cubes texturés en pixel art, et **tout le reste en modèles 3D voxel** (1 voxel = 1 pixel du dessin) : joueur, arbres, plantes, rochers… **Tous les futurs objets (items) aussi en 3D voxel.** Viser les meilleurs graphismes possibles. |
+| Style (phase 5 et suite) | **Ne pas s'inspirer du style de Minecraft** : interface, présentation et mots à nous (jauge de vitalité au lieu des cœurs, « Tu as perdu connaissance… »), **monstres originaux** ; la logique de jeu reste à la Minecraft. |
 | Plateformes | PC d'abord (installable, Steam/Epic un jour), puis **iOS et Android**. Graphismes poussés au maximum, en tirant parti de la carte graphique… sans la faire tourner à 100 % pour rien (limite d'images par seconde). |
 | Graphismes | Claude crée tout lui-même, de façon procédurale (aucune ressource externe). |
 | Joueurs | Solo d'abord, avec un code prêt pour le multijoueur (serveur intégré, messages). |
@@ -63,7 +64,7 @@ Les questions de goût ou les choix lourds de conséquences sont posés avant de
 
 ## 3. État actuel : ce qui est fait
 
-Godot **4.7.2** (GDScript), rendu Forward+. 156 tests unitaires, lint propre.
+Godot **4.7.2** (GDScript), rendu Forward+. 161 tests unitaires, lint propre.
 
 | Phase | Contenu | Commits |
 |---|---|---|
@@ -97,7 +98,8 @@ Godot **4.7.2** (GDScript), rendu Forward+. 156 tests unitaires, lint propre.
 | 4.5e Glisser au clic droit | Comme dans Minecraft : avec une pile au curseur, maintenir le clic droit et bouger la souris pose un objet dans chaque case survolée (une fois par case et par glissé ; les cases qui ne l'acceptent pas sont sautées), dans le sac, la barre, la grille de fabrication (inventaire et établi), les coffres et les fours (entrée et combustible) | `2cdbe29` |
 | 4.5f Glisser au clic gauche | Comme dans Minecraft : avec une pile au curseur, maintenir le clic gauche et passer sur des cases répartit la pile à parts égales entre elles (le reste de la division reste en main ; pas plus de cases que d'objets ; les cases qui ne l'acceptent pas sont sautées), l'aperçu se met à jour pendant le glissé et le serveur reçoit la répartition au relâchement (`Inventory.spread`, `Msg.SLOT_SPREAD`) ; appuyer et relâcher sur une seule case reste un clic normal ; mêmes endroits que le glissé au clic droit ; le nom de l'objet survolé se cache pendant un glissé | `bef6cf1` |
 | 4.6 Blocs de construction | Six blocs cubes à poser, textures pixel art de `gen_art.py` : **briques de pierre** (4 pierres → 4), **briques d'ardoise des abîmes** (4 ardoises → 4), **grès taillé** (4 grès → 4), **briques** (4 briques → 1 ; la brique sort du four d'usine à partir de boue), **pierre lisse** (pierre au four d'usine), **verre** (sable ou sable rouge au four d'usine) ; le verre est **transparent** (cadre et reflets opaques, le reste découpé : on voit le sol, les fleurs et les blocs derrière, vue de dessus comme en 1re personne, la lumière passe ; deux vitres collées ne montrent pas de face entre elles), il casse vite ; icônes en cubes (le verre transparent) ; tous à la pioche ; recettes dans le livre ; poser en visant une petite plante la remplace (comme dans Minecraft) | `faa28b1` |
-| 4.7 Tab et E | **Tab** ouvre l'inventaire (et le ferme) ; **E** (B à la manette) utilise le bloc visé : ouvre l'établi, un coffre, un four (E, Tab ou Échap referment) ; le clic droit ne sert plus qu'à poser un bloc (et ouvrir le livre en main) ; le livre nomme les touches comme elles sont réglées (`{use}`, `{inventory}` dans les textes) | « Tab opens the inventory, E uses » |
+| 4.7 Tab et E | **Tab** ouvre l'inventaire (et le ferme) ; **E** (B à la manette) utilise le bloc visé : ouvre l'établi, un coffre, un four (E, Tab ou Échap referment) ; le clic droit ne sert plus qu'à poser un bloc (et ouvrir le livre en main) ; le livre nomme les touches comme elles sont réglées (`{use}`, `{inventory}` dans les textes) | `3edfdb0` |
+| 5.1 Vitalité et dégâts | 20 points de vitalité gardés par le serveur et sauvegardés, une **jauge** à nous au-dessus de la moitié gauche de la barre (cristal de vie, cadre de bois, crans tous les 2 points, la part perdue reste pâle un instant puis fond, la jauge bat quand il reste peu) ; **chutes** : au-delà de 3 niveaux, un point par niveau, mesurées depuis le plus haut du saut, **rien si l'on atterrit dans l'eau** ; **lave** : on peut y entrer (lente), elle brûle 2 points toutes les ½ s ; le corps rougit et les bords de l'écran palpitent en rouge ; la vitalité revient doucement (un point toutes les 4 s après 6 s sans blessure, au rythme du monde) ; à 0, **« Tu as perdu connaissance… »** : le monde s'assombrit, la cause est dite, ce que l'on portait reste sur place, le corps s'allonge, bouton « Se relever » (au point d'apparition) ; rien en mode créatif ; astuce dans le livre | « Vitality » |
 
 **Pas encore fait** (prévu) : survie/combat, créatures, structures, agriculture, menus de départ, sons,
 mode Arcade, mobile.
@@ -233,11 +235,14 @@ But de la phase 5 : survivre et se battre, avec les modes de jeu (section 6). D�
 **à valider avec le propriétaire avant de commencer**, une étape par « go », chacune avec tests,
 captures, commit et retour :
 
-1. **Vie et dégâts** : 10 cœurs côté serveur (sauvegardés), affichés au-dessus de la barre ;
-   dégâts de chute (au-delà de 3 niveaux), de la lave ; rougeur et recul quand on est touché ;
+Il ne faut pas s'inspirer du style de Minecraft
+
+1. ✅ **Vie et dégâts** (voir section 3) : jauge de vitalité à nous (pas de cœurs), 20 points ; recul
+   quand on est touché : avec les premiers coups (monstres, étape 6). Le plan suivi : 10 cœurs côté serveur (sauvegardés), affichés au-dessus de la barre ;
+   dégâts de chute (au-delà de 3 niveaux sauf si le joueur atteris dans l'eau), de la lave ; rougeur et recul quand on est touché ;
    mort (écran « Vous êtes mort », le contenu de l'inventaire tombe au sol) et réapparition au
    point d'apparition.
-2. **Faim et nourriture** : barre de faim qui baisse avec le temps et l'effort (rythme du monde,
+2. **Faim et nourriture** (prochaine étape) : barre de faim qui baisse avec le temps et l'effort (rythme du monde,
    `WorldClock.scale_duration()`), manger en maintenant le clic droit (baies, baies déshydratées,
    ragoût, champignons ; la nourriture carbonisée nourrit mal), la vie remonte rassasié, baisse
    affamé.
@@ -250,10 +255,10 @@ captures, commit et retour :
    entités gérées par le serveur et synchronisées (messages d'entités), errance, fuite quand on
    les frappe, recherche de chemin sur les hauteurs (sauts d'un niveau), ce qu'ils donnent.
 6. **Monstres** : apparition la nuit et dans le noir (selon la lumière), poursuite, attaque,
-   disparition au loin.
+   disparition au loin, il faut être original pour le choix des monstres dans le jeu
 7. **Combat et armures** : épées (6 matériaux, à l'établi), coups au corps à corps avec recul et
    courte invincibilité, arc et flèches, armures (casque, plastron, jambières, bottes) en voxel,
-   qui réduisent les dégâts et s'usent.
+   qui réduisent les dégâts et s'usent
 
 ## 6. Feuille de route détaillée (phases restantes)
 

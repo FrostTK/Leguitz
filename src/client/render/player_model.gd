@@ -154,6 +154,16 @@ func swing() -> void:
 
 ## Dithers the body away (0 = shown, 1 = gone; its shadow stays, and so
 ## does the shadow of what it holds, drawn in first person by the view).
+## Reddens the body (0: not at all; a hurt flashes it).
+func set_hurt(amount: float) -> void:
+	_material.set_shader_parameter("hurt", amount)
+
+
+## Lays the body down on its back (1: passed out, 0: standing).
+func set_down(amount: float) -> void:
+	_body.rotation.x = -PI * 0.5 * amount
+
+
 func set_fade(amount: float) -> void:
 	_material.set_shader_parameter("fade", amount)
 	var shadow := (

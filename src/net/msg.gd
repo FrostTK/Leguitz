@@ -18,6 +18,7 @@ const BLOCK_PLACE := "block_place"
 const SELECT_SLOT := "select_slot"
 const SLOT_CLICK := "slot_click"
 const SLOT_SPREAD := "slot_spread"
+const RESPAWN := "respawn"
 const ITEM_DROP := "item_drop"
 const INVENTORY_CLOSE := "inventory_close"
 const DEBUG_GIVE_TOOLS := "debug_give_tools"
@@ -47,6 +48,8 @@ const ITEM_SPAWN := "item_spawn"
 const ITEM_MOVE := "item_move"
 const ITEM_REMOVE := "item_remove"
 const CHEST := "chest"
+const HEALTH := "health"
+const DIED := "died"
 const FURNACE := "furnace"
 
 
@@ -177,8 +180,32 @@ static func hello(player_name: String, view_distance: int) -> Dictionary:
 
 
 ## `height` is the feet height in levels (jumps, falls).
-static func player_move(position: Vector2, facing: Vector2i, height := 0.0) -> Dictionary:
-	return {"t": PLAYER_MOVE, "pos": position, "facing": facing, "h": height}
+## Where the player is; `fell`: how far they fell (levels) when they landed
+## since the last move (PlayerBody.take_fall; 0: no landing).
+static func player_move(
+	position: Vector2, facing: Vector2i, height := 0.0, fell := 0.0
+) -> Dictionary:
+	var message := {"t": PLAYER_MOVE, "pos": position, "facing": facing, "h": height}
+	if fell > 0.0:
+		message["fell"] = fell
+	return message
+
+
+## The player who passed out gets up again (at the spawn).
+static func respawn() -> Dictionary:
+	return {"t": RESPAWN}
+
+
+## A player's vitality (Vitals): `hurt` when it just went down, and what
+## hurt them (Vitals.Cause).
+static func health(points: int, hurt := false, cause := Vitals.Cause.NONE) -> Dictionary:
+	return {"t": HEALTH, "health": points, "hurt": hurt, "cause": cause}
+
+
+## The player passed out (their vitality ran out), from `cause`
+## (Vitals.Cause); what they carried lies where they fell.
+static func died(cause: int) -> Dictionary:
+	return {"t": DIED, "cause": cause}
 
 
 ## `mode` is a WorldClock.Mode; `value` is day minutes (NORMAL) or the

@@ -95,6 +95,8 @@ var crosshair := Crosshair.new()
 ## Aiming, breaking and placing blocks.
 var interaction := BlockInteraction.new()
 var hotbar := Hotbar.new()
+## The player's vitality: the gauge, hurts, passing out (VitalsView).
+var vitals := VitalsView.new()
 var inventory_screen := InventoryScreen.new()
 ## The player's book, open.
 var book_screen := BookScreen.new()
@@ -163,6 +165,8 @@ func _ready() -> void:
 	_setup_world()
 	interaction.client = self
 	add_child(interaction)
+	vitals.client = self
+	add_child(vitals)
 	item_icons.library = items
 	add_child(item_icons)
 	hotbar.inventory = inventory
@@ -199,6 +203,7 @@ func _ready() -> void:
 	save_notice.anchor = hud_clock
 	_ui_root.add_child(save_notice)
 	_ui_root.add_child(hotbar)
+	_ui_root.add_child(vitals.screen)
 	_ui_root.add_child(debug_overlay)
 	_ui_root.add_child(debug_map)
 	_ui_root.add_child(inventory_screen)
@@ -498,6 +503,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not joined or get_tree().paused:
 		_dragging = false
 		_drag_button = MOUSE_BUTTON_NONE
+		return
+	if vitals.passed_out and not event.is_action_pressed(InputBindings.PAUSE):
 		return
 	if event.is_action_pressed(InputBindings.TOGGLE_VIEW):
 		view_mode.toggle()
@@ -920,6 +927,10 @@ func _handle_message(message: Dictionary) -> void:
 		Msg.BLOCK_CHANGED:
 			interaction.on_block_changed(message["cell"], message["voxel"])
 			_close_if_gone(message["cell"])
+		Msg.HEALTH:
+			vitals.on_health(message["health"], message["hurt"])
+		Msg.DIED:
+			vitals.on_passed_out(message["cause"])
 		Msg.INVENTORY:
 			var selected := inventory.selected
 			inventory.load_dict(message["inventory"])

@@ -115,7 +115,8 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   (trees: the trunk, see ObjectShapes); furniture (workbench, chest, furnaces: ObjectShapes.TOPS,
   the height of their models' tops) blocks up to its top and is stood on once the feet get there
   (PlayerBody.support looks for it under the body's box; dropped items rest on it too); water
-  is walked on for now (swimming comes with survival), lava blocks. No stairs: terrain levels rise
+  and lava are walked on for now (swimming comes later; lava slows and burns, see Vitality).
+  PlayerBody measures falls from their highest point (`take_fall`). No stairs: terrain levels rise
   one at a time so they can be climbed.
 - World generation (`src/sim/world/generation/`): ClimateSampler (5 Minecraft climate noises,
   sampled every 4 tiles by ClimateGrid) -> TerrainShaper (splines, rivers, terrace levels) ->
@@ -260,6 +261,21 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   lava lights) and glowing voxels; a food furnace breaking near the player is announced
   (`furnace_broke`). Recipes: food furnace 8 stones; factory furnace 8 stones around coal or
   charcoal, at the workbench. The book's Furnaces chapter lists what each makes and the fuels.
+- Vitality (`src/sim/survival/`; phase 5 must not copy Minecraft's style: its own HUD, words
+  and monsters): `Vitals` holds the rules (MAX_HEALTH 20 points, falls over FALL_SAFE 3 levels
+  cost a point a level unless the player lands on water, lava burns LAVA_DAMAGE every
+  LAVA_SECONDS real seconds, a short immunity after a hurt, a point back every REGEN_SECONDS
+  once nothing hurt for REGEN_DELAY, both paced by `WorldClock.scale_duration()`). The server
+  keeps PlayerSession.health (saved with the player; 0 = passed out) and runs `Survival`
+  (stateless, given the server): falls reported by the client (Msg.player_move's `fell`, from
+  PlayerBody.take_fall), lava under the feet, healing, `GameServer.hurt` (not in creative mode);
+  at 0 the player passes out: what they carried (bag, cursor, grid) falls where they are, open
+  screens close, their moves and actions are ignored and they pick nothing up until Msg.RESPAWN
+  (back at the spawn, full). Msg.HEALTH (points, hurt, Vitals.Cause), Msg.DIED. Client:
+  VitalsView (the gauge, VitalsBar over the hotbar's left half: a life crystal, a notch every 2
+  points, a pale trail melting after a hurt, throbbing when low; the body reddens, voxel.gdshader
+  `hurt`; DeathScreen pulses the screen's edges, and when passed out darkens the world, says
+  why and offers "Get up"; the body lies down, PlayerModel.set_down).
 - Saves (`src/sim/save/world_storage.gd`, server side only): `user://worlds/<folder>/` holds
   world.cfg (settings, clock, weather), players/<name>.cfg and regions/r.<x>.<z>.bin (the chunks
   players changed, 32x32 per file, zstd voxels; the others are generated again). Change voxels

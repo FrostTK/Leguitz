@@ -40,6 +40,8 @@ var height: float:
 		return body.height
 
 var _send_timer := 0.0
+## How far the body fell, for the next report to the server.
+var _fell := 0.0
 var _last_sent_position := Vector2.INF
 var _last_sent_facing := Vector2i.ZERO
 var _last_sent_height := INF
@@ -89,6 +91,7 @@ func step(delta: float) -> void:
 	speed = before.distance_to(body.feet) / maxf(delta, 0.001) / GameConst.TILE_SIZE
 	if body.on_ground or body.height < view_height:
 		view_height = body.height
+	_fell = maxf(_fell, body.take_fall())
 	_send_timer += delta
 	if _send_timer >= SEND_INTERVAL:
 		_send_timer = 0.0
@@ -116,9 +119,11 @@ func _send_state() -> void:
 		position == _last_sent_position
 		and facing == _last_sent_facing
 		and height == _last_sent_height
+		and _fell == 0.0
 	):
 		return
 	_last_sent_position = position
 	_last_sent_facing = facing
 	_last_sent_height = height
-	transport.send(Msg.player_move(position, facing, height))
+	transport.send(Msg.player_move(position, facing, height, _fell))
+	_fell = 0.0

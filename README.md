@@ -13,9 +13,21 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 
 ![Leguitz : vue par défaut, fin d'après-midi caméra tournée, neige, nuit à la lanterne](docs/screenshots/phase2-3d-jour-nuit.png)
 
-## État actuel : phase 4 (craft) terminée
+## État actuel : phase 5 (survie et combat) en cours
 
-### Phase 4 : craft
+### Phase 5 : survie et combat (en cours)
+
+| Fonction | État |
+|---|---|
+| Vitalité : une jauge au-dessus de la barre ; les chutes de plus de 3 niveaux (sauf dans l'eau) et la lave blessent ; la vitalité revient doucement ; à zéro, on perd connaissance, ses affaires restent sur place et on se relève au point d'apparition | ✅ |
+| Faim et nourriture (manger les baies, le ragoût…) | à venir |
+| Nage et noyade | à venir |
+| Modes de jeu : Créatif, Survie, Hardcore | à venir |
+| Animaux, monstres (originaux), combat et armures | à venir |
+
+![Leguitz : la jauge de vitalité après une chute (la part perdue pâlit, les bords de l'écran rougissent), puis « Tu as perdu connaissance… » après la lave](docs/screenshots/phase5-vitalite.png)
+
+### Phase 4 : craft (terminée)
 
 | Fonction | État |
 |---|---|

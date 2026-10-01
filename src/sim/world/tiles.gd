@@ -143,6 +143,7 @@ const ORES: Array[Block] = [
 const GROUND_SPEED := {
 	Ground.DEEP_WATER: 0.45,
 	Ground.WATER: 0.6,
+	Ground.LAVA: 0.4,
 	Ground.SWAMP_WATER: 0.6,
 	Ground.WARM_WATER: 0.6,
 	Ground.SAND: 0.92,

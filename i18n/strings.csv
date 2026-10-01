@@ -300,3 +300,10 @@ ITEM_CUT_SANDSTONE,Cut sandstone,Grès taillé
 ITEM_GLASS,Glass,Verre
 BOOK_TIP_14,"Build with more than raw stone: bricks of stone, deepslate or sandstone at the inventory grid; glass, smooth stone and bricks from the factory furnace (sand, stone, mud).","Construis avec mieux que de la pierre brute : briques de pierre, d'ardoise ou de grès dans la grille de l'inventaire ; verre, pierre lisse et briques au four d'usine (sable, pierre, boue)."
 BOOK_USE,"Use what you aim at: open a workbench, a chest, a furnace","Utiliser ce qui est visé : ouvrir un établi, un coffre, un four"
+DEATH_TITLE,You passed out…,Tu as perdu connaissance…
+DEATH_CAUSE_NONE,Your strength ran out.,Tes forces t'ont lâché.
+DEATH_CAUSE_FALL,A fall from too high.,Une chute de trop haut.
+DEATH_CAUSE_LAVA,The lava burnt you.,La lave t'a brûlé la peau.
+DEATH_THINGS,What you carried lies where you fell. Hurry back for it!,"Ce que tu portais est resté sur place. Vite, va le reprendre !"
+DEATH_GET_UP,Get up,Se relever
+BOOK_TIP_15,"The red gauge over your items is your vitality: a fall of more than 3 levels (unless into water) or lava wears it down, and it comes back slowly. Empty, you pass out.","La jauge rouge au-dessus de tes objets est ta vitalité : une chute de plus de 3 niveaux (sauf dans l'eau) ou la lave l'usent, elle revient doucement. Vide, tu perds connaissance."
