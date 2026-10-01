@@ -251,6 +251,18 @@ func set_view(row: int, caves: bool) -> void:
 			_mark_pending(coord, false)
 
 
+## A voxel changed (mined, placed): its chunk is built again, and the
+## neighbors whose border it lies on (their faces and surface maps see it).
+func voxel_changed(cell: Vector3i) -> void:
+	var touched := {}
+	for dy in range(-1, 2):
+		for dx in range(-1, 2):
+			touched[Coords.tile_to_chunk(Vector2i(cell.x + dx, cell.z + dy))] = true
+	for coord: Vector2i in touched:
+		if _views.has(coord):
+			_mark_pending(coord, true)
+
+
 ## Re-places the world-space lights after the world root turned.
 func place_lights() -> void:
 	for view: ChunkView3D in _views.values():

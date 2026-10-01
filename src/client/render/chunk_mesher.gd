@@ -300,6 +300,12 @@ static func bed_code(voxel: int, level: int) -> float:
 	return float(((level + 256) * 64 + Voxels.ground_of(voxel)) * 32 + wall)
 
 
+## How an object's model is turned on a tile (quarter turns).
+static func prop_turn(tile: Vector2i) -> Basis:
+	var h := HashUtil.hash2(ObjectShapes.SALT, tile.x, tile.y)
+	return Basis(Vector3.UP, ((h >> 4) & 3) * PI * 0.5)
+
+
 ## Ground texture variant of a tile, as the top shader picks it
 ## (ground_atlas_pos in terrain3d_common.gdshaderinc).
 static func ground_variant(tile: Vector2i) -> int:
@@ -683,7 +689,7 @@ static func _add_prop(
 	# Where it stands and which version: the same as physics (ObjectShapes).
 	var offset := Vector2(ObjectShapes.offset_at(block, tile)) / 16.0
 	var foot := Vector3(lx + 0.5 + offset.x, height, lz + 0.5 + offset.y)
-	var turn := Basis(Vector3.UP, ((h >> 4) & 3) * PI * 0.5)
+	var turn := prop_turn(tile)
 	var shade := 0.93 + ((h >> 16) & 15) / 15.0 * 0.14
 	var warmth := 0.97 + ((h >> 20) & 7) / 7.0 * 0.06
 	var custom := Color(shade * warmth, shade, shade / warmth, ((h >> 24) & 255) / 255.0)

@@ -50,7 +50,7 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Grands arbres détaillés, tous différents (8 versions par espèce, troncs plus ou moins hauts et épais) : troncs penchés sur leurs racines, branches fourchues, feuillage éclairé par le haut, écorce sillonnée et moussue | ✅ |
 | On circule toujours entre les arbres, même en forêt dense : seul le tronc bloque, jamais deux arbres ou rochers côte à côte | ✅ |
 | Sauvegarde du monde et du joueur : toutes les 2 minutes, en ouvrant le menu pause et en quittant ; on reprend là où on était, à la même heure | ✅ |
-| Viser, miner, poser des blocs | à venir |
+| Viser, miner, poser des blocs : clic gauche maintenu pour miner (fissures, éclats, un arbre abattu tombe), clic droit pour poser ; à la souris en vue de dessus, au viseur à la 1re personne, à la manette | ✅ |
 | Objets, inventaire, outils | à venir |
 
 ![Leguitz : le monde en voxels en surface, une grotte vue en coupe, un lac souterrain](docs/screenshots/phase3-voxels-grottes.png)
@@ -60,6 +60,8 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 ![Leguitz : les nouveaux arbres, en forêt vue de dessus, à la 1re personne, et dans plusieurs biomes](docs/screenshots/phase3-arbres.png)
 
 ![Leguitz : l'eau transparente, une rivière à la 1re personne, une mer chaude vue de près et de haut, un marais trouble](docs/screenshots/phase3-eau.png)
+
+![Leguitz : miner un bloc (fissures), un arbre abattu qui tombe, miner sous l'eau à la 1re personne, un bloc posé](docs/screenshots/phase3-miner-poser.png)
 
 ![Biomes de Leguitz (phase 1, carte)](docs/screenshots/phase1-biomes.png)
 

@@ -14,6 +14,9 @@ const UNLOAD_CHECK_TICKS := GameConst.TICKS_PER_SECOND * 2
 ## a player asks (pausing), at most this often.
 const AUTOSAVE_TICKS := GameConst.TICKS_PER_SECOND * 120
 const SAVE_REQUEST_MSEC := 5000
+## Leeway (local units) on the reach of a player breaking or placing (they
+## move while their messages travel).
+const REACH_LEEWAY := 1.5
 ## Max distance (world px) a player may move between two updates before
 ## the server corrects them. Generous: real validation comes with Phase 3.
 const MAX_MOVE_PER_UPDATE := 96.0
@@ -185,6 +188,10 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 			_on_debug_set_weather(session, message)
 		Msg.SET_VIEW_DISTANCE:
 			_on_set_view_distance(session, message)
+		Msg.BLOCK_BREAK:
+			_on_block_break(session, message)
+		Msg.BLOCK_PLACE:
+			_on_block_place(session, message)
 		Msg.SAVE_REQUEST:
 			if session.joined and Time.get_ticks_msec() - _last_save_msec >= SAVE_REQUEST_MSEC:
 				save()
@@ -229,6 +236,69 @@ func _place_player(session: PlayerSession) -> void:
 		return
 	session.position = Coords.tile_to_world_center(spawn_tile) + Vector2(0, 4)
 	session.height = world.surface_height(spawn_tile)
+
+
+## A player broke a voxel: gone if it can be broken and is within reach,
+## and what stood on it with it. Refused, the player is told what is there.
+func _on_block_break(session: PlayerSession, message: Dictionary) -> void:
+	if not session.joined:
+		return
+	var cell: Vector3i = message.get("cell", Vector3i.ZERO)
+	var voxel := world.voxel_at(cell)
+	var near := Mining.reach_to(session.position, session.height, cell)
+	if not Mining.can_break(voxel, cell.y) or near > Mining.REACH + REACH_LEEWAY:
+		session.transport.send(Msg.block_changed(cell, voxel))
+		return
+	change_voxel(cell, Mining.left_after_break(cell, world.voxel_at))
+	var above := cell + Vector3i.UP
+	if Mining.needs_support(world.voxel_at(above)):
+		change_voxel(above, Voxels.AIR)
+
+
+## A player placed a block: kept if it is a block, within reach, against
+## the terrain, into air, water or a small plant, and in nobody's way.
+## Refused, the player is told what is there.
+func _on_block_place(session: PlayerSession, message: Dictionary) -> void:
+	if not session.joined:
+		return
+	var cell: Vector3i = message.get("cell", Vector3i.ZERO)
+	var voxel := int(message.get("voxel", Voxels.AIR))
+	var there := world.voxel_at(cell)
+	var near := Mining.reach_to(session.position, session.height, cell)
+	var ok := (
+		cell.y >= Mining.LOWEST_ROW
+		and cell.y < GameConst.WORLD_HEIGHT
+		and Mining.can_place(voxel)
+		and Mining.is_replaceable(there)
+		and near <= Mining.REACH + REACH_LEEWAY
+		and _against_terrain(cell)
+	)
+	for other in _sessions:
+		if ok and other.joined and Mining.overlaps_body(cell, other.position, other.height):
+			ok = false
+	if not ok:
+		session.transport.send(Msg.block_changed(cell, there))
+		return
+	change_voxel(cell, voxel)
+
+
+## Sets a voxel and tells every player who has its chunk.
+func change_voxel(cell: Vector3i, voxel: int) -> void:
+	world.set_voxel(cell, voxel)
+	var coord := Coords.tile_to_chunk(Vector2i(cell.x, cell.z))
+	for session in _sessions:
+		if session.joined and session.sent_chunks.has(coord):
+			session.transport.send(Msg.block_changed(cell, voxel))
+
+
+## Whether a cell touches the terrain (a block is placed against another).
+func _against_terrain(cell: Vector3i) -> bool:
+	for side: Vector3i in [
+		Vector3i.UP, Vector3i.DOWN, Vector3i.LEFT, Vector3i.RIGHT, Vector3i.FORWARD, Vector3i.BACK
+	]:
+		if Voxels.is_cube(world.voxel_at(cell + side)):
+			return true
+	return false
 
 
 ## The client's view grew or shrank (zoom, window, camera): stream more

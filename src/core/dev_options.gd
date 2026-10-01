@@ -31,6 +31,9 @@ extends RefCounted
 ## --first-person       start in first person (like F5)
 ## --look=PITCH         first-person look pitch in degrees (default -11)
 ## --dive=T             hold the dive into first person at T (0..1)
+## --aim=X,Y            aim at this point (screen units from its center)
+## --mine               hold the break button once the world is ready
+## --place              place a block at what is aimed at, once
 
 var seed_text := ""
 var new_world := false
@@ -60,6 +63,9 @@ var camera_angles := Vector2(0.0, Render3D.DEFAULT_PITCH)
 var first_person := false
 var look_pitch := -11.5
 var dive := -1.0
+var aim := Vector2.INF
+var hold_break := false
+var place_once := false
 
 
 static func parse(args: PackedStringArray) -> DevOptions:
@@ -131,6 +137,14 @@ static func parse(args: PackedStringArray) -> DevOptions:
 				options.look_pitch = value.to_float()
 			"dive":
 				options.dive = clampf(value.to_float(), 0.0, 1.0)
+			"aim":
+				var point := value.split(",")
+				if point.size() == 2:
+					options.aim = Vector2(point[0].to_float(), point[1].to_float())
+			"mine":
+				options.hold_break = true
+			"place":
+				options.place_once = true
 			"camera":
 				var angles := value.split(",")
 				if angles.size() == 2:

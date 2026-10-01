@@ -135,6 +135,9 @@ func _start_dev_actions() -> void:
 	for i in absi(dev.descend):
 		client.transport.send(Msg.debug_move_depth(-signi(dev.descend)))
 	client.local_player.noclip = dev.noclip
+	client.interaction.aim_override = dev.aim
+	client.interaction.breaking = dev.hold_break
+	client.interaction.place_soon = dev.place_once
 	if dev.open_map:
 		client.debug_map.cycle(client.local_player.current_tile(), client.map_row())
 	if dev.open_pause_menu:

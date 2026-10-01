@@ -13,6 +13,8 @@ const MAP_REQUEST := "map_request"
 const DEBUG_SET_WEATHER := "debug_set_weather"
 const SET_VIEW_DISTANCE := "set_view_distance"
 const SAVE_REQUEST := "save_request"
+const BLOCK_BREAK := "block_break"
+const BLOCK_PLACE := "block_place"
 
 ## map_request() row for a map of the surface.
 const MAP_SURFACE := -1
@@ -27,6 +29,23 @@ const PLAYER_TELEPORT := "player_teleport"
 const MAP_DATA := "map_data"
 const WEATHER_STATE := "weather_state"
 const WORLD_SAVED := "world_saved"
+const BLOCK_CHANGED := "block_changed"
+
+
+## The player broke the voxel at `cell` (tile x, row, tile y).
+static func block_break(cell: Vector3i) -> Dictionary:
+	return {"t": BLOCK_BREAK, "cell": cell}
+
+
+## The player placed `voxel` at `cell`.
+static func block_place(cell: Vector3i, voxel: int) -> Dictionary:
+	return {"t": BLOCK_PLACE, "cell": cell, "voxel": voxel}
+
+
+## A voxel is now `voxel` (also the answer to a refused break or place:
+## what is really there).
+static func block_changed(cell: Vector3i, voxel: int) -> Dictionary:
+	return {"t": BLOCK_CHANGED, "cell": cell, "voxel": voxel}
 
 
 ## The player paused: a good time to save the world.

@@ -24,6 +24,8 @@ var lantern := OmniLight3D.new()
 ## Set by the first-person view: the lantern is carried at the eye instead
 ## (world space; INF: above the head as usual).
 var lantern_override := Vector3.INF
+## The right arm strikes again and again (breaking a block).
+var swinging := false
 
 var _body := Node3D.new()
 var _arms: Array[Node3D] = []
@@ -32,6 +34,9 @@ var _yaw := 0.0
 var _phase := 0.0
 var _swing := 0.0
 var _material := ShaderMaterial.new()
+## Phase of the strokes, and how long a single stroke (placing) lasts.
+var _strike := 0.0
+var _strike_left := 0.0
 
 
 func _ready() -> void:
@@ -84,6 +89,10 @@ func animate(feet: Vector3, heading: Vector2, speed: float, airborne: bool, delt
 		if airborne:
 			_legs[i].rotation.x = 0.35 * side
 			_arms[i].rotation.x = -1.1
+	if swinging or _strike_left > 0.0:
+		_strike += delta * 13.0
+		_strike_left -= delta
+		_arms[0].rotation.x = -1.3 + sin(_strike) * 0.7
 	_body.position.y = absf(sin(_phase)) * _swing * VOXEL * 1.2
 	if is_inside_tree():
 		var above := global_position + Vector3(0, LANTERN_HEIGHT, 0)
@@ -92,6 +101,11 @@ func animate(feet: Vector3, heading: Vector2, speed: float, airborne: bool, delt
 		var root := get_parent_node_3d().global_transform
 		RenderingServer.global_shader_parameter_set(&"player_position", root * (feet + CHEST))
 		RenderingServer.global_shader_parameter_set(&"player_feet", root * feet)
+
+
+## One stroke of the right arm (placing a block).
+func swing() -> void:
+	_strike_left = 0.25
 
 
 ## Dithers the body away (0 = shown, 1 = gone; its shadow stays).

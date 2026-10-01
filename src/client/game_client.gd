@@ -37,6 +37,9 @@ const FIRST_PERSON_VIEW_DISTANCE := 6
 ## Where the lantern is carried in first person (right, up, back of the
 ## eye, in its frame).
 const LANTERN_IN_HAND := Vector3(0.35, -0.3, -0.25)
+## A right click moving less than this (screen pixels) places a block; more
+## is a drag turning the camera.
+const CLICK_SLOP := 6.0
 
 var transport: Transport
 var world := ClientWorld.new()
@@ -66,6 +69,8 @@ var hud_clock := HudClock.new()
 var save_notice := SaveNotice.new()
 var pause_menu := PauseMenu.new()
 var crosshair := Crosshair.new()
+## Aiming, breaking and placing blocks.
+var interaction := BlockInteraction.new()
 ## Chooses between the top-down view and first person (caves, F5).
 var view_mode := ViewMode.new()
 ## 0 = top-down view, 1 = first person, in between during the dive.
@@ -86,6 +91,10 @@ var _camera_local := Vector3.ZERO
 ## Camera yaw, pitch and stretch the world root is set for.
 var _root_orbit := Vector3.INF
 var _dragging := false
+## The right button is down: a click places, a drag turns the camera once
+## it moved CLICK_SLOP (how far it moved so far).
+var _right_down := false
+var _right_moved := 0.0
 ## First-person look angles (radians; pitch > 0 looks up).
 var _look_yaw := 0.0
 var _look_pitch := ENTRY_LOOK_PITCH
@@ -99,6 +108,8 @@ func _ready() -> void:
 	local_player.client_world = world
 	world_view.client_world = world
 	_setup_world()
+	interaction.client = self
+	add_child(interaction)
 	hud_clock.clock = clock
 	pause_menu.clock = clock
 	debug_overlay.client = self
@@ -376,6 +387,7 @@ func is_view_complete() -> bool:
 
 func pause() -> void:
 	debug_map.close()
+	interaction.stop()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if joined:
 		transport.send(Msg.save_request())
@@ -393,9 +405,13 @@ func resume() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not joined or get_tree().paused:
 		_dragging = false
+		_right_down = false
 		return
 	if event.is_action_pressed(InputBindings.TOGGLE_VIEW):
 		view_mode.toggle()
+		get_viewport().set_input_as_handled()
+		return
+	if _handle_block_input(event):
 		get_viewport().set_input_as_handled()
 		return
 	var used := _handle_look_input(event) if view_mode.first_person else _handle_camera_input(event)
@@ -423,14 +439,56 @@ func _unhandled_input(event: InputEvent) -> void:
 	get_viewport().set_input_as_handled()
 
 
+## Breaking (left button held, right trigger) and placing (right click,
+## left trigger). Returns true when the event was used.
+func _handle_block_input(event: InputEvent) -> bool:
+	if event is InputEventJoypadButton or event is InputEventJoypadMotion:
+		interaction.pad_aiming = true
+	elif event is InputEventMouseMotion:
+		interaction.pad_aiming = false
+	var button := event as InputEventMouseButton
+	if button != null and button.button_index == MOUSE_BUTTON_LEFT:
+		interaction.breaking = button.pressed
+		interaction.pad_aiming = false
+		return true
+	if button != null and button.button_index == MOUSE_BUTTON_RIGHT and view_mode.first_person:
+		if button.pressed:
+			interaction.place()
+		return true
+	if event.is_action_pressed(InputBindings.BREAK):
+		interaction.breaking = true
+		return true
+	if event.is_action_released(InputBindings.BREAK):
+		interaction.breaking = false
+		return true
+	if event.is_action_pressed(InputBindings.PLACE):
+		interaction.place()
+		return true
+	return false
+
+
 ## Mouse drag (right or middle button) orbits the camera around the
-## player; the wheel and +/- zoom. Returns true when the event was used.
+## player (a right click without dragging places a block); the wheel and
+## +/- zoom. Returns true when the event was used.
 func _handle_camera_input(event: InputEvent) -> bool:
 	var button := event as InputEventMouseButton
-	if button != null and button.button_index in [MOUSE_BUTTON_RIGHT, MOUSE_BUTTON_MIDDLE]:
+	if button != null and button.button_index == MOUSE_BUTTON_RIGHT:
+		if button.pressed:
+			_right_down = true
+			_right_moved = 0.0
+		elif _right_down:
+			_right_down = false
+			if not _dragging:
+				interaction.place()
+			_dragging = false
+		return true
+	if button != null and button.button_index == MOUSE_BUTTON_MIDDLE:
 		_dragging = button.pressed
 		return true
 	var motion := event as InputEventMouseMotion
+	if motion != null and _right_down and not _dragging:
+		_right_moved += motion.screen_relative.length()
+		_dragging = _right_moved > CLICK_SLOP
 	if motion != null and _dragging:
 		var drag := motion.screen_relative
 		# Grab the world: dragging right turns it right, dragging down tilts
@@ -493,6 +551,8 @@ func _handle_message(message: Dictionary) -> void:
 			weather_effects.apply_state(message["weather"])
 		Msg.WORLD_SAVED:
 			save_notice.flash()
+		Msg.BLOCK_CHANGED:
+			interaction.on_block_changed(message["cell"], message["voxel"])
 		var unknown:
 			push_warning("Client: unknown message type %s" % unknown)
 

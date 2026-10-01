@@ -119,6 +119,19 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   Biomes.select -> SurfaceBuilder (surface voxel, filler, vegetation) fill the columns; then
   CaveGenerator carves 3D caves under the terrain (cheese chambers, spaghetti tunnels, lakes, lava,
   ore veins), never closer than a few rows to it. Tune with `tools/render_world_map.gd`.
+- Breaking and placing: rules in `Mining` (sim, shared: reach 5 from the eye, hand breaking
+  times, what can be placed, water filling holes next to it), aiming by `VoxelRay` (DDA in local
+  units; objects are met on their body, trees on their trunk). The client's BlockInteraction aims
+  (top-down: the mouse ray through the ortho camera, taken back to local units by the root's
+  inverse; first person: the crosshair; gamepad: in front of the player), always clamped to the
+  reach sphere, draws the frame (one art pixel thick), cracks, chips and falling trees, and
+  shows each change at once (prediction). Msg.BLOCK_BREAK / BLOCK_PLACE go to the server, which
+  checks reach, what is there, room and support, changes the voxel through WorldState.set_voxel
+  (objects above go with a broken voxel) and sends BLOCK_CHANGED to players having the chunk
+  (also its answer to a refused guess). WorldView3D.voxel_changed rebuilds the chunk and the
+  neighbors whose border the voxel lies on. Left button held breaks, right click places (a right
+  drag still turns the camera), gamepad triggers; placing uses the last block broken until the
+  inventory exists.
 - Saves (`src/sim/save/world_storage.gd`, server side only): `user://worlds/<folder>/` holds
   world.cfg (settings, clock, weather), players/<name>.cfg and regions/r.<x>.<z>.bin (the chunks
   players changed, 32x32 per file, zstd voxels; the others are generated again). Change voxels
