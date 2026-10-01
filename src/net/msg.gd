@@ -12,6 +12,7 @@ const DEBUG_MOVE_DEPTH := "debug_move_depth"
 const MAP_REQUEST := "map_request"
 const DEBUG_SET_WEATHER := "debug_set_weather"
 const SET_VIEW_DISTANCE := "set_view_distance"
+const SAVE_REQUEST := "save_request"
 
 ## map_request() row for a map of the surface.
 const MAP_SURFACE := -1
@@ -25,6 +26,12 @@ const PLAYER_CORRECTION := "player_correction"
 const PLAYER_TELEPORT := "player_teleport"
 const MAP_DATA := "map_data"
 const WEATHER_STATE := "weather_state"
+const WORLD_SAVED := "world_saved"
+
+
+## The player paused: a good time to save the world.
+static func save_request() -> Dictionary:
+	return {"t": SAVE_REQUEST}
 
 
 static func hello(player_name: String, view_distance: int) -> Dictionary:
@@ -79,6 +86,11 @@ static func chunk_data(chunk: ChunkData) -> Dictionary:
 
 static func chunk_unload(coord: Vector2i) -> Dictionary:
 	return {"t": CHUNK_UNLOAD, "coord": coord}
+
+
+## The world was just saved (the client shows it).
+static func world_saved() -> Dictionary:
+	return {"t": WORLD_SAVED}
 
 
 static func time_state(clock: WorldClock) -> Dictionary:

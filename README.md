@@ -49,7 +49,7 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | 1re personne dans les grottes (ou avec F5) : plongée de la caméra, ciel, brume au loin, lanterne à la main | ✅ |
 | Grands arbres détaillés, tous différents (8 versions par espèce, troncs plus ou moins hauts et épais) : troncs penchés sur leurs racines, branches fourchues, feuillage éclairé par le haut, écorce sillonnée et moussue | ✅ |
 | On circule toujours entre les arbres, même en forêt dense : seul le tronc bloque, jamais deux arbres ou rochers côte à côte | ✅ |
-| Sauvegarde du monde et du joueur | à venir |
+| Sauvegarde du monde et du joueur : toutes les 2 minutes, en ouvrant le menu pause et en quittant ; on reprend là où on était, à la même heure | ✅ |
 | Viser, miner, poser des blocs | à venir |
 | Objets, inventaire, outils | à venir |
 
@@ -92,7 +92,7 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Caméra fluide, pixel art net, zoom (+ / -) | ✅ |
 | Horloge du monde : durée de journée 5 à 120 min, synchronisation avec l'appareil, temps figé | ✅ |
 | Rythme de la faim, de la cuisson et des cultures adapté à la durée des journées | ✅ (formule prête, utilisée à partir des phases 4 à 7) |
-| Rattrapage hors-ligne en mode synchronisé (limité à 1 journée) | ✅ (calcul prêt, appliqué avec les sauvegardes) |
+| Rattrapage hors-ligne en mode synchronisé (limité à 1 journée) | ✅ (l'horloge reprend à l'heure de l'appareil ; cultures, fours… rattrapés avec les phases 4 à 7) |
 | Menu pause (temps, langue, zoom), horloge à l'écran, écran de debug (F3) | ✅ |
 | Tests automatiques et compilation Windows / Linux / macOS par GitHub | ✅ |
 

@@ -51,7 +51,7 @@ Les questions de goût ou les choix lourds de conséquences sont posés avant de
 | Eau | **Transparente** : on voit le fond, de moins en moins avec la profondeur (pour voir plus tard les poissons nager, pêcher, admirer la végétation sous-marine), avec une **ondulation du fond** et des reflets dansants. Limpidité par type : eaux chaudes tropicales très claires (~10 blocs), rivières et lacs clairs (~6), océans plus bleus (~4-5), marais troubles (1-2). Lave et glace restent opaques. |
 | Sous terre | **Vue en coupe** : dès qu'il y a un plafond au-dessus du joueur (grotte, galerie, toit), tout ce qui dépasse sa tête est coupé, la roche coupée s'affiche en sombre. |
 | Arbres, plantes | Restent des **modèles voxel détaillés** posés dans une case (pas des troncs en blocs) : miner le pied abattra l'arbre entier. Arbres **grands, épais et tous différents** (8 versions par espèce, troncs de hauteurs et d'épaisseurs variées), **réalistes en restant en pixel art** (1 voxel = 1 pixel : troncs penchés sur racines, branches fourchues, grappes de feuilles éclairées, écorce sillonnée, mousse). **Seul le tronc bloque**, et jamais deux objets solides côte à côte : on passe toujours entre les arbres. |
-| Sauvegardes | **Dès la phase 3** : chunks modifiés + joueur, sauvegarde auto toutes les 2 min et à la fermeture ; un seul monde en attendant l'écran titre. |
+| Sauvegardes | **Dès la phase 3** (fait) : chunks modifiés + joueur, sauvegarde auto toutes les 2 min, en ouvrant le menu pause et à la fermeture (« Monde sauvegardé » s'affiche sous l'horloge) ; un seul monde en attendant l'écran titre. |
 | Contrôles (phase 3) | Clic gauche maintenu = miner, clic droit court = poser, clic droit glissé = tourner la caméra ; **molette = objet en main** (zoom sur Ctrl+molette et +/-), touches 1 à 9 ; manette : gâchettes miner/poser, LB/RB changer d'objet. |
 | Outils avant le craft | **Tout se mine à la main** (lentement, chaque bloc donne quelque chose) ; une touche de debug donne des outils pour tester, en attendant le craft (phase 4). |
 | Chargement | Tout ce qui est visible doit être chargé, même dézoomé au maximum sur l'écran ultra-large du propriétaire (3440×1440, fenêtré). Carte graphique du propriétaire : NVIDIA GeForce RTX 5050 (8 Go). |
@@ -60,7 +60,7 @@ Les questions de goût ou les choix lourds de conséquences sont posés avant de
 
 ## 3. État actuel : ce qui est fait
 
-Godot **4.7.2** (GDScript), rendu Forward+. 89 tests unitaires, lint propre.
+Godot **4.7.2** (GDScript), rendu Forward+. 96 tests unitaires, lint propre.
 
 | Phase | Contenu | Commits |
 |---|---|---|
@@ -76,10 +76,10 @@ Godot **4.7.2** (GDScript), rendu Forward+. 89 tests unitaires, lint propre.
 | 3.1 Monde en voxels | Chunks 16×16×128 (ids : sols < 64, blocs 64+), génération remplissant les colonnes + grottes 3D (salles, tunnels, lacs, lave, filons de minerai), physique 3D (plafonds, objets hauts de 3), maillage sur les cœurs (faces fusionnées, grottes à part), vue en coupe sous terre, Page ↓/↑ = grotte suivante (`--descend=N`), carte de debug en coupe, chargement aussi rapide qu'avant | `493ff38` |
 | 3.1b 1re personne | Automatique dans les grottes (réglage), F5 partout, plongée de la caméra (perspective qui s'ouvre, étirement qui s'efface, corps qui disparaît en tramé, roche traversée transparente), souris capturée, viseur, lanterne à la main, ciel procédural, brume au loin, ombres en cascades, détail des objets selon la distance, plafonds texturés (`--first-person`, `--look`, `--dive`) | « First-person view » |
 | 3.1c Arbres | Arbres procéduraux détaillés (`TreeModels`, 8 espèces × 8 versions de tailles différentes), forêts plus denses ; `ObjectShapes` partagé physique/modèles : seul le tronc bloque (boîtes d'obstacles), objets solides jamais voisins ; feuillages jamais sous 2 niveaux (la caméra à la 1re personne reste sous les couronnes) ; détail des objets : hors de l'écran (ombres seules) toujours simplifiés, en 1re personne selon la distance au joueur, réduit en qualité Bas/Moyen ; F3 affiche le temps GPU et les triangles | `1f26962` |
-| 3.1d Eau transparente | Surface de l'eau à part (shader `water.gdshader` : textures d'écran et de profondeur), fonds et berges sous l'eau maillés et fondus comme la terre ferme, fondu par paliers selon l'épaisseur d'eau traversée, ondulation du fond par pixels entiers, caustiques dans les bas-fonds, écume et vagues conservées ; lacs des grottes aussi | « Clear water » |
+| 3.1d Eau transparente | Surface de l'eau à part (shader `water.gdshader` : textures d'écran et de profondeur), fonds et berges sous l'eau maillés et fondus comme la terre ferme, fondu par paliers selon l'épaisseur d'eau traversée, ondulation du fond par pixels entiers, caustiques dans les bas-fonds, écume et vagues conservées ; lacs des grottes aussi | `7ad0662` |
+| 3.2 Sauvegardes | `WorldStorage` (côté serveur) : `user://worlds/world_1/` = world.cfg (réglages, horloge, météo), players/<nom>.cfg, regions/ (chunks modifiés, 32×32 par fichier, compressés) ; écriture à côté puis échange (copie .bak) ; `WorldState.set_voxel` marque le chunk à sauvegarder, chargé au lieu d'être régénéré ; sauvegarde toutes les 2 min, en pause et en quittant ; joueur remis où il était (jamais dans le sol) ; `--seed` seul = monde jetable jamais sauvegardé, `--new-world`, `--world=NOM` | « World saves » |
 
-**Pas encore fait** (prévu) : le reste de la phase 3 (sauvegardes, miner/poser, objets et
-inventaire, outils), craft, survie/combat, créatures, structures, agriculture, menus de départ, sons,
+**Pas encore fait** (prévu) : le reste de la phase 3 (miner/poser, objets et inventaire, outils), craft, survie/combat, créatures, structures, agriculture, menus de départ, sons,
 mode Arcade, mobile.
 
 ---
@@ -91,7 +91,7 @@ mode Arcade, mobile.
 | Domaine | Fichiers |
 |---|---|
 | Point d'entrée | `src/main.gd` (crée le serveur, le client, options de développement, captures) |
-| Serveur | `src/sim/game_server.gd` (sessions, envoi des chunks, messages, météo, temps) |
+| Serveur | `src/sim/game_server.gd` (sessions, envoi des chunks, messages, météo, temps, sauvegarde), `src/sim/save/world_storage.gd` (fichiers du monde sauvegardé) |
 | Monde | `src/sim/world/` (`voxels.gd` : ids et propriétés des voxels ; `chunk_data.gd` : 16×16×128 voxels, biome et sommet du terrain par colonne ; `world_state.gd` : chunks du serveur, recherche d'un sol pour les déplacements de debug), `generation/` (climat, relief, biomes, surface → colonnes, `cave_generator.gd` : grottes 3D et minerais) |
 | Physique | `src/sim/physics/player_body.gd` (marche, saut, chute, plafonds, parmi les voxels), `tile_collider.gd` (déplacement parmi des boîtes d'obstacles : case entière, tronc, rocher) ; `src/sim/world/object_shapes.gd` (versions des objets, troncs, emprise au sol : partagé avec les modèles) |
 | Messages | `src/net/msg.gd` (tous les échanges client ⇄ serveur) |
@@ -115,7 +115,9 @@ Options de développement (après `--`) : `--seed`, `--spawn=X,Y`, `--time`, `--
 `--screenshot-delay`, `--autowalk=DX,DY`, `--jump`, `--pause-menu`, `--descend=N`, `--noclip`,
 `--map`, `--weather`, `--quality`, `--hd`, `--camera=LACET,INCLINAISON`, `--hide-debug`,
 `--first-person`, `--look=INCLINAISON` (1re personne), `--dive=T` (plongée figée à T entre 0 et 1,
-pour les captures) (voir `src/core/dev_options.gd`).
+pour les captures), `--new-world` (recommencer le monde sauvegardé), `--world=NOM` (un autre monde
+sauvegardé) (voir `src/core/dev_options.gd`). **`--seed` seul joue un monde jetable, jamais
+sauvegardé** : les captures ne touchent jamais au monde du propriétaire.
 
 Lieux utiles avec la graine 42 : rivière `4,-6` ; plaine `-12,21` ; montagnes `76,123` ;
 forêt sombre `-123,261` ; désert `338,-228` ; badlands `474,-232` ; jungle `-334,-498` ;
@@ -123,6 +125,10 @@ taïga enneigée `-219,147` ; champignons `163,347` ; marais `-119,-12` ; océan
 mer chaude `478,276` ; lac souterrain `-1,-4` (`--descend=1`).
 
 ### Sur le PC Windows du propriétaire
+
+Le monde du propriétaire est sauvegardé dans
+`C:\Users\guill\AppData\Roaming\Godot\app_userdata\Leguitz\worlds\world_1\` : ne jamais y
+toucher (pour tester, `--world=essai`, puis effacer ce dossier).
 
 Godot 4.7.2 est dans `C:\Users\guill\godot\` (utiliser la version `_console` pour lire la
 sortie), gdtoolkit/Pillow/numpy sont installés pour `py` (Python 3.14 ; `python` est un autre
@@ -187,17 +193,13 @@ Les décisions sont prises (section 2). Découpage, une étape par « go », cha
 captures, commit et retour du propriétaire :
 
 1. ✅ **Monde en voxels** (voir section 3).
-2. **Sauvegardes** (prochaine étape) : dossier `user://worlds/<nom>/` avec les réglages du monde,
-   l'horloge, le joueur (position, hauteur ; inventaire à l'étape 4) et les chunks modifiés
-   (`ChunkData.modified`, voxels compressés, par régions pour éviter des milliers de fichiers).
-   Le serveur charge un chunk sauvegardé au lieu de le générer ; sauvegarde automatique toutes les
-   2 minutes et à la fermeture. Un seul monde (« Nouveau monde ») tant qu'il n'y a pas d'écran
-   titre ; option de dev pour repartir d'un monde neuf. Tests : aller-retour d'un chunk modifié et
-   du joueur.
-3. **Viser, miner, poser** : rayon depuis la souris dans la vue 3D (caméra orthographique, monde
+2. ✅ **Sauvegardes** (voir section 3). L'inventaire s'ajoutera à l'état du joueur à l'étape 4
+   (`GameServer.player_state`).
+3. **Viser, miner, poser** (prochaine étape) : rayon depuis la souris dans la vue 3D (caméra orthographique, monde
    étiré : repasser en unités locales) parcouru voxel par voxel (DDA) jusqu'au premier bloc ou objet,
    portée ≈ 5 ; à la manette, la case devant le joueur. Contour 3D du bloc visé. Messages
-   `BLOCK_BREAK` / `BLOCK_PLACE` (client → serveur), validés (portée, bloc présent, place libre,
+   `BLOCK_BREAK` / `BLOCK_PLACE` (client → serveur, appliqués par `WorldState.set_voxel` : le chunk
+   est alors sauvegardé), validés (portée, bloc présent, place libre,
    pas dans le joueur), `BLOCK_CHANGED` diffusé ; le client met à jour le chunk et remaille le
    chunk et ses voisins touchés (prédiction locale annulée si le serveur refuse). Miner prend du
    temps (fissures dessinées sur le bloc, petits débris voxel) ; miner le pied d'un arbre l'abat.

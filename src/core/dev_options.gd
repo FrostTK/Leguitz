@@ -3,7 +3,10 @@ extends RefCounted
 ## Developer command-line options, passed after "--":
 ##   godot --path . -- --seed=42 --spawn=100,-40 --time=21.5 --screenshot=shot.png
 ##
-## --seed=TEXT          world seed (number or any text)
+## --seed=TEXT          world seed (number or any text): a throwaway world,
+##                      never saved, or with --new-world the new world's seed
+## --new-world          start the saved world over (the old one is deleted)
+## --world=NAME         play the saved world NAME (folder in user://worlds/)
 ## --spawn=X,Y          spawn tile override
 ## --time=HOURS         start time of day (e.g. 6.5, 21)
 ## --time-mode=MODE     normal | synced | frozen
@@ -30,6 +33,8 @@ extends RefCounted
 ## --dive=T             hold the dive into first person at T (0..1)
 
 var seed_text := ""
+var new_world := false
+var world_folder := WorldStorage.FIRST_WORLD
 var spawn_override := Vector2i.ZERO
 var has_spawn_override := false
 var start_hour := -1.0
@@ -66,6 +71,11 @@ static func parse(args: PackedStringArray) -> DevOptions:
 		match key:
 			"seed":
 				options.seed_text = value
+			"new-world":
+				options.new_world = true
+			"world":
+				if not value.validate_filename().is_empty():
+					options.world_folder = value.validate_filename()
 			"spawn":
 				var xy := value.split(",")
 				if xy.size() == 2:
@@ -126,6 +136,12 @@ static func parse(args: PackedStringArray) -> DevOptions:
 				if angles.size() == 2:
 					options.camera_angles = Vector2(angles[0].to_float(), angles[1].to_float())
 	return options
+
+
+## Whether this run plays the saved world: always, but for a dev seed on
+## its own (screenshots, generation checks), which plays a throwaway one.
+func saves_world() -> bool:
+	return seed_text.is_empty() or new_world
 
 
 ## Applies the time options to a freshly created world clock.

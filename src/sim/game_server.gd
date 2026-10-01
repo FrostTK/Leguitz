@@ -10,6 +10,10 @@ extends RefCounted
 const CHUNKS_SENT_PER_TICK := 16
 const TIME_BROADCAST_TICKS := GameConst.TICKS_PER_SECOND * 5
 const UNLOAD_CHECK_TICKS := GameConst.TICKS_PER_SECOND * 2
+## A saved world saves itself this often (real seconds of play), and when
+## a player asks (pausing), at most this often.
+const AUTOSAVE_TICKS := GameConst.TICKS_PER_SECOND * 120
+const SAVE_REQUEST_MSEC := 5000
 ## Max distance (world px) a player may move between two updates before
 ## the server corrects them. Generous: real validation comes with Phase 3.
 const MAX_MOVE_PER_UPDATE := 96.0
@@ -49,12 +53,17 @@ var weather: Weather
 var world: WorldState
 var generation: ChunkGenerationQueue
 var spawn_tile := Vector2i.ZERO
+## Dev: players start at spawn_tile even where they were saved elsewhere.
+var spawn_forced := false
+## Where the world is saved (null: a throwaway world, see use_storage).
+var storage: WorldStorage
 var tick_count := 0
 ## Debug commands (moving between caves, world map). Restricted to
 ## creative mode and server operators once those exist.
 var allow_debug_commands := true
 
 var _sessions: Array[PlayerSession] = []
+var _last_save_msec := -SAVE_REQUEST_MSEC
 var _next_player_id := 1
 var _map_jobs: Array[MapJob] = []
 
@@ -68,6 +77,43 @@ func _init(world_settings: WorldSettings, world_clock: WorldClock = null, thread
 	generation = ChunkGenerationQueue.new(generator, threaded)
 	spawn_tile = generator.find_spawn_tile()
 	clock.sync_to_device()
+
+
+## Saves the world in `world_storage` from now on. `saved`: what it held
+## (WorldStorage.read_world; the settings and clock were read from it to
+## create this server); a new world is saved right away.
+func use_storage(world_storage: WorldStorage, saved: Dictionary) -> void:
+	storage = world_storage
+	world.storage = world_storage
+	if saved.is_empty():
+		save()
+	else:
+		weather.load_dict(saved.get("weather", {}))
+
+
+## Writes the world to its storage: settings, clock, weather, players and
+## the chunks they changed. False if something could not be written (or
+## the world is not saved).
+func save() -> bool:
+	if storage == null:
+		return false
+	_last_save_msec = Time.get_ticks_msec()
+	world.store_changed()
+	var ok := storage.save_world(settings, clock, weather)
+	for session in _sessions:
+		if session.joined:
+			ok = storage.save_player(session.player_name, player_state(session)) and ok
+	ok = storage.flush() and ok
+	if ok:
+		_broadcast(Msg.world_saved())
+	else:
+		push_warning("The world could not be saved in %s" % storage.folder)
+	return ok
+
+
+## What is saved of a player.
+static func player_state(session: PlayerSession) -> Dictionary:
+	return {"position": session.position, "height": session.height, "facing": session.facing}
 
 
 ## Waits for background work; call before quitting.
@@ -119,6 +165,8 @@ func tick() -> void:
 		_broadcast(Msg.weather_state(weather))
 	if tick_count % UNLOAD_CHECK_TICKS == 0:
 		_unload_unused_chunks()
+	if storage != null and tick_count % AUTOSAVE_TICKS == 0:
+		save()
 
 
 func _handle_message(session: PlayerSession, message: Dictionary) -> void:
@@ -137,6 +185,9 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 			_on_debug_set_weather(session, message)
 		Msg.SET_VIEW_DISTANCE:
 			_on_set_view_distance(session, message)
+		Msg.SAVE_REQUEST:
+			if session.joined and Time.get_ticks_msec() - _last_save_msec >= SAVE_REQUEST_MSEC:
+				save()
 		var unknown:
 			push_warning("Server: unknown message type %s" % unknown)
 
@@ -150,8 +201,7 @@ func _on_hello(session: PlayerSession, message: Dictionary) -> void:
 	session.view_distance = _clamp_view_distance(
 		message.get("view_distance", GameConst.DEFAULT_VIEW_DISTANCE)
 	)
-	session.position = Coords.tile_to_world_center(spawn_tile) + Vector2(0, 4)
-	session.height = world.surface_height(spawn_tile)
+	_place_player(session)
 	session.joined = true
 	session.transport.send(
 		Msg.welcome(session.id, session.position, session.height, settings.to_dict())
@@ -162,6 +212,23 @@ func _on_hello(session: PlayerSession, message: Dictionary) -> void:
 	_stream_chunks(session, CHUNKS_SENT_PER_TICK)
 	_collect_generated()
 	_stream_chunks(session, CHUNKS_SENT_PER_TICK)
+
+
+## Where a joining player starts: where they were saved, or at the spawn.
+func _place_player(session: PlayerSession) -> void:
+	var saved := storage.load_player(session.player_name) if storage != null else {}
+	if saved.has("position") and not spawn_forced:
+		session.position = saved["position"]
+		session.height = saved.get("height", 0.0)
+		session.facing = saved.get("facing", Vector2i.DOWN)
+		# Never inside the ground (the world may have changed since).
+		var tile := Coords.world_to_tile(session.position)
+		var row := floori(session.height + 0.01) + GameConst.SEA_LEVEL
+		if Voxels.is_solid(world.voxel_at(Vector3i(tile.x, row, tile.y))):
+			session.height = world.surface_height(tile)
+		return
+	session.position = Coords.tile_to_world_center(spawn_tile) + Vector2(0, 4)
+	session.height = world.surface_height(spawn_tile)
 
 
 ## The client's view grew or shrank (zoom, window, camera): stream more
@@ -287,7 +354,7 @@ func _stream_chunks(session: PlayerSession, budget: int) -> void:
 	)
 	var sent := 0
 	for coord in missing:
-		if world.has_chunk(coord):
+		if world.has_chunk(coord) or world.load_saved(coord):
 			if sent >= budget:
 				continue
 			session.sent_chunks[coord] = true

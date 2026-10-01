@@ -1,7 +1,9 @@
 extends Node
-## Entry point. Phase 0 starts a solo world directly: it creates the
-## integrated server, connects the client through a local transport and
-## drives the fixed 20 TPS simulation. (Title menu and saves: Phase 8.)
+## Entry point. Until the title screen, it plays one solo world directly:
+## the saved one (created and saved on first launch), or a throwaway world
+## for a dev seed (see DevOptions.saves_world). It creates the integrated
+## server, connects the client through a local transport, drives the fixed
+## 20 TPS simulation and saves the world when the game closes.
 
 const GAME_CLIENT_SCENE := preload("res://scenes/game_client.tscn")
 ## Never run more than this many ticks in one frame (avoids a death spiral
@@ -24,12 +26,27 @@ func _ready() -> void:
 	dev = DevOptions.parse(OS.get_cmdline_user_args())
 	_apply_dev_preferences()
 
-	var settings := WorldSettings.create(tr("WORLD_DEFAULT_NAME"), dev.seed_text, dev.game_mode)
+	var storage: WorldStorage = null
+	var saved := {}
+	if dev.saves_world():
+		storage = WorldStorage.of_world(dev.world_folder)
+		if dev.new_world:
+			storage.erase()
+		saved = storage.read_world()
+	var settings := WorldSettings.new()
 	var clock := WorldClock.new()
+	if saved.is_empty():
+		settings = WorldSettings.create(tr("WORLD_DEFAULT_NAME"), dev.seed_text, dev.game_mode)
+	else:
+		settings.load_dict(saved["settings"])
+		clock.load_dict(saved["clock"])
 	dev.apply_to_clock(clock)
 	server = GameServer.new(settings, clock)
 	if dev.has_spawn_override:
 		server.spawn_tile = dev.spawn_override
+		server.spawn_forced = true
+	if storage != null:
+		server.use_storage(storage, saved)
 	if dev.weather >= 0:
 		server.weather.set_kind(dev.weather as Weather.Kind, clock)
 
@@ -157,3 +174,4 @@ func _quit() -> void:
 func _exit_tree() -> void:
 	# Let worker threads finish before the engine shuts down.
 	server.shutdown()
+	server.save()

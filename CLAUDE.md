@@ -119,6 +119,15 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   Biomes.select -> SurfaceBuilder (surface voxel, filler, vegetation) fill the columns; then
   CaveGenerator carves 3D caves under the terrain (cheese chambers, spaghetti tunnels, lakes, lava,
   ore veins), never closer than a few rows to it. Tune with `tools/render_world_map.gd`.
+- Saves (`src/sim/save/world_storage.gd`, server side only): `user://worlds/<folder>/` holds
+  world.cfg (settings, clock, weather), players/<name>.cfg and regions/r.<x>.<z>.bin (the chunks
+  players changed, 32x32 per file, zstd voxels; the others are generated again). Change voxels
+  through WorldState.set_voxel: the chunk is then saved, and loaded instead of generated (also
+  after being unloaded). Files are written aside then swapped in (a .bak survives a save cut
+  short). The server saves every 2 min of play, when the player pauses (Msg.save_request) and
+  on quit. A dev `--seed` alone plays a throwaway world that is never saved (screenshots never
+  touch the owner's world); `--new-world` starts the saved world over, `--world=NAME` picks
+  another one.
 - generate_chunk() must stay thread-safe (read-only shared state): the server runs it on the
   WorkerThreadPool via ChunkGenerationQueue. Tests use `GameServer.new(settings, null, false)`.
 - GDScript on worker threads: plain GDScript scales over the cores, but calls on native objects

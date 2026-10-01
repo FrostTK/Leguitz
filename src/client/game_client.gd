@@ -63,6 +63,7 @@ var environment := Environment.new()
 var debug_overlay := DebugOverlay.new()
 var debug_map := DebugMap.new()
 var hud_clock := HudClock.new()
+var save_notice := SaveNotice.new()
 var pause_menu := PauseMenu.new()
 var crosshair := Crosshair.new()
 ## Chooses between the top-down view and first person (caves, F5).
@@ -109,6 +110,8 @@ func _ready() -> void:
 	_ui_root.add_child(_loading_label)
 	_ui_root.add_child(crosshair)
 	_ui_root.add_child(hud_clock)
+	save_notice.anchor = hud_clock
+	_ui_root.add_child(save_notice)
 	_ui_root.add_child(debug_overlay)
 	_ui_root.add_child(debug_map)
 	_ui_root.add_child(pause_menu)
@@ -374,6 +377,8 @@ func is_view_complete() -> bool:
 func pause() -> void:
 	debug_map.close()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	if joined:
+		transport.send(Msg.save_request())
 	get_tree().paused = true
 	world_viewport.set_paused(true)
 	pause_menu.open()
@@ -486,6 +491,8 @@ func _handle_message(message: Dictionary) -> void:
 			debug_map.show_map(message["png"], message["scale"])
 		Msg.WEATHER_STATE:
 			weather_effects.apply_state(message["weather"])
+		Msg.WORLD_SAVED:
+			save_notice.flash()
 		var unknown:
 			push_warning("Client: unknown message type %s" % unknown)
 

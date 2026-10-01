@@ -1,26 +1,65 @@
 class_name WorldState
 extends RefCounted
 ## Authoritative world content: the chunks currently loaded on the server,
-## keyed by chunk coordinate.
+## keyed by chunk coordinate. Chunks players changed come from the world's
+## storage (when it has one) instead of being generated again.
 
 ## Clear rows a body needs above the voxel it stands on.
 const HEADROOM := 2
 
 var generator: WorldGenerator
 var chunks: Dictionary[Vector2i, ChunkData] = {}
+## Where changed chunks are saved (null: a throwaway world, they stay in
+## memory).
+var storage: WorldStorage
+
+## Chunks changed since they were last handed to the storage.
+var _changed: Dictionary[Vector2i, bool] = {}
 
 
 func _init(world_generator: WorldGenerator) -> void:
 	generator = world_generator
 
 
-## Synchronous access (generates on the calling thread if needed).
+## Synchronous access (loads or generates on the calling thread if needed).
 func get_or_create_chunk(coord: Vector2i) -> ChunkData:
 	var chunk: ChunkData = chunks.get(coord)
+	if chunk == null and load_saved(coord):
+		chunk = chunks[coord]
 	if chunk == null:
 		chunk = generator.generate_chunk(coord)
 		chunks[coord] = chunk
 	return chunk
+
+
+## Loads a chunk players changed from the storage. False if it was never
+## saved (it is generated instead).
+func load_saved(coord: Vector2i) -> bool:
+	if storage == null or not storage.has_chunk(coord):
+		return false
+	chunks[coord] = storage.load_chunk(coord)
+	return true
+
+
+## Changes a voxel (players mining, building...): its chunk is saved with
+## the world from now on, instead of being generated again.
+func set_voxel(cell: Vector3i, voxel: int) -> void:
+	var tile := Vector2i(cell.x, cell.z)
+	var chunk := get_or_create_chunk(Coords.tile_to_chunk(tile))
+	var local := Coords.tile_to_local(tile)
+	chunk.set_voxel(Vector3i(local.x, cell.y, local.y), voxel)
+	chunk.modified = true
+	_changed[chunk.coord] = true
+
+
+## Hands the chunks changed since the last call to the storage.
+func store_changed() -> void:
+	if storage == null:
+		return
+	for coord: Vector2i in _changed:
+		if chunks.has(coord):
+			storage.store_chunk(chunks[coord])
+	_changed.clear()
 
 
 func store(chunk: ChunkData) -> void:
@@ -97,9 +136,16 @@ func find_floor(around: Vector2i, height: float, direction: int, radius := 24) -
 	return []
 
 
-## Drops unmodified chunks that no player needs. Modified chunks stay in
-## memory until persistence exists.
+## Drops the chunks no player needs. Changed ones go to the storage first;
+## without one (a throwaway world) they stay in memory.
 func unload_unused(needed: Dictionary) -> void:
 	for coord: Vector2i in chunks.keys():
-		if not needed.has(coord) and not chunks[coord].modified:
-			chunks.erase(coord)
+		if needed.has(coord):
+			continue
+		if chunks[coord].modified:
+			if storage == null:
+				continue
+			if _changed.has(coord):
+				storage.store_chunk(chunks[coord])
+				_changed.erase(coord)
+		chunks.erase(coord)

@@ -1,13 +1,14 @@
 keys,en,fr
 GAME_TITLE,Leguitz,Leguitz
 WORLD_DEFAULT_NAME,New world,Nouveau monde
+HUD_SAVED,World saved,Monde sauvegardé
 LOADING_WORLD,Generating the world...,Génération du monde...
 GAME_MODE_CREATIVE,Creative,Créatif
 GAME_MODE_SURVIVAL,Survival,Survie
 GAME_MODE_HARDCORE,Hardcore,Hardcore
 MENU_PAUSE_TITLE,Paused,Pause
 MENU_RESUME,Resume,Reprendre
-MENU_QUIT,Quit game,Quitter le jeu
+MENU_QUIT,Save and quit,Sauvegarder et quitter
 MENU_WORLD_SETTINGS,World,Monde
 MENU_GAME_SETTINGS,Settings,Paramètres
 SETTING_TIME_MODE,Time,Temps
