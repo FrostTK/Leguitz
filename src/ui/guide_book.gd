@@ -190,6 +190,7 @@ static func _survival() -> Array:
 		_title(CHAPTERS[6]),
 		_text("BOOK_SURVIVAL_VITALITY"),
 		_text("BOOK_SURVIVAL_FOOD"),
+		_text("BOOK_SURVIVAL_WATER"),
 		_heading("BOOK_SURVIVAL_FOODS"),
 	]
 	var foods := Items.FOOD.keys()
@@ -239,5 +240,6 @@ static func _t(key: String) -> String:
 		"use": " / ".join(InputNames.keys(InputBindings.USE)),
 		"inventory": " / ".join(InputNames.keys(InputBindings.INVENTORY)),
 		"place": String(TranslationServer.translate("MOUSE_RIGHT")).to_lower(),
+		"jump": " / ".join(InputNames.keys(InputBindings.JUMP)),
 	}
 	return text.format(keys)

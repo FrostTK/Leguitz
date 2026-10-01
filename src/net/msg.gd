@@ -197,10 +197,12 @@ static func respawn() -> Dictionary:
 	return {"t": RESPAWN}
 
 
-## A player's vitality and satiety (Vitals): `hurt` when vitality just
-## went down, and what hurt them (Vitals.Cause).
-static func vitals(health: int, food: int, hurt := false, cause := Vitals.Cause.NONE) -> Dictionary:
-	return {"t": VITALS, "health": health, "food": food, "hurt": hurt, "cause": cause}
+## A player's vitality, satiety and air (Vitals): `hurt` when vitality
+## just went down, and what hurt them (Vitals.Cause).
+static func vitals(
+	health: int, food: int, hurt := false, cause := Vitals.Cause.NONE, air := Vitals.MAX_AIR
+) -> Dictionary:
+	return {"t": VITALS, "health": health, "food": food, "hurt": hurt, "cause": cause, "air": air}
 
 
 ## The player ate one of what hotbar slot `slot` holds (after holding the

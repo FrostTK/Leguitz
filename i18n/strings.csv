@@ -317,3 +317,5 @@ BOOK_SURVIVAL_FOODS,What feeds you,Ce qui nourrit
 BOOK_SURVIVAL_FEEDS,%s: +%d,%s : +%d
 BOOK_SURVIVAL_SICK,(makes you sick raw),(rend malade cru)
 BOOK_SURVIVAL_COOK,Cook in the food furnace: dried berries and stew feed far better than raw food.,Cuisine au four alimentaire : les baies déshydratées et le ragoût nourrissent bien mieux que la nourriture crue.
+DEATH_CAUSE_DROWNING,You ran out of air.,Tu as manqué d'air.
+BOOK_SURVIVAL_WATER,"In water you sink slowly: hold {jump} to swim up and float. Against a bank, {jump} leaps out. Under water, the blue gauge is your breath: when it runs out, you drown. Water breaks any fall.","Dans l'eau, tu coules doucement : maintiens {jump} pour remonter et flotter. Contre une berge, {jump} te fait bondir dehors. Sous l'eau, la jauge bleue est ton souffle : quand elle est vide, tu te noies. L'eau amortit toutes les chutes."

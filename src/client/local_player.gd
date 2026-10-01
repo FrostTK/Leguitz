@@ -4,8 +4,11 @@ extends RefCounted
 ## (instant response) and reported to the server, which may correct it.
 ## Logic only: PlayerModel draws it.
 
-## Walking speed in tiles per second (Stardew-like pace).
+## Walking speed in tiles per second (Stardew-like pace); in water and in
+## lava, so much slower.
 const WALK_SPEED := 5.0 * GameConst.TILE_SIZE
+const WATER_SPEED := 0.6
+const LAVA_SPEED := 0.4
 const SPRINT_MULTIPLIER := 1.45
 ## Debug "ghost" mode: flies through everything (creative flight later).
 const NOCLIP_MULTIPLIER := 2.5
@@ -82,6 +85,9 @@ func step(delta: float) -> void:
 		var speed := WALK_SPEED * Tiles.ground_speed(ground)
 		if can_sprint and Input.is_action_pressed(InputBindings.SPRINT):
 			speed *= SPRINT_MULTIPLIER
+		if body.in_liquid:
+			var lava := Voxels.ground_of(body.liquid) == Tiles.Ground.LAVA
+			speed *= LAVA_SPEED if lava else WATER_SPEED
 		# Cap the step so a frame hitch never tunnels through a tile.
 		motion = input * speed * minf(delta, 0.1)
 	var before := body.feet
@@ -91,7 +97,7 @@ func step(delta: float) -> void:
 		var jump := controls_enabled and Input.is_action_pressed(InputBindings.JUMP)
 		body.step(motion, jump, minf(delta, 0.1), client_world.voxel_at)
 	speed = before.distance_to(body.feet) / maxf(delta, 0.001) / GameConst.TILE_SIZE
-	if body.on_ground or body.height < view_height:
+	if body.on_ground or body.in_liquid or body.height < view_height:
 		view_height = body.height
 	_fell = maxf(_fell, body.take_fall())
 	_send_timer += delta

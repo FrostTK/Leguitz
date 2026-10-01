@@ -18,11 +18,12 @@ func _server(mode := WorldSettings.GameMode.SURVIVAL) -> Array:
 	return [server, client, server.first_session()]
 
 
-## The voxel under a player's feet becomes `ground`.
-func _under(server: GameServer, session: GameServer.PlayerSession, ground: int) -> void:
+## A player stands in `ground` (water, lava) `rows` deep from their feet.
+func _bathe(server: GameServer, session: GameServer.PlayerSession, ground: int, rows := 1) -> void:
 	var tile := Coords.world_to_tile(session.position)
-	var row := floori(session.height + 0.01) + SEA - 1
-	server.world.set_voxel(Vector3i(tile.x, row, tile.y), Voxels.of_ground(ground))
+	var row := floori(session.height + 0.01) + SEA
+	for i in rows:
+		server.world.set_voxel(Vector3i(tile.x, row + i, tile.y), Voxels.of_ground(ground))
 
 
 func _fall(client: LocalTransport, session: GameServer.PlayerSession, levels: float) -> void:
@@ -55,7 +56,7 @@ func test_falls_hurt_unless_into_water() -> void:
 	assert_true(told[0]["hurt"])
 	assert_eq(told[0]["cause"], Vitals.Cause.FALL)
 	_ticks(server, 0.5)
-	_under(server, session, Tiles.Ground.WATER)
+	_bathe(server, session, Tiles.Ground.WATER)
 	_fall(client, session, 12.0)
 	server.process_messages()
 	assert_eq(session.health, Vitals.MAX_HEALTH - 2, "into water: nothing")
@@ -73,7 +74,7 @@ func test_lava_burns_until_the_player_passes_out_and_gets_up() -> void:
 	session.inventory.add(Items.Id.DIAMOND, 3)
 	session.inventory.add(Items.Id.IRON_PICKAXE, 1, 40)
 	var spot := session.position
-	_under(server, session, Tiles.Ground.LAVA)
+	_bathe(server, session, Tiles.Ground.LAVA)
 	_ticks(server, 2.0)
 	assert_true(session.health <= Vitals.MAX_HEALTH - 6, "burnt: %d" % session.health)
 	assert_true(session.health >= Vitals.MAX_HEALTH - 10)
@@ -199,3 +200,25 @@ func test_healing_needs_food_and_starving_hurts() -> void:
 	var creative := _server(WorldSettings.GameMode.CREATIVE)
 	_ticks(creative[0], Vitals.FOOD_SECONDS * 2.0)
 	assert_eq(creative[2].food, Vitals.MAX_FOOD, "never hungry in creative mode")
+
+
+func test_under_water_the_air_runs_out_and_the_player_drowns() -> void:
+	var made := _server()
+	var server: GameServer = made[0]
+	var client: LocalTransport = made[1]
+	var session: GameServer.PlayerSession = made[2]
+	_bathe(server, session, Tiles.Ground.WATER, 3)
+	_ticks(server, Vitals.MAX_AIR * 0.5)
+	assert_almost(session.air, Vitals.MAX_AIR * 0.5, 0.1, "the air goes")
+	var told := _said(client, Msg.VITALS)
+	assert_true(told.size() >= 10, "the player sees it go: %d" % told.size())
+	assert_eq(session.health, Vitals.MAX_HEALTH)
+	_ticks(server, Vitals.MAX_AIR * 0.5 + Vitals.DROWN_SECONDS * 2.0 + 0.1)
+	assert_eq(session.air, 0.0)
+	assert_eq(session.health, Vitals.MAX_HEALTH - Vitals.DROWN_DAMAGE * 2, "drowning")
+	var hurts := _said(client, Msg.VITALS).filter(func(m: Dictionary) -> bool: return m["hurt"])
+	assert_eq(hurts[-1]["cause"], Vitals.Cause.DROWNING)
+	_bathe(server, session, Tiles.Ground.NONE, 3)
+	_ticks(server, Vitals.MAX_AIR / Vitals.AIR_REFILL + 0.2)
+	assert_eq(session.air, Vitals.MAX_AIR, "out of the water: breathing again")
+	assert_eq(_said(client, Msg.VITALS)[-1]["air"], Vitals.MAX_AIR, "told when full")

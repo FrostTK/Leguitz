@@ -132,6 +132,8 @@ var covered := false
 ## True deep enough under the rock for caves' light and silence.
 var underground := false
 var _loading_label := Label.new()
+## The feet were in water or lava last frame (a splash when they go in).
+var _was_in_liquid := false
 ## During a left drag: the slots as they were before it (this inventory,
 ## the chest's, the furnace's), each new share shown from there; empty
 ## when no drag is going on.
@@ -206,6 +208,7 @@ func _ready() -> void:
 	_ui_root.add_child(hud_clock)
 	save_notice.anchor = hud_clock
 	_ui_root.add_child(save_notice)
+	_ui_root.add_child(vitals.veil)
 	_ui_root.add_child(hotbar)
 	_ui_root.add_child(vitals.screen)
 	_ui_root.add_child(debug_overlay)
@@ -412,6 +415,10 @@ func _update_view(delta: float) -> void:
 		not local_player.body.on_ground,
 		delta
 	)
+	player_model.swimming = local_player.body.in_liquid and not local_player.body.on_ground
+	if local_player.body.in_liquid and not _was_in_liquid:
+		interaction.splash(Voxels.ground_of(local_player.body.liquid) == Tiles.Ground.LAVA)
+	_was_in_liquid = local_player.body.in_liquid
 	# The camera follows the ground the player stands on (not each jump).
 	var focus := Render3D.world_px_to_local(feet, local_player.view_height)
 	focus += CAMERA_TARGET_OFFSET
@@ -953,7 +960,7 @@ func _handle_message(message: Dictionary) -> void:
 			interaction.on_block_changed(message["cell"], message["voxel"])
 			_close_if_gone(message["cell"])
 		Msg.VITALS:
-			vitals.on_vitals(message["health"], message["food"], message["hurt"])
+			vitals.on_vitals(message["health"], message["food"], message["hurt"], message["air"])
 		Msg.DIED:
 			vitals.on_passed_out(message["cause"])
 		Msg.INVENTORY:

@@ -80,5 +80,10 @@ func is_covered(tile: Vector2i, height: float) -> bool:
 	var chunk := chunk_at(tile)
 	if chunk == null:
 		return false
-	var top := chunk.top_row(Coords.tile_to_local(tile)) - GameConst.SEA_LEVEL
-	return top > height + COVER_ABOVE
+	var local := Coords.tile_to_local(tile)
+	var row := chunk.top_row(local) - 1
+	var feet_row := floori(height) + GameConst.SEA_LEVEL
+	# Water and lava over the head are no roof: the first cube over them is.
+	while row > feet_row and Voxels.is_liquid(chunk.get_voxel(Vector3i(local.x, row, local.y))):
+		row -= 1
+	return row + 1 - GameConst.SEA_LEVEL > height + COVER_ABOVE

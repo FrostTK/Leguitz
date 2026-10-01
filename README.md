@@ -21,9 +21,11 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 |---|---|
 | Vitalité : une jauge au-dessus de la barre ; les chutes de plus de 3 niveaux (sauf dans l'eau) et la lave blessent ; la vitalité revient doucement ; à zéro, on perd connaissance, ses affaires restent sur place et on se relève au point d'apparition | ✅ |
 | Faim et nourriture : une jauge de satiété qui baisse avec le temps, la marche et le minage ; manger en maintenant le clic droit (le ragoût et les baies déshydratées nourrissent bien mieux que le cru ; le champignon rouge cru rend malade) ; la vitalité ne revient que bien nourri, la faim l'use ; chapitre « Survie » du livre | ✅ |
-| Nage et noyade | à venir |
+| Nage et noyade : on coule, on remonte et on flotte en maintenant Saut, on bondit hors de l'eau contre une berge ; une jauge de souffle sous l'eau, puis on se noie ; l'eau amortit les chutes | ✅ |
 | Modes de jeu : Créatif, Survie, Hardcore | à venir |
 | Animaux, monstres (originaux), combat et armures | à venir |
+
+![Leguitz : sous l'eau vue de dessus (la jauge de souffle apparaît), flottant à la surface, sous l'eau en 1re personne](docs/screenshots/phase5-nage.png)
 
 ![Leguitz : la jauge de vitalité après une chute (la part perdue pâlit, les bords de l'écran rougissent), puis « Tu as perdu connaissance… » après la lave](docs/screenshots/phase5-vitalite.png)
 
@@ -160,6 +162,7 @@ du projet, puis appuyer sur F5.
 | Se déplacer | ZQSD (AZERTY) / WASD (QWERTY), flèches | Stick gauche, croix |
 | Courir | Maj | Clic du stick gauche |
 | Sauter (1 bloc de haut) | Espace | A |
+| Nager vers le haut (maintenir), sortir de l'eau contre une berge | Espace | A |
 | Pause | Échap | Start |
 | Tourner / incliner la caméra | Glisser avec le clic droit (ou la molette enfoncée) | Stick droit |
 | Vue à la 1re personne / vue de dessus | F5 (souris pour regarder autour) | X (stick droit) |

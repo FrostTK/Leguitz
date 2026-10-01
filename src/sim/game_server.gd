@@ -73,6 +73,11 @@ class PlayerSession:
 	var burning := 0.0
 	var healing := 0.0
 	var starving := 0.0
+	## Air left with the eye under water (seconds), as last told, and the
+	## time towards the next point lost drowning.
+	var air := Vitals.MAX_AIR
+	var air_told := Vitals.MAX_AIR
+	var drowning := 0.0
 
 	func alive() -> bool:
 		return health > 0

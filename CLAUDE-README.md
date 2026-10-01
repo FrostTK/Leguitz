@@ -64,7 +64,7 @@ Les questions de goût ou les choix lourds de conséquences sont posés avant de
 
 ## 3. État actuel : ce qui est fait
 
-Godot **4.7.2** (GDScript), rendu Forward+. 163 tests unitaires, lint propre.
+Godot **4.7.2** (GDScript), rendu Forward+. 165 tests unitaires, lint propre.
 
 | Phase | Contenu | Commits |
 |---|---|---|
@@ -101,7 +101,8 @@ Godot **4.7.2** (GDScript), rendu Forward+. 163 tests unitaires, lint propre.
 | 4.7 Tab et E | **Tab** ouvre l'inventaire (et le ferme) ; **E** (B à la manette) utilise le bloc visé : ouvre l'établi, un coffre, un four (E, Tab ou Échap referment) ; le clic droit ne sert plus qu'à poser un bloc (et ouvrir le livre en main) ; le livre nomme les touches comme elles sont réglées (`{use}`, `{inventory}` dans les textes) | `3edfdb0` |
 | 5.1 Vitalité et dégâts | 20 points de vitalité gardés par le serveur et sauvegardés, une **jauge** à nous au-dessus de la moitié gauche de la barre (cristal de vie, cadre de bois, crans tous les 2 points, la part perdue reste pâle un instant puis fond, la jauge bat quand il reste peu) ; **chutes** : au-delà de 3 niveaux, un point par niveau, mesurées depuis le plus haut du saut, **rien si l'on atterrit dans l'eau** ; **lave** : on peut y entrer (lente), elle brûle 2 points toutes les ½ s ; le corps rougit et les bords de l'écran palpitent en rouge ; la vitalité revient doucement (un point toutes les 4 s après 6 s sans blessure, au rythme du monde) ; à 0, **« Tu as perdu connaissance… »** : le monde s'assombrit, la cause est dite, ce que l'on portait reste sur place, le corps s'allonge, bouton « Se relever » (au point d'apparition) ; rien en mode créatif ; astuce dans le livre | `35f8b03` |
 | 5.1b Outils droits | Les outils sont tenus **droits** au lieu d'à plat : sur le corps, manche levé, tournés de 45° autour du manche (lisibles de face, de profil et de dos) ; en 1re personne, droits en bas à droite, tournés pour montrer leur épaisseur ; la lanterne passe dans la main gauche (elle n'éblouit plus l'outil) ; l'objet en main ne projette plus d'**ombre géante** à la lumière de la lanterne (il est, comme le corps, hors de ses ombres ; le soleil et la lune gardent la leur) | `fb5e3cf` |
-| 5.2 Faim et nourriture | **Jauge de satiété** à nous (ambrée, une petite miche, sur la moitié droite au-dessus de la barre ; elle bat quand on a faim) : 20 points qui baissent avec le temps (un point toutes les 50 s au rythme du monde), la marche et le minage ; **manger en maintenant le clic droit** (gâchette gauche à la manette) avec de la nourriture en main : le bras porte l'aliment à la bouche, des miettes volent, un aliment toutes les 1,4 s (« Tu n'as pas faim. » si l'on est rassasié) ; ragoût +8, baies déshydratées +4, baies +2, champignons +1, nourriture carbonisée +1, **le champignon rouge cru rend malade** (-2 de vitalité) : cuisiner paie ; la vitalité ne revient que **bien nourri** (14 points et plus) et coûte un peu de satiété ; **affamé** (0), on perd un point de vitalité toutes les 6 s ; trop faible (moins de 4), on ne peut plus courir ; rien en créatif ; chapitre « Survie » du livre (jauges, comment manger, ce qui nourrit) | « Hunger and food » |
+| 5.2 Faim et nourriture | **Jauge de satiété** à nous (ambrée, une petite miche, sur la moitié droite au-dessus de la barre ; elle bat quand on a faim) : 20 points qui baissent avec le temps (un point toutes les 50 s au rythme du monde), la marche et le minage ; **manger en maintenant le clic droit** (gâchette gauche à la manette) avec de la nourriture en main : le bras porte l'aliment à la bouche, des miettes volent, un aliment toutes les 1,4 s (« Tu n'as pas faim. » si l'on est rassasié) ; ragoût +8, baies déshydratées +4, baies +2, champignons +1, nourriture carbonisée +1, **le champignon rouge cru rend malade** (-2 de vitalité) : cuisiner paie ; la vitalité ne revient que **bien nourri** (14 points et plus) et coûte un peu de satiété ; **affamé** (0), on perd un point de vitalité toutes les 6 s ; trop faible (moins de 4), on ne peut plus courir ; rien en créatif ; chapitre « Survie » du livre (jauges, comment manger, ce qui nourrit) | `97286ac` |
+| 5.3 Nage et noyade | On ne marche plus sur l'eau : on **nage** (eau et lave) ; on coule doucement, **Saut maintenu** fait remonter et flotter la tête hors de l'eau, **contre une berge, Saut fait bondir dehors** ; plus lent dans l'eau (encore plus dans la lave) ; une chute dans l'eau ne blesse jamais ; **souffle** : 12 s la tête sous l'eau (petite jauge bleue avec une bulle au-dessus de la satiété, elle clignote presque vide), il revient vite à l'air libre ; ensuite on se **noie** (2 points par seconde, « Tu as manqué d'air. ») ; on voit le joueur sous l'eau vue de dessus (l'eau n'est pas un toit : pas de coupe ni de passage en 1re personne), voile bleuté en 1re personne sous l'eau, nage animée (bras et jambes), éclaboussure en entrant dans l'eau ; texte dans le chapitre « Survie » | « Swimming and drowning » |
 
 **Pas encore fait** (prévu) : survie/combat, créatures, structures, agriculture, menus de départ, sons,
 mode Arcade, mobile.
@@ -249,9 +250,10 @@ Il ne faut pas s'inspirer du style de Minecraft
    `WorldClock.scale_duration()`), manger en maintenant le clic droit (baies, baies déshydratées,
    ragoût, champignons ; la nourriture carbonisée nourrit mal), la vie remonte rassasié, baisse
    affamé.
-3. **Nage et noyade** (prochaine étape) : on nage dans l'eau au lieu de marcher dessus (monter, descendre, plus
+3. ✅ **Nage et noyade** (voir section 3), comme prévu, avec la sortie d'eau en bondissant
+   contre une berge. Le plan suivi : on nage dans l'eau au lieu de marcher dessus (monter, descendre, plus
    lent), réserve d'air sous l'eau, noyade.
-4. **Modes de jeu** : Créatif (vol, blocs illimités, ni dégâts ni faim, F7 et les outils de debug),
+4. **Modes de jeu** (prochaine étape) : Créatif (vol, blocs illimités, ni dégâts ni faim, F7 et les outils de debug),
    Survie, Hardcore (une seule vie) ; choix à la création du monde (en attendant les menus de
    départ : réglage du monde et option de lancement).
 5. **Premiers animaux** en voxel animé (par exemple moutons, cochons, poules selon les biomes) :

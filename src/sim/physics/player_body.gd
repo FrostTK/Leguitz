@@ -3,9 +3,11 @@ extends RefCounted
 ## A player's body among the voxels: feet position on the map (world
 ## pixels), height (levels) and vertical speed. Like in Minecraft it walks
 ## up rises of STEP_UP, falls off edges, bumps its head on ceilings and
-## jumps 1.25 levels, so it climbs one voxel at a time; it stands on cubes,
-## on water (for now) and on the furniture under it (a workbench, a chest,
-## a furnace: ObjectShapes.stand_height).
+## jumps 1.25 levels, so it climbs one voxel at a time; it stands on cubes
+## and on the furniture under it (a workbench, a chest, a furnace:
+## ObjectShapes.stand_height). In water or lava it swims: it sinks slowly,
+## rises while jump is held up to float with its head out, leaps out
+## against a bank; falls end there (they never hurt).
 ## Shared by the client (prediction) and the server (validation).
 ##
 ## `voxel_at` is a Callable(cell: Vector3i) -> int giving the voxel at
@@ -25,6 +27,16 @@ const GRAVITY := 32.0
 const JUMP_HEIGHT := 1.25
 const MAX_FALL_SPEED := 60.0
 const EPSILON := 0.001
+## Swimming (levels, per second): rising while jump is held, sinking, how
+## fast the speed eases towards those (per second); the feet float this
+## far under the surface; a leap out against a bank rises this high.
+const SWIM_UP := 2.6
+const SINK_SPEED := 1.2
+const LIQUID_DRAG := 6.0
+const FLOAT_DEPTH := 0.45
+const LEAP_HEIGHT := 1.45
+## The eye, over the feet (levels): under the surface, the body has no air.
+const EYE_HEIGHT := 1.35
 
 var feet := Vector2.ZERO
 var height := 0.0
@@ -33,6 +45,9 @@ var on_ground := true
 ## Set when placed somewhere new: the body lands on the ground as soon as
 ## the ground there is known (its chunk may still be on its way).
 var needs_landing := true
+## The feet are in water or lava (`liquid`: which voxel; under its surface).
+var in_liquid := false
+var liquid := Voxels.AIR
 
 ## The highest point since the body left the ground, and how far it fell
 ## from there when it last landed (see take_fall).
@@ -44,10 +59,35 @@ static func jump_speed() -> float:
 	return sqrt(2.0 * GRAVITY * JUMP_HEIGHT)
 
 
+## The liquid voxel (water, lava) the feet of a body are in, under its
+## surface (Voxels.AIR: none).
+static func liquid_at(at: Vector2, at_height: float, voxel_at: Callable) -> int:
+	var tile := Coords.world_to_tile(at)
+	var row := floori(at_height + 0.05) + GameConst.SEA_LEVEL
+	var voxel: int = voxel_at.call(Vector3i(tile.x, row, tile.y))
+	if not Voxels.is_liquid(voxel):
+		return Voxels.AIR
+	return voxel if at_height < _surface(tile, row, voxel_at) else Voxels.AIR
+
+
+## Whether the eye of a body is under water (it has no air).
+static func eye_in_water(at: Vector2, at_height: float, voxel_at: Callable) -> bool:
+	var eye := liquid_at(at, at_height + EYE_HEIGHT, voxel_at)
+	return eye != Voxels.AIR and Tiles.is_water(Voxels.ground_of(eye))
+
+
+## The surface (levels) of the liquid in a column, from one of its voxels.
+static func _surface(tile: Vector2i, row: int, voxel_at: Callable) -> float:
+	var top := row
+	while Voxels.is_liquid(voxel_at.call(Vector3i(tile.x, top + 1, tile.y))):
+		top += 1
+	return float(top + 1 - GameConst.SEA_LEVEL) - ChunkData.WATER_DROP
+
+
 ## Highest place to stand at or below `limit` (levels) under a box: the
-## top of a cube, the surface of water, or the top of furniture the box is
-## over. -INF while unknown voxels are in the way (or nothing at all is
-## below).
+## top of a cube, or the top of furniture the box is over (liquids are
+## swum in). -INF while unknown voxels are in the way (or nothing at all
+## is below).
 static func support(at: Vector2, limit: float, voxel_at: Callable) -> float:
 	var best := -INF
 	var body := TileCollider.body_rect(at, BOX)
@@ -70,7 +110,7 @@ static func obstacle(tile: Vector2i, height: float, voxel_at: Callable) -> Rect2
 	var whole := Rect2(Vector2(tile * GameConst.TILE_SIZE), Vector2.ONE * GameConst.TILE_SIZE)
 	for row in range(low - MAX_OBJECT_LEVELS, high):
 		var voxel: int = voxel_at.call(Vector3i(tile.x, row, tile.y))
-		if not Voxels.is_solid(voxel):
+		if not Voxels.is_solid(voxel) or Voxels.is_liquid(voxel):
 			continue
 		if Voxels.is_object(voxel):
 			var block := Voxels.block_of(voxel)
@@ -93,20 +133,15 @@ static func _ground_below(tile: Vector2i, limit: float, voxel_at: Callable, body
 		var top := _furniture_top(tile, row + 1, in_limit, body)
 		if top != -INF and top <= limit:
 			return top
-	var above := Voxels.AIR
 	while row >= 0:
 		var voxel: int = voxel_at.call(Vector3i(tile.x, row, tile.y))
 		if voxel == Voxels.UNKNOWN:
 			return -INF
 		if Voxels.is_cube(voxel):
 			return float(row + 1 - GameConst.SEA_LEVEL)
-		if Voxels.is_liquid(voxel) and not Voxels.is_liquid(above):
-			# Water is walked on for now (wading); swimming comes later.
-			return float(row + 1 - GameConst.SEA_LEVEL) - ChunkData.WATER_DROP
 		var top := _furniture_top(tile, row, voxel, body)
 		if top != -INF:
 			return top
-		above = voxel
 		row -= 1
 	return -INF
 
@@ -150,15 +185,25 @@ func step(motion: Vector2, jump: bool, delta: float, voxel_at: Callable) -> void
 		height = ground
 		on_ground = true
 		needs_landing = false
+	var blocked := false
 	if motion != Vector2.ZERO:
 		var current := height
 		var obstacle_at := func(tile: Vector2i) -> Rect2: return obstacle(tile, current, voxel_at)
+		var before := feet
 		feet = TileCollider.move(feet, motion, BOX, obstacle_at)
+		blocked = feet.distance_to(before) < motion.length() * 0.5
 	var below := support(feet, height + STEP_UP, voxel_at)
 	if below == -INF:
 		return
 	var was_airborne := not on_ground
 	var start_height := height
+	liquid = liquid_at(feet, height, voxel_at)
+	in_liquid = liquid != Voxels.AIR
+	if in_liquid and not (on_ground and not jump and height <= below + EPSILON):
+		_swim(jump, blocked, below, delta, voxel_at)
+		# A fall ends in the liquid (it never hurts).
+		_fall_peak = height
+		return
 	if on_ground and jump:
 		vertical_speed = jump_speed()
 		on_ground = false
@@ -185,6 +230,41 @@ func step(motion: Vector2, jump: bool, delta: float, voxel_at: Callable) -> void
 		_fall_peak = maxf(_fall_peak if was_airborne else start_height, height)
 	elif was_airborne:
 		_fallen = maxf(_fallen, _fall_peak - height)
+
+
+## Moves in water or lava: sinking slowly, rising while `jump` is held up
+## to float FLOAT_DEPTH under the surface, leaping out when held against a
+## bank (`blocked`) near the surface; lands on the ground `below`.
+func _swim(jump: bool, blocked: bool, below: float, delta: float, voxel_at: Callable) -> void:
+	on_ground = false
+	var tile := Coords.world_to_tile(feet)
+	var row := floori(height + 0.05) + GameConst.SEA_LEVEL
+	var floating := _surface(tile, row, voxel_at) - FLOAT_DEPTH
+	var leaping := vertical_speed > SWIM_UP + 0.01
+	if jump and blocked and height >= floating - 0.25 and not leaping:
+		vertical_speed = sqrt(2.0 * GRAVITY * LEAP_HEIGHT)
+		leaping = true
+	if leaping:
+		vertical_speed -= GRAVITY * delta
+	else:
+		var target := -SINK_SPEED
+		if jump:
+			target = SWIM_UP if height < floating else 0.0
+		vertical_speed += (target - vertical_speed) * (1.0 - exp(-LIQUID_DRAG * delta))
+	var next_height := height + vertical_speed * delta
+	if jump and not leaping and next_height > floating and vertical_speed > 0.0:
+		next_height = maxf(floating, height)
+		vertical_speed = 0.0
+	if vertical_speed > 0.0:
+		var ceiling := _ceiling_above(next_height, voxel_at)
+		if next_height > ceiling:
+			next_height = ceiling
+			vertical_speed = 0.0
+	height = next_height
+	if height <= below:
+		height = below
+		vertical_speed = 0.0
+		on_ground = true
 
 
 ## Ghost movement (debug): through everything, onto the highest ground.

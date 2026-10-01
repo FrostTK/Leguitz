@@ -352,6 +352,14 @@ func crumbs(color: Color) -> void:
 	_debris.throw(_world_point(mouth + Vector3(0.0, 1.35, 0.0)), color, 3, 0.06)
 
 
+## Drops flying where the player goes into water (or lava).
+func splash(lava: bool) -> void:
+	var player := client.local_player
+	var feet := Render3D.world_px_to_local(player.position, player.height + 0.3)
+	var color := Color("f06a1e") if lava else Color("a8d8f0")
+	_debris.throw(_world_point(feet), color, 14, 0.35)
+
+
 ## A local point in world space (the bits fly outside the stretched root).
 func _world_point(local: Vector3) -> Vector3:
 	return client.world_root.global_transform * local

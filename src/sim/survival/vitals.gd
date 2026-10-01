@@ -3,13 +3,13 @@ extends RefCounted
 ## A player's vitality and satiety: how much they have (MAX_HEALTH and
 ## MAX_FOOD points, kept by the server and saved), what hurts (falls from
 ## higher than FALL_SAFE levels, unless into water; lava; starving; a raw
-## red mushroom), how satiety goes (with time, walking, mining and
+## red mushroom; drowning once their air runs out), how satiety goes (with time, walking, mining and
 ## healing), how vitality comes back (slowly, only well fed) and what is
 ## said of a death. The server runs it on its player sessions (Survival);
 ## clients show it (VitalsBar).
 
 ## What hurt a player (said when they pass out).
-enum Cause { NONE, FALL, LAVA, STARVATION, POISON }
+enum Cause { NONE, FALL, LAVA, STARVATION, POISON, DROWNING }
 
 const MAX_HEALTH := 20
 ## Falls up to this many levels are harmless; each level more costs a
@@ -43,6 +43,15 @@ const WEAK := 4
 const STARVE_SECONDS := 6.0
 ## Eating one takes EAT_SECONDS (real seconds, the right button held).
 const EAT_SECONDS := 1.4
+## Air: MAX_AIR seconds with the eye under water (real seconds), refilled
+## AIR_REFILL times as fast out of it; without air, DROWN_DAMAGE points
+## every DROWN_SECONDS.
+const MAX_AIR := 12.0
+const AIR_REFILL := 6.0
+const DROWN_DAMAGE := 2
+const DROWN_SECONDS := 1.0
+## Air is told to the player in steps this small (seconds).
+const AIR_STEP := 0.25
 ## Foods that make one sick raw: the vitality they cost.
 const POISONS := {Items.Id.MUSHROOM_RED: 2}
 ## Translation keys of the causes.
@@ -52,6 +61,7 @@ const CAUSE_KEYS := {
 	Cause.LAVA: "DEATH_CAUSE_LAVA",
 	Cause.STARVATION: "DEATH_CAUSE_STARVATION",
 	Cause.POISON: "DEATH_CAUSE_POISON",
+	Cause.DROWNING: "DEATH_CAUSE_DROWNING",
 }
 
 

@@ -68,7 +68,7 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   runs of one material merged, the ground hangs over as a lip) and undersides (never seen
   front-on, the camera always looks down). Faces open to the sky (also through water) and cave
   faces go to separate meshes; caves show only when the player is under cover
-  (ClientWorld.is_covered): the view then cuts everything above their head (global
+  (ClientWorld.is_covered; water and lava over the head are no roof): the view then cuts everything above their head (global
   `cut_height`), the surface maps are rebuilt for the cut, and the back of the faces closing the
   rock draws its section in dark (`see_through.gdshaderinc`).
 - Water (the water grounds; lava stays opaque): its surfaces are meshes of their own (Part.WATER,
@@ -114,9 +114,15 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   jump 1.25, bump ceilings, fall off edges; solid objects block their footprint up their height
   (trees: the trunk, see ObjectShapes); furniture (workbench, chest, furnaces: ObjectShapes.TOPS,
   the height of their models' tops) blocks up to its top and is stood on once the feet get there
-  (PlayerBody.support looks for it under the body's box; dropped items rest on it too); water
-  and lava are walked on for now (swimming comes later; lava slows and burns, see Vitality).
-  PlayerBody measures falls from their highest point (`take_fall`). No stairs: terrain levels rise
+  (PlayerBody.support looks for it under the body's box; dropped items rest on it too). Water
+  and lava are swum in (PlayerBody.liquid_at: the feet under a liquid's surface; `_swim`): the
+  body sinks (SINK_SPEED), rises while jump is held (SWIM_UP) to float FLOAT_DEPTH under the
+  surface, leaps out (LEAP_HEIGHT) when held against a bank near the surface; slower
+  (LocalPlayer WATER_SPEED, LAVA_SPEED); liquids never block bodies. PlayerBody measures falls
+  from their highest point (`take_fall`); a fall ends in a liquid (never hurts).
+  `eye_in_water`: the eye (EYE_HEIGHT) under water, no air. Client: the swimming body (arms
+  sweeping, legs kicking), a splash going in, a veil over the first-person view under water
+  (VitalsView.veil). No stairs: terrain levels rise
   one at a time so they can be climbed.
 - World generation (`src/sim/world/generation/`): ClimateSampler (5 Minecraft climate noises,
   sampled every 4 tiles by ClimateGrid) -> TerrainShaper (splines, rivers, terrace levels) ->
@@ -275,7 +281,9 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   (LocalPlayer.can_sprint). Food: Items.FOOD (satiety per item), Vitals.POISONS (raw red
   mushroom: sick). The server keeps PlayerSession.health and .food (saved with the player;
   health 0 = passed out) and runs `Survival` (stateless, given the server): falls reported by
-  the client (Msg.player_move's `fell`, from PlayerBody.take_fall), lava under the feet,
+  the client (Msg.player_move's `fell`, from PlayerBody.take_fall), lava the feet are in, air
+  (MAX_AIR seconds with the eye under water, AIR_REFILL faster back; then DROWN_DAMAGE every
+  DROWN_SECONDS; told in AIR_STEP steps, Msg.VITALS `air`; a breath gauge over the satiety's),
   effort (`spend`), eating (Msg.EAT: a hotbar slot's food, not past full), starving, healing,
   `GameServer.hurt` (no hurt nor hunger in creative mode);
   at 0 the player passes out: what they carried (bag, cursor, grid) falls where they are, open

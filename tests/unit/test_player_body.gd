@@ -136,14 +136,57 @@ func test_walks_between_trees_but_not_through_trunks() -> void:
 	assert_true(walker.feet.y < whole_tile - 1.0, "only at the trunk, not at the tile's edge")
 
 
-func test_wades_in_water_and_walks_into_lava() -> void:
-	_extra[Vector3i(1, SEA - 1, 1)] = Voxels.of_ground(Tiles.Ground.WATER)
+## A pool three levels deep over tiles x = 0..2 (z = 0..2), its water at
+## the ground's level; the one-level step from x = 3 is its bank.
+func _pool(ground: int) -> void:
+	for x in 3:
+		for z in 3:
+			for row in range(SEA - 3, SEA):
+				_extra[Vector3i(x, row, z)] = Voxels.of_ground(ground)
+
+
+func test_swims_sinks_floats_and_leaps_out() -> void:
+	_pool(Tiles.Ground.WATER)
 	var body := _body_at(1.5)
-	assert_almost(body.height, -ChunkData.WATER_DROP, 0.001, "walks on the water surface")
-	_extra[Vector3i(2, SEA - 1, 1)] = Voxels.of_ground(Tiles.Ground.LAVA)
-	var walker := _body_at(0.5)
-	_walk(walker, 5.0 * TS, 1.0)
-	assert_true(walker.feet.x > 2.0 * TS, "lava does not stop bodies (it burns them)")
+	assert_eq(body.height, -3.0, "nothing stands on water: down to the bed")
+	_walk(body, 0.0, 2.0, true)
+	var surface := -ChunkData.WATER_DROP
+	assert_true(body.in_liquid)
+	assert_almost(body.height, surface - PlayerBody.FLOAT_DEPTH, 0.05, "floating, head out")
+	assert_false(PlayerBody.eye_in_water(body.feet, body.height, _voxel_at), "breathing")
+	_walk(body, 0.0, 1.0)
+	assert_true(body.height < surface - 1.0, "sinking without jump")
+	assert_true(PlayerBody.eye_in_water(body.feet, body.height, _voxel_at), "under water")
+	_walk(body, 0.0, 3.0)
+	assert_eq(body.height, -3.0, "back on the bed")
+	assert_true(body.on_ground)
+	# Up, then along against the bank (x = 3, a level over the water) and out.
+	_walk(body, 0.0, 2.0, true)
+	_walk(body, 2.0 * TS, 1.0, true)
+	_walk(body, 2.0 * TS, 0.8)
+	assert_true(body.feet.x > 3.0 * TS, "leapt out")
+	assert_eq(body.height, 1.0, "on the bank")
+	assert_false(body.in_liquid)
+	_extra.clear()
+
+
+func test_falls_end_in_water_and_lava_is_swum_too() -> void:
+	_pool(Tiles.Ground.WATER)
+	var body := _body_at(1.5)
+	body.place(body.feet, 8.0)
+	body.needs_landing = false
+	body.on_ground = false
+	body.take_fall()
+	_walk(body, 0.0, 4.0)
+	assert_eq(body.height, -3.0)
+	assert_true(body.take_fall() < 0.5, "the water broke the fall")
+	_extra.clear()
+	_pool(Tiles.Ground.LAVA)
+	var swimmer := _body_at(1.5)
+	assert_eq(swimmer.height, -3.0, "lava is swum in too")
+	_walk(swimmer, 0.0, 1.0, true)
+	assert_true(swimmer.in_liquid)
+	assert_eq(Voxels.ground_of(swimmer.liquid), Tiles.Ground.LAVA)
 	_extra.clear()
 
 

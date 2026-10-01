@@ -4,7 +4,8 @@ extends Node
 ## them, Vitals): the gauges over the hotbar, a hurt reddening the body and
 ## pulsing the screen's edges, passing out (the body lies down, screens
 ## close, the world darkens and says why, DeathScreen, until the player
-## gets up), and eating: food in hand, the right button (or the left
+## gets up), air (a breath gauge while the eye is under water; a blue veil
+## over the first-person view), and eating: food in hand, the right button (or the left
 ## trigger) held, one is eaten every Vitals.EAT_SECONDS (the arm at the
 ## mouth, crumbs), predicted and told to the server (Msg.EAT).
 
@@ -21,10 +22,15 @@ const CRUMBS := {
 	Items.Id.CHARRED_FOOD: Color("1f1a19"),
 }
 const CRUMB_SECONDS := 0.22
+## The veil over the first-person view with the eye in water or lava.
+const WATER_VEIL := Color(0.06, 0.22, 0.45, 0.42)
+const LAVA_VEIL := Color(0.9, 0.3, 0.05, 0.6)
 
 var client: GameClient
-## Where it shows (added to the UI by GameClient).
+## Where it shows (added to the UI by GameClient), and the veil under
+## water.
 var screen := DeathScreen.new()
+var veil := ColorRect.new()
 ## The vitality the server told, and whether the player passed out
 ## (waiting to get up).
 var health := Vitals.MAX_HEALTH
@@ -42,16 +48,20 @@ var _crumb_left := 0.0
 
 
 func _ready() -> void:
+	veil.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	veil.visible = false
 	screen.respawn_requested.connect(func() -> void: client.transport.send(Msg.respawn()))
 
 
 ## The vitality and satiety the server tells; a hurt flashes the body and
 ## the screen's edges red. Back above 0 after passing out: up again.
-func on_vitals(points: int, satiety: int, hurt: bool) -> void:
+func on_vitals(points: int, satiety: int, hurt: bool, air: float) -> void:
 	health = points
 	food = satiety
 	client.hotbar.vitals.set_health(points)
 	client.hotbar.vitals.set_food(satiety)
+	client.hotbar.vitals.set_air(air)
 	client.local_player.can_sprint = satiety >= Vitals.WEAK
 	if hurt:
 		_hurt_glow = 1.0
@@ -83,6 +93,19 @@ func _process(delta: float) -> void:
 	_down = move_toward(_down, 1.0 if passed_out else 0.0, delta / DOWN_SECONDS)
 	client.player_model.set_down(smoothstep(0.0, 1.0, _down))
 	_update_eating(delta)
+	_update_veil()
+
+
+## First person with the eye in water or lava: the view is veiled.
+func _update_veil() -> void:
+	var player := client.local_player
+	var eye := PlayerBody.liquid_at(
+		player.position, player.height + PlayerBody.EYE_HEIGHT, client.world.voxel_at
+	)
+	veil.visible = client.first_person >= 1.0 and eye != Voxels.AIR
+	if veil.visible:
+		var lava := Voxels.ground_of(eye) == Tiles.Ground.LAVA
+		veil.color = LAVA_VEIL if lava else WATER_VEIL
 
 
 ## Eats while the player holds the button with food in hand (not when

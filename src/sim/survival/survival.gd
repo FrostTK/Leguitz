@@ -2,7 +2,8 @@ class_name Survival
 extends RefCounted
 ## Runs the players' vitality and satiety on the server (see Vitals):
 ## falls (reported by the clients' bodies, PlayerBody.take_fall; water
-## breaks them), lava, satiety spent with effort, eating, starving, slow
+## breaks them), lava, air and drowning, satiety spent with effort,
+## eating, starving, slow
 ## healing when well fed, passing out (what they carry falls where they
 ## are) and getting up at the spawn. Creative players are never hurt nor
 ## hungry. Stateless: each call is given the server.
@@ -64,6 +65,7 @@ static func get_up(server: GameServer, session: GameServer.PlayerSession) -> voi
 	session.health = Vitals.MAX_HEALTH
 	session.food = Vitals.MAX_FOOD
 	session.effort = 0.0
+	session.air = Vitals.MAX_AIR
 	session.immune = 0.0
 	session.since_hurt = INF
 	session.position = Coords.tile_to_world_center(server.spawn_tile) + Vector2(0, 4)
@@ -117,7 +119,9 @@ static func update(server: GameServer, sessions: Array, delta: float) -> void:
 			continue
 		session.immune = maxf(session.immune - delta, 0.0)
 		session.since_hurt += delta
-		if _feet_ground(server, session) == Tiles.Ground.LAVA:
+		_breathe(server, session, delta)
+		var bathed := PlayerBody.liquid_at(session.position, session.height, server.world.voxel_at)
+		if Voxels.ground_of(bathed) == Tiles.Ground.LAVA:
 			session.burning += delta
 			if session.burning >= Vitals.LAVA_SECONDS:
 				session.burning = 0.0
@@ -127,6 +131,28 @@ static func update(server: GameServer, sessions: Array, delta: float) -> void:
 		spend(server, session, delta / server.clock.scale_duration(Vitals.FOOD_SECONDS))
 		_starve(server, session, delta)
 		_heal(server, session, delta)
+
+
+## The eye under water uses air; without air, drowning hurts. Out of the
+## water, air comes back fast. Told in steps of AIR_STEP.
+static func _breathe(server: GameServer, session: GameServer.PlayerSession, delta: float) -> void:
+	var under := PlayerBody.eye_in_water(session.position, session.height, server.world.voxel_at)
+	if under and server.settings.game_mode != WorldSettings.GameMode.CREATIVE:
+		session.air = maxf(session.air - delta, 0.0)
+		if session.air == 0.0:
+			session.drowning += delta
+			if session.drowning >= Vitals.DROWN_SECONDS:
+				session.drowning = 0.0
+				hurt(server, session, Vitals.DROWN_DAMAGE, Vitals.Cause.DROWNING)
+	else:
+		session.drowning = 0.0
+		session.air = minf(session.air + delta * Vitals.AIR_REFILL, Vitals.MAX_AIR)
+	var full := session.air == Vitals.MAX_AIR
+	if (
+		absf(session.air - session.air_told) >= Vitals.AIR_STEP
+		or (full and session.air_told != Vitals.MAX_AIR)
+	):
+		_tell(session)
 
 
 ## Starving (no satiety left): a point of vitality every STARVE_SECONDS.
@@ -164,17 +190,11 @@ static func _heal(server: GameServer, session: GameServer.PlayerSession, delta: 
 static func _tell(
 	session: GameServer.PlayerSession, hurt := false, cause := Vitals.Cause.NONE
 ) -> void:
-	session.transport.send(Msg.vitals(session.health, session.food, hurt, cause))
+	session.air_told = session.air
+	session.transport.send(Msg.vitals(session.health, session.food, hurt, cause, session.air))
 
 
-## The ground (Tiles.Ground) under a player's feet: water or lava they
-## stand on, the ground they walk on (NONE on blocks).
-static func _feet_ground(server: GameServer, session: GameServer.PlayerSession) -> int:
-	var tile := Coords.world_to_tile(session.position)
-	var row := floori(session.height + ChunkData.WATER_DROP + 0.01) + GameConst.SEA_LEVEL - 1
-	return Voxels.ground_of(server.world.voxel_at(Vector3i(tile.x, row, tile.y)))
-
-
-## Whether a player stands on water (it breaks falls).
+## Whether a player is in water (it breaks falls).
 static func _over_water(server: GameServer, session: GameServer.PlayerSession) -> bool:
-	return Tiles.is_water(_feet_ground(server, session))
+	var bathed := PlayerBody.liquid_at(session.position, session.height, server.world.voxel_at)
+	return Tiles.is_water(Voxels.ground_of(bathed))

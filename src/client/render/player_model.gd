@@ -39,6 +39,8 @@ var lantern_override := Vector3.INF
 var swinging := false
 ## Eating: the right hand at the mouth, munching.
 var eating := false
+## Swimming: arms sweeping, legs kicking.
+var swimming := false
 ## Where the right arm is in its stroke: 0 raised, 1 striking down (-1: no
 ## stroke going on).
 var strike_phase := -1.0
@@ -56,6 +58,7 @@ var _swing := 0.0
 var _material := ShaderMaterial.new()
 ## Phase of the strokes, and how long a single stroke (placing) lasts.
 var _strike := 0.0
+var _swim_time := 0.0
 var _strike_left := 0.0
 
 
@@ -103,6 +106,7 @@ func animate(feet: Vector3, heading: Vector2, speed: float, airborne: bool, delt
 		var target := atan2(heading.x, heading.y)
 		_yaw = lerp_angle(_yaw, target, 1.0 - exp(-TURN_SHARPNESS * delta))
 	_body.rotation.y = _yaw
+	_swim_time += delta
 	var walking := clampf(speed / 5.0, 0.0, 1.0)
 	_phase += delta * speed * STRIDE * TAU / 2.0
 	_swing = lerpf(_swing, walking * SWING, 1.0 - exp(-10.0 * delta))
@@ -111,7 +115,11 @@ func animate(feet: Vector3, heading: Vector2, speed: float, airborne: bool, delt
 		var side := 1.0 if i == 0 else -1.0
 		_legs[i].rotation.x = stride * side
 		_arms[i].rotation.x = -stride * side * 0.8
-		if airborne:
+		if swimming:
+			var stroke := sin(_phase * 0.5 + _swim_time * 4.0)
+			_legs[i].rotation.x = sin(_swim_time * 9.0) * 0.35 * side
+			_arms[i].rotation.x = -1.6 + stroke * 0.9
+		elif airborne:
 			_legs[i].rotation.x = 0.35 * side
 			_arms[i].rotation.x = -1.1
 	strike_phase = -1.0
