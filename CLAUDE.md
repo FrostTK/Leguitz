@@ -146,7 +146,10 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   Hotbar, InventoryScreen (E), DroppedItemsView, the item in hand (body and first person). With
   empty hands, the name of the item under the mouse shows beside it (ItemSlot.draw_name; the
   inventory screen and the book follow the mouse from its own events, `make_input_local`;
-  BookScreen records the items it draws in `_named`). Wheel
+  BookScreen records the items it draws in `_named`). Holding the right button with a stack and
+  moving puts one item into each slot crossed, once per drag (InventoryScreen._input: right
+  clicks on the bag, hotbar, crafting grid, chest and furnace input/fuel, sent like any click).
+  Wheel
   and 1-9 pick the slot (the wheel zooms with its button held down in the top-down view, or with
   Ctrl: InputBindings.wheel_zooms), Q throws (Ctrl: the stack), shoulders on a gamepad.
 - Tools (`Items.TOOLS`: pickaxe, axe and shovel in 6 materials, `Items.Tier`; they do not stack):

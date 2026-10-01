@@ -9,7 +9,10 @@ extends Control
 ## stacks (Inventory.click: the client shows its guess at once, the server
 ## decides), a click on what the grid makes takes it (shift: as many as
 ## possible); the stack held by the cursor follows the mouse, and dropped
-## outside the panel it is thrown away. With empty hands, the name of the
+## outside the panel it is thrown away. Holding the right button with a
+## stack and moving puts one item into each slot crossed (Minecraft's
+## right drag: the bag, the hotbar, the crafting grid, a chest, a
+## furnace). With empty hands, the name of the
 ## item under the mouse shows beside it.
 
 signal slot_clicked(slot: int, right: bool, shift: bool)
@@ -68,6 +71,11 @@ var _cursor := Control.new()
 ## _cursor, from its own events).
 var _hovered: ItemSlot
 var _pointer := Vector2.ZERO
+## The slots a right drag puts items into, whether one is going on, and
+## the slots it already gave one (each gets one per drag).
+var _drop_slots: Array[ItemSlot] = []
+var _dragging := false
+var _dragged: Dictionary[ItemSlot, bool] = {}
 
 
 func _ready() -> void:
@@ -133,6 +141,10 @@ func _ready() -> void:
 		var slot := node as ItemSlot
 		slot.mouse_entered.connect(_on_slot_entered.bind(slot))
 		slot.mouse_exited.connect(_on_slot_exited.bind(slot))
+	_drop_slots.append_array(_slots)
+	_drop_slots.append_array(_chest_slots)
+	_drop_slots.append(_furnace_slots[Furnace.INPUT])
+	_drop_slots.append(_furnace_slots[Furnace.FUEL])
 	visible = false
 
 
@@ -185,6 +197,7 @@ func close() -> void:
 	if visible:
 		visible = false
 		_hovered = null
+		_dragging = false
 		close_requested.emit()
 
 
@@ -349,10 +362,52 @@ func _gui_input(event: InputEvent) -> void:
 	accept_event()
 
 
+## Follows the mouse (from its own events: the slots keep it while a
+## button is held) and runs right drags.
 func _input(event: InputEvent) -> void:
 	var mouse := event as InputEventMouse
-	if visible and mouse != null:
-		_pointer = (_cursor.make_input_local(mouse) as InputEventMouse).position
+	if not visible or mouse == null:
+		return
+	var from := _pointer
+	_pointer = (_cursor.make_input_local(mouse) as InputEventMouse).position
+	var button := event as InputEventMouseButton
+	if button != null and button.button_index == MOUSE_BUTTON_RIGHT:
+		_dragged.clear()
+		var start: ItemSlot = _drop_slot_at(_pointer) if button.pressed else null
+		_dragging = start != null and not button.shift_pressed and _holding()
+		if _dragging:
+			# Its own click puts the first item.
+			_dragged[start] = true
+	elif _dragging and event is InputEventMouseMotion:
+		# Every slot on the way (a fast mouse jumps over some).
+		var steps := maxi(ceili(from.distance_to(_pointer) / 4.0), 1)
+		for i in steps:
+			var slot := _drop_slot_at(from.lerp(_pointer, float(i + 1) / steps))
+			if slot != null and not _dragged.has(slot) and _holding():
+				_dragged[slot] = true
+				_right_click(slot)
+
+
+func _holding() -> bool:
+	return inventory != null and inventory.items[Inventory.CURSOR] != Items.Id.NONE
+
+
+## The slot a right drag can put an item into at `point` (null: none).
+func _drop_slot_at(point: Vector2) -> ItemSlot:
+	for slot in _drop_slots:
+		if slot.is_visible_in_tree() and slot.get_global_rect().has_point(point):
+			return slot
+	return null
+
+
+## A right click on a slot, as if the player clicked it.
+func _right_click(slot: ItemSlot) -> void:
+	if slot in _chest_slots:
+		chest_clicked.emit(slot.slot, true, false)
+	elif slot in _furnace_slots:
+		furnace_clicked.emit(slot.slot, true, false)
+	else:
+		slot_clicked.emit(slot.slot, true, false)
 
 
 func _unhandled_input(event: InputEvent) -> void:
