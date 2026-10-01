@@ -55,6 +55,8 @@ const FIRST_PERSON_TOOL_AT := Vector3(0.3, -0.36, -0.5)
 const FIRST_PERSON_TOOL_HANDLE := Vector3(-0.35, 0.85, -0.4)
 const FIRST_PERSON_TOOL_STROKE := Vector2(-0.35, 1.0)
 const FIRST_PERSON_TOOL_SIZE := 0.3
+## The hand's "slot" of the player's book (beside the hotbar's 9).
+const BOOK_SLOT := Inventory.HOTBAR
 
 var transport: Transport
 var world := ClientWorld.new()
@@ -92,6 +94,11 @@ var crosshair := Crosshair.new()
 var interaction := BlockInteraction.new()
 var hotbar := Hotbar.new()
 var inventory_screen := InventoryScreen.new()
+## The player's book, open.
+var book_screen := BookScreen.new()
+## The player's book is in hand (its slot: Settings.guide_book). Only the
+## client knows: the server keeps the hotbar slot chosen before.
+var book_in_hand := false
 var dropped_items := DroppedItemsView.new()
 var item_icons := ItemIcons.new()
 ## What is in hand in first person (a child of the camera).
@@ -149,6 +156,9 @@ func _ready() -> void:
 	inventory_screen.slot_clicked.connect(_on_slot_clicked)
 	inventory_screen.cursor_dropped.connect(_on_cursor_dropped)
 	inventory_screen.close_requested.connect(_on_inventory_closed)
+	inventory_screen.book_requested.connect(_on_book_requested)
+	book_screen.library = items
+	book_screen.close_requested.connect(_on_book_closed)
 	dropped_items.library = items
 	dropped_items.local_player = local_player
 	world_root.add_child(dropped_items)
@@ -171,6 +181,7 @@ func _ready() -> void:
 	_ui_root.add_child(debug_overlay)
 	_ui_root.add_child(debug_map)
 	_ui_root.add_child(inventory_screen)
+	_ui_root.add_child(book_screen)
 	_ui_root.add_child(pause_menu)
 
 	pause_menu.resume_requested.connect(resume)
@@ -216,6 +227,9 @@ func _on_settings_changed(key: StringName) -> void:
 		_apply_quality()
 	elif key == &"cave_first_person":
 		view_mode.set_automatic(Settings.cave_first_person)
+	elif key == &"guide_book" and not Settings.guide_book:
+		book_in_hand = false
+		book_screen.close()
 
 
 func _apply_quality() -> void:
@@ -271,6 +285,10 @@ func _process(delta: float) -> void:
 		local_player.step(delta)
 		_update_view(delta)
 		_update_held()
+	hotbar.book_shown = Settings.guide_book
+	hotbar.book_selected = book_in_hand
+	inventory_screen.book_shown = Settings.guide_book
+	inventory_screen.book_selected = book_in_hand
 	_loading_label.visible = not is_ready_to_play()
 
 
@@ -303,7 +321,9 @@ func _update_view_mode(delta: float) -> void:
 	first_person = move_toward(first_person, wanted, delta / DIVE_TIME)
 	if dive_hold >= 0.0:
 		first_person = dive_hold
-	var captured := view_mode.first_person and not inventory_screen.visible
+	var captured := (
+		view_mode.first_person and not inventory_screen.visible and not book_screen.visible
+	)
 	var mouse := Input.MOUSE_MODE_CAPTURED if captured else Input.MOUSE_MODE_VISIBLE
 	if Input.mouse_mode != mouse:
 		Input.mouse_mode = mouse
@@ -437,6 +457,7 @@ func is_view_complete() -> bool:
 func pause() -> void:
 	debug_map.close()
 	inventory_screen.close()
+	book_screen.close()
 	interaction.stop()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if joined:
@@ -541,22 +562,30 @@ func _handle_item_input(event: InputEvent) -> bool:
 			var zoom := world_viewport.world_zoom + (1 if up else -1)
 			Settings.set_world_zoom(clampi(zoom, 1, Settings.MAX_WORLD_ZOOM))
 		else:
-			select_slot(posmod(inventory.selected + (-1 if up else 1), Inventory.HOTBAR))
+			_cycle_hand(-1 if up else 1)
 		return true
 	if event.is_action_pressed(InputBindings.HOTBAR_NEXT):
-		select_slot(posmod(inventory.selected + 1, Inventory.HOTBAR))
+		_cycle_hand(1)
 		return true
 	if event.is_action_pressed(InputBindings.HOTBAR_PREVIOUS):
-		select_slot(posmod(inventory.selected - 1, Inventory.HOTBAR))
+		_cycle_hand(-1)
 		return true
 	for i in Inventory.HOTBAR:
 		if event.is_action_pressed(InputBindings.HOTBAR_SLOTS[i]):
-			select_slot(i)
+			select_hand(i)
 			return true
+	if event.is_action_pressed(InputBindings.HOTBAR_BOOK) and Settings.guide_book:
+		if book_in_hand:
+			open_book()
+		else:
+			select_hand(BOOK_SLOT)
+		return true
 	if event.is_action_pressed(InputBindings.INVENTORY):
 		open_inventory()
 		return true
 	if event.is_action_pressed(InputBindings.DROP_ITEM):
+		if book_in_hand:
+			return true
 		var key := event as InputEventKey
 		var whole := key != null and key.ctrl_pressed
 		if inventory.held() != Items.Id.NONE:
@@ -564,6 +593,47 @@ func _handle_item_input(event: InputEvent) -> bool:
 			transport.send(Msg.item_drop(inventory.selected, whole))
 		return true
 	return false
+
+
+## What is in hand: the player's book or the selected hotbar slot's item.
+func held_item() -> int:
+	return Items.Id.GUIDE_BOOK if book_in_hand else inventory.held()
+
+
+## The slot in hand: a hotbar slot, or BOOK_SLOT.
+func hand_slot() -> int:
+	return BOOK_SLOT if book_in_hand else inventory.selected
+
+
+## Takes a hotbar slot, or the player's book (BOOK_SLOT), in hand.
+func select_hand(slot: int) -> void:
+	book_in_hand = slot == BOOK_SLOT and Settings.guide_book
+	if slot < Inventory.HOTBAR:
+		select_slot(slot)
+
+
+## The next slot in hand (the wheel, the shoulders), the book included.
+func _cycle_hand(step: int) -> void:
+	var slots := Inventory.HOTBAR + (1 if Settings.guide_book else 0)
+	select_hand(posmod(hand_slot() + step, slots))
+
+
+## Opens the player's book (the world goes on).
+func open_book() -> void:
+	if not Settings.guide_book or book_screen.visible:
+		return
+	inventory_screen.close()
+	interaction.stop()
+	local_player.controls_enabled = false
+	book_screen.open()
+
+
+func _on_book_requested() -> void:
+	open_book()
+
+
+func _on_book_closed() -> void:
+	local_player.controls_enabled = true
 
 
 ## Takes a hotbar slot in hand.
@@ -599,7 +669,7 @@ func _on_inventory_closed() -> void:
 ## Puts what is in hand in the body's hand and, in first person, at the
 ## bottom right of the view, swinging with the arm's strokes.
 func _update_held() -> void:
-	var held := inventory.held()
+	var held := held_item()
 	var model := items.mesh(held) if held != Items.Id.NONE else null
 	first_person_held.visible = model != null and first_person >= 1.0
 	if held != _shown_held:

@@ -37,6 +37,7 @@ extends RefCounted
 ## --give=ITEM:N,...    put items in the inventory (dirt:20,diamond:3...)
 ## --inventory          open the inventory once the world is ready
 ## --drop               throw the stack in hand once the world is ready
+## --book[=SPREAD]      open the player's book (at two pages SPREAD, from 0)
 
 var seed_text := ""
 var new_world := false
@@ -73,6 +74,8 @@ var place_once := false
 var give: Array[Vector2i] = []
 var open_inventory := false
 var drop_held := false
+## The spread the player's book opens at (-1: closed).
+var book_spread := -1
 
 
 static func parse(args: PackedStringArray) -> DevOptions:
@@ -159,6 +162,8 @@ static func parse(args: PackedStringArray) -> DevOptions:
 						options.give.append(Vector2i(item, maxi(count, 1)))
 			"inventory":
 				options.open_inventory = true
+			"book":
+				options.book_spread = maxi(value.to_int(), 0)
 			"drop":
 				options.drop_held = true
 			"place":

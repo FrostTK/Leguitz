@@ -33,6 +33,8 @@ var hd_rendering := false
 var max_fps := 60
 ## Goes first person when entering a cave (F5 switches by hand anyway).
 var cave_first_person := true
+## The player's book in a 10th slot beside the hotbar (see BookScreen).
+var guide_book := true
 
 ## The user's own values of the settings overridden for this session only
 ## (developer options): those are saved instead.
@@ -117,6 +119,12 @@ func set_cave_first_person(value: bool) -> void:
 	changed.emit(&"cave_first_person")
 
 
+func set_guide_book(value: bool) -> void:
+	guide_book = value
+	_save_choice(&"guide_book")
+	changed.emit(&"guide_book")
+
+
 func set_show_debug(value: bool) -> void:
 	show_debug = value
 	_save_choice(&"show_debug")
@@ -150,6 +158,7 @@ func load_settings() -> void:
 	hd_rendering = file.get_value("display", "hd_rendering", hd_rendering)
 	max_fps = file.get_value("display", "max_fps", max_fps)
 	cave_first_person = file.get_value("display", "cave_first_person", cave_first_person)
+	guide_book = file.get_value("display", "guide_book", guide_book)
 	show_debug = file.get_value("debug", "show_debug", show_debug)
 
 
@@ -171,6 +180,7 @@ func save_settings() -> void:
 	file.set_value("display", "hd_rendering", _saved(&"hd_rendering"))
 	file.set_value("display", "max_fps", _saved(&"max_fps"))
 	file.set_value("display", "cave_first_person", _saved(&"cave_first_person"))
+	file.set_value("display", "guide_book", _saved(&"guide_book"))
 	file.set_value("debug", "show_debug", _saved(&"show_debug"))
 	var error := file.save(PATH)
 	if error != OK:

@@ -157,7 +157,7 @@ func _target_line(target: VoxelRay.Hit) -> String:
 		target.cell.x,
 		target.cell.y - GameConst.SEA_LEVEL,
 		target.cell.z,
-		Mining.break_seconds(target.voxel, client.inventory.held()),
+		Mining.break_seconds(target.voxel, client.held_item()),
 		Items.Tool.find_key(Mining.tool_for(target.voxel)),
 	]
 	return "%s: %s (%d, %d, %d)  |  %.2f s  |  %s" % target_args

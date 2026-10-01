@@ -50,6 +50,8 @@ const HOTBAR_SLOTS: Array[StringName] = [
 	&"hotbar_8",
 	&"hotbar_9",
 ]
+## Takes the player's book (the 10th slot) in hand; again: opens it.
+const HOTBAR_BOOK := &"hotbar_book"
 # Debug (creative-only later).
 const DEPTH_UP := &"depth_up"
 const DEPTH_DOWN := &"depth_down"
@@ -95,6 +97,7 @@ static func register_defaults() -> void:
 	_bind(HOTBAR_PREVIOUS, [_button(JOY_BUTTON_LEFT_SHOULDER)])
 	for i in HOTBAR_SLOTS.size():
 		_bind(HOTBAR_SLOTS[i], [_key(KEY_1 + i)])
+	_bind(HOTBAR_BOOK, [_key(KEY_0)])
 	_bind(CAMERA_LEFT, [_axis(JOY_AXIS_RIGHT_X, -1.0)])
 	_bind(CAMERA_RIGHT, [_axis(JOY_AXIS_RIGHT_X, 1.0)])
 	_bind(CAMERA_UP, [_axis(JOY_AXIS_RIGHT_Y, -1.0)])

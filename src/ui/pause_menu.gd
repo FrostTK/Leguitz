@@ -21,6 +21,10 @@ const LANGUAGE_CHOICES := [
 	["LANGUAGE_EN", "en"],
 ]
 const ZOOM_CHOICES := [0, 2, 3, 4, 5, 6, 8]
+## The panel's width and the room kept around it (UI units): taller than
+## the window, it scrolls.
+const WIDTH := 230.0
+const SCREEN_MARGIN := 8.0
 const QUALITY_KEYS := ["QUALITY_LOW", "QUALITY_MEDIUM", "QUALITY_HIGH", "QUALITY_ULTRA"]
 
 var clock: WorldClock
@@ -37,7 +41,10 @@ var _zoom := OptionButton.new()
 var _quality := OptionButton.new()
 var _hd := CheckButton.new()
 var _cave_first_person := CheckButton.new()
+var _guide_book := CheckButton.new()
 var _max_fps := OptionButton.new()
+var _scroll := ScrollContainer.new()
+var _box := VBoxContainer.new()
 var _updating := false
 
 
@@ -55,10 +62,13 @@ func _ready() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(230, 0)
 	center.add_child(panel)
-	var box := VBoxContainer.new()
-	panel.add_child(box)
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	panel.add_child(_scroll)
+	var box := _box
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_scroll.add_child(box)
+	get_viewport().size_changed.connect(_fit_height)
 
 	var title := Label.new()
 	title.text = "MENU_PAUSE_TITLE"
@@ -119,6 +129,9 @@ func _ready() -> void:
 	_cave_first_person.toggled.connect(_on_cave_first_person_toggled)
 	box.add_child(_row("SETTING_CAVE_FIRST_PERSON", _cave_first_person))
 
+	_guide_book.toggled.connect(_on_guide_book_toggled)
+	box.add_child(_row("SETTING_GUIDE_BOOK", _guide_book))
+
 	var quit := Button.new()
 	quit.text = "MENU_QUIT"
 	quit.pressed.connect(quit_requested.emit)
@@ -131,6 +144,14 @@ func open() -> void:
 	visible = true
 	refresh_from_state()
 	_resume_button.grab_focus()
+
+
+## As tall as its content, within the window (the rest scrolls).
+func _fit_height() -> void:
+	var panel_margins := 16.0
+	var room := get_viewport_rect().size.y - SCREEN_MARGIN * 2.0 - panel_margins
+	var content := _box.get_combined_minimum_size().y
+	_scroll.custom_minimum_size = Vector2(WIDTH - panel_margins, minf(content, room))
 
 
 func close() -> void:
@@ -153,6 +174,7 @@ func refresh_from_state() -> void:
 	_quality.select(Settings.graphics_quality)
 	_hd.button_pressed = Settings.hd_rendering
 	_cave_first_person.button_pressed = Settings.cave_first_person
+	_guide_book.button_pressed = Settings.guide_book
 	_max_fps.select(maxi(0, Settings.FPS_CHOICES.find(Settings.max_fps)))
 	_updating = false
 	_refresh_dynamic_texts()
@@ -213,6 +235,11 @@ func _on_cave_first_person_toggled(enabled: bool) -> void:
 		Settings.set_cave_first_person(enabled)
 
 
+func _on_guide_book_toggled(enabled: bool) -> void:
+	if not _updating:
+		Settings.set_guide_book(enabled)
+
+
 func _refresh_dynamic_texts() -> void:
 	for i in WorldClock.DAY_MINUTES_PRESETS.size():
 		_day_length.set_item_text(i, tr("DAY_LENGTH_VALUE") % WorldClock.DAY_MINUTES_PRESETS[i])
@@ -236,6 +263,7 @@ func _refresh_dynamic_texts() -> void:
 	if mode == WorldClock.Mode.SYNCED:
 		info = tr("TIME_SYNCED_INFO") + "\n" + info
 	_pace_info.text = info
+	_fit_height.call_deferred()
 
 
 func _closest_preset(minutes: float) -> int:

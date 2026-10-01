@@ -1,6 +1,7 @@
 class_name InventoryScreen
 extends Control
-## The inventory (E): the bag's 27 slots over the hotbar's 9. Clicks pick
+## The inventory (E): the bag's 27 slots over the hotbar's 9, and the
+## player's book set apart (it stays there: a click opens it). Clicks pick
 ## up, put down, split and swap stacks (Inventory.click: the client shows
 ## its guess at once, the server decides); the stack held by the cursor
 ## follows the mouse, and dropped outside the panel it is thrown away.
@@ -8,11 +9,17 @@ extends Control
 signal slot_clicked(slot: int, right: bool, shift: bool)
 signal cursor_dropped(whole: bool)
 signal close_requested
+signal book_requested
 
 var inventory: Inventory
 var library: ItemLibrary
+## The book's slot shows, and the book is in hand (set by GameClient).
+var book_shown := false
+var book_selected := false
 
 var _slots: Array[ItemSlot] = []
+var _book := ItemSlot.new()
+var _book_gap := Control.new()
 ## Draws the cursor's stack over the panel.
 var _cursor := Control.new()
 
@@ -45,6 +52,11 @@ func _ready() -> void:
 	box.add_child(hotbar)
 	for i in Inventory.HOTBAR:
 		hotbar.add_child(_new_slot(i))
+	_book_gap.custom_minimum_size.x = Hotbar.BOOK_GAP - 2.0
+	hotbar.add_child(_book_gap)
+	_book.library = library
+	_book.clicked.connect(_on_book_clicked.unbind(3))
+	hotbar.add_child(_book)
 	_cursor.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_cursor.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_cursor.draw.connect(_draw_cursor)
@@ -76,11 +88,21 @@ func _new_slot(index: int) -> ItemSlot:
 func _process(_delta: float) -> void:
 	if not visible or inventory == null:
 		return
+	var selected := inventory.selected if not book_selected else Inventory.HOTBAR
 	for slot in _slots:
 		slot.show_stack(
-			inventory.items[slot.slot], inventory.counts[slot.slot], slot.slot == inventory.selected
+			inventory.items[slot.slot], inventory.counts[slot.slot], slot.slot == selected
 		)
+	_book.visible = book_shown
+	_book_gap.visible = book_shown
+	_book.show_stack(Items.Id.GUIDE_BOOK, 1, book_selected)
 	_cursor.queue_redraw()
+
+
+## The book never leaves its slot: a click opens it (with empty hands).
+func _on_book_clicked() -> void:
+	if inventory.items[Inventory.CURSOR] == Items.Id.NONE:
+		book_requested.emit()
 
 
 ## A click beside the panel throws the cursor's stack (right: one item).

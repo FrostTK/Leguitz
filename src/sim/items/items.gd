@@ -67,6 +67,7 @@ enum Id {
 	DIAMOND_PICKAXE,
 	DIAMOND_AXE,
 	DIAMOND_SHOVEL,
+	GUIDE_BOOK,
 }
 ## What a tool is made for (Mining.tool_for: what it breaks faster).
 enum Tool { NONE, PICKAXE, AXE, SHOVEL }
@@ -200,7 +201,7 @@ static func name_key(item: int) -> String:
 static func max_stack(item: int) -> int:
 	if not is_valid(item):
 		return 0
-	return 1 if TOOLS.has(item) else MAX_STACK
+	return 1 if TOOLS.has(item) or item == Id.GUIDE_BOOK else MAX_STACK
 
 
 ## What a tool is made for (Tool.NONE for other items).

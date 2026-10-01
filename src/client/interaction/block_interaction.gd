@@ -58,8 +58,12 @@ func _process(delta: float) -> void:
 		place()
 
 
-## Puts the block in hand against the side of the target.
+## Puts the block in hand against the side of the target (the player's
+## book in hand opens instead).
 func place() -> void:
+	if client.held_item() == Items.Id.GUIDE_BOOK:
+		client.open_book()
+		return
 	if target == null or target.normal == Vector3i.ZERO:
 		return
 	var cell := target.cell + target.normal
@@ -110,7 +114,7 @@ func _update_breaking(delta: float) -> void:
 	_face(target.box.get_center())
 	if _pause > 0.0:
 		return
-	var seconds := Mining.break_seconds(target.voxel, client.inventory.held())
+	var seconds := Mining.break_seconds(target.voxel, client.held_item())
 	_progress += delta / seconds
 	if Voxels.is_cube(target.voxel):
 		_cracks.show_on(target.box, _progress)

@@ -152,6 +152,16 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   bottom right of the view, the body's copy only casts its shadow). F7 (debug) asks the server
   for the next material's tools (Msg.DEBUG_GIVE_TOOLS, announced over the hotbar); the F3 screen
   shows what is aimed at, its breaking time with what is in hand and the tool made for it.
+- The player's book (`Settings.guide_book`, on by default, in the pause menu): a 10th slot set
+  apart beside the hotbar (Hotbar keeps the 9 centered; InventoryScreen shows it too, where a
+  click opens the book: it never moves). Client only: `GameClient.book_in_hand`, `held_item()`,
+  `select_hand(BOOK_SLOT)` (the server keeps the hotbar slot chosen before); 0 takes it (again:
+  opens it), the wheel and the shoulders go through it, Q does nothing, a right click
+  (BlockInteraction.place) opens BookScreen: two pages drawn in UI units (tabs, title page and
+  contents, arrows; `BookScreen.paginate`), turned by the arrows, the wheel or the movement keys,
+  closed by Esc, E, 0 or a right click. Its text comes from GuideBook (chapters of translated
+  entries; the controls named by InputNames as they are bound, in the player's keyboard layout:
+  ZQSD on AZERTY). `Items.Id.GUIDE_BOOK` gives it a model and an icon; never in inventories.
 - Saves (`src/sim/save/world_storage.gd`, server side only): `user://worlds/<folder>/` holds
   world.cfg (settings, clock, weather), players/<name>.cfg and regions/r.<x>.<z>.bin (the chunks
   players changed, 32x32 per file, zstd voxels; the others are generated again). Change voxels

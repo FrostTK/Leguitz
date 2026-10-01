@@ -88,6 +88,8 @@ static func build(item: int) -> VoxelGrid:
 			return _lily_pad()
 		Items.Id.FERN:
 			return _fern()
+		Items.Id.GUIDE_BOOK:
+			return _book()
 	return null
 
 
@@ -336,6 +338,46 @@ static func _lily_pad() -> VoxelGrid:
 	grid.disc(Vector2(5.5, 5.5), 3.0, 0, _v("#4fa346", VoxelGrid.Kind.FOLIAGE))
 	for i in 5:
 		grid.set_voxel(Vector3i(5 + i, 0, 5), 0)
+	return grid
+
+
+## The player's book, closed: a leather cover with gold corners and an
+## emblem, gold bands on the spine, the pages' edges showing on three sides.
+static func _book() -> VoxelGrid:
+	var grid := VoxelGrid.new(Vector3i(11, 4, 13))
+	var leather := _v("#7a2a1e")
+	var dark := _v("#521911")
+	var gold := _v("#e3b24c")
+	grid.box(Vector3i(0, 0, 0), Vector3i(10, 0, 12), leather)
+	grid.box(Vector3i(0, 3, 0), Vector3i(10, 3, 12), leather)
+	grid.box(Vector3i(0, 1, 0), Vector3i(0, 2, 12), dark)
+	grid.box(Vector3i(1, 1, 1), Vector3i(9, 2, 11), _v("#f2e7ca"))
+	for z in range(2, 11, 2):
+		grid.set_voxel(Vector3i(9, 1, z), _v("#d8c79e"))
+	for x in range(2, 9, 2):
+		grid.set_voxel(Vector3i(x, 2, 11), _v("#d8c79e"))
+	for z: int in [3, 9]:
+		grid.box(Vector3i(0, 1, z), Vector3i(0, 2, z), gold)
+	# The top cover: a darker rim, gold corners and a gold emblem.
+	for x in 11:
+		for z in 13:
+			if x == 10 or z == 0 or z == 12:
+				grid.set_voxel(Vector3i(x, 3, z), dark)
+	for corner: Vector3i in [
+		Vector3i(9, 3, 1), Vector3i(9, 3, 11), Vector3i(1, 3, 1), Vector3i(1, 3, 11)
+	]:
+		grid.set_voxel(corner, gold)
+	for p: Vector3i in [
+		Vector3i(5, 3, 4),
+		Vector3i(4, 3, 5),
+		Vector3i(6, 3, 5),
+		Vector3i(3, 3, 6),
+		Vector3i(7, 3, 6)
+	]:
+		grid.set_voxel(p, gold)
+	for p: Vector3i in [Vector3i(4, 3, 7), Vector3i(6, 3, 7), Vector3i(5, 3, 8)]:
+		grid.set_voxel(p, gold)
+	grid.set_voxel(Vector3i(5, 3, 6), _v("#c4283a"))
 	return grid
 
 

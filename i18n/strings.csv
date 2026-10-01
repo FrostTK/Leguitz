@@ -167,3 +167,84 @@ ITEM_DIAMOND_PICKAXE,Diamond pickaxe,Pioche en diamant
 ITEM_DIAMOND_AXE,Diamond axe,Hache en diamant
 ITEM_DIAMOND_SHOVEL,Diamond shovel,Pelle en diamant
 INVENTORY_TITLE,Inventory,Inventaire
+ITEM_GUIDE_BOOK,Player's book,Livre du joueur
+SETTING_GUIDE_BOOK,Player's book (10th slot),Livre du joueur (10e case)
+BOOK_TITLE,Player's book,Livre du joueur
+BOOK_INTRO,"This book goes everywhere with you: controls, tips, tools and, soon, recipes. Turn the pages with the arrows, the wheel or the movement keys, pick a chapter with its tab. Right click or Esc closes it.","Ce livre t'accompagne partout : touches, astuces, outils et bientôt recettes. Tourne les pages avec les flèches, la molette ou les touches de déplacement, choisis un chapitre avec son onglet. Clic droit ou Échap pour le refermer."
+BOOK_CONTENTS,Contents,Sommaire
+BOOK_CHAPTER_CONTROLS,Controls,Touches
+BOOK_CHAPTER_GAMEPAD,Gamepad,Manette
+BOOK_CHAPTER_TIPS,Tips,Astuces
+BOOK_CHAPTER_TOOLS,Tools,Outils
+BOOK_CHAPTER_CRAFT,Crafting,Fabrication
+BOOK_MOVE,Move,Se déplacer
+BOOK_SPRINT,Run,Courir
+BOOK_JUMP,Jump,Sauter
+BOOK_BREAK,Mine (hold),Miner (maintenir)
+BOOK_PLACE,"Place a block, read this book","Poser un bloc, lire ce livre"
+BOOK_CAMERA,Turn the camera,Tourner la caméra
+BOOK_CAMERA_MOUSE,Drag with the right or middle button,Glisser avec le clic droit ou le clic molette
+BOOK_ZOOM,Zoom (top-down view),Zoomer (vue de dessus)
+BOOK_ZOOM_MOUSE,"Wheel while holding the middle button, Ctrl + wheel, + and -","Molette en gardant le clic molette enfoncé, Ctrl + molette, + et -"
+BOOK_HAND,Item in hand,Objet en main
+BOOK_HAND_KEYS,"Wheel, 1 to 9; 0: this book (0 again opens it)","Molette, 1 à 9 ; 0 : ce livre (0 encore pour l'ouvrir)"
+BOOK_INVENTORY,Inventory,Inventaire
+BOOK_DROP,Throw what is in hand (with Ctrl: the stack),Lancer l'objet en main (avec Ctrl : la pile)
+BOOK_VIEW,First person / top-down view,1re personne / vue de dessus
+BOOK_CAMERA_RESET,Back to the default view,Revenir à la vue par défaut
+BOOK_PAUSE,"Pause, settings","Pause, réglages"
+BOOK_DEBUG,Debug,Debug
+BOOK_DEBUG_SCREEN,Debug screen,Écran de debug
+BOOK_MAP,Map,Carte
+BOOK_DEPTH,Next cave / back up,Grotte suivante / remonter
+BOOK_NOCLIP,Ghost mode,Mode fantôme
+BOOK_WEATHER,Change the weather,Changer la météo
+BOOK_GIVE_TOOLS,Get tools,Recevoir des outils
+BOOK_GAMEPAD_AIM,"With a gamepad, you aim at what is in front of you.","À la manette, on vise ce qui est devant soi."
+BOOK_TIP_1,"Every block gives something: grass gives dirt, a tree its logs and sticks.","Chaque bloc donne quelque chose : l'herbe donne de la terre, un arbre ses bûches et des bâtons."
+BOOK_TIP_2,Mine the foot of a tree to fell it whole.,Mine le pied d'un arbre pour l'abattre en entier.
+BOOK_TIP_3,Items on the ground fly to you when you walk by.,Les objets au sol viennent à toi quand tu passes à côté.
+BOOK_TIP_4,"Under a roof or in a cave, the view cuts everything above your head.","Sous un toit ou dans une grotte, la vue coupe tout ce qui dépasse ta tête."
+BOOK_TIP_5,Entering a cave switches to first person (you can turn this off in the pause menu).,"En entrant dans une grotte, la vue passe à la 1re personne (désactivable dans le menu pause)."
+BOOK_TIP_6,Water fills the holes dug next to it.,L'eau comble les trous creusés à côté d'elle.
+BOOK_TIP_7,"In the inventory, a right click takes half a stack or puts one item down; Shift + click sends a stack between the bar and the bag.","Dans l'inventaire, le clic droit prend la moitié d'une pile ou pose un seul objet ; Maj + clic envoie une pile entre la barre et le sac."
+BOOK_TIP_8,Click beside the inventory to throw what the cursor holds.,Clique à côté de l'inventaire pour lancer ce que tient le curseur.
+BOOK_TIP_9,"The world saves itself every 2 minutes, when you pause and when you quit.","Le monde se sauvegarde tout seul toutes les 2 minutes, en pause et en quittant."
+BOOK_TIP_10,"At night, your lantern lights the way; caves stay dark.","La nuit, ta lanterne éclaire le chemin ; les grottes restent sombres."
+BOOK_TIP_11,This book can be hidden in the pause menu.,Ce livre peut être masqué dans le menu pause.
+BOOK_TOOLS_INTRO,"Everything can be mined by hand, slowly. The right tool is much faster.","Tout se mine à la main, lentement. Le bon outil va bien plus vite."
+BOOK_TOOLS_PICKAXE,"Pickaxe: stone, ores, ice, terracotta","Pioche : pierre, minerais, glace, terre cuite"
+BOOK_TOOLS_SHOVEL,"Shovel: dirt, grass, sand, snow, mud","Pelle : terre, herbe, sable, neige, boue"
+BOOK_TOOLS_AXE,"Axe: trees, big mushrooms","Hache : arbres, grands champignons"
+BOOK_TOOLS_SPEED,Speed by material,Vitesse selon le matériau
+BOOK_TOOLS_GOLD,"Gold is the fastest, but it will wear out quickly.","L'or est le plus rapide, mais il s'usera vite."
+BOOK_TOOLS_PLANTS,"Plants break at once, with or without a tool.","Les plantes se cassent d'un coup, avec ou sans outil."
+BOOK_CRAFT_SOON,"Soon you will make planks, tools, chests and furnaces. The recipes will show here.","Bientôt, tu fabriqueras planches, outils, coffres et fours. Les recettes s'afficheront ici."
+TIER_WOOD,Wood,Bois
+TIER_STONE,Stone,Pierre
+TIER_COPPER,Copper,Cuivre
+TIER_IRON,Iron,Fer
+TIER_GOLD,Gold,Or
+TIER_DIAMOND,Diamond,Diamant
+KEY_SPACE,Space,Espace
+KEY_SHIFT,Shift,Maj
+KEY_CTRL,Ctrl,Ctrl
+KEY_ESCAPE,Esc,Échap
+KEY_HOME,Home,Début
+KEY_PAGE_UP,Page Up,Pg préc.
+KEY_PAGE_DOWN,Page Down,Pg suiv.
+KEY_UP,Up,Haut
+KEY_DOWN,Down,Bas
+KEY_LEFT,Left,Gauche
+KEY_RIGHT,Right,Droite
+KEY_ARROWS,Arrows,Flèches
+KEY_ENTER,Enter,Entrée
+KEY_TAB,Tab,Tab
+KEY_KP_ADD,Num +,Pavé +
+KEY_KP_SUBTRACT,Num -,Pavé -
+MOUSE_LEFT,Left click,Clic gauche
+MOUSE_RIGHT,Right click,Clic droit
+MOUSE_MIDDLE,Middle click,Clic molette
+PAD_LEFT_STICK,Left stick,Stick gauche
+PAD_RIGHT_STICK,Right stick,Stick droit
+PAD_DPAD,D-pad,Croix

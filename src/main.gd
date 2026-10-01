@@ -145,6 +145,10 @@ func _start_dev_actions() -> void:
 		session.transport.send(Msg.inventory(session.inventory))
 	if dev.open_inventory:
 		client.open_inventory()
+	if dev.book_spread >= 0:
+		client.select_hand(GameClient.BOOK_SLOT)
+		client.open_book()
+		client.book_screen.turn(dev.book_spread)
 	if dev.drop_held:
 		client.transport.send(Msg.item_drop(0, true))
 	if dev.open_map:
