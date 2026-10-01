@@ -56,14 +56,14 @@ Les questions de goût ou les choix lourds de conséquences sont posés avant de
 | Outils avant le craft | **Tout se mine à la main** (lentement, chaque bloc donne quelque chose) ; les outils (pioche, hache, pelle, en 6 matériaux) minent plus vite ce pour quoi ils sont faits ; en attendant le craft (phase 4), **F7** (debug) donne les outils du matériau suivant. Fait à l'étape 3.5 (vitesses de Minecraft, temps de minage en temps réel, pas adapté au rythme du monde). |
 | Livre du joueur | Une **10e case** à part, à droite de la barre (les 9 restent centrées), tient un **livre ancré** : on ne peut ni le jeter ni le déplacer. 0 le prend en main (0 encore, ou clic droit, l'ouvre) ; il montre les touches (celles du clavier du joueur : ZQSD en AZERTY), la manette, des astuces, les outils et bientôt les recettes. Se désactive dans le menu pause (activé par défaut). |
 | Établi | **Modèle voxel sur 2 cases**, d'après la photo d'un établi de menuisier en hêtre envoyée par le propriétaire : plateau épais en lamelles, étau à gauche, étagère ouverte sous le plateau, 4 petits tiroirs, 2 grands et une porte à charnières, pieds en traîneau ; dessus, des détails du jeu : une petite enclume, un marteau et une scie en fer. Il se pose face au joueur. |
-| Craft | Recettes comme Minecraft : une forme placée n'importe où dans la grille (en miroir aussi) ou sans forme, ingrédients d'un même groupe interchangeables (n'importe quelles planches). **Grille 3×3 dans l'inventaire (E)**, **établi 5×5** (étape 4.2). Clic sur le résultat pour le prendre, Maj+clic pour en faire le plus possible ; ce qui reste dans la grille revient dans le sac à la fermeture. Les recettes s'affichent dans le livre du joueur. |
+| Craft | Recettes comme Minecraft : une forme placée n'importe où dans la grille (en miroir aussi) ou sans forme, ingrédients d'un même groupe interchangeables (n'importe quelles planches). **Grille 3×3 dans l'inventaire (E)**, **établi 5×5** (clic droit dessus). Les outils se font à l'établi, avec **les formes classiques de Minecraft** ; la grille 5×5 est prévue pour de futurs objets plus grands. Clic sur le résultat pour le prendre, Maj+clic pour en faire le plus possible ; ce qui reste dans la grille revient dans le sac à la fermeture. Les recettes s'affichent dans le livre du joueur. |
 | Chargement | Tout ce qui est visible doit être chargé, même dézoomé au maximum sur l'écran ultra-large du propriétaire (3440×1440, fenêtré). Carte graphique du propriétaire : NVIDIA GeForce RTX 5050 (8 Go). |
 
 ---
 
 ## 3. État actuel : ce qui est fait
 
-Godot **4.7.2** (GDScript), rendu Forward+. 129 tests unitaires, lint propre.
+Godot **4.7.2** (GDScript), rendu Forward+. 131 tests unitaires, lint propre.
 
 | Phase | Contenu | Commits |
 |---|---|---|
@@ -86,7 +86,8 @@ Godot **4.7.2** (GDScript), rendu Forward+. 129 tests unitaires, lint propre.
 | 3.5 Outils et dureté | 18 outils (`Items.TOOLS` : pioche, hache et pelle en bois, pierre, cuivre, fer, or et diamant ; ils ne s'empilent pas), dureté de chaque bloc et outil qui lui convient (`Mining.break_seconds`, `tool_for` : la pioche pour la pierre, les minerais, la glace et la terre cuite, la pelle pour la terre, l'herbe, le sable, la neige et la boue, la hache pour les arbres et les grands champignons ; rien n'aide pour les plantes) ; vitesses de Minecraft (×2 bois, ×4 pierre, ×5 cuivre, ×6 fer, ×8 diamant, ×12 or), ¼ s entre deux blocs ; modèles voxel en diagonale comme les icônes de Minecraft (icônes face à la caméra, objets plats plus grands au sol), outil tenu par le manche (couché à plat pour se voir de dessus, le poignet frappe ; à la 1re personne en bas à droite, avec le geste) ; **F7** (debug) donne les outils du matériau suivant (annoncé au-dessus de la barre) ; ligne « Visé » de l'écran F3 (bloc, temps de minage avec l'objet en main, outil qui convient) ; une case d'inventaire se redessine quand son icône arrive | `9733d72` |
 | 3.6 Livre du joueur | 10e case à part (réglage « Livre du joueur » du menu pause, activé par défaut), livre ancré (ni jeté ni déplacé ; dans l'inventaire, un clic l'ouvre), touche 0 (encore : l'ouvrir), molette et LB/RB passent par lui, clic droit pour l'ouvrir ; `BookScreen` : livre ouvert sur deux pages (onglets des chapitres, page de titre et sommaire, flèches, numéros de page ; flèches, molette, touches de déplacement pour tourner les pages ; Échap, E, 0 ou clic droit pour fermer), texte de `GuideBook` : touches (noms de `InputNames`, selon le clavier du joueur), manette, 11 astuces, outils (icônes, vitesses), fabrication (à venir) ; modèle voxel du livre (en main, en 1re personne) ; le menu pause défile quand la fenêtre est trop petite ; `--book[=N]` | `209f9b7` |
 | 4.1 Recettes et grille 3×3 | Registre `Recipes` (avec forme, placée n'importe où et en miroir, ou sans forme ; groupes d'ingrédients comme « n'importe quelles planches » ; recettes réservées à l'établi possibles), grille de fabrication dans l'`Inventory` (5×5 cases, l'inventaire utilise les 3×3 du haut à gauche), clic sur le résultat (Maj : le plus possible), la grille et le curseur reviennent dans le sac à la fermeture, `Msg.CRAFT` vérifié par le serveur ; recettes : bûche → 4 planches de son bois, 2 planches → 4 bâtons, 4 planches → établi ; planches des 6 bois et établi posables (blocs cubes, textures de `gen_art.py` : planches clouées, établi à grille 5×5 et outils sur les côtés), à la hache ; les objets-blocs montrent leurs côtés ; chapitre « Fabrication » du livre (recettes dessinées, les planches défilent) ; `--grid` | `6f011e6` |
-| 4.1b Établi en modèle | L'établi devient un modèle voxel de 2 cases (`WorkbenchModel` : établi de menuisier en hêtre, étau, tiroirs, porte, enclume, marteau et scie en fer dessus), posé face au joueur (4 orientations : `WORKBENCH`, `_WEST`, `_NORTH`, `_EAST`, plus son autre bout `WORKBENCH_END_X/_Z` sans modèle) sur la case visée et celle de sa droite (sinon de sa gauche), libres et posées sur des cubes (`Mining.placement`) ; casser un bout casse tout l'établi et rend un établi (`Mining.object_cells`) ; collisions sur les deux cases, cadre de visée autour de l'établi entier ; icône, objet en main et au sol avec le même modèle ; sa texture de cube est retirée des atlas | « Workbench model » |
+| 4.1b Établi en modèle | L'établi devient un modèle voxel de 2 cases (`WorkbenchModel` : établi de menuisier en hêtre, étau, tiroirs, porte, enclume, marteau et scie en fer dessus), posé face au joueur (4 orientations : `WORKBENCH`, `_WEST`, `_NORTH`, `_EAST`, plus son autre bout `WORKBENCH_END_X/_Z` sans modèle) sur la case visée et celle de sa droite (sinon de sa gauche), libres et posées sur des cubes (`Mining.placement`) ; casser un bout casse tout l'établi et rend un établi (`Mining.object_cells`) ; collisions sur les deux cases, cadre de visée autour de l'établi entier ; icône, objet en main et au sol avec le même modèle ; sa texture de cube est retirée des atlas | `97dc394` |
+| 4.2 Établi 5×5 | Clic droit sur un établi posé (n'importe quel bout ; à la manette, gâchette gauche) : l'écran « Établi » avec la grille 5×5 (`InventoryScreen.open(width)`), le serveur l'accepte si l'établi est à portée (`Msg.OPEN_WORKBENCH`, `PlayerSession.craft_width` jusqu'à la fermeture) ; recettes des 18 outils aux formes classiques de Minecraft, seulement à l'établi (planches, n'importe quelle pierre, lingots de cuivre/fer/or, diamants ; bâtons) ; lingots de cuivre, de fer et d'or (objets en voxels, pas encore fabricables : le four viendra à l'étape 5) ; grès (4 sable) et glace compacte (9 glace) ; le livre classe les recettes (inventaire, puis « À l'établi », une entrée par sorte d'outil qui fait défiler les matériaux) ; `--grid` par lignes | « Workbench crafting » |
 
 **Pas encore fait** (prévu) : la suite de la phase 4 (établi 5×5, usure, coffres, fours, blocs de construction), survie/combat, créatures, structures, agriculture, menus de départ, sons,
 mode Arcade, mobile.
@@ -131,7 +132,8 @@ sauvegardé), `--aim=X,Y` (viser ce point, en unités de l'interface depuis le c
 bouton de minage enfoncé), `--place` (poser un bloc une fois), `--give=objet:N,...` (donner des
 objets, noms de `Items.Id` : `dirt:20,diamond:3`), `--inventory` (ouvrir l'inventaire), `--drop`
 (lancer la pile en main), `--book[=N]` (ouvrir le livre du joueur à la double page N),
-`--grid=objet,...` (remplir la grille de fabrication ligne par ligne, `none` = case vide) (voir
+`--grid=ligne/ligne` (remplir la grille de fabrication, 5×5 au plus : lignes séparées par `/`, cases par
+`,`, `none` = case vide ; `--place` visant un établi l'ouvre) (voir
 `src/core/dev_options.gd`). **`--seed` seul joue un monde jetable, jamais
 sauvegardé** : les captures ne touchent jamais au monde du propriétaire.
 
@@ -227,9 +229,12 @@ valider avec le propriétaire avant de commencer** (validé, avec la grille 3×3
    premières recettes : bûche → planches, planches → bâtons, l'établi ; planches de chaque bois
    posables (nouveaux blocs, textures de `tools/gen_art.py`) ; les recettes s'affichent dans le
    chapitre « Fabrication » du livre du joueur (`GuideBook._craft`).
-2. **Établi 5×5** (prochaine étape ; au lieu du 3×3 de Minecraft) : l'établi posé s'ouvre au clic droit sur une
+2. ✅ **Établi 5×5** (voir section 3). Outils aux formes classiques de Minecraft (décision du
+   propriétaire : la grille 5×5 servira à de futurs objets). Les lingots existent comme objets ; ils
+   sortiront du four (étape 5). Les blocs de construction nouveaux restent à l'étape 6 ; pour
+   l'instant grès et glace compacte. Le plan suivi : l'établi posé s'ouvre au clic droit sur une
    grille 5×5 ; recettes des outils (les 18 existent déjà, étape 3.5) et des blocs de construction.
-3. **Usure des outils** : solidité par matériau (l'or rapide mais fragile), barre d'usure dans les
+3. **Usure des outils** (prochaine étape) : solidité par matériau (l'or rapide mais fragile), barre d'usure dans les
    cases, l'outil casse ; F7 reste une touche de debug (créatif plus tard).
 4. **Coffres** : données de bloc côté serveur (un inventaire par coffre, sauvegardé avec la région),
    ouverture au clic droit, contenu répandu quand on le casse.

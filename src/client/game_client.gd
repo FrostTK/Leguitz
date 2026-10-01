@@ -99,6 +99,8 @@ var book_screen := BookScreen.new()
 ## The player's book is in hand (its slot: Settings.guide_book). Only the
 ## client knows: the server keeps the hotbar slot chosen before.
 var book_in_hand := false
+## Cells across of the crafting grid in use (a workbench's is wider).
+var craft_width := Inventory.OWN_GRID
 var dropped_items := DroppedItemsView.new()
 var item_icons := ItemIcons.new()
 ## What is in hand in first person (a child of the camera).
@@ -647,7 +649,18 @@ func select_slot(slot: int) -> void:
 func open_inventory() -> void:
 	interaction.stop()
 	local_player.controls_enabled = false
-	inventory_screen.open()
+	craft_width = Inventory.OWN_GRID
+	inventory_screen.open(craft_width)
+
+
+## Opens the workbench standing in `cell`: the inventory with its 5 x 5
+## crafting grid (the server is told: its grid is used until it closes).
+func open_workbench(cell: Vector3i) -> void:
+	interaction.stop()
+	local_player.controls_enabled = false
+	craft_width = Inventory.GRID
+	transport.send(Msg.open_workbench(cell))
+	inventory_screen.open(craft_width)
 
 
 func _on_slot_clicked(slot: int, right: bool, shift: bool) -> void:
@@ -668,7 +681,7 @@ func _on_inventory_closed() -> void:
 
 
 func _on_craft_clicked(shift: bool) -> void:
-	inventory.craft(Inventory.OWN_GRID, shift)
+	inventory.craft(craft_width, shift)
 	transport.send(Msg.craft(shift))
 
 

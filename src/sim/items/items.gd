@@ -75,6 +75,9 @@ enum Id {
 	JUNGLE_PLANKS,
 	ACACIA_PLANKS,
 	WORKBENCH,
+	COPPER_INGOT,
+	IRON_INGOT,
+	GOLD_INGOT,
 }
 ## What a tool is made for (Mining.tool_for: what it breaks faster).
 enum Tool { NONE, PICKAXE, AXE, SHOVEL }

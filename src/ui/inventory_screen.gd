@@ -1,6 +1,7 @@
 class_name InventoryScreen
 extends Control
-## The inventory (E): the crafting grid (3 x 3) and what it makes, the
+## The inventory (E): the crafting grid (3 x 3; a workbench's, 5 x 5, when
+## one is opened) and what it makes, the
 ## bag's 27 slots over the hotbar's 9, and the player's book set apart (it
 ## stays there: a click opens it). Clicks pick up, put down, split and swap
 ## stacks (Inventory.click: the client shows its guess at once, the server
@@ -17,6 +18,8 @@ signal craft_clicked(shift: bool)
 
 var inventory: Inventory
 var library: ItemLibrary
+## Cells across of the crafting grid shown (see open).
+var craft_width := Inventory.OWN_GRID
 ## The book's slot shows, and the book is in hand (set by GameClient).
 var book_shown := false
 var book_selected := false
@@ -26,6 +29,11 @@ var _book := ItemSlot.new()
 var _book_gap := Control.new()
 ## What the crafting grid makes.
 var _result := ItemSlot.new()
+var _title := Label.new()
+## The crafting grid's cells (all GRID x GRID, row by row; those past the
+## width in use hide).
+var _grid := GridContainer.new()
+var _cells: Array[ItemSlot] = []
 ## Draws the cursor's stack over the panel.
 var _cursor := Control.new()
 
@@ -42,11 +50,10 @@ func _ready() -> void:
 	panel.add_child(box)
 	var top := HBoxContainer.new()
 	box.add_child(top)
-	var title := Label.new()
-	title.text = "INVENTORY_TITLE"
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	top.add_child(title)
+	_title.text = "INVENTORY_TITLE"
+	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_title.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	top.add_child(_title)
 	top.add_child(_crafting())
 	var bag := GridContainer.new()
 	bag.columns = Inventory.HOTBAR
@@ -75,7 +82,14 @@ func _ready() -> void:
 	visible = false
 
 
-func open() -> void:
+## Opens with a crafting grid `width` cells across: the inventory's own,
+## or a workbench's (Inventory.GRID).
+func open(width := Inventory.OWN_GRID) -> void:
+	craft_width = width
+	_title.text = "WORKBENCH_TITLE" if width > Inventory.OWN_GRID else "INVENTORY_TITLE"
+	_grid.columns = width
+	for cell in _cells.size():
+		_cells[cell].visible = cell % Inventory.GRID < width and cell / Inventory.GRID < width
 	visible = true
 
 
@@ -85,7 +99,7 @@ func close() -> void:
 		close_requested.emit()
 
 
-## The inventory's crafting grid, an arrow and what the grid makes.
+## The crafting grid, an arrow and what the grid makes.
 func _crafting() -> Control:
 	var area := VBoxContainer.new()
 	area.add_theme_constant_override("separation", 2)
@@ -96,15 +110,13 @@ func _crafting() -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 3)
 	area.add_child(row)
-	var grid := GridContainer.new()
-	grid.columns = Inventory.OWN_GRID
-	grid.add_theme_constant_override("h_separation", 1)
-	grid.add_theme_constant_override("v_separation", 1)
-	row.add_child(grid)
-	for cell in Inventory.OWN_GRID * Inventory.OWN_GRID:
-		var column := cell % Inventory.OWN_GRID
-		var line := cell / Inventory.OWN_GRID
-		grid.add_child(_new_slot(Inventory.CRAFT + line * Inventory.GRID + column))
+	_grid.add_theme_constant_override("h_separation", 1)
+	_grid.add_theme_constant_override("v_separation", 1)
+	row.add_child(_grid)
+	for cell in Inventory.GRID * Inventory.GRID:
+		var slot := _new_slot(Inventory.CRAFT + cell)
+		_cells.append(slot)
+		_grid.add_child(slot)
 	var arrow := Control.new()
 	arrow.custom_minimum_size = Vector2(12.0, 0.0)
 	arrow.draw.connect(_draw_arrow.bind(arrow))
@@ -149,7 +161,7 @@ func _process(_delta: float) -> void:
 		slot.show_stack(
 			inventory.items[slot.slot], inventory.counts[slot.slot], slot.slot == selected
 		)
-	var made := inventory.craft_result(Inventory.OWN_GRID)
+	var made := inventory.craft_result(craft_width)
 	_result.show_stack(made.x, made.y)
 	_book.visible = book_shown
 	_book_gap.visible = book_shown

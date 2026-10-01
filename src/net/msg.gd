@@ -21,6 +21,7 @@ const ITEM_DROP := "item_drop"
 const INVENTORY_CLOSE := "inventory_close"
 const DEBUG_GIVE_TOOLS := "debug_give_tools"
 const CRAFT := "craft"
+const OPEN_WORKBENCH := "open_workbench"
 
 ## map_request() row for a map of the surface.
 const MAP_SURFACE := -1
@@ -73,6 +74,12 @@ static func item_drop(slot: int, whole: bool) -> Dictionary:
 ## go back.
 static func inventory_close() -> Dictionary:
 	return {"t": INVENTORY_CLOSE}
+
+
+## The player opened the workbench standing in `cell`: their crafting
+## grid is its 5 x 5 one until the screen closes.
+static func open_workbench(cell: Vector3i) -> Dictionary:
+	return {"t": OPEN_WORKBENCH, "cell": cell}
 
 
 ## The player takes what their crafting grid makes (shift: as many as

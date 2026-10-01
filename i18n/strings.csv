@@ -257,4 +257,12 @@ ITEM_WORKBENCH,Workbench,Établi
 CRAFTING_TITLE,Crafting,Fabrication
 BOOK_CRAFT_HOW,"Put the ingredients in the grid of your inventory (E): what they make shows on the right. Click it to take it, Shift + click to make as many as possible.","Place les ingrédients dans la grille de ton inventaire (E) : ce qu'ils donnent s'affiche à droite. Clique dessus pour le prendre, Maj + clic pour en faire le plus possible."
 BOOK_CRAFT_PLANKS,Planks  ×%d (from each log),Planches  ×%d (de chaque bûche)
-BOOK_CRAFT_MORE,"Placed, the workbench will open a bigger grid (5 x 5) for tools and more.","Une fois posé, l'établi ouvrira une plus grande grille (5 × 5) pour les outils et plus encore."
+BOOK_CRAFT_MORE,"Copper, iron and gold are worked as ingots, which will come out of the furnace (soon). The workbench's 5 x 5 grid is ready for the items to come.","Le cuivre, le fer et l'or se travaillent en lingots, qui sortiront du four (bientôt). La grille 5 × 5 de l'établi attend les objets à venir."
+ITEM_COPPER_INGOT,Copper ingot,Lingot de cuivre
+ITEM_IRON_INGOT,Iron ingot,Lingot de fer
+ITEM_GOLD_INGOT,Gold ingot,Lingot d'or
+WORKBENCH_TITLE,Workbench,Établi
+BOOK_CRAFT_AT_BENCH,At the workbench (right click on it),À l'établi (clic droit dessus)
+BOOK_CRAFT_PICKAXE,Pickaxes (every material),Pioches (tous les matériaux)
+BOOK_CRAFT_AXE,Axes (every material),Haches (tous les matériaux)
+BOOK_CRAFT_SHOVEL,Shovels (every material),Pelles (tous les matériaux)

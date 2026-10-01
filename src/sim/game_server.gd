@@ -259,7 +259,10 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 			if session.joined:
 				for left in session.inventory.put_back_all():
 					_throw(session, left.x, left.y)
+				session.craft_width = Inventory.OWN_GRID
 				session.transport.send(Msg.inventory(session.inventory))
+		Msg.OPEN_WORKBENCH:
+			_on_open_workbench(session, message)
 		Msg.CRAFT:
 			if session.joined:
 				session.inventory.craft(session.craft_width, message.get("shift", false))
@@ -385,6 +388,17 @@ func _on_block_place(session: PlayerSession, message: Dictionary) -> void:
 		change_voxel(at, cells[at])
 	session.inventory.take(slot, 1)
 	session.transport.send(Msg.inventory(session.inventory))
+
+
+## A player opened a workbench: crafting uses its whole grid, if there is
+## one within reach.
+func _on_open_workbench(session: PlayerSession, message: Dictionary) -> void:
+	if not session.joined:
+		return
+	var cell: Vector3i = message.get("cell", Vector3i.ZERO)
+	var near := Mining.reach_to(session.position, session.height, cell)
+	if Mining.opens(world.voxel_at(cell)) and near <= Mining.REACH + REACH_LEEWAY:
+		session.craft_width = Inventory.GRID
 
 
 ## A player throws one item of a slot, or its whole stack.

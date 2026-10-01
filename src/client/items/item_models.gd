@@ -47,6 +47,12 @@ const HANDLE := ["#5c3b1f", "#7a5230", "#94683d"]
 const SQRT_HALF := 0.70710678
 ## Across the handle, from the middle of its 2-voxel staircase.
 const HANDLE_MIDDLE := 0.3535534
+## Ingots: the colors of their metal (the tools' heads).
+const INGOTS := {
+	Items.Id.COPPER_INGOT: Items.Tier.COPPER,
+	Items.Id.IRON_INGOT: Items.Tier.IRON,
+	Items.Id.GOLD_INGOT: Items.Tier.GOLD,
+}
 ## Tools lie on the diagonal of a TOOL_SIZE grid, like the icons of block
 ## games: the handle from the bottom left, the head at the top right. The
 ## hand holds the handle at TOOL_GRIP (grid units), its axis TOOL_AXIS;
@@ -69,6 +75,8 @@ static func build(item: int) -> VoxelGrid:
 		return _flower(FLOWERS[item])
 	if Items.TOOLS.has(item):
 		return _tool(Items.tool_of(item), TOOL_HEADS[Items.tier_of(item)])
+	if INGOTS.has(item):
+		return _ingot(TOOL_HEADS[INGOTS[item]])
 	match item:
 		Items.Id.STICK:
 			return _stick()
@@ -102,6 +110,17 @@ static func is_flat(item: int) -> bool:
 
 static func _v(hex: String, kind := VoxelGrid.Kind.SOLID) -> int:
 	return VoxelGrid.voxel(Color(hex), kind)
+
+
+## An ingot: a bar narrowing to its top, shining along its upper edge.
+static func _ingot(colors: Array) -> VoxelGrid:
+	var grid := VoxelGrid.new(Vector3i(12, 3, 7))
+	grid.box(Vector3i(0, 0, 0), Vector3i(11, 0, 6), _v(colors[0]))
+	grid.box(Vector3i(1, 0, 1), Vector3i(10, 1, 5), _v(colors[1]))
+	grid.box(Vector3i(2, 2, 1), Vector3i(9, 2, 5), _v(colors[2]))
+	grid.box(Vector3i(2, 2, 1), Vector3i(9, 2, 1), _v(colors[3]))
+	grid.box(Vector3i(1, 1, 1), Vector3i(10, 1, 1), _v(colors[2]))
+	return grid
 
 
 ## A tool on the diagonal: the handle, a stick from the bottom left, and

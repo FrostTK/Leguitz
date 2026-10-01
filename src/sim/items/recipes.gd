@@ -6,7 +6,8 @@ extends RefCounted
 ## a shapeless one only counts its ingredients. An ingredient is an item or
 ## a group of items (any planks...). The inventory's 3 x 3 grid makes the
 ## recipes that fit in it, the workbench's grid (WORKBENCH_GRID) all of
-## them, some only there ("workbench": true).
+## them, some only there ("workbench": true: the tools, Minecraft's
+## shapes; the 5 x 5 grid waits for bigger recipes to come).
 
 const WORKBENCH_GRID := 5
 ## Any planks.
@@ -18,25 +19,52 @@ const PLANKS: Array[int] = [
 	Items.Id.JUNGLE_PLANKS,
 	Items.Id.ACACIA_PLANKS,
 ]
-## The recipes besides the logs sawn into planks (see all()): a "pattern"
-## (rows of letters, spaces left empty) and its "keys" (letter ->
-## ingredient), and the "result" [item, count].
+## Any stone.
+const STONES: Array[int] = [Items.Id.STONE, Items.Id.DEEPSLATE]
+## The recipes besides the logs sawn into planks and the tools (see
+## all()): a "pattern" (rows of letters, spaces left empty) and its "keys"
+## (letter -> ingredient), and the "result" [item, count].
 const SHAPED := [
 	{"pattern": ["P", "P"], "keys": {"P": PLANKS}, "result": [Items.Id.STICK, 4]},
 	{"pattern": ["PP", "PP"], "keys": {"P": PLANKS}, "result": [Items.Id.WORKBENCH, 1]},
+	{"pattern": ["SS", "SS"], "keys": {"S": Items.Id.SAND}, "result": [Items.Id.SANDSTONE, 1]},
+	{
+		"pattern": ["III", "III", "III"],
+		"keys": {"I": Items.Id.ICE},
+		"result": [Items.Id.PACKED_ICE, 1],
+	},
 ]
+## The tools, at the workbench: Minecraft's shapes ("M": the material,
+## "S": a stick), and what each tier's are made of.
+const TOOL_PATTERNS := {
+	Items.Tool.PICKAXE: ["MMM", " S ", " S "],
+	Items.Tool.AXE: ["MM", "MS", " S"],
+	Items.Tool.SHOVEL: ["M", "S", "S"],
+}
+const TOOL_MATERIALS := {
+	Items.Tier.WOOD: PLANKS,
+	Items.Tier.STONE: STONES,
+	Items.Tier.COPPER: Items.Id.COPPER_INGOT,
+	Items.Tier.IRON: Items.Id.IRON_INGOT,
+	Items.Tier.GOLD: Items.Id.GOLD_INGOT,
+	Items.Tier.DIAMOND: Items.Id.DIAMOND,
+}
 
 static var _all: Array[Dictionary] = []
 
 
-## Every recipe: each log gives 4 planks (shapeless: "ingredients"), then
-## SHAPED.
+## Every recipe: each log gives 4 planks (shapeless: "ingredients"),
+## SHAPED, then the tools.
 static func all() -> Array[Dictionary]:
 	if _all.is_empty():
 		for log_item: int in Items.PLANKS_OF:
 			_all.append({"ingredients": [log_item], "result": [Items.PLANKS_OF[log_item], 4]})
 		for recipe: Dictionary in SHAPED:
 			_all.append(recipe)
+		for tool: int in Items.TOOLS:
+			var keys := {"M": TOOL_MATERIALS[Items.tier_of(tool)], "S": Items.Id.STICK}
+			var pattern: Array = TOOL_PATTERNS[Items.tool_of(tool)]
+			_all.append({"pattern": pattern, "keys": keys, "result": [tool, 1], "workbench": true})
 	return _all
 
 

@@ -164,14 +164,20 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   ZQSD on AZERTY). `Items.Id.GUIDE_BOOK` gives it a model and an icon; never in inventories.
 - Crafting (`src/sim/items/recipes.gd`, shared): shaped recipes (a pattern placed anywhere in the
   grid, mirrored too) and shapeless ones; an ingredient is an item or a group (`Recipes.PLANKS`);
-  `"workbench": true` keeps a recipe to the 5x5 grid. The grid lives in the `Inventory`
+  `"workbench": true` keeps a recipe to the 5x5 grid (the tools: Minecraft's shapes,
+  `TOOL_PATTERNS`, made of `TOOL_MATERIALS`: planks, any stone, copper/iron/gold ingots,
+  diamonds; the 5x5 grid waits for bigger recipes). The grid lives in the `Inventory`
   (GRID x GRID cells from `Inventory.CRAFT`; the inventory's own grid is its top left OWN_GRID,
-  3x3; a workbench will use all 5x5) and is clicked like slots; `craft(width, shift)` takes the
+  3x3; a workbench's all 5x5) and is clicked like slots; `craft(width, shift)` takes the
   result (shift: as many as fit, into the slots), `put_back_all()` empties the cursor and the
   grid when the screen closes (the server throws what does not fit). Msg.CRAFT; the server uses
-  `PlayerSession.craft_width`. InventoryScreen shows the grid, an arrow and the result; the
-  book's Crafting chapter draws every recipe (GuideBook Kind.RECIPE, groups going through their
-  items). `--grid=ITEM,...` fills the grid for screenshots.
+  `PlayerSession.craft_width`: OWN_GRID, or GRID once Msg.OPEN_WORKBENCH names a workbench
+  within reach, until the screen closes. A right click on a workbench (`Mining.opens`,
+  BlockInteraction.place) opens it: `GameClient.open_workbench`, InventoryScreen.open(width)
+  showing the grid that wide (titled Workbench), an arrow and the result; the book's Crafting
+  chapter draws every recipe (GuideBook Kind.RECIPE, groups and each kind of tool going through
+  their items). `--grid=ROW/ROW` fills the grid for screenshots; `--place` aimed at a workbench
+  opens it.
 - New cube blocks (planks): append to Tiles.Block and CUBE_BLOCKS, give them a
   TileAtlas.WALL_KINDS row and a `tools/gen_art.py` WALLS entry (walls from FIRST_OWN_SEED_WALL
   draw from random generators of their own, so the older textures stay the same), then Items

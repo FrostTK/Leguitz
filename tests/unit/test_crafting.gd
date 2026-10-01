@@ -185,3 +185,79 @@ func test_the_server_places_and_breaks_a_whole_workbench() -> void:
 	assert_eq(server.world.voxel_at(end), Voxels.AIR)
 	assert_eq(server.items.size(), 1, "one workbench given back")
 	assert_eq(server.items.values()[0].item, Items.Id.WORKBENCH)
+
+
+func test_tools_are_made_at_the_workbench_in_minecraft_shapes() -> void:
+	var stick := Items.Id.STICK
+	var stone := Items.Id.STONE
+	var deepslate := Items.Id.DEEPSLATE
+	var pickaxe := [[OAK, BIRCH, OAK], [N, stick, N], [N, stick, N]]
+	var wide := _grid(Inventory.GRID, Vector2i(2, 2), pickaxe)
+	var wooden := Vector2i(Items.Id.WOODEN_PICKAXE, 1)
+	assert_eq(Recipes.result_of(wide, Inventory.GRID), wooden, "anywhere in the 5 x 5 grid")
+	var small := _grid(Inventory.OWN_GRID, Vector2i.ZERO, pickaxe)
+	assert_eq(Recipes.result_of(small, Inventory.OWN_GRID), Vector2i.ZERO, "only at a workbench")
+	var axe := _grid(
+		Inventory.GRID, Vector2i.ZERO, [[stone, deepslate], [stick, stone], [stick, N]]
+	)
+	var stone_axe := Vector2i(Items.Id.STONE_AXE, 1)
+	assert_eq(Recipes.result_of(axe, Inventory.GRID), stone_axe, "mirrored, any stone")
+	var shovel := [[Items.Id.IRON_INGOT], [stick], [stick]]
+	var iron := _grid(Inventory.GRID, Vector2i(4, 1), shovel)
+	assert_eq(Recipes.result_of(iron, Inventory.GRID).x, Items.Id.IRON_SHOVEL, "iron ingots")
+	var raw := _grid(Inventory.GRID, Vector2i(4, 1), [[Items.Id.RAW_IRON], [stick], [stick]])
+	assert_eq(Recipes.result_of(raw, Inventory.GRID), Vector2i.ZERO, "not raw iron")
+	for tool: int in Items.TOOLS:
+		var made := Recipes.all().filter(
+			func(recipe: Dictionary) -> bool: return recipe["result"][0] == tool
+		)
+		assert_eq(made.size(), 1, "%s has its recipe" % Items.name_key(tool))
+	var two_sand := [Items.Id.SAND, Items.Id.SAND]
+	var sand := _grid(Inventory.OWN_GRID, Vector2i(1, 1), [two_sand, two_sand])
+	assert_eq(Recipes.result_of(sand, Inventory.OWN_GRID).x, Items.Id.SANDSTONE, "4 sand")
+
+
+func test_a_workbench_opened_lends_its_grid() -> void:
+	var settings := WorldSettings.create("Test", "42", WorldSettings.GameMode.SURVIVAL)
+	var server := GameServer.new(settings, null, false)
+	var transports := LocalTransport.create_pair()
+	server.connect_client(transports[1])
+	var client: LocalTransport = transports[0]
+	client.send(Msg.hello("Alex", 2))
+	server.process_messages()
+	var session := server.first_session()
+	var feet := Coords.world_to_tile(session.position)
+	var row := floori(session.height + 0.01) + GameConst.SEA_LEVEL
+	var bench := Vector3i(feet.x + 2, row, feet.y)
+	server.world.set_voxel(bench, Voxels.of_block(Tiles.Block.WORKBENCH))
+	var bag := session.inventory
+	var cells := [OAK, OAK, OAK, N, Items.Id.STICK, N, N, Items.Id.STICK, N]
+	for i in cells.size():
+		var cell := Inventory.CRAFT + (i / 3) * Inventory.GRID + i % 3 + 2
+		if cells[i] != N:
+			bag.items[cell] = cells[i]
+			bag.counts[cell] = 1
+	client.send(Msg.craft(false))
+	server.process_messages()
+	assert_eq(bag.items[Inventory.CURSOR], N, "the inventory's own grid cannot")
+	client.send(Msg.open_workbench(bench))
+	client.send(Msg.craft(false))
+	server.process_messages()
+	assert_eq(bag.items[Inventory.CURSOR], Items.Id.WOODEN_PICKAXE, "the workbench's can")
+	client.send(Msg.inventory_close())
+	server.process_messages()
+	assert_eq(session.craft_width, Inventory.OWN_GRID, "closed: back to the inventory's")
+	client.send(Msg.open_workbench(bench + Vector3i(0, 0, 3)))
+	server.process_messages()
+	assert_eq(session.craft_width, Inventory.OWN_GRID, "no workbench there")
+
+
+## A crafting grid `width` across holding `rows` of items from `at`.
+static func _grid(width: int, at: Vector2i, rows: Array) -> PackedInt32Array:
+	var cells := PackedInt32Array()
+	cells.resize(width * width)
+	cells.fill(N)
+	for y in rows.size():
+		for x in rows[y].size():
+			cells[(at.y + y) * width + at.x + x] = rows[y][x]
+	return cells

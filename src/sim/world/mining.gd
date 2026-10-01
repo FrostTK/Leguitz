@@ -133,6 +133,11 @@ static func placement(
 	return {}
 
 
+## Whether a voxel opens something when used (right click): a workbench.
+static func opens(voxel: int) -> bool:
+	return ObjectShapes.is_bench(Voxels.block_of(voxel))
+
+
 ## Which way a workbench placed at `cell` faces: towards the player's feet
 ## (world pixels), along the nearer axis.
 static func front_towards(cell: Vector3i, feet: Vector2) -> Vector2i:

@@ -111,22 +111,31 @@ static func _tools() -> Array:
 
 
 ## How to craft, then every recipe (the logs sawn into planks in one
-## entry going through the woods).
+## entry going through the woods), the workbench's last (each kind of tool
+## in one entry going through the materials).
 static func _craft() -> Array:
 	var entries := [_title(CHAPTERS[4]), _text("BOOK_CRAFT_HOW")]
 	var planks := []
+	var tools := {}
 	for recipe: Dictionary in Recipes.all():
+		var made: int = recipe["result"][0]
 		if recipe.has("ingredients") and Items.PLANKS_OF.has(recipe["ingredients"][0]):
 			planks.append(recipe)
+		elif Items.TOOLS.has(made):
+			tools.get_or_add(Items.tool_of(made), []).append(recipe)
 	var sawn: int = planks[0]["result"][1]
 	entries.append({"kind": Kind.RECIPE, "text": _t("BOOK_CRAFT_PLANKS") % sawn, "recipes": planks})
 	for recipe: Dictionary in Recipes.all():
-		if not recipe in planks:
+		if not recipe in planks and not Items.TOOLS.has(recipe["result"][0]):
 			var result: Array = recipe["result"]
 			var made := _t(Items.name_key(result[0]))
 			if result[1] > 1:
 				made += "  ×%d" % result[1]
 			entries.append({"kind": Kind.RECIPE, "text": made, "recipes": [recipe]})
+	entries.append(_heading("BOOK_CRAFT_AT_BENCH"))
+	for kind: int in tools:
+		var label := _t("BOOK_CRAFT_" + String(Items.Tool.find_key(kind)))
+		entries.append({"kind": Kind.RECIPE, "text": label, "recipes": tools[kind]})
 	entries.append(_text("BOOK_CRAFT_MORE"))
 	return entries
 
