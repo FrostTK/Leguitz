@@ -9,18 +9,23 @@ extends RefCounted
 const COVER_ABOVE := 2.5
 
 var chunks: Dictionary[Vector2i, ChunkData] = {}
+## Bumped by every change (a chunk comes or goes, a voxel changes).
+var revision := 0
 
 
 func store(chunk: ChunkData) -> void:
 	chunks[chunk.coord] = chunk
+	revision += 1
 
 
 func remove(coord: Vector2i) -> void:
 	chunks.erase(coord)
+	revision += 1
 
 
 func clear() -> void:
 	chunks.clear()
+	revision += 1
 
 
 func chunk_at(tile: Vector2i) -> ChunkData:
@@ -54,6 +59,7 @@ func set_voxel(cell: Vector3i, voxel: int) -> int:
 	var at := Vector3i(local.x, cell.y, local.y)
 	var before := chunk.get_voxel(at)
 	chunk.set_voxel(at, voxel)
+	revision += 1
 	return before
 
 

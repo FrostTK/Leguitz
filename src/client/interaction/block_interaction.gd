@@ -384,15 +384,18 @@ func _aim() -> VoxelRay.Hit:
 
 ## The voxel at a cell as the view shows it: air where it is cut away.
 func _shown_voxel(cell: Vector3i) -> int:
-	if cell.y >= client.shown_below_row:
+	if cell.y >= client.shown_below_row and client.cut_region.covers(Vector2i(cell.x, cell.z)):
 		return Voxels.AIR
 	return client.world.voxel_at(cell)
 
 
 ## Whether a creature shows (not standing above the view's cut).
 func _shown(creature: int) -> bool:
-	var floor_level := client.creatures.bounds_of(creature).position.y
-	return floor_level + GameConst.SEA_LEVEL < client.shown_below_row
+	var box := client.creatures.bounds_of(creature)
+	if box.position.y + GameConst.SEA_LEVEL < client.shown_below_row:
+		return true
+	var middle := box.get_center()
+	return not client.cut_region.covers(Vector2i(floori(middle.x), floori(middle.z)))
 
 
 ## The player's eye (local units).

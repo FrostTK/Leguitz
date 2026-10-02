@@ -71,7 +71,11 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   THICK_COVER natural cubes in a row do, so a house's rooms show through its windows and doors)
   and cave faces go to separate meshes; caves show only when the player is under cover
   (ClientWorld.is_covered; water and lava over the head are no roof): the view then cuts everything above their head (global
-  `cut_height`; undersides in the cut's plane go too, `underside_cut`: a beam or a ceiling right
+  `cut_height`; under a building's roof only over the building, so the world around keeps its
+  mountains and trees: CutRegion, the covered room joined to the player's tile, flood filled,
+  and a tile around it for the walls, given to the shaders as `cut_mask` (+ `cut_mask_origin`,
+  `cut_local`, `world_to_local`) and to the chunk builds as Job.cut_columns (surface maps and
+  caps cut there only); under rock or underground everywhere; undersides in the cut's plane go too, `underside_cut`: a beam or a ceiling right
   over the cut would cover what lies under it), the surface maps are rebuilt for the cut, and the
   back of the faces closing the rock draws its section in dark (`see_through.gdshaderinc`); building blocks cut through
   (TileAtlas.BUILDING_WALLS: planks, bricks, glass...) get a cap instead, their top at the cut
@@ -146,8 +150,9 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   local units; objects are met on their body, trees on their trunk). The client's BlockInteraction
   aims (top-down: the mouse ray through the ortho camera, taken back to local units by the root's
   inverse; first person: the crosshair; gamepad: in front of the player), always clamped to the
-  reach sphere, through what the view cuts away (GameClient.shown_below_row: a roof over the
-  player is not met, nor a creature standing on it), draws the frame (one art pixel thick top-down; in perspective about two pixels of
+  reach sphere, through what the view cuts away (GameClient.shown_below_row where
+  GameClient.cut_region reaches: a roof over the player is not met, nor a creature standing on
+  it), draws the frame (one art pixel thick top-down; in perspective about two pixels of
   the screen, at least a texel: BlockHighlight.thickness_for), cracks, chips and falling trees, and shows
   each change at once (prediction). Msg.BLOCK_BREAK / BLOCK_PLACE go to the server, which checks
   reach, what is there, room and support, changes the voxel through WorldState.set_voxel (objects

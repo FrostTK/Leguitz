@@ -134,9 +134,14 @@ var covered := false
 ## True deep enough under the rock for caves' light and silence.
 var underground := false
 ## Voxel rows from this one up are cut away from the view (ChunkData.HEIGHT:
-## no cut): what is there cannot be aimed at.
+## no cut) where `cut_region` reaches: what is there cannot be aimed at.
 var shown_below_row := ChunkData.HEIGHT
+var cut_region := CutRegion.new()
 var _loading_label := Label.new()
+## The cut region's mask for the shaders, and what the region was last
+## worked out for: [tile, level, world revision].
+var _cut_mask := ImageTexture.create_from_image(CutRegion.new().image())
+var _cut_key := []
 ## The feet were in water or lava last frame (a splash when they go in).
 var _was_in_liquid := false
 ## Set on spawn and teleport: place the camera without smoothing once the
@@ -167,6 +172,8 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	local_player.client_world = world
 	world_view.client_world = world
+	RenderingServer.global_shader_parameter_set(&"cut_mask", _cut_mask)
+	RenderingServer.global_shader_parameter_set(&"cut_local", 0.0)
 	_setup_world()
 	interaction.client = self
 	add_child(interaction)
@@ -468,7 +475,8 @@ func _update_view(delta: float) -> void:
 
 
 ## Under cover (a cave, a tunnel, a roof), cuts the world above the
-## player's head so the view shows where they are.
+## player's head so the view shows where they are (under a roof, only over
+## the building: CutRegion).
 func _update_cut(root: Transform3D) -> void:
 	var tile := local_player.current_tile()
 	var ground := local_player.view_height
@@ -485,10 +493,34 @@ func _update_cut(root: Transform3D) -> void:
 		if first_person < CUT_UNTIL:
 			cut_height = (root.basis * Vector3(0.0, cut_level, 0.0)).y
 	shown_below_row = cut_row if cut_height < 100000.0 else ChunkData.HEIGHT
-	world_view.set_view(cut_row, covered or first_person > 0.0, cut_height < 100000.0)
+	_update_cut_region(tile, ground)
+	var cutting := cut_height < 100000.0
+	world_view.set_view(cut_row, covered or first_person > 0.0, cutting, cut_region)
 	RenderingServer.global_shader_parameter_set(&"cut_height", cut_height)
+	var to_local := world_root.global_transform.affine_inverse()
+	RenderingServer.global_shader_parameter_set(&"world_to_local", Projection(to_local))
 	lighting.underground = underground
 	weather_effects.underground = underground
+
+
+## Works out where the cut reaches when the player stands on another tile
+## or level or the world changed (underground: everywhere), and hands its
+## mask to the shaders.
+func _update_cut_region(tile: Vector2i, ground: float) -> void:
+	if not covered:
+		_cut_key = []
+		return
+	var key := [tile, floori(ground + 0.01), world.revision, underground]
+	if key == _cut_key:
+		return
+	_cut_key = key
+	var region := CutRegion.new() if underground else CutRegion.around(world, tile, ground)
+	if region.same_as(cut_region):
+		return
+	cut_region = region
+	_cut_mask.update(region.image())
+	RenderingServer.global_shader_parameter_set(&"cut_mask_origin", Vector2(region.origin))
+	RenderingServer.global_shader_parameter_set(&"cut_local", 0.0 if region.everywhere else 1.0)
 
 
 ## True once the player has spawned and stands on loaded ground.

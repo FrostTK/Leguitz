@@ -87,8 +87,11 @@ class Job:
 	var tops: Array[PackedByteArray] = []
 	## Model variants per block (0 = not a prop), see PropLibrary.
 	var variants := PackedByteArray()
-	## Row the view cuts the world at (HEIGHT: no cut), for the surface map.
+	## Row the view cuts the world at (HEIGHT: no cut), for the surface map,
+	## and the columns it cuts (chunk and border, SPAN x SPAN, 1 where it
+	## does; empty: all, see CutRegion.columns_of).
 	var cut_row := HEIGHT
+	var cut_columns := PackedByteArray()
 	## Surface map only (the cut moved): no geometry.
 	var map_only := false
 	## Bumped by every new build of the chunk: older results are dropped.
@@ -189,12 +192,12 @@ static func build(job: Job) -> Result:
 	var voxels := pad(job.voxels, HEIGHT)
 	var tops := pad(job.tops, 1)
 	var clear := _clear.duplicate()
-	result.surface_map = surface_map(voxels, tops, job.cut_row, clear)
+	result.surface_map = surface_map(voxels, tops, job.cut_row, clear, job.cut_columns)
 	for part in Part.size():
 		result.parts.append(Surface.new())
 	if job.map_only:
 		var cap_flats := {}
-		_record_caps(cap_flats, voxels, job.cut_row)
+		_record_caps(cap_flats, voxels, job.cut_row, job.cut_columns)
 		_add_flats(result, cap_flats)
 		return result
 	var origin := Coords.chunk_origin_tile(job.coord)
@@ -264,7 +267,7 @@ static func build(job: Job) -> Result:
 							rows > 1 and not _sky_through(voxels, flags, clear, base + y, rows)
 						)
 						result.lava_strength.append(FIRE_LIGHT)
-	_record_caps(flats, voxels, job.cut_row)
+	_record_caps(flats, voxels, job.cut_row, job.cut_columns)
 	_add_flats(result, flats)
 	_add_world_bottom(result.parts[Part.DEEP_FACES])
 	for quarter in 8:
@@ -305,17 +308,25 @@ static func pad(arrays: Array[PackedByteArray], stride: int) -> PackedByteArray:
 ## below the cut (NO_LEVEL if none), and if that top is clear water, the
 ## bed under it (see bed_code), else 0. Tops at that level blend with their
 ## neighbors, beds with the beds around; other tops (hidden ledges) are
-## drawn plainly. `clear`: see _build_clear.
+## drawn plainly. `clear`: see _build_clear; `cut_columns`: the columns
+## the cut reaches (see Job; empty: all).
 static func surface_map(
-	voxels: PackedByteArray, tops: PackedByteArray, cut_row: int, clear: PackedByteArray
+	voxels: PackedByteArray,
+	tops: PackedByteArray,
+	cut_row: int,
+	clear: PackedByteArray,
+	cut_columns := PackedByteArray()
 ) -> PackedFloat32Array:
 	var values := PackedFloat32Array()
 	values.resize(SPAN * SPAN * 4)
+	var every_column := cut_columns.is_empty()
 	for column in SPAN * SPAN:
 		var base := column * HEIGHT
 		var out := column * 4
 		values[out + 2] = NO_LEVEL
-		var start := mini(cut_row, tops[column]) - 1
+		var start := tops[column] - 1
+		if every_column or cut_columns[column] != 0:
+			start = mini(cut_row, tops[column]) - 1
 		for y in range(start, -1, -1):
 			var voxel := voxels[base + y]
 			if not Voxels.is_cube(voxel) and not Voxels.is_liquid(voxel):
@@ -390,16 +401,22 @@ static func _build_flags() -> PackedByteArray:
 
 
 ## Caps the building blocks just under the cut whose column goes on above
-## it (they have no top of their own there).
-static func _record_caps(flats: Dictionary, voxels: PackedByteArray, cut_row: int) -> void:
+## it (they have no top of their own there), where the cut reaches.
+static func _record_caps(
+	flats: Dictionary, voxels: PackedByteArray, cut_row: int, cut_columns: PackedByteArray
+) -> void:
 	var row := cut_row - 1
 	if row < 0 or cut_row >= HEIGHT:
 		return
 	var capped := _capped
 	var flags := _flags
+	var every_column := cut_columns.is_empty()
 	for lz in SIZE:
 		for lx in SIZE:
-			var index := ((lz + 1) * SPAN + (lx + 1)) * HEIGHT + row
+			var column := (lz + 1) * SPAN + (lx + 1)
+			if not every_column and cut_columns[column] == 0:
+				continue
+			var index := column * HEIGHT + row
 			var voxel := voxels[index]
 			if capped[voxel] != 0 and flags[voxels[index + 1]] & ANY_CUBE != 0:
 				_record_flat(flats, row, _top_codes[voxel], Part.CAPS, 0, lx, lz)

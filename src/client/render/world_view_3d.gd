@@ -7,8 +7,9 @@ extends Node3D
 ## borders), so each arrival also rebuilds its neighbors.
 ##
 ## When the player is under cover (a cave, a tunnel, a roof), the view
-## cuts the world above their head (see set_view): caves show, and the top
-## shader's surface maps are rebuilt for the cut.
+## cuts the world above their head (see set_view; under a roof only over
+## the building, CutRegion): caves show, and the top shader's surface maps
+## are rebuilt for the cut where it reaches.
 
 const TOP_SHADER := preload("res://src/client/shaders/terrain3d_top.gdshader")
 const FACE_SHADER := preload("res://src/client/shaders/terrain3d_faces.gdshader")
@@ -59,6 +60,8 @@ var view_yaw := 0.0
 ## Row the top shader's surface maps are cut at (ChunkData.HEIGHT: none),
 ## and whether caves show (see set_view).
 var cut_row := ChunkData.HEIGHT
+## Where the cut reaches (null: everywhere).
+var cut_region: CutRegion
 var caves_shown := false
 ## The caps of building blocks cut by the view show (see set_view).
 var caps_shown := false
@@ -239,10 +242,11 @@ static func lod_for_view(ground: Vector2, reach := 1.0) -> int:
 
 
 ## Cuts the surface maps at `row` (ChunkData.HEIGHT: no cut; the shaders
-## cut the world itself, see the `cut_height` global), shows or hides the
-## caves, and the caps of the building blocks cut (`cut`: the view cuts the
-## world now, not in first person).
-func set_view(row: int, caves: bool, cut := true) -> void:
+## cut the world itself, see the `cut_height` global) where `region`
+## reaches (null: everywhere), shows or hides the caves, and the caps of
+## the building blocks cut (`cut`: the view cuts the world now, not in
+## first person).
+func set_view(row: int, caves: bool, cut := true, region: CutRegion = null) -> void:
 	if cut != caps_shown:
 		caps_shown = cut
 		for view: ChunkView3D in _views.values():
@@ -251,11 +255,21 @@ func set_view(row: int, caves: bool, cut := true) -> void:
 		caves_shown = caves
 		for view: ChunkView3D in _views.values():
 			view.show_caves(caves)
-	if row == cut_row:
+	var same_region := (
+		region == cut_region
+		or (region != null and cut_region != null and region.same_as(cut_region))
+	)
+	if row == cut_row and same_region:
 		return
+	var before := cut_region
+	var every_chunk := row != cut_row or before == null or region == null
+	every_chunk = every_chunk or before.everywhere or region.everywhere
 	cut_row = row
+	cut_region = region
 	for coord: Vector2i in _views:
-		if not _pending.has(coord):
+		if _pending.has(coord):
+			continue
+		if every_chunk or before.touches(coord) or region.touches(coord):
 			_mark_pending(coord, false)
 
 
@@ -306,6 +320,11 @@ func _start_jobs() -> void:
 		var job := ChunkMesher.Job.of_chunk(chunk, _chunk)
 		job.variants = _variants
 		job.cut_row = cut_row
+		if cut_row < ChunkData.HEIGHT and cut_region != null and not cut_region.everywhere:
+			if cut_region.touches(coord):
+				job.cut_columns = cut_region.columns_of(coord)
+			else:
+				job.cut_row = ChunkData.HEIGHT
 		job.map_only = not full and view.visible
 		job.serial = _serials.get(coord, 0) + 1
 		_serials[coord] = job.serial

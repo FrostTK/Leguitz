@@ -2,8 +2,9 @@
 // - the see-through hole: whatever stands between the camera and the player
 //   (trees, cliffs, walls) is dithered away inside a window around them,
 // - the view cut: under cover (a cave, a tunnel, a roof) everything above
-//   their head is cut away; the rock cut through shows as a dark section
-//   (the back of the faces closing it, see ChunkMesher).
+//   their head is cut away (under a roof, only over the building: see
+//   CutRegion); the rock cut through shows as a dark section (the back of
+//   the faces closing it, see ChunkMesher).
 
 // The player's chest and feet (world space).
 global uniform vec3 player_position;
@@ -14,6 +15,14 @@ global uniform float see_through_on;
 // Height (world units) above which the view cuts the world; very high when
 // the player is in the open.
 global uniform float cut_height;
+// 1 when the cut only reaches the tiles of `cut_mask` (CutRegion.SIZE
+// tiles square from the tile `cut_mask_origin`; local tiles, see
+// `world_to_local`, the inverse of the world root's transform).
+global uniform float cut_local;
+global uniform sampler2D cut_mask;
+global uniform vec2 cut_mask_origin;
+global uniform mat4 world_to_local;
+const int CUT_MASK_SIZE = 64;
 // Color of rock seen in section through the view cut (emitted: the same
 // in the dark, so the shape of the caves always reads).
 const vec3 SECTION_COLOR = vec3(0.022, 0.02, 0.027);
@@ -62,9 +71,30 @@ bool hides_player(
 }
 
 
+bool cut_tile(vec2 tile) {
+	ivec2 texel = ivec2(tile - cut_mask_origin);
+	if (texel.x < 0 || texel.y < 0 || texel.x >= CUT_MASK_SIZE || texel.y >= CUT_MASK_SIZE) {
+		return false;
+	}
+	return texelFetch(cut_mask, texel, 0).r > 0.5;
+}
+
+// Whether the view cut reaches a point (world space). On a tile's edge
+// (a wall's face) either side counts.
+bool cut_reaches(vec3 world) {
+	if (cut_local < 0.5) {
+		return true;
+	}
+	vec2 local = (world_to_local * vec4(world, 1.0)).xz;
+	return cut_tile(floor(local + vec2(0.02))) || cut_tile(floor(local - vec2(0.02)))
+			|| cut_tile(floor(local + vec2(0.02, -0.02)))
+			|| cut_tile(floor(local + vec2(-0.02, 0.02)));
+}
+
 // True when the fragment at `vertex` (view space) lies above the view cut.
 bool above_cut(vec3 vertex, mat4 inv_view) {
-	return (inv_view * vec4(vertex, 1.0)).y > cut_height;
+	vec3 world = (inv_view * vec4(vertex, 1.0)).xyz;
+	return world.y > cut_height && cut_reaches(world);
 }
 
 // Undersides lying in the cut's plane (world units around it): the bottom
@@ -74,5 +104,6 @@ bool above_cut(vec3 vertex, mat4 inv_view) {
 const float CUT_PLANE = 0.01;
 
 bool underside_cut(vec3 vertex, mat4 inv_view) {
-	return (inv_view * vec4(vertex, 1.0)).y > cut_height - CUT_PLANE;
+	vec3 world = (inv_view * vec4(vertex, 1.0)).xyz;
+	return world.y > cut_height - CUT_PLANE && cut_reaches(world);
 }

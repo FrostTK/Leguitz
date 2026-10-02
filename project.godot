@@ -79,6 +79,22 @@ cut_height={
 "type": "float",
 "value": 100000.0
 }
+cut_local={
+"type": "float",
+"value": 0.0
+}
+cut_mask={
+"type": "sampler2D",
+"value": ""
+}
+cut_mask_origin={
+"type": "vec2",
+"value": Vector2(0, 0)
+}
+world_to_local={
+"type": "mat4",
+"value": Projection(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
+}
 see_through_on={
 "type": "float",
 "value": 1.0
