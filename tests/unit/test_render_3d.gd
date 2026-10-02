@@ -318,3 +318,24 @@ func test_glass_shows_what_is_behind_it() -> void:
 	assert_eq(ChunkMesher.face_kind(glass), ChunkMesher.WALL_KIND_OFFSET + glass_kind)
 	assert_eq(TileAtlas.clear_wall_flags()[glass_kind], 1)
 	assert_true(TileAtlas.WALL_KINDS.size() <= 31, "wall kinds fit the surface map")
+
+
+func test_building_blocks_cut_by_the_view_show_their_top() -> void:
+	var chunk := _flat_chunk(0)
+	var planks := Voxels.of_block(Tiles.Block.OAK_PLANKS)
+	var stone := Voxels.of_block(Tiles.Block.STONE)
+	for row in range(SEA, SEA + 4):
+		chunk.set_voxel(Vector3i(3, row, 3), planks)
+		chunk.set_voxel(Vector3i(8, row, 8), stone)
+	var open := _build(chunk)
+	assert_true(open.parts[ChunkMesher.Part.CAPS].is_empty(), "no cut: no caps")
+	var cut := _build(chunk, SEA + 2)
+	var caps := cut.parts[ChunkMesher.Part.CAPS]
+	assert_eq(caps.quad_count(), 1, "the planks cut through, not the rock")
+	assert_almost(caps.vertices[0].y, 2.0, 0.01, "at the cut")
+	assert_eq(int(caps.uv2s[0].x), ChunkMesher.top_code(planks), "wearing the planks' top")
+	var job := ChunkMesher.Job.of_chunk(chunk, _no_neighbor)
+	job.variants.resize(256)
+	job.cut_row = SEA + 2
+	job.map_only = true
+	assert_eq(ChunkMesher.build(job).parts[ChunkMesher.Part.CAPS].quad_count(), 1, "the cut moved")

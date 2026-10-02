@@ -17,7 +17,12 @@ var terrain := MeshInstance3D.new()
 var caves := MeshInstance3D.new()
 var water := MeshInstance3D.new()
 var cave_water := MeshInstance3D.new()
+## The tops of building blocks cut by the view (ChunkMesher caps), shown
+## while the view cuts the world.
+var caps := MeshInstance3D.new()
 var top_material: ShaderMaterial
+## The top material for the caps (see caps).
+var cap_material: ShaderMaterial
 var face_material: ShaderMaterial
 var water_material: ShaderMaterial
 var caves_shown := false
@@ -44,16 +49,19 @@ func _init(
 ) -> void:
 	top_material = base_top_material.duplicate()
 	top_material.set_shader_parameter("chunk_data", _data_texture)
+	cap_material = top_material.duplicate()
+	cap_material.set_shader_parameter("cap", true)
 	face_material = faces
 	water_material = base_water_material.duplicate()
 	water_material.set_shader_parameter("chunk_data", _data_texture)
 	add_child(terrain)
 	add_child(caves)
 	caves.visible = false
-	for node in [water, cave_water]:
+	for node in [water, cave_water, caps]:
 		node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(node)
 	cave_water.visible = false
+	caps.visible = false
 
 
 ## Shows a finished build: terrain, caves, props and lava lights.
@@ -61,6 +69,7 @@ func apply(result: ChunkMesher.Result, library: PropLibrary, lod: int) -> void:
 	coord = result.coord
 	position = Render3D.world_px_to_local(Coords.chunk_to_world(coord), 0.0)
 	top_material.set_shader_parameter("chunk_origin_px", Coords.chunk_to_world(coord))
+	cap_material.set_shader_parameter("chunk_origin_px", Coords.chunk_to_world(coord))
 	water_material.set_shader_parameter("chunk_origin_px", Coords.chunk_to_world(coord))
 	apply_surface_map(result.surface_map)
 	var parts := result.parts
@@ -68,6 +77,7 @@ func apply(result: ChunkMesher.Result, library: PropLibrary, lod: int) -> void:
 	caves.mesh = _mesh(parts[ChunkMesher.Part.DEEP_TOPS], parts[ChunkMesher.Part.DEEP_FACES])
 	water.mesh = _water_mesh(parts[ChunkMesher.Part.WATER])
 	cave_water.mesh = _water_mesh(parts[ChunkMesher.Part.DEEP_WATER])
+	apply_caps(parts[ChunkMesher.Part.CAPS])
 	props_lod = lod
 	_apply_props(result.props, library, lod)
 	_lava_spots = result.lava_spots
@@ -79,6 +89,15 @@ func apply(result: ChunkMesher.Result, library: PropLibrary, lod: int) -> void:
 		_lava_lights[i].visible = false
 	show_caves(caves_shown)
 	place_lights()
+
+
+## The caps of the building blocks cut by the view (the cut moved).
+func apply_caps(surface: ChunkMesher.Surface) -> void:
+	var mesh := ArrayMesh.new()
+	if not surface.is_empty():
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface.arrays())
+		mesh.surface_set_material(0, cap_material)
+	caps.mesh = mesh
 
 
 ## New data for the top shader (the view cut moved).

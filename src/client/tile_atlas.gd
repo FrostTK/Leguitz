@@ -35,6 +35,23 @@ const WALL_KINDS := {
 ## Walls one sees through (glass): their textures' clear pixels are cut
 ## out, and what lies behind them is drawn (ChunkMesher).
 const CLEAR_WALLS := {Tiles.Block.GLASS: true}
+## What players build with: cut by the view (a roof over the player), these
+## show their top at the cut (ChunkMesher caps); natural rock shows its
+## section in dark instead.
+const BUILDING_WALLS := {
+	Tiles.Block.OAK_PLANKS: true,
+	Tiles.Block.BIRCH_PLANKS: true,
+	Tiles.Block.SPRUCE_PLANKS: true,
+	Tiles.Block.DARK_OAK_PLANKS: true,
+	Tiles.Block.JUNGLE_PLANKS: true,
+	Tiles.Block.ACACIA_PLANKS: true,
+	Tiles.Block.STONE_BRICKS: true,
+	Tiles.Block.SMOOTH_STONE: true,
+	Tiles.Block.BRICKS: true,
+	Tiles.Block.DEEPSLATE_BRICKS: true,
+	Tiles.Block.CUT_SANDSTONE: true,
+	Tiles.Block.GLASS: true,
+}
 const GLOWING_WALLS := {
 	Tiles.Block.GOLD_ORE: true,
 	Tiles.Block.LAPIS_ORE: true,

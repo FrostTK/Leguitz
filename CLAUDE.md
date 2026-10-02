@@ -70,7 +70,10 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   faces go to separate meshes; caves show only when the player is under cover
   (ClientWorld.is_covered; water and lava over the head are no roof): the view then cuts everything above their head (global
   `cut_height`), the surface maps are rebuilt for the cut, and the back of the faces closing the
-  rock draws its section in dark (`see_through.gdshaderinc`).
+  rock draws its section in dark (`see_through.gdshaderinc`); building blocks cut through
+  (TileAtlas.BUILDING_WALLS: planks, bricks, glass...) get a cap instead, their top at the cut
+  (ChunkMesher Part.CAPS, also in surface-map-only builds; ChunkView3D.caps with the top shader's
+  `cap`: a little darker, outlined where it drops), shown only while the view cuts.
 - Water (the water grounds; lava stays opaque): its surfaces are meshes of their own (Part.WATER,
   DEEP_WATER in caves) drawn by `water.gdshader`, casting no shadow. It reads the screen and depth
   textures: what lies behind fades with the thickness of water the eye looks through (local

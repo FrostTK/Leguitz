@@ -15,6 +15,10 @@ extends RefCounted
 ## the player.
 ## Undersides are never seen from the camera (it always looks down) but
 ## close the rock: seen from behind through the cut, they draw its section.
+## Where the view cuts the world (`cut_row`), building blocks cut through
+## (TileAtlas.BUILDING_WALLS) get a cap: their top at the cut (Part.CAPS,
+## also in surface-map-only builds), so walls cut under a roof read as
+## walls; natural rock shows its section in dark.
 ## Cubes one sees through (glass, TileAtlas.CLEAR_WALLS) draw their faces
 ## like the others (the shaders cut out their clear pixels) and do not hide
 ## the faces of their neighbors, but two of the same hide each other's.
@@ -22,7 +26,7 @@ extends RefCounted
 ## spots that light their surroundings, and the surface map of the top
 ## shader (see surface_map).
 
-enum Part { TOPS, FACES, DEEP_TOPS, DEEP_FACES, WATER, DEEP_WATER }
+enum Part { TOPS, FACES, DEEP_TOPS, DEEP_FACES, WATER, DEEP_WATER, CAPS }
 enum Side { NORTH, EAST, SOUTH, WEST }
 
 const SIZE := GameConst.CHUNK_SIZE
@@ -63,6 +67,8 @@ static var _top_codes := _build_top_codes()
 static var _clear := _build_clear()
 ## Voxels.flag_table() for meshing: see-through cubes are CLEAR_CUBE.
 static var _flags := _build_flags()
+## 1 for the building blocks capped at the view's cut.
+static var _capped := _build_capped()
 
 
 ## What a build reads: the voxels and column tops of the chunk and of its
@@ -177,10 +183,13 @@ static func build(job: Job) -> Result:
 	var tops := pad(job.tops, 1)
 	var clear := _clear.duplicate()
 	result.surface_map = surface_map(voxels, tops, job.cut_row, clear)
-	if job.map_only:
-		return result
 	for part in Part.size():
 		result.parts.append(Surface.new())
+	if job.map_only:
+		var cap_flats := {}
+		_record_caps(cap_flats, voxels, job.cut_row)
+		_add_flats(result, cap_flats)
+		return result
 	var origin := Coords.chunk_origin_tile(job.coord)
 	var lava_sums: Array[Vector3] = []
 	var lava_counts := PackedInt32Array()
@@ -244,6 +253,7 @@ static func build(job: Job) -> Result:
 						result.lava_spots.append(fire)
 						result.lava_deep.append(y + 1 < tops[column])
 						result.lava_strength.append(FIRE_LIGHT)
+	_record_caps(flats, voxels, job.cut_row)
 	_add_flats(result, flats)
 	_add_world_bottom(result.parts[Part.DEEP_FACES])
 	for quarter in 8:
@@ -364,6 +374,30 @@ static func _build_flags() -> PackedByteArray:
 		var voxel := Voxels.of_block(block)
 		flags[voxel] = (flags[voxel] & ~CUBE) | CLEAR_CUBE
 	return flags
+
+
+## Caps the building blocks just under the cut whose column goes on above
+## it (they have no top of their own there).
+static func _record_caps(flats: Dictionary, voxels: PackedByteArray, cut_row: int) -> void:
+	var row := cut_row - 1
+	if row < 0 or cut_row >= HEIGHT:
+		return
+	var capped := _capped
+	var flags := _flags
+	for lz in SIZE:
+		for lx in SIZE:
+			var index := ((lz + 1) * SPAN + (lx + 1)) * HEIGHT + row
+			var voxel := voxels[index]
+			if capped[voxel] != 0 and flags[voxels[index + 1]] & ANY_CUBE != 0:
+				_record_flat(flats, row, _top_codes[voxel], Part.CAPS, 0, lx, lz)
+
+
+static func _build_capped() -> PackedByteArray:
+	var table := PackedByteArray()
+	table.resize(256)
+	for block: int in TileAtlas.BUILDING_WALLS:
+		table[Voxels.of_block(block)] = 1
+	return table
 
 
 static func _build_clear() -> PackedByteArray:
@@ -620,6 +654,9 @@ static func _add_flat(result: Result, group: Vector3i, run: Vector2i, z0: int, z
 	var height := float(level)
 	if Voxels.is_liquid(code):
 		height -= ChunkData.WATER_DROP
+	if group.z >> 1 == Part.CAPS:
+		# A hair under the cut, so the cut keeps it.
+		height -= 0.002
 	var corners: Array[Vector3] = [
 		Vector3(x0, height, z0),
 		Vector3(x1, height, z0),

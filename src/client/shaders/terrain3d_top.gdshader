@@ -22,6 +22,9 @@ uniform float emission_strength = 2.2;
 // Per wall kind: 1 for the walls one sees through (glass): their clear
 // pixels are cut out, their backs seen through them are not rock sections.
 uniform int see_through_walls[32];
+// Caps: the tops of building blocks cut by the view (ChunkMesher), a
+// little darker and outlined where they drop, so cut walls read as walls.
+uniform bool cap = false;
 
 varying flat vec2 top_info;
 
@@ -144,6 +147,14 @@ void fragment() {
 
 	if (wall == 0) {
 		albedo *= edge_shade(n, tx);
+	}
+	if (cap) {
+		albedo *= 0.8;
+		int here = top_rank(n[4]);
+		if ((tx.y == 0 && top_rank(n[1]) < here) || (tx.y == 15 && top_rank(n[7]) < here)
+				|| (tx.x == 0 && top_rank(n[3]) < here) || (tx.x == 15 && top_rank(n[5]) < here)) {
+			albedo *= 0.55;
+		}
 	}
 	ALBEDO = albedo;
 	NORMAL_MAP = normal * 0.5 + 0.5;

@@ -457,7 +457,7 @@ func _update_cut(root: Transform3D) -> void:
 		# maps keep it, so the floor around blends its grounds).
 		if first_person < CUT_UNTIL:
 			cut_height = (root.basis * Vector3(0.0, cut_level, 0.0)).y
-	world_view.set_view(cut_row, covered or first_person > 0.0)
+	world_view.set_view(cut_row, covered or first_person > 0.0, cut_height < 100000.0)
 	RenderingServer.global_shader_parameter_set(&"cut_height", cut_height)
 	lighting.underground = underground
 	weather_effects.underground = underground

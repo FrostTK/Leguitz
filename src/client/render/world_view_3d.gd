@@ -60,6 +60,8 @@ var view_yaw := 0.0
 ## and whether caves show (see set_view).
 var cut_row := ChunkData.HEIGHT
 var caves_shown := false
+## The caps of building blocks cut by the view show (see set_view).
+var caps_shown := false
 var top_material := ShaderMaterial.new()
 var face_material := ShaderMaterial.new()
 var water_material := ShaderMaterial.new()
@@ -237,9 +239,14 @@ static func lod_for_view(ground: Vector2, reach := 1.0) -> int:
 
 
 ## Cuts the surface maps at `row` (ChunkData.HEIGHT: no cut; the shaders
-## cut the world itself, see the `cut_height` global) and shows or hides
-## the caves.
-func set_view(row: int, caves: bool) -> void:
+## cut the world itself, see the `cut_height` global), shows or hides the
+## caves, and the caps of the building blocks cut (`cut`: the view cuts the
+## world now, not in first person).
+func set_view(row: int, caves: bool, cut := true) -> void:
+	if cut != caps_shown:
+		caps_shown = cut
+		for view: ChunkView3D in _views.values():
+			view.caps.visible = cut
 	if caves != caves_shown:
 		caves_shown = caves
 		for view: ChunkView3D in _views.values():
@@ -332,9 +339,11 @@ func _apply_results() -> void:
 			continue
 		if result.map_only:
 			view.apply_surface_map(result.surface_map)
+			view.apply_caps(result.parts[ChunkMesher.Part.CAPS])
 		else:
 			view.caves_shown = caves_shown
 			view.apply(result, props, lod_of(result.coord))
+			view.caps.visible = caps_shown
 			view.visible = true
 	if not left.is_empty():
 		_results_mutex.lock()
