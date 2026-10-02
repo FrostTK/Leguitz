@@ -4,11 +4,13 @@ extends Node3D
 ## its terrain as seen from the sky, its caves (shown when the view cuts
 ## the world above the player), the surface of its water (the ground under
 ## it shows through; it casts no shadow), its 3D props (trees, plants,
-## rocks...: one MultiMesh per model) and the warm lights of its lava pools.
-## Built from a ChunkMesher.Result.
+## rocks...: one MultiMesh per model) and the warm lights of its lava pools,
+## fires, torches and lanterns (flames flicker). Built from a
+## ChunkMesher.Result.
 
-const LAVA_LIGHT_COLOR := Color(1.0, 0.45, 0.15)
 const LAVA_LIGHT_RANGE := 7.0
+## How much a flame's light wavers (a share of its energy).
+const FLICKER := 0.12
 ## Flat on the water: no shadow worth drawing.
 const NO_SHADOW := {Tiles.Block.LILY_PAD: true}
 
@@ -42,6 +44,10 @@ var _lava_lights: Array[OmniLight3D] = []
 ## caves.
 var _lava_spots: Array[Vector3] = []
 var _lava_deep: Array[bool] = []
+## Each light's energy and how much it flickers; whether any does.
+var _lava_energy: Array[float] = []
+var _lava_flicker: Array[float] = []
+var _flickers := false
 
 
 func _init(
@@ -82,13 +88,30 @@ func apply(result: ChunkMesher.Result, library: PropLibrary, lod: int) -> void:
 	_apply_props(result.props, library, lod)
 	_lava_spots = result.lava_spots
 	_lava_deep = result.lava_deep
+	_lava_energy = result.lava_strength
+	_lava_flicker = result.lava_flicker
+	_flickers = _lava_flicker.any(func(amount: float) -> bool: return amount > 0.0)
 	for i in _lava_spots.size():
 		var light := _lava_light(i)
 		light.light_energy = result.lava_strength[i]
+		light.light_color = result.lava_colors[i]
 	for i in range(_lava_spots.size(), _lava_lights.size()):
 		_lava_lights[i].visible = false
 	show_caves(caves_shown)
 	place_lights()
+
+
+## The flames' lights waver (`time`: seconds, the same for every chunk).
+func flicker(time: float) -> void:
+	if not _flickers:
+		return
+	for i in _lava_spots.size():
+		var amount := _lava_flicker[i]
+		if amount <= 0.0:
+			continue
+		var phase := _lava_spots[i].x * 1.7 + _lava_spots[i].z * 2.3
+		var waver := sin(time * 9.0 + phase) * 0.6 + sin(time * 23.0 + phase * 2.1) * 0.4
+		_lava_lights[i].light_energy = _lava_energy[i] * (1.0 + waver * FLICKER * amount)
 
 
 ## The caps of the building blocks cut by the view (the cut moved).
@@ -203,7 +226,6 @@ func _prop_node(index: int, library: PropLibrary) -> MultiMeshInstance3D:
 func _lava_light(index: int) -> OmniLight3D:
 	while _lava_lights.size() <= index:
 		var light := OmniLight3D.new()
-		light.light_color = LAVA_LIGHT_COLOR
 		light.omni_range = LAVA_LIGHT_RANGE
 		light.omni_attenuation = 1.4
 		light.top_level = true

@@ -5,7 +5,10 @@ extends RefCounted
 ## an iron torch bracket and curtains hung on a wall (their back against
 ## the tile's edge, z = 0), a glass pane, a sink, a toilet, a table, a
 ## chair, a fence (one version per set of sides it joins), a wicket gate
-## and a big gate two tiles wide (shut and open), a campfire.
+## and a big gate two tiles wide (shut and open), a campfire; the lights:
+## a torch on the ground or in its bracket, a lantern on the ground, hung
+## from a ceiling by a chain or on a wall from an arm (their flames and
+## glass light themselves).
 
 const WOOD := ["#5e3d22", "#7a5130", "#9a6a3c", "#b37f4b", "#c99560"]
 ## Furniture: a darker walnut, which stands out on plank floors.
@@ -19,6 +22,10 @@ const WATER := ["#3f7fa8", "#6aa6c8"]
 const FIRE := ["#b4280c", "#ea5a12", "#f99a1c", "#ffd04a", "#fff2b0"]
 const EMBER := ["#3a1c10", "#7a2a10"]
 const ASH := ["#4a4448", "#6a6468"]
+## A torch's head, wrapped in coal-soaked cloth.
+const WRAP := ["#241c18", "#3a2c24"]
+## A lantern's glass, lit from inside.
+const LANTERN_GLOW := ["#e8902c", "#ffc35a", "#ffe6a4"]
 
 
 ## The model of a block (its kind's; a fence's version: the sides it joins,
@@ -26,7 +33,17 @@ const ASH := ["#4a4448", "#6a6468"]
 static func build(block: int, variant: int) -> VoxelGrid:
 	match block:
 		Tiles.Block.TORCH_BRACKET:
-			return torch_bracket()
+			return torch_bracket(false)
+		Tiles.Block.TORCH_BRACKET_LIT:
+			return torch_bracket(true)
+		Tiles.Block.TORCH:
+			return torch()
+		Tiles.Block.LANTERN:
+			return lantern(0)
+		Tiles.Block.LANTERN_HANGING:
+			return lantern_hanging()
+		Tiles.Block.LANTERN_WALL:
+			return lantern_wall()
 		Tiles.Block.CURTAINS:
 			return curtains()
 		Tiles.Block.GLASS_PANE:
@@ -79,8 +96,12 @@ static func color_of(kind: int) -> Color:
 			return Color(GLASS[1])
 		Tiles.Block.SINK, Tiles.Block.TOILET:
 			return Color(PORCELAIN[2])
-		Tiles.Block.CAMPFIRE:
+		Tiles.Block.CAMPFIRE, Tiles.Block.TORCH:
 			return Color(FIRE[2])
+		Tiles.Block.TORCH_BRACKET_LIT, Tiles.Block.LANTERN:
+			return Color(IRON[2])
+		Tiles.Block.LANTERN_HANGING, Tiles.Block.LANTERN_WALL:
+			return Color(IRON[2])
 		Tiles.Block.TABLE, Tiles.Block.CHAIR:
 			return Color(WALNUT[3])
 	return Color(WOOD[3])
@@ -100,9 +121,11 @@ static func _wood(salt: int, colors: Array = WOOD) -> Callable:
 
 
 ## An iron bracket hung on the wall: a riveted plate, an arm and a ring to
-## hold a torch, a strut under it.
-static func torch_bracket() -> VoxelGrid:
-	var grid := VoxelGrid.new(Vector3i(16, 16, 16))
+## hold a torch, a strut under it; `lit`: a torch in it.
+static func torch_bracket(lit: bool) -> VoxelGrid:
+	var grid := VoxelGrid.new(Vector3i(16, 22 if lit else 16, 16))
+	if lit:
+		_torch(grid, Vector3i(7, 9, 5), 6)
 	grid.box(Vector3i(6, 5, 0), Vector3i(9, 11, 0), _v(IRON[1]))
 	grid.box(Vector3i(6, 11, 0), Vector3i(9, 11, 0), _v(IRON[2]))
 	for x: int in [6, 9]:
@@ -119,6 +142,89 @@ static func torch_bracket() -> VoxelGrid:
 	# The strut from the plate's foot to under the ring.
 	grid.line(Vector3(7.5, 5.5, 1.5), Vector3(7.5, 7.5, 5.0), 0.4, _v(IRON[1]))
 	grid.line(Vector3(8.5, 5.5, 1.5), Vector3(8.5, 7.5, 5.0), 0.4, _v(IRON[0]))
+	return grid
+
+
+## A torch standing on the ground: a stick, its wrapped head, a flame.
+static func torch() -> VoxelGrid:
+	var grid := VoxelGrid.new(Vector3i(16, 18, 16))
+	_torch(grid, Vector3i(7, 0, 7), 9)
+	return grid
+
+
+## A torch (2 x 2 voxels) from `foot` up: `length` of stick, its head, its
+## flame.
+static func _torch(grid: VoxelGrid, foot: Vector3i, length: int) -> void:
+	for y in length:
+		grid.box(foot + Vector3i(0, y, 0), foot + Vector3i(0, y, 1), _v(WOOD[2]))
+		grid.box(foot + Vector3i(1, y, 0), foot + Vector3i(1, y, 1), _v(WOOD[1]))
+	var head := foot + Vector3i(0, length, 0)
+	grid.box(head - Vector3i(1, 0, 1), head + Vector3i(2, 1, 2), _v(WRAP[0]))
+	grid.box(head + Vector3i(-1, 1, -1), head + Vector3i(2, 1, 2), _v(WRAP[1]))
+	var glow := VoxelGrid.Kind.GLOW
+	grid.box(head + Vector3i(0, 1, 0), head + Vector3i(1, 1, 1), _v(EMBER[1], glow))
+	# The flame: wide at its foot, a tongue leaning a little.
+	grid.box(head + Vector3i(-1, 2, -1), head + Vector3i(2, 2, 2), _v(FIRE[1], glow))
+	grid.box(head + Vector3i(-1, 3, 0), head + Vector3i(2, 3, 1), _v(FIRE[2], glow))
+	grid.box(head + Vector3i(0, 3, -1), head + Vector3i(1, 3, 2), _v(FIRE[2], glow))
+	grid.box(head + Vector3i(0, 4, 0), head + Vector3i(1, 4, 1), _v(FIRE[3], glow))
+	grid.box(head + Vector3i(0, 5, 0), head + Vector3i(0, 5, 1), _v(FIRE[3], glow))
+	grid.set_voxel(head + Vector3i(0, 6, 1), _v(FIRE[4], glow))
+
+
+## A lantern standing on `base` (rows): an iron foot, four posts, glass lit
+## from inside, a cap and a handle (13 rows in all).
+static func lantern(base: int) -> VoxelGrid:
+	var grid := VoxelGrid.new(Vector3i(16, 16, 16))
+	_lantern(grid, base)
+	return grid
+
+
+static func _lantern(grid: VoxelGrid, base: int) -> void:
+	var glow := VoxelGrid.Kind.GLOW
+	grid.box(Vector3i(5, base, 5), Vector3i(10, base + 1, 10), _v(IRON[1]))
+	grid.box(Vector3i(5, base, 5), Vector3i(10, base, 10), _v(IRON[0]))
+	for y in range(base + 2, base + 9):
+		for x in range(5, 11):
+			for z in range(5, 11):
+				var post := (x == 5 or x == 10) and (z == 5 or z == 10)
+				var side := x == 5 or x == 10 or z == 5 or z == 10
+				if post:
+					grid.set_voxel(Vector3i(x, y, z), _v(IRON[0]))
+				elif side:
+					# The glass glows brighter at its middle, where the flame is.
+					var near_flame := absi(y - (base + 5)) <= 1
+					var middle := near_flame and ((x > 6 and x < 9) or (z > 6 and z < 9))
+					var shade := 2 if middle else (1 if y > base + 2 else 0)
+					grid.set_voxel(Vector3i(x, y, z), _v(LANTERN_GLOW[shade], glow))
+	grid.box(Vector3i(5, base + 9, 5), Vector3i(10, base + 9, 10), _v(IRON[2]))
+	grid.box(Vector3i(6, base + 10, 6), Vector3i(9, base + 10, 9), _v(IRON[1]))
+	# The handle: up from both sides, across the top.
+	for z: int in [7, 8]:
+		grid.set_voxel(Vector3i(6, base + 11, z), _v(IRON[2]))
+		grid.set_voxel(Vector3i(9, base + 11, z), _v(IRON[2]))
+		grid.box(Vector3i(7, base + 12, z), Vector3i(8, base + 12, z), _v(IRON[3]))
+
+
+## A lantern hung from a ceiling by a short chain.
+static func lantern_hanging() -> VoxelGrid:
+	var grid := VoxelGrid.new(Vector3i(16, 16, 16))
+	_lantern(grid, 2)
+	grid.box(Vector3i(7, 15, 7), Vector3i(8, 15, 8), _v(IRON[1]))
+	grid.set_voxel(Vector3i(7, 14, 8), _v(IRON[2]))
+	grid.set_voxel(Vector3i(8, 14, 7), _v(IRON[2]))
+	return grid
+
+
+## A lantern hung on a wall from an iron arm (the wall at z = 0).
+static func lantern_wall() -> VoxelGrid:
+	var grid := VoxelGrid.new(Vector3i(16, 16, 16))
+	_lantern(grid, 1)
+	grid.box(Vector3i(6, 10, 0), Vector3i(9, 15, 0), _v(IRON[1]))
+	grid.box(Vector3i(6, 15, 0), Vector3i(9, 15, 0), _v(IRON[2]))
+	grid.box(Vector3i(7, 14, 1), Vector3i(8, 14, 8), _v(IRON[2]))
+	grid.box(Vector3i(7, 13, 1), Vector3i(8, 13, 1), _v(IRON[0]))
+	grid.line(Vector3(7.5, 11.5, 0.5), Vector3(7.5, 13.5, 4.0), 0.4, _v(IRON[1]))
 	return grid
 
 

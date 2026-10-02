@@ -525,7 +525,10 @@ func _on_block_place(session: PlayerSession, message: Dictionary) -> void:
 	var front: Vector2i = message.get("front", Vector2i(0, 1))
 	if absi(front.x) + absi(front.y) != 1:
 		front = Vector2i(0, 1)
-	var cells := Mining.placement(cell, voxel, front, world.voxel_at)
+	var face: Vector3i = message.get("face", Vector3i.UP)
+	if absi(face.x) + absi(face.y) + absi(face.z) != 1:
+		face = Vector3i.UP
+	var cells := Mining.placement(cell, voxel, front, world.voxel_at, face)
 	var near := Mining.reach_to(session.position, session.height, cell)
 	var ok := (
 		cell.y >= Mining.LOWEST_ROW
@@ -535,15 +538,10 @@ func _on_block_place(session: PlayerSession, message: Dictionary) -> void:
 		and near <= Mining.REACH + REACH_LEEWAY
 		and (cells.size() > 1 or _against_terrain(cell))
 	)
-	for other in sessions:
-		for at: Vector3i in cells:
-			if ok and other.joined and Mining.overlaps_body(at, other.position, other.height):
-				ok = false
-	for creature: Creature in creatures.living.values():
-		var body := creature.body
-		for at: Vector3i in cells:
-			if ok and Mining.overlaps_body(at, body.feet, body.height, body.box, body.tall):
-				ok = false
+	# Only what blocks bodies keeps out of anybody's way.
+	for at: Vector3i in cells:
+		if ok and Voxels.is_solid(cells[at]) and Fixtures.someone_in(self, at):
+			ok = false
 	if not ok:
 		# What is really there, where the player guessed it changed.
 		for at: Vector3i in cells.keys() if not cells.is_empty() else [cell]:

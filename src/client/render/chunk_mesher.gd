@@ -49,6 +49,18 @@ const NO_LEVEL := -1000.0
 const LAVA_QUARTER := 8
 ## How bright a lit furnace's light is (lava's: 0.8 to 2.2).
 const FIRE_LIGHT := 0.75
+const LAVA_COLOR := Color(1.0, 0.45, 0.15)
+## What else burns, by kind: where its flame is from the middle of its
+## tile's floor (local units; z towards the way it faces), how bright, its
+## color, and whether it flickers (flames do, a lantern's glass hardly).
+const FLAMES := {
+	Tiles.Block.CAMPFIRE: [Vector3(0.0, 0.5, 0.0), 1.4, Color(1.0, 0.55, 0.22), 1.0],
+	Tiles.Block.TORCH: [Vector3(0.0, 0.85, 0.0), 1.1, Color(1.0, 0.66, 0.32), 1.0],
+	Tiles.Block.TORCH_BRACKET_LIT: [Vector3(0.0, 1.1, -0.16), 1.1, Color(1.0, 0.66, 0.32), 1.0],
+	Tiles.Block.LANTERN: [Vector3(0.0, 0.4, 0.0), 1.25, Color(1.0, 0.76, 0.45), 0.25],
+	Tiles.Block.LANTERN_HANGING: [Vector3(0.0, 0.5, 0.0), 1.25, Color(1.0, 0.76, 0.45), 0.25],
+	Tiles.Block.LANTERN_WALL: [Vector3(0.0, 0.45, 0.0), 1.25, Color(1.0, 0.76, 0.45), 0.25],
+}
 
 const CUBE := Voxels.FLAG_CUBE
 const LIQUID := Voxels.FLAG_LIQUID
@@ -123,11 +135,14 @@ class Result:
 	var parts: Array[Surface] = []
 	## (block, variant) -> [[Transform3D, Color], ...]
 	var props: Dictionary[Vector2i, Array] = {}
-	## Lava lights (and lit furnaces'): local position, whether they are in
-	## a cave, how bright.
+	## Lava lights (and the fires', torches', lanterns'): local position,
+	## whether they are in a cave, how bright, their color, how much they
+	## flicker (0: lava, steady).
 	var lava_spots: Array[Vector3] = []
 	var lava_deep: Array[bool] = []
 	var lava_strength: Array[float] = []
+	var lava_colors: Array[Color] = []
+	var lava_flicker: Array[float] = []
 	var surface_map := PackedFloat32Array()
 
 
@@ -262,15 +277,11 @@ static func build(job: Job) -> Result:
 					_add_prop(result, job.variants, voxel, voxels, base, lx, y, lz, origin)
 					var block := Voxels.block_of(voxel)
 					if ObjectShapes.is_lit(block):
-						# The fire shines out of the furnace's front.
-						var front := Vector2(ObjectShapes.front_of(block)) * 0.9
-						var fire := Vector3(lx + 0.5 + front.x, y - SEA + 0.5, lz + 0.5 + front.y)
-						result.lava_spots.append(fire)
+						_add_flame(result, block, Vector3(lx + 0.5, y - SEA, lz + 0.5))
 						var rows := tops[column] - y
 						result.lava_deep.append(
 							rows > 1 and not _sky_through(voxels, flags, clear, base + y, rows)
 						)
-						result.lava_strength.append(FIRE_LIGHT)
 	_record_caps(flats, voxels, job.cut_row, job.cut_columns)
 	_add_flats(result, flats)
 	_add_world_bottom(result.parts[Part.DEEP_FACES])
@@ -279,7 +290,24 @@ static func build(job: Job) -> Result:
 			result.lava_spots.append(lava_sums[quarter] / lava_counts[quarter])
 			result.lava_deep.append(quarter >= 4)
 			result.lava_strength.append(clampf(0.8 + lava_counts[quarter] * 0.05, 0.8, 2.2))
+			result.lava_colors.append(LAVA_COLOR)
+			result.lava_flicker.append(0.0)
 	return result
+
+
+## The light of something burning in a tile (`floor`: the middle of its
+## floor, local units): a lit furnace's shines out of its front.
+static func _add_flame(result: Result, block: int, floor: Vector3) -> void:
+	var flame: Array = FLAMES.get(
+		ObjectShapes.base_kind(block), [Vector3(0.0, 0.5, 0.9), FIRE_LIGHT, LAVA_COLOR, 1.0]
+	)
+	var front := Vector2(ObjectShapes.front_of(block))
+	var offset: Vector3 = flame[0]
+	var at := floor + Vector3(front.x * offset.z, offset.y, front.y * offset.z)
+	result.lava_spots.append(at)
+	result.lava_strength.append(flame[1])
+	result.lava_colors.append(flame[2])
+	result.lava_flicker.append(flame[3])
 
 
 ## The chunk's arrays (`stride` bytes per column) plus a one-column border

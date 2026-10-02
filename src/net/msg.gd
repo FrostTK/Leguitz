@@ -158,8 +158,12 @@ static func block_break(cell: Vector3i, slot := -1) -> Dictionary:
 
 ## The player placed the block of hotbar slot `slot` at `cell` (a
 ## workbench facing `front`, see Mining.placement).
-static func block_place(cell: Vector3i, slot: int, front := Vector2i(0, 1)) -> Dictionary:
-	return {"t": BLOCK_PLACE, "cell": cell, "slot": slot, "front": front}
+## `front`: the way an object placed faces; `face`: the side of the cube
+## aimed at (UP: its top; see Mining.placement).
+static func block_place(
+	cell: Vector3i, slot: int, front := Vector2i(0, 1), face := Vector3i.UP
+) -> Dictionary:
+	return {"t": BLOCK_PLACE, "cell": cell, "slot": slot, "front": front, "face": face}
 
 
 ## The player swings the gate in `cell` open or shut.

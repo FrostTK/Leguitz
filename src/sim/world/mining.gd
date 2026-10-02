@@ -106,9 +106,16 @@ const BLOCK_SECONDS := {
 	Tiles.Block.BIG_GATE: 2.5,
 	Tiles.Block.BIG_GATE_OPEN: 2.5,
 	Tiles.Block.CAMPFIRE: 1.0,
+	Tiles.Block.TORCH: PLANT_SECONDS,
+	Tiles.Block.TORCH_BRACKET_LIT: 1.5,
+	Tiles.Block.LANTERN: 1.0,
+	Tiles.Block.LANTERN_HANGING: 1.0,
+	Tiles.Block.LANTERN_WALL: 1.0,
 }
 ## Trees by hand: chopping a trunk takes a while.
 const TREE_SECONDS := 3.5
+## How far up (rows) a lantern placed with Shift looks for a ceiling.
+const CEILING_SEARCH := 3
 ## After a break, the next one waits this long (Minecraft's quarter of a
 ## second) unless the block went at once (small plants).
 const BREAK_PAUSE := 0.25
@@ -179,12 +186,18 @@ const PICKAXE_BLOCKS := {
 	Tiles.Block.TORCH_BRACKET: true,
 	Tiles.Block.SINK: true,
 	Tiles.Block.TOILET: true,
+	Tiles.Block.TORCH_BRACKET_LIT: true,
+	Tiles.Block.LANTERN: true,
+	Tiles.Block.LANTERN_HANGING: true,
+	Tiles.Block.LANTERN_WALL: true,
 }
 ## Objects placed as they are (no way to face), standing on a cube.
 const FLOOR_OBJECTS := {
 	Tiles.Block.TABLE: true,
 	Tiles.Block.FENCE: true,
 	Tiles.Block.CAMPFIRE: true,
+	Tiles.Block.TORCH: true,
+	Tiles.Block.LANTERN: true,
 }
 
 
@@ -217,18 +230,36 @@ static func can_place(voxel: int) -> bool:
 ## the one on its left); other furniture faces `front` in the cell aimed
 ## at, the objects placed as they are stand there, all free of anything
 ## solid or liquid and standing on cubes. What hangs on a wall faces
-## `front` (away from the side of the cube aimed at, behind it).
+## `front` (away from the side of the cube aimed at, behind it). `face`:
+## the side of the cube aimed at (UP: its top); a torch goes on the ground
+## or into an empty bracket (aimed at it, `cell` is the bracket's), never
+## straight against a wall; a lantern on the ground, hung from the cube
+## above (its underside aimed at) or on a wall.
 static func placement(
-	cell: Vector3i, voxel: int, front: Vector2i, voxel_at: Callable
+	cell: Vector3i, voxel: int, front: Vector2i, voxel_at: Callable, face := Vector3i.UP
 ) -> Dictionary:
 	var block := Voxels.block_of(voxel)
 	var kind := ObjectShapes.kind_of(block)
 	if ObjectShapes.WALL_MOUNTED.has(kind):
-		var there: int = voxel_at.call(cell)
-		var behind: int = voxel_at.call(cell - Vector3i(front.x, 0, front.y))
-		if not is_replaceable(there) or Voxels.is_liquid(there) or not Voxels.is_cube(behind):
+		return _hung(cell, kind, front, voxel_at)
+	if block == Tiles.Block.TORCH:
+		var bracket := Voxels.block_of(voxel_at.call(cell))
+		if ObjectShapes.kind_of(bracket) == Tiles.Block.TORCH_BRACKET:
+			var lit := ObjectShapes.facing(
+				Tiles.Block.TORCH_BRACKET_LIT, ObjectShapes.front_of(bracket)
+			)
+			return {cell: Voxels.of_block(lit)}
+		if face.y == 0:
 			return {}
-		return {cell: Voxels.of_block(ObjectShapes.facing(kind, front))}
+	if block == Tiles.Block.LANTERN and face.y < 0:
+		var there: int = voxel_at.call(cell)
+		if not is_replaceable(there) or Voxels.is_liquid(there):
+			return {}
+		if not Voxels.is_cube(voxel_at.call(cell + Vector3i.UP)):
+			return {}
+		return {cell: Voxels.of_block(Tiles.Block.LANTERN_HANGING)}
+	if block == Tiles.Block.LANTERN and face.y == 0:
+		return _hung(cell, Tiles.Block.LANTERN_WALL, front, voxel_at)
 	if ObjectShapes.WIDE_KINDS.has(kind):
 		var left := ObjectShapes.facing(kind, front)
 		var right := ObjectShapes.wide_right(left)
@@ -253,6 +284,49 @@ static func wears(voxel: int) -> bool:
 	return hand_seconds(voxel) > INSTANT_SECONDS
 
 
+## Something of `kind` (see ObjectShapes.WALL_MOUNTED) hung in `cell`
+## facing `front`, on the cube behind it.
+static func _hung(cell: Vector3i, kind: int, front: Vector2i, voxel_at: Callable) -> Dictionary:
+	var there: int = voxel_at.call(cell)
+	var behind: int = voxel_at.call(cell - Vector3i(front.x, 0, front.y))
+	if not is_replaceable(there) or Voxels.is_liquid(there) or not Voxels.is_cube(behind):
+		return {}
+	return {cell: Voxels.of_block(ObjectShapes.facing(kind, front))}
+
+
+## The cell under the first cube over `cell` (within CEILING_SEARCH rows,
+## through air only): where a lantern hangs from that ceiling; MAX: none.
+static func under_ceiling(cell: Vector3i, voxel_at: Callable) -> Vector3i:
+	for up in CEILING_SEARCH:
+		var at := cell + Vector3i(0, up, 0)
+		var voxel: int = voxel_at.call(at + Vector3i.UP)
+		if Voxels.is_cube(voxel):
+			return at if voxel_at.call(at) == Voxels.AIR else Vector3i.MAX
+		if voxel != Voxels.AIR:
+			break
+	return Vector3i.MAX
+
+
+## Whether placing `voxel` aimed at `there` fills it (a torch into an empty
+## bracket) instead of going next to it.
+static func fills(there: int, voxel: int) -> bool:
+	return (
+		Voxels.block_of(voxel) == Tiles.Block.TORCH
+		and ObjectShapes.kind_of(Voxels.block_of(there)) == Tiles.Block.TORCH_BRACKET
+	)
+
+
+## Whether where `voxel` goes depends on the side aimed at (what hangs on
+## a wall, a torch, a lantern): the client sends that side.
+static func minds_the_side(voxel: int) -> bool:
+	var block := Voxels.block_of(voxel)
+	return (
+		ObjectShapes.WALL_MOUNTED.has(ObjectShapes.kind_of(block))
+		or block == Tiles.Block.TORCH
+		or block == Tiles.Block.LANTERN
+	)
+
+
 ## Whether a voxel swings when used: a gate (see swung_cells).
 static func swings(voxel: int) -> bool:
 	return voxel != Voxels.UNKNOWN and ObjectShapes.is_gate(Voxels.block_of(voxel))
@@ -267,9 +341,13 @@ static func swung_cells(cell: Vector3i, voxel: int, voxel_at: Callable) -> Dicti
 	return cells
 
 
-## What hangs on the sides of the cube in `cell` (it falls with it).
+## What hangs on the sides of the cube in `cell` or from it (it falls with
+## it).
 static func hung_on(cell: Vector3i, voxel_at: Callable) -> Array[Vector3i]:
 	var hung: Array[Vector3i] = []
+	var below := cell + Vector3i.DOWN
+	if ObjectShapes.is_hanging(Voxels.block_of(voxel_at.call(below))):
+		hung.append(below)
 	for side: Vector2i in ObjectShapes.WAYS:
 		var at := cell + Vector3i(side.x, 0, side.y)
 		var block := Voxels.block_of(voxel_at.call(at))
@@ -332,11 +410,14 @@ static func _bench_room(cell: Vector3i, voxel_at: Callable) -> bool:
 	)
 
 
-## Whether a block can be placed into a voxel: air, liquids, small plants.
+## Whether a block can be placed into a voxel: air, liquids, small plants
+## (not what players placed: a torch, a curtain...).
 static func is_replaceable(voxel: int) -> bool:
 	if voxel == Voxels.AIR or Voxels.is_liquid(voxel):
 		return true
-	return Voxels.is_object(voxel) and not Voxels.is_solid(voxel)
+	if not Voxels.is_object(voxel) or Voxels.is_solid(voxel):
+		return false
+	return Items.item_placing(ObjectShapes.base_kind(Voxels.block_of(voxel))) == Items.Id.NONE
 
 
 ## What a broken voxel leaves: the water touching it from above or the
@@ -352,9 +433,14 @@ static func left_after_break(cell: Vector3i, voxel_at: Callable) -> int:
 
 
 ## Objects stand on the voxel under them: breaking it breaks them too
-## (not what hangs on a wall: see hung_on).
+## (not what hangs on a wall or from a ceiling: see hung_on).
 static func needs_support(voxel: int) -> bool:
-	return Voxels.is_object(voxel) and not ObjectShapes.is_wall_mounted(Voxels.block_of(voxel))
+	var block := Voxels.block_of(voxel)
+	return (
+		Voxels.is_object(voxel)
+		and not ObjectShapes.is_wall_mounted(block)
+		and not ObjectShapes.is_hanging(block)
+	)
 
 
 ## Seconds to break a voxel with an item in hand: the tool made for it

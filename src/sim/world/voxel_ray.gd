@@ -8,8 +8,17 @@ extends RefCounted
 
 ## Height (levels) of the small plants' body.
 const PLANT_HEIGHT := 0.7
-## How deep (local units) what hangs on a wall is met, against it.
+## How deep (local units) what hangs on a wall is met, against it (a
+## lantern on its arm: deeper).
 const WALL_SLICE := 0.3
+const LANTERN_SLICE := 0.75
+## Small lights met on a little body of their own, in the middle of their
+## tile: [width, height, how high it starts] (local units).
+const SMALL_BODIES := {
+	Tiles.Block.TORCH: [0.3, 0.95, 0.0],
+	Tiles.Block.LANTERN: [0.45, 0.85, 0.0],
+	Tiles.Block.LANTERN_HANGING: [0.45, 0.85, 0.15],
+}
 
 
 class Hit:
@@ -96,16 +105,24 @@ static func cast(
 static func object_box(block: int, cell: Vector3i) -> AABB:
 	var tile := Vector2i(cell.x, cell.z)
 	var level := float(cell.y - GameConst.SEA_LEVEL)
+	if SMALL_BODIES.has(block):
+		var body: Array = SMALL_BODIES[block]
+		var width: float = body[0]
+		var low := Vector3(tile.x + 0.5 - width * 0.5, level + body[2], tile.y + 0.5 - width * 0.5)
+		return AABB(low, Vector3(width, body[1], width))
 	if ObjectShapes.is_wall_mounted(block):
 		var back := -ObjectShapes.front_of(block)
+		var slice := WALL_SLICE
+		if ObjectShapes.kind_of(block) == Tiles.Block.LANTERN_WALL:
+			slice = LANTERN_SLICE
 		var low := Vector3(tile.x, level, tile.y)
 		var size := Vector3(1.0, 1.0, 1.0)
 		if back.x != 0:
-			size.x = WALL_SLICE
-			low.x += 1.0 - WALL_SLICE if back.x > 0 else 0.0
+			size.x = slice
+			low.x += 1.0 - slice if back.x > 0 else 0.0
 		else:
-			size.z = WALL_SLICE
-			low.z += 1.0 - WALL_SLICE if back.y > 0 else 0.0
+			size.z = slice
+			low.z += 1.0 - slice if back.y > 0 else 0.0
 		return AABB(low, size)
 	if ObjectShapes.is_gate(block) and ObjectShapes.is_open(block):
 		return AABB(Vector3(tile.x, level, tile.y), Vector3(1.0, 1.25, 1.0))

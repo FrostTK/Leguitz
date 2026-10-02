@@ -442,7 +442,7 @@ ITEM_CAMPFIRE,Campfire,Feu de camp
 BOOK_CHAPTER_HOME,Home and garden,Maison et jardin
 BOOK_HOME_INTRO,"Furnish your house and your garden (their recipes are in the Crafting chapter). Furniture stands on the ground, facing you; you can climb on it.","Aménage ta maison et ton jardin (leurs recettes sont au chapitre Fabrication). Les meubles se posent au sol, tournés vers toi ; on peut monter dessus."
 BOOK_HOME_WALL,Hung on a wall: aim at the side of a block. It falls with it.,Accroché au mur : vise le côté d'un bloc. Il tombe avec lui.
-BOOK_HOME_BRACKET,"Torch bracket: on a wall, it will hold a torch.","Support mural : au mur, il tiendra une torche."
+BOOK_HOME_BRACKET,Torch bracket: on a wall; aim at it with a torch in hand to put one in.,Support mural : au mur ; vise-le avec une torche en main pour l'y mettre.
 BOOK_HOME_CURTAINS,"Curtains: on a wall, in front of a window.","Rideaux : au mur, devant une fenêtre."
 BOOK_HOME_WINDOW,Window: a block of glass in a wooden frame.,Fenêtre : un bloc de verre dans un cadre en bois.
 BOOK_HOME_PANE,Glass pane: a thin pane across its tile.,Vitre : une plaque fine au milieu de sa case.
@@ -452,3 +452,9 @@ BOOK_HOME_FENCE,"Fence: it joins the fences, gates and blocks beside it. Nobody 
 BOOK_HOME_GATE,Wicket gate: {use} opens and shuts it.,Portillon : {use} l'ouvre et le ferme.
 BOOK_HOME_BIG_GATE,"Gate: two tiles wide, {use} opens and shuts it.","Portail : large de deux cases, {use} l'ouvre et le ferme."
 BOOK_HOME_CAMPFIRE,"Campfire: it burns day and night, lights up around it and keeps monsters away.","Feu de camp : il brûle jour et nuit, éclaire autour de lui et tient les monstres à distance."
+ITEM_TORCH,Torch,Torche
+ITEM_LANTERN,Lantern,Lanterne
+BOOK_HOME_LIGHTS,Lights,Lumières
+BOOK_HOME_TORCH,"Torch: on the ground, or in a torch bracket (aim at it, torch in hand).","Torche : au sol, ou dans un support mural (vise-le, la torche en main)."
+BOOK_HOME_LANTERN,"Lantern: on the ground, on a wall, or hung from a ceiling: aim at the underside of a block, or at the floor under it holding {sprint}.","Lanterne : au sol, au mur, ou suspendue au plafond : vise le dessous d'un bloc, ou le sol en dessous en tenant {sprint}."
+BOOK_HOME_LIGHTS_KEEP,"Torches, lanterns and fires light up around them and keep monsters away.","Torches, lanternes et feux éclairent autour d'eux et tiennent les monstres à distance."

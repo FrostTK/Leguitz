@@ -87,6 +87,16 @@ const SHAPED := [
 		"result": [Items.Id.TORCH_BRACKET, 2],
 	},
 	{
+		"pattern": ["C", "S"],
+		"keys": {"C": COALS, "S": Items.Id.STICK},
+		"result": [Items.Id.TORCH, 4],
+	},
+	{
+		"pattern": ["I", "T", "I"],
+		"keys": {"I": Items.Id.IRON_INGOT, "T": Items.Id.TORCH},
+		"result": [Items.Id.LANTERN, 1],
+	},
+	{
 		"pattern": ["SSS", "W W", "W W"],
 		"keys": {"S": Items.Id.STICK, "W": Items.Id.WOOL},
 		"result": [Items.Id.CURTAINS, 1],

@@ -102,36 +102,51 @@ func place() -> void:
 		return
 	if target == null:
 		return
-	# A small plant aimed at gives way to the block (as in Minecraft).
-	var replaced := Mining.is_replaceable(target.voxel)
-	if target.normal == Vector3i.ZERO and not replaced:
-		return
-	var cell := target.cell if replaced else target.cell + target.normal
 	var player := client.local_player
 	var slot := client.inventory.selected
 	var voxel := Items.placed_voxel(client.inventory.items[slot])
+	# A small plant aimed at gives way to the block (as in Minecraft); a
+	# torch goes into an empty bracket aimed at.
+	var fills := Mining.fills(target.voxel, voxel)
+	var replaced := not fills and Mining.is_replaceable(target.voxel)
+	if target.normal == Vector3i.ZERO and not replaced and not fills:
+		return
+	var cell := target.cell if replaced or fills else target.cell + target.normal
+	var face := Vector3i.UP if replaced else target.normal
+	if (
+		Voxels.block_of(voxel) == Tiles.Block.LANTERN
+		and face == Vector3i.UP
+		and Input.is_action_pressed(InputBindings.SPRINT)
+	):
+		# Shift: hung from the ceiling over the floor aimed at (the camera
+		# never sees a ceiling's underside from above).
+		var under := Mining.under_ceiling(cell, client.world.voxel_at)
+		if under == Vector3i.MAX:
+			return
+		cell = under
+		face = Vector3i.DOWN
 	if (
 		not Mining.can_place(voxel)
 		or Mining.reach_to(player.position, player.height, cell) > Mining.REACH
 	):
 		return
 	var front := Mining.front_towards(cell, player.position)
-	if ObjectShapes.is_wall_mounted(Voxels.block_of(voxel)):
+	if Mining.minds_the_side(voxel) and face.y == 0 and not fills:
 		# Hung on the side aimed at, facing away from it.
-		front = Vector2i(target.normal.x, target.normal.z)
-		if replaced or front == Vector2i.ZERO or target.normal.y != 0:
-			return
-	var cells := Mining.placement(cell, voxel, front, client.world.voxel_at)
+		front = Vector2i(face.x, face.z)
+	elif ObjectShapes.is_wall_mounted(Voxels.block_of(voxel)):
+		return
+	var cells := Mining.placement(cell, voxel, front, client.world.voxel_at, face)
 	if cells.is_empty():
 		return
 	for at: Vector3i in cells:
-		if Mining.overlaps_body(at, player.position, player.height):
+		if Voxels.is_solid(cells[at]) and Mining.overlaps_body(at, player.position, player.height):
 			return
 	for at: Vector3i in cells:
 		_predict(at, cells[at])
 	if not client.modes.creative():
 		client.inventory.take(slot, 1)
-	client.transport.send(Msg.block_place(cell, slot, front))
+	client.transport.send(Msg.block_place(cell, slot, front, face))
 	client.player_model.swing()
 
 

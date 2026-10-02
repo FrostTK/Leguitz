@@ -291,6 +291,24 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   terrain: hung high on a wall), kept by set_voxel, found by recompute_tops, sent in to_dict:
   ChunkMesher walks a column up to it (columns stop at `tops` otherwise). The book's "Home and
   garden" chapter (GuideBook._home; chapters' titles are named, not indexed).
+- Lights (phase 6, step 1): items TORCH (coal or charcoal over a stick: 4) and LANTERN (a torch
+  between two iron ingots); blocks TORCH (on the ground), TORCH_BRACKET_LIT (a torch in a
+  bracket: aimed at an empty bracket with a torch in hand, Mining.fills; never straight against a
+  wall), LANTERN (ground), LANTERN_HANGING (ObjectShapes.HANGING: from the cube above, falls with
+  it, Mining.hung_on, not with the floor, needs_support), LANTERN_WALL (wall-mounted); the
+  item's other shapes in ObjectShapes.SHAPE_OF (they give the lantern back; a lit bracket gives
+  the bracket and the torch). Msg.BLOCK_PLACE carries `face`, the side of the cube aimed at
+  (Mining.placement's `face`: UP top, DOWN underside, sides; Mining.minds_the_side); top-down the
+  camera never sees an underside, so Shift (InputBindings.SPRINT) with a lantern aimed at a floor
+  hangs it under the ceiling over it (Mining.under_ceiling, CEILING_SEARCH rows). They do not
+  block bodies; placing what does not block is allowed where a body stands (server and client
+  check only solid voxels; Fixtures.someone_in). What players placed is no longer replaceable
+  like a plant (Mining.is_replaceable: Items.item_placing). ObjectShapes.LIGHTS: is_lit (with lit
+  furnaces): Light.near_fire keeps monsters away, ChunkMesher._add_flame lights them
+  (ChunkMesher.FLAMES: where the flame is, energy, color, flicker; lava keeps LAVA_COLOR), and
+  ChunkView3D.flicker (driven by WorldView3D) makes flames waver (lanterns hardly). Models in
+  DecorModels (`_torch`, `_lantern`; their flames and glass are GLOW voxels). Small aiming bodies
+  (VoxelRay.SMALL_BODIES; a wall lantern deeper, LANTERN_SLICE).
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made

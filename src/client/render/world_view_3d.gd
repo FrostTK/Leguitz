@@ -303,6 +303,9 @@ func _process(_delta: float) -> void:
 		_refresh_lods()
 	_start_jobs()
 	_apply_results()
+	var time := Time.get_ticks_msec() / 1000.0
+	for view: ChunkView3D in _views.values():
+		view.flicker(time)
 
 
 func _start_jobs() -> void:

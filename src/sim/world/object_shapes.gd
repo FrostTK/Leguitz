@@ -163,6 +163,20 @@ const FACING_KINDS := {
 		Tiles.Block.BIG_GATE_OPEN_NORTH,
 		Tiles.Block.BIG_GATE_OPEN_EAST,
 	],
+	Tiles.Block.TORCH_BRACKET_LIT:
+	[
+		Tiles.Block.TORCH_BRACKET_LIT,
+		Tiles.Block.TORCH_BRACKET_LIT_WEST,
+		Tiles.Block.TORCH_BRACKET_LIT_NORTH,
+		Tiles.Block.TORCH_BRACKET_LIT_EAST,
+	],
+	Tiles.Block.LANTERN_WALL:
+	[
+		Tiles.Block.LANTERN_WALL,
+		Tiles.Block.LANTERN_WALL_WEST,
+		Tiles.Block.LANTERN_WALL_NORTH,
+		Tiles.Block.LANTERN_WALL_EAST,
+	],
 }
 ## Objects two tiles long: their kind (in FACING_KINDS: their left end,
 ## which holds the model) and the block of their right end, lying beside
@@ -219,7 +233,31 @@ const OPENS := {
 }
 ## What hangs on the side of a cube (by kind), facing away from it: it
 ## falls with it.
-const WALL_MOUNTED := {Tiles.Block.TORCH_BRACKET: true, Tiles.Block.CURTAINS: true}
+const WALL_MOUNTED := {
+	Tiles.Block.TORCH_BRACKET: true,
+	Tiles.Block.TORCH_BRACKET_LIT: true,
+	Tiles.Block.CURTAINS: true,
+	Tiles.Block.LANTERN_WALL: true,
+}
+## What hangs from the cube above it (it falls with it, not with the
+## floor).
+const HANGING := {Tiles.Block.LANTERN_HANGING: true}
+## What burns and lights its surroundings (ChunkMesher's lights), and keeps
+## monsters away (Light.near_fire); a lit furnace too (LIT).
+const LIGHTS := {
+	Tiles.Block.TORCH: true,
+	Tiles.Block.TORCH_BRACKET_LIT: true,
+	Tiles.Block.LANTERN: true,
+	Tiles.Block.LANTERN_HANGING: true,
+	Tiles.Block.LANTERN_WALL: true,
+	Tiles.Block.CAMPFIRE: true,
+}
+## Other shapes of one thing (a lantern hung from a ceiling or a wall): the
+## kind it is placed as, the item's.
+const SHAPE_OF := {
+	Tiles.Block.LANTERN_HANGING: Tiles.Block.LANTERN,
+	Tiles.Block.LANTERN_WALL: Tiles.Block.LANTERN,
+}
 ## Fences join their neighbors (fences, gates and cubes): their version is
 ## the sides they join (FENCE_SIDES bits, 16 versions), not their tile's.
 const FENCE_SIDES: Array[Vector2i] = [
@@ -227,7 +265,13 @@ const FENCE_SIDES: Array[Vector2i] = [
 ]
 const FENCE_VARIANTS := 16
 ## Objects with a single version (no random ones).
-const SINGLE := {Tiles.Block.TABLE: true, Tiles.Block.CAMPFIRE: true}
+const SINGLE := {
+	Tiles.Block.TABLE: true,
+	Tiles.Block.CAMPFIRE: true,
+	Tiles.Block.TORCH: true,
+	Tiles.Block.LANTERN: true,
+	Tiles.Block.LANTERN_HANGING: true,
+}
 ## Small things stand anywhere in their tile (whole voxels), not centered.
 const WANDERING := {
 	Tiles.Block.TALL_GRASS: true,
@@ -322,11 +366,17 @@ static func furnace_kind(block: int) -> int:
 	return -1
 
 
-## Something burning: a lit furnace, a campfire.
+## Something burning: a lit furnace, a campfire, a torch, a lantern (see
+## LIGHTS).
 static func is_lit(block: int) -> bool:
-	if block == Tiles.Block.CAMPFIRE:
+	if LIGHTS.has(base_kind(block)):
 		return true
 	return _facing.has(block) and kind_of(block) in LIT.values()
+
+
+## Hung from the cube above (see HANGING).
+static func is_hanging(block: int) -> bool:
+	return HANGING.has(block)
 
 
 ## A gate, open or shut, any part of it.

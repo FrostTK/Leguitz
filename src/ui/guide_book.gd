@@ -205,7 +205,7 @@ static func _furnaces() -> Array:
 
 
 ## What furnishes a house and a garden: what hangs on a wall, the
-## furniture, fences and gates, the campfire.
+## furniture, the lights, fences and gates, the campfire.
 static func _home() -> Array:
 	return [
 		_title("BOOK_CHAPTER_HOME"),
@@ -216,6 +216,10 @@ static func _home() -> Array:
 		_icon(Items.Id.WINDOW, _t("BOOK_HOME_WINDOW")),
 		_icon(Items.Id.GLASS_PANE, _t("BOOK_HOME_PANE")),
 		_icon(Items.Id.TABLE, _t("BOOK_HOME_FURNITURE")),
+		_heading("BOOK_HOME_LIGHTS"),
+		_icon(Items.Id.TORCH, _t("BOOK_HOME_TORCH")),
+		_icon(Items.Id.LANTERN, _t("BOOK_HOME_LANTERN")),
+		_text("BOOK_HOME_LIGHTS_KEEP"),
 		_heading("BOOK_HOME_GARDEN"),
 		_icon(Items.Id.FENCE, _t("BOOK_HOME_FENCE")),
 		_icon(Items.Id.GATE, _t("BOOK_HOME_GATE")),

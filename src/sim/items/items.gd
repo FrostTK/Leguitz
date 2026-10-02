@@ -147,6 +147,8 @@ enum Id {
 	GATE,
 	BIG_GATE,
 	CAMPFIRE,
+	TORCH,
+	LANTERN,
 }
 ## What a tool is made for (Mining.tool_for: what it breaks faster).
 enum Tool { NONE, PICKAXE, AXE, SHOVEL, SWORD }
@@ -237,6 +239,8 @@ const PLACES_BLOCK := {
 	Id.GATE: Tiles.Block.GATE,
 	Id.BIG_GATE: Tiles.Block.BIG_GATE,
 	Id.CAMPFIRE: Tiles.Block.CAMPFIRE,
+	Id.TORCH: Tiles.Block.TORCH,
+	Id.LANTERN: Tiles.Block.LANTERN,
 }
 
 ## What a ground gives (soil gives dirt); grounds left out give nothing.
@@ -463,6 +467,9 @@ static func drops(voxel: int, tile: Vector2i, rng: RandomNumberGenerator) -> Arr
 	elif BLOCK_DROPS.has(block):
 		var drop: Array = BLOCK_DROPS[block]
 		result.append(Vector2i(drop[0], rng.randi_range(drop[1], drop[2])))
+	elif ObjectShapes.base_kind(block) == Tiles.Block.TORCH_BRACKET_LIT:
+		result.append(Vector2i(Id.TORCH_BRACKET, 1))
+		result.append(Vector2i(Id.TORCH, 1))
 	elif _placed_by.has(ObjectShapes.base_kind(block)):
 		# What players place gives itself back, any way it faces, open or
 		# shut.
@@ -470,12 +477,20 @@ static func drops(voxel: int, tile: Vector2i, rng: RandomNumberGenerator) -> Arr
 	return result
 
 
+## The item placing a block kind (Id.NONE: none; see _build_placed_by).
+static func item_placing(kind: int) -> int:
+	return _placed_by.get(kind, Id.NONE)
+
+
 ## Block kind -> the item placing it (PLACES_BLOCK; a gate's open kind
-## too).
+## too, a lantern hung up, a bracket holding a torch: the bracket).
 static func _build_placed_by() -> Dictionary:
 	var lookup := {}
 	for item: int in PLACES_BLOCK:
 		lookup[PLACES_BLOCK[item]] = item
 	for shut: int in ObjectShapes.OPENS:
 		lookup[ObjectShapes.OPENS[shut]] = lookup[shut]
+	for shape: int in ObjectShapes.SHAPE_OF:
+		lookup[shape] = lookup[ObjectShapes.SHAPE_OF[shape]]
+	lookup[Tiles.Block.TORCH_BRACKET_LIT] = Id.TORCH_BRACKET
 	return lookup

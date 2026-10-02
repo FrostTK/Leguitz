@@ -22,7 +22,7 @@ static func swing_gate(
 	):
 		cells = Mining.swung_cells(cell, voxel, world.voxel_at)
 	for at: Vector3i in cells.keys():
-		if Voxels.is_solid(cells[at]) and _someone_in(server, at):
+		if Voxels.is_solid(cells[at]) and someone_in(server, at):
 			cells.clear()
 			break
 	if cells.is_empty():
@@ -44,7 +44,7 @@ static func drop_hung(server: GameServer, cell: Vector3i, drops: bool) -> void:
 
 
 ## Whether a player or a creature stands in a cell.
-static func _someone_in(server: GameServer, cell: Vector3i) -> bool:
+static func someone_in(server: GameServer, cell: Vector3i) -> bool:
 	for other in server.sessions:
 		if other.joined and Mining.overlaps_body(cell, other.position, other.height):
 			return true
