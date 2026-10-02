@@ -10,9 +10,10 @@ extends RefCounted
 ## - faces: the sides of cubes open to the air or to clear water (vertical
 ##   runs of the same material share one quad), and their undersides,
 ## - water: the surface of clear water (the ground under it shows through),
-## each split into what can be seen from the sky (also through water) and
-## what lies deeper (caves), shown only when the view cuts the world above
-## the player.
+## each split into what can be seen from the sky (also through water,
+## glass, or a building's roof: a house shows its rooms through its windows
+## and doors) and what lies deeper, under rock (caves), shown only when the
+## view cuts the world above the player.
 ## Undersides are never seen from the camera (it always looks down) but
 ## close the rock: seen from behind through the cut, they draw its section.
 ## Where the view cuts the world (`cut_row`), building blocks cut through
@@ -55,6 +56,12 @@ const TERRAIN := CUBE | LIQUID
 ## Flag of the cubes one sees through (instead of CUBE, see _build_flags).
 const CLEAR_CUBE := 8
 const ANY_CUBE := CUBE | CLEAR_CUBE
+## Flag of the building blocks (TileAtlas.BUILDING_WALLS): roofs and floors
+## of these never make what is under them a cave.
+const BUILT := 16
+## Natural cubes in a row over a face that make it a cave's (one is a roof
+## a player made: caves keep two rows of rock over them, CaveGenerator.ROOF).
+const THICK_COVER := 2
 
 ## Horizontal faces are gathered per row of the chunk before being merged
 ## into rectangles: tops, or undersides (see _record_flat).
@@ -232,7 +239,8 @@ static func build(job: Job) -> Result:
 					var above := voxels[base + y + 1] if y + 1 < HEIGHT else Voxels.AIR
 					if flags[above] & TERRAIN != 0:
 						continue
-					var deep := y + 1 < tops[column]
+					var rows := tops[column] - y
+					var deep := rows > 1 and not _sky_through(voxels, flags, clear, base + y, rows)
 					var part := Part.DEEP_TOPS if deep else Part.TOPS
 					if clear[voxel] != 0:
 						part = Part.DEEP_WATER if deep else Part.WATER
@@ -251,7 +259,10 @@ static func build(job: Job) -> Result:
 						var front := Vector2(ObjectShapes.front_of(block)) * 0.9
 						var fire := Vector3(lx + 0.5 + front.x, y - SEA + 0.5, lz + 0.5 + front.y)
 						result.lava_spots.append(fire)
-						result.lava_deep.append(y + 1 < tops[column])
+						var rows := tops[column] - y
+						result.lava_deep.append(
+							rows > 1 and not _sky_through(voxels, flags, clear, base + y, rows)
+						)
 						result.lava_strength.append(FIRE_LIGHT)
 	_record_caps(flats, voxels, job.cut_row)
 	_add_flats(result, flats)
@@ -373,6 +384,8 @@ static func _build_flags() -> PackedByteArray:
 	for block: int in TileAtlas.CLEAR_WALLS:
 		var voxel := Voxels.of_block(block)
 		flags[voxel] = (flags[voxel] & ~CUBE) | CLEAR_CUBE
+	for block: int in TileAtlas.BUILDING_WALLS:
+		flags[Voxels.of_block(block)] |= BUILT
 	return flags
 
 
@@ -562,18 +575,25 @@ static func _open(flags: PackedByteArray, clear: PackedByteArray, voxel: int) ->
 	return flags[voxel] & TERRAIN == 0 or clear[voxel] != 0
 
 
-## Whether the `rows` - 1 voxels above `index` (padded voxels), up to the
-## column's top, all let the eye through (air, plants, clear water,
-## glass): then what is at `index` shows from the sky (a lake bed, a
-## drowned bank, what stands under or behind glass).
+## Whether what is at `index` (padded voxels) shows from the sky: the
+## `rows` - 1 voxels above it, up to the column's top, let the eye through
+## (air, plants, clear water, glass: a lake bed, a drowned bank, what
+## stands under or behind glass) or are only thin covers (a building's
+## roofs and floors, a single natural layer: seen through its windows and
+## doors); THICK_COVER natural ones in a row (rock) hide it in a cave.
 static func _sky_through(
 	voxels: PackedByteArray, flags: PackedByteArray, clear: PackedByteArray, index: int, rows: int
 ) -> bool:
+	var run := 0
 	for k in range(1, rows):
 		var voxel := voxels[index + k]
 		var flag := flags[voxel]
-		if flag & CUBE != 0 or (flag & LIQUID != 0 and clear[voxel] == 0):
-			return false
+		if flag & BUILT == 0 and (flag & CUBE != 0 or (flag & LIQUID != 0 and clear[voxel] == 0)):
+			run += 1
+			if run >= THICK_COVER:
+				return false
+		else:
+			run = 0
 	return true
 
 

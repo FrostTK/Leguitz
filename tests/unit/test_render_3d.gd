@@ -339,3 +339,67 @@ func test_building_blocks_cut_by_the_view_show_their_top() -> void:
 	job.cut_row = SEA + 2
 	job.map_only = true
 	assert_eq(ChunkMesher.build(job).parts[ChunkMesher.Part.CAPS].quad_count(), 1, "the cut moved")
+
+
+## Area of the tops of a surface at `height` (local units).
+static func _area_at(surface: ChunkMesher.Surface, height: float) -> float:
+	var area := 0.0
+	for quad in surface.quad_count():
+		var a := surface.vertices[quad * 4]
+		var c := surface.vertices[quad * 4 + 2]
+		if surface.normals[quad * 4] == Vector3.UP and absf(a.y - height) < 0.01:
+			area += absf((c.x - a.x) * (c.z - a.z))
+	return area
+
+
+func test_a_house_shows_its_rooms_from_outside() -> void:
+	var chunk := _flat_chunk(0)
+	var planks := Voxels.of_block(Tiles.Block.SPRUCE_PLANKS)
+	var glass := Voxels.of_block(Tiles.Block.GLASS)
+	# A floor, walls three levels tall with a window, a roof, 6 x 6 tiles.
+	for lz in range(2, 8):
+		for lx in range(2, 8):
+			chunk.set_voxel(Vector3i(lx, SEA, lz), planks)
+			chunk.set_voxel(Vector3i(lx, SEA + 4, lz), planks)
+			if lx == 2 or lx == 7 or lz == 2 or lz == 7:
+				for row in range(SEA + 1, SEA + 4):
+					var window := lz == 7 and lx == 4 and row == SEA + 2
+					chunk.set_voxel(Vector3i(lx, row, lz), glass if window else planks)
+	var result := _build(chunk)
+	var tops := result.parts[ChunkMesher.Part.TOPS]
+	assert_almost(_area_at(tops, 5.0), 36.0, 0.001, "the roof")
+	assert_almost(_area_at(tops, 1.0), 16.0, 0.001, "the room's floor, seen through the window")
+	assert_true(result.parts[ChunkMesher.Part.DEEP_TOPS].is_empty(), "a roof is not a cave")
+	# Inside, the walls show too (4 sides x 4 tiles x 3 levels, the
+	# window's pane among them).
+	var inside := 0.0
+	var faces := result.parts[ChunkMesher.Part.FACES]
+	for quad in faces.quad_count():
+		var a := faces.vertices[quad * 4]
+		var middle := (a + faces.vertices[quad * 4 + 2]) * 0.5
+		if middle.x > 2.99 and middle.x < 7.01 and middle.z > 2.99 and middle.z < 7.01:
+			inside += _side_area_of(faces, quad)
+	assert_almost(inside, 48.0, 0.001, "the room's walls")
+
+
+func test_rock_over_the_ground_makes_a_cave_a_single_layer_does_not() -> void:
+	var stone := Voxels.of_block(Tiles.Block.STONE)
+	for thickness in [1, 2]:
+		var chunk := _flat_chunk(0)
+		# A slab over the grass, two levels up.
+		for lz in range(4, 8):
+			for lx in range(4, 8):
+				for row in range(SEA + 2, SEA + 2 + thickness):
+					chunk.set_voxel(Vector3i(lx, row, lz), stone)
+		var result := _build(chunk)
+		var hidden := _area(result.parts[ChunkMesher.Part.DEEP_TOPS])
+		assert_almost(hidden, 16.0 if thickness == 2 else 0.0, 0.001, "%d layers" % thickness)
+
+
+## Area (tiles x levels) of one vertical quad of a surface.
+static func _side_area_of(surface: ChunkMesher.Surface, quad: int) -> float:
+	var a := surface.vertices[quad * 4]
+	var c := surface.vertices[quad * 4 + 2]
+	if surface.normals[quad * 4].y != 0.0:
+		return 0.0
+	return Vector2(c.x - a.x, c.z - a.z).length() * absf(c.y - a.y)

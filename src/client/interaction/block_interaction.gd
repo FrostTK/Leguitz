@@ -328,10 +328,10 @@ func aim_point() -> Vector3:
 	var camera := client.world_viewport.camera
 	var origin := root_inverse * camera.project_ray_origin(pixel)
 	var direction := (root_inverse.basis * camera.project_ray_normal(pixel)).normalized()
-	var hit := VoxelRay.cast(origin, direction, AIM_FAR, client.world.voxel_at)
+	var hit := VoxelRay.cast(origin, direction, AIM_FAR, _shown_voxel)
 	var far := AIM_FAR if hit == null else (hit.point - origin).dot(direction)
 	var creature := client.creatures.pick(origin, direction, far)
-	if creature.x >= 0.0:
+	if creature.x >= 0.0 and _shown(int(creature.x)):
 		return client.creatures.bounds_of(int(creature.x)).get_center()
 	if hit != null:
 		return hit.point
@@ -344,7 +344,8 @@ func aim_point() -> Vector3:
 
 ## What the player aims at: a ray in local units, kept within reach; an
 ## animal nearer than the block met is aimed at instead (`target_creature`,
-## then null).
+## then null). What the view cuts away (a roof over the player) is not
+## met: the ray goes through it to what shows under it.
 func _aim() -> VoxelRay.Hit:
 	target_creature = -1
 	if client.first_person > 0.0 and client.first_person < 1.0:
@@ -369,18 +370,29 @@ func _aim() -> VoxelRay.Hit:
 	var span := _reach_span(origin, direction, eye)
 	var hit: VoxelRay.Hit = null
 	if span.x <= span.y:
-		hit = VoxelRay.cast(
-			origin + direction * span.x, direction, span.y - span.x, client.world.voxel_at
-		)
+		hit = VoxelRay.cast(origin + direction * span.x, direction, span.y - span.x, _shown_voxel)
 	var reach := _reach_span(origin, direction, eye, Combat.REACH)
 	if reach.x <= reach.y:
 		var start := origin + direction * reach.x
 		var animal := client.creatures.pick(start, direction, reach.y - reach.x)
 		var block := INF if hit == null else (hit.point - origin).dot(direction)
-		if animal.x >= 0.0 and reach.x + animal.y < block:
+		if animal.x >= 0.0 and reach.x + animal.y < block and _shown(int(animal.x)):
 			target_creature = int(animal.x)
 			return null
 	return hit
+
+
+## The voxel at a cell as the view shows it: air where it is cut away.
+func _shown_voxel(cell: Vector3i) -> int:
+	if cell.y >= client.shown_below_row:
+		return Voxels.AIR
+	return client.world.voxel_at(cell)
+
+
+## Whether a creature shows (not standing above the view's cut).
+func _shown(creature: int) -> bool:
+	var floor_level := client.creatures.bounds_of(creature).position.y
+	return floor_level + GameConst.SEA_LEVEL < client.shown_below_row
 
 
 ## The player's eye (local units).

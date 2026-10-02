@@ -133,6 +133,9 @@ var dive_hold := -1.0
 var covered := false
 ## True deep enough under the rock for caves' light and silence.
 var underground := false
+## Voxel rows from this one up are cut away from the view (ChunkData.HEIGHT:
+## no cut): what is there cannot be aimed at.
+var shown_below_row := ChunkData.HEIGHT
 var _loading_label := Label.new()
 ## The feet were in water or lava last frame (a splash when they go in).
 var _was_in_liquid := false
@@ -481,6 +484,7 @@ func _update_cut(root: Transform3D) -> void:
 		# maps keep it, so the floor around blends its grounds).
 		if first_person < CUT_UNTIL:
 			cut_height = (root.basis * Vector3(0.0, cut_level, 0.0)).y
+	shown_below_row = cut_row if cut_height < 100000.0 else ChunkData.HEIGHT
 	world_view.set_view(cut_row, covered or first_person > 0.0, cut_height < 100000.0)
 	RenderingServer.global_shader_parameter_set(&"cut_height", cut_height)
 	lighting.underground = underground

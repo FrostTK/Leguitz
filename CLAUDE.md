@@ -66,8 +66,10 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   pixel from the chunk's surface map, ChunkMesher.surface_map, shared code in
   `terrain3d_surface.gdshaderinc`), sides of cubes open to the air or to clear water (vertical
   runs of one material merged, the ground hangs over as a lip) and undersides (never seen
-  front-on, the camera always looks down). Faces open to the sky (also through water) and cave
-  faces go to separate meshes; caves show only when the player is under cover
+  front-on, the camera always looks down). Faces open to the sky (also through water, glass and
+  thin covers: building blocks, ChunkMesher.BUILT, never hide what is under them, only
+  THICK_COVER natural cubes in a row do, so a house's rooms show through its windows and doors)
+  and cave faces go to separate meshes; caves show only when the player is under cover
   (ClientWorld.is_covered; water and lava over the head are no roof): the view then cuts everything above their head (global
   `cut_height`; undersides in the cut's plane go too, `underside_cut`: a beam or a ceiling right
   over the cut would cover what lies under it), the surface maps are rebuilt for the cut, and the
@@ -144,7 +146,8 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   local units; objects are met on their body, trees on their trunk). The client's BlockInteraction
   aims (top-down: the mouse ray through the ortho camera, taken back to local units by the root's
   inverse; first person: the crosshair; gamepad: in front of the player), always clamped to the
-  reach sphere, draws the frame (one art pixel thick top-down; in perspective about two pixels of
+  reach sphere, through what the view cuts away (GameClient.shown_below_row: a roof over the
+  player is not met, nor a creature standing on it), draws the frame (one art pixel thick top-down; in perspective about two pixels of
   the screen, at least a texel: BlockHighlight.thickness_for), cracks, chips and falling trees, and shows
   each change at once (prediction). Msg.BLOCK_BREAK / BLOCK_PLACE go to the server, which checks
   reach, what is there, room and support, changes the voxel through WorldState.set_voxel (objects
