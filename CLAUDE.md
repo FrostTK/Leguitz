@@ -111,6 +111,12 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   offset in their tile. Only a tree's trunk blocks bodies (TileCollider moves among obstacle
   boxes, PlayerBody.obstacle); generation never puts two solid objects on neighboring tiles
   (WorldGenerator._spaced), so bodies can always walk between them.
+- Weather (`src/client/effects/weather_effects.gd`): GPU particles in world space around the
+  camera target (rain, snow, leaves, fireflies, dust). Rain and snow end on the first thing they
+  meet from above: a GPUParticlesCollisionHeightField3D over the emitters (shown only while it
+  rains), moved on a HEIGHT_FIELD_STEP grid and drawn again when chunks or blocks change
+  (`terrain_changed`, twice: the new mesh comes a moment later); drops are DROP art pixels from
+  above, FINE_DROP in first person and HD.
 - Keep the GPU cool: Settings.max_fps (default 60, 15 in the background), the world SubViewport
   stops rendering while paused, and the client only asks for the chunks its view needs.
 - Movement is Minecraft-like (`src/sim/physics/player_body.gd`, shared client/server) among voxels

@@ -802,6 +802,7 @@ func _handle_message(message: Dictionary) -> void:
 			var chunk := ChunkData.from_dict(message["chunk"])
 			world.store(chunk)
 			world_view.show_chunk(chunk)
+			weather_effects.terrain_changed()
 		Msg.CHUNK_UNLOAD:
 			world.remove(message["coord"])
 			world_view.remove_chunk(message["coord"])
@@ -822,6 +823,7 @@ func _handle_message(message: Dictionary) -> void:
 			save_notice.flash()
 		Msg.BLOCK_CHANGED:
 			interaction.on_block_changed(message["cell"], message["voxel"])
+			weather_effects.terrain_changed()
 			actions.close_if_gone(message["cell"])
 		Msg.VITALS:
 			vitals.on_vitals(message["health"], message["food"], message["hurt"], message["air"])

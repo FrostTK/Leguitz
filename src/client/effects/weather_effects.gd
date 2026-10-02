@@ -5,7 +5,11 @@ extends Node3D
 ## falling leaves, fireflies at night and dust motes in caves.
 ## Particles run on the GPU around the camera target, in world space (rain
 ## and snow move along with the player: nobody notices, and they stay
-## put when the camera turns).
+## put when the camera turns). Raindrops and snowflakes end on the first
+## thing they meet from above (roofs, leaves...): a height field of what
+## lies around, seen from the sky, refreshed when it moves by
+## HEIGHT_FIELD_STEP or the terrain changed (terrain_changed). Drops are an
+## art pixel wide from above; seen closer (first person, HD), finer.
 
 const RAIN_BY_KIND := {Weather.Kind.CLEAR: 0.0, Weather.Kind.RAIN: 0.8, Weather.Kind.THUNDER: 1.0}
 const FADE_PER_SECOND := 0.12
@@ -14,6 +18,14 @@ const DRYING_PER_SECOND := 0.012
 ## Particles live in a slab this many units above and below the target.
 const SLAB_HALF_HEIGHT := 12.0
 const RAIN_SPEED := 30.0
+## A drop's size in art pixels (width, length): from above at art
+## resolution, and seen closer (first person, HD).
+const DROP := Vector2(1.0, 6.0)
+const FINE_DROP := Vector2(0.3, 5.0)
+## The height field stopping drops moves by this much (world units), and
+## is drawn again at most this often when the terrain changed.
+const HEIGHT_FIELD_STEP := 2.0
+const HEIGHT_FIELD_REFRESH := 0.5
 
 ## Biomes where it never rains (like Minecraft's deserts and savannas).
 const DRY_BIOMES := {
@@ -83,6 +95,14 @@ var _flash := 0.0
 var _flash_timer := 8.0
 var _second_flash := 0.0
 var _rng := RandomNumberGenerator.new()
+## What stops drops falling (see the class).
+var _roof := GPUParticlesCollisionHeightField3D.new()
+## Times it is still to be drawn again (a chunk changed: once at once, once
+## when its new mesh is surely there).
+var _roof_redraws := 0
+var _roof_wait := 0.0
+var _roof_nudge := 0.0
+var _fine := false
 
 
 func _ready() -> void:
@@ -94,6 +114,11 @@ func _ready() -> void:
 	_particles[&"dust"] = _make_dust()
 	for particles: GPUParticles3D in _particles.values():
 		add_child(particles)
+	_roof.resolution = GPUParticlesCollisionHeightField3D.RESOLUTION_512
+	_roof.update_mode = GPUParticlesCollisionHeightField3D.UPDATE_MODE_WHEN_MOVED
+	_roof.follow_camera_enabled = false
+	_roof.visible = false
+	add_child(_roof)
 	set_particle_scale(particle_scale)
 
 
@@ -108,6 +133,12 @@ func apply_state(data: Dictionary) -> void:
 	if not _has_state:
 		_has_state = true
 		_snap_state = true
+
+
+## Blocks were placed or broken, chunks came: the height field stopping
+## drops is drawn again (soon).
+func terrain_changed() -> void:
+	_roof_redraws = 2
 
 
 ## Current lightning flash brightness (added to the ambient light).
@@ -146,6 +177,12 @@ func _process(delta: float) -> void:
 	_share = clampf(spread, 1.0, MAX_SPREAD) / MAX_SPREAD
 	for particles: GPUParticles3D in _particles.values():
 		_place(particles, reach)
+	_place_roof(reach, delta)
+	var fine := first_person or Settings.hd_rendering
+	if fine != _fine:
+		_fine = fine
+		var drop := FINE_DROP if fine else DROP
+		(_particles[&"rain"].draw_pass_1 as QuadMesh).size = _pixel_size(drop, false)
 	var rain := _particles[&"rain"]
 	rain.amount_ratio = 0.0 if snowing else rain_intensity * _share
 	(rain.process_material as ParticleProcessMaterial).direction = Vector3(
@@ -183,6 +220,28 @@ func _update_lightning(delta: float, underground: bool) -> void:
 func _reach(pitch: float) -> float:
 	var depth := view_size.y / sin(pitch)
 	return maxf(view_size.x * 0.5 + 1.0, depth * 0.5 + SLAB_HALF_HEIGHT * 0.6)
+
+
+## Keeps the height field stopping drops over the emitters while it rains
+## or snows, on a grid (it is drawn again each time it moves).
+func _place_roof(reach: float, delta: float) -> void:
+	_roof.visible = rain_intensity > 0.0
+	if not _roof.visible:
+		return
+	var across := reach * 2.0 + HEIGHT_FIELD_STEP * 2.0
+	var size := Vector3(across, SLAB_HALF_HEIGHT * 2.0 + 8.0, across)
+	if not _roof.size.is_equal_approx(size):
+		_roof.size = size
+	var at := (target / HEIGHT_FIELD_STEP).round() * HEIGHT_FIELD_STEP
+	_roof_wait -= delta
+	if _roof_redraws > 0 and _roof_wait <= 0.0:
+		# A hair off: it counts as moved, so it is drawn again.
+		_roof_redraws -= 1
+		_roof_wait = HEIGHT_FIELD_REFRESH
+		_roof_nudge = 0.001 if _roof_nudge == 0.0 else 0.0
+	at.y += _roof_nudge
+	if not _roof.global_position.is_equal_approx(at):
+		_roof.global_position = at
 
 
 ## Keeps an emitter around the visible area.
@@ -243,10 +302,11 @@ func _make_rain() -> GPUParticles3D:
 	material.billboard_mode = BaseMaterial3D.BILLBOARD_FIXED_Y
 	var particles := _base(2000, SLAB_HALF_HEIGHT * 2.0 / RAIN_SPEED, material)
 	particles.local_coords = true
-	(particles.draw_pass_1 as QuadMesh).size = _pixel_size(Vector2(1, 6), false)
+	(particles.draw_pass_1 as QuadMesh).size = _pixel_size(DROP, false)
 	var process := particles.process_material as ParticleProcessMaterial
 	process.direction = Vector3(0.1, -1.0, 0.0)
 	process.spread = 2.0
+	process.collision_mode = ParticleProcessMaterial.COLLISION_HIDE_ON_CONTACT
 	process.initial_velocity_min = RAIN_SPEED
 	process.initial_velocity_max = RAIN_SPEED * 1.1
 	return particles
@@ -264,6 +324,7 @@ func _make_snow() -> GPUParticles3D:
 	process.turbulence_enabled = true
 	process.turbulence_noise_strength = 1.5
 	process.turbulence_noise_scale = 2.0
+	process.collision_mode = ParticleProcessMaterial.COLLISION_HIDE_ON_CONTACT
 	return particles
 
 
