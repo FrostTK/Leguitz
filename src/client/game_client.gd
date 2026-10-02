@@ -112,8 +112,8 @@ var book_in_hand := false
 ## What the player does in the inventory screen and with what it opens.
 var actions := InventoryActions.new()
 var dropped_items := DroppedItemsView.new()
-## The animals around.
-var animals := AnimalsView.new()
+## The animals and monsters around.
+var creatures := CreaturesView.new()
 var item_icons := ItemIcons.new()
 ## What is in hand in first person (a child of the camera).
 var first_person_held := MeshInstance3D.new()
@@ -179,8 +179,8 @@ func _ready() -> void:
 	dropped_items.library = items
 	dropped_items.local_player = local_player
 	world_root.add_child(dropped_items)
-	world_root.add_child(animals)
-	animals.burst.connect(func(at: Vector3, color: Color) -> void: interaction.burst(at, color))
+	world_root.add_child(creatures)
+	creatures.burst.connect(func(at: Vector3, color: Color) -> void: interaction.burst(at, color))
 	first_person_held.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	world_viewport.camera.add_child(first_person_held)
 	hud_clock.clock = clock
@@ -225,6 +225,7 @@ func _setup_world() -> void:
 	var world_environment := WorldEnvironment.new()
 	world_environment.environment = environment
 	root.add_child(world_environment)
+	creatures.light_parent = root
 	root.add_child(sun)
 	root.add_child(world_root)
 	world_root.add_child(world_view)
@@ -849,7 +850,7 @@ func _handle_message(message: Dictionary) -> void:
 		Msg.ITEM_REMOVE:
 			dropped_items.remove(message["id"], message["by"])
 		Msg.ENTITY_SPAWN:
-			animals.spawn(
+			creatures.spawn(
 				message["id"],
 				message["kind"],
 				message["pos"],
@@ -858,13 +859,17 @@ func _handle_message(message: Dictionary) -> void:
 				message["state"]
 			)
 		Msg.ENTITY_MOVE:
-			animals.move(
+			creatures.move(
 				message["id"], message["pos"], message["h"], message["heading"], message["state"]
 			)
 		Msg.ENTITY_HURT:
-			animals.hurt(message["id"])
+			creatures.hurt(message["id"])
 		Msg.ENTITY_REMOVE:
-			animals.remove(message["id"], message["died"])
+			creatures.remove(message["id"], message["died"])
+		Msg.PUSH:
+			local_player.push(message["speed"], message["hop"])
+		Msg.LANTERN_OUT:
+			lighting.lantern_out(message["seconds"])
 		var unknown:
 			push_warning("Client: unknown message type %s" % unknown)
 

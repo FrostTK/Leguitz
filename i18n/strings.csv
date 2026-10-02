@@ -355,3 +355,24 @@ BOOK_CHAPTER_ANIMALS,Animals,Animaux
 BOOK_ANIMALS_INTRO,"Herds live in the wild: they graze and wander, climbing one level at a time. Hit one ({break}; an axe hits hardest): it runs away with its herd, and when it falls it leaves what it gives.","Des troupeaux vivent dans la nature : ils broutent et se promènent, en grimpant un niveau à la fois. Frappe un animal ({break} ; une hache frappe le plus fort) : il s'enfuit avec son troupeau, et quand il tombe il laisse ce qu'il donne."
 BOOK_ANIMALS_ENTRY,%s (%s): %s,%s (%s) : %s
 BOOK_ANIMALS_COOK,"Roast meat in the food furnace: it feeds far better than raw, and raw chicken makes you sick. Wool is a soft block to build with; feathers and hides will soon be useful.","Fais rôtir la viande au four alimentaire : elle nourrit bien mieux que crue, et le poulet cru rend malade. La laine est un bloc doux pour construire ; plumes et peaux serviront bientôt."
+ITEM_MOTH_DUST,Moth dust,Poudre de phalène
+ITEM_SHADE_ESSENCE,Shade essence,Essence d'ombre
+ITEM_WISP_EMBER,Wisp ember,Braise de follet
+CREATURE_LANTERN_MOTH,Lantern moth,Phalène-lanterne
+CREATURE_SHADE_LURKER,Shade lurker,Rôdeur d'ombre
+CREATURE_ROCK_MIMIC,Rock mimic,Faux-rocher
+CREATURE_WISP,Will-o'-wisp,Feu follet
+CREATURE_LANTERN_MOTH_HOME,outdoors at night,"dehors, la nuit"
+CREATURE_SHADE_LURKER_HOME,"in the dark: outdoors at night, in caves","dans le noir : dehors la nuit, dans les grottes"
+CREATURE_ROCK_MIMIC_HOME,in caves,dans les grottes
+CREATURE_WISP_HOME,over swamps at night,"au-dessus des marais, la nuit"
+CREATURE_LANTERN_MOTH_HOW,it circles you and dives at your lantern: its blow puts your light out a while.,elle tourne autour de toi et fonce sur ta lanterne : son coup éteint ta lumière un moment.
+CREATURE_SHADE_LURKER_HOW,it creeps up in the dark and freezes in the light; daylight melts it.,il approche dans le noir et se fige à la lumière ; le jour le dissout.
+CREATURE_ROCK_MIMIC_HOW,it waits as a rock and bites when you pass by. Tough.,"il attend, déguisé en rocher, et mord quand tu passes. Coriace."
+CREATURE_WISP_HOW,"a light that draws back to lure you on, then darts in to burn. Its ember burns long in a furnace.","une lueur qui recule pour t'attirer, puis fonce pour brûler. Sa braise brûle longtemps dans un four."
+DEATH_CAUSE_MOTH,"A lantern moth put out your light, and more.",Une phalène-lanterne a soufflé ta lumière… et plus encore.
+DEATH_CAUSE_LURKER,A shade lurker caught you in the dark.,Un rôdeur d'ombre t'a surpris dans le noir.
+DEATH_CAUSE_MIMIC,That rock was not a rock.,Ce rocher n'en était pas un.
+DEATH_CAUSE_WISP,You followed the wisp's light too close.,Tu as suivi la lueur du feu follet de trop près.
+BOOK_CHAPTER_MONSTERS,Monsters,Monstres
+BOOK_MONSTERS_INTRO,"At night and in the dark, monsters come out. Light keeps them at bay: lava, a burning furnace, daylight. Hit back ({break}): they leave something behind. They leave you alone in creative.","La nuit et dans le noir, des monstres sortent. La lumière les tient à distance : la lave, un four allumé, le jour. Riposte ({break}) : ils laissent quelque chose derrière eux. En créatif, ils te laissent tranquille."

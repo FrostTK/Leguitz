@@ -80,9 +80,9 @@ class PlayerSession:
 	var drowning := 0.0
 	## Hardcore: they passed out, their one life is over; they only watch.
 	var spectator := false
-	## The animals they are shown (Creatures.sync), and when they last hit
+	## The creatures they are shown (Creatures.sync), and when they last hit
 	## one (seconds of play).
-	var seen_animals: Dictionary[int, bool] = {}
+	var seen_creatures: Dictionary[int, bool] = {}
 	var last_blow := -INF
 
 	func alive() -> bool:
@@ -113,7 +113,7 @@ var storage: WorldStorage
 var tick_count := 0
 ## Items lying in the world, by id.
 var items: Dictionary[int, DroppedItem] = {}
-## The animals.
+## The animals and monsters.
 var creatures: Creatures
 ## Debug commands (moving between caves, world map, weather, tools):
 ## creative players use them where the server allows them (operators once
@@ -259,7 +259,7 @@ func tick() -> void:
 		broadcast(Msg.time_state(clock))
 		broadcast(Msg.weather_state(weather))
 	_update_items(GameConst.TICK_DELTA)
-	creatures.update(GameConst.TICK_DELTA, sessions)
+	creatures.update(self, GameConst.TICK_DELTA)
 	creatures.sync(sessions)
 	Survival.update(self, sessions, GameConst.TICK_DELTA)
 	if tick_count % FURNACE_TICKS == 0:
@@ -526,8 +526,8 @@ func _on_block_place(session: PlayerSession, message: Dictionary) -> void:
 		for at: Vector3i in cells:
 			if ok and other.joined and Mining.overlaps_body(at, other.position, other.height):
 				ok = false
-	for animal: Animal in creatures.animals.values():
-		var body := animal.body
+	for creature: Creature in creatures.living.values():
+		var body := creature.body
 		for at: Vector3i in cells:
 			if ok and Mining.overlaps_body(at, body.feet, body.height, body.box, body.tall):
 				ok = false

@@ -1,10 +1,14 @@
-class_name AnimalBody
+class_name CreatureBody
 extends Node3D
-## One animal as the client shows it (local units, under the world root):
-## the parts of its model (AnimalModels) on joints that move. It glides to
-## where the server says it is and turns to where it looks; its legs swing
-## as it walks or runs, its head dips to graze, a fowl's wings flap when it
-## runs or falls; it reddens when hurt and, dead, tips over and fades away.
+## One creature as the client shows it (local units, under the world
+## root): the parts of its model (CreatureModels) on joints that move. It
+## glides to where the server says it is and turns to where it looks; its
+## legs swing as it walks or runs (four in a trot, two in turn, a mimic's
+## six), its head dips to graze, a fowl's wings flap when it runs or falls
+## and a moth's all the time, a lurker's arms reach out to strike and it
+## pales, still, in the light, a mimic sits as a rock while dormant (legs
+## and face hidden), a wisp pulses; it reddens when hurt and, dead, tips
+## over and fades away.
 
 const SHADER := preload("res://src/client/shaders/voxel.gdshader")
 const VOXEL := 1.0 / 16.0
@@ -19,15 +23,19 @@ const SWING := 0.7
 const GRAZE_PITCH := 0.95
 const HURT_SECONDS := 0.35
 const DEATH_SECONDS := 1.2
+## A dormant mimic sinks this many voxels (onto its folded legs).
+const MIMIC_SINK := 5.0
+## A lurker in the light pales this much (dithered away).
+const FROZEN_FADE := 0.35
 
 var id := 0
 var kind := Species.Id.SHEEP
 ## Where its feet should be (local units: the middle of its box, on the
 ## ground), where it looks (ground direction) and what it does
-## (Animal.State).
+## (Creature.State).
 var target := Vector3.ZERO
 var heading := Vector2.DOWN
-var state := Animal.State.IDLE
+var state := Creature.State.IDLE
 ## Dead: it tips over and fades; `finished` once gone.
 var dying := false
 var finished := false
@@ -43,6 +51,8 @@ var _death := 0.0
 var _time := 0.0
 var _last := Vector3.INF
 var _climb := 0.0
+var _sink := 0.0
+var _fade := 0.0
 
 
 ## Builds the model of `animal_kind` from `meshes` (part name -> mesh).
@@ -53,10 +63,10 @@ func setup(animal_id: int, animal_kind: int, meshes: Dictionary) -> void:
 	_material.set_shader_parameter("use_instance_data", false)
 	add_child(_root)
 	var head_joint := Vector3.ZERO
-	for part: AnimalModels.Part in AnimalModels.parts(kind):
+	for part: CreatureModels.Part in CreatureModels.parts(kind):
 		if part.name == "head":
 			head_joint = part.joint
-	for part: AnimalModels.Part in AnimalModels.parts(kind):
+	for part: CreatureModels.Part in CreatureModels.parts(kind):
 		# Antlers on stags only (one deer in two); they go with the head.
 		if part.name == "antlers" and id % 2 == 1:
 			continue
@@ -107,28 +117,43 @@ func animate(delta: float) -> void:
 	var walking := clampf(speed / 2.5, 0.0, 1.0)
 	_swing = lerpf(_swing, walking * SWING, 1.0 - exp(-10.0 * delta))
 	_phase += delta * speed * STRIDE * TAU
+	if state == Creature.State.FROZEN:
+		_swing = 0.0
 	_animate_legs()
 	_root.position.y = absf(sin(_phase)) * _swing * VOXEL * 1.5
+	if Species.FLIERS.has(kind):
+		_root.position.y = sin(_time * 3.0 + id) * VOXEL * 1.5
+		_root.rotation.x = lerpf(
+			_root.rotation.x, 0.5 if state == Creature.State.STRIKE else 0.0, 0.2
+		)
 	_animate_head(delta)
 	_animate_wings()
+	_animate_monster(delta)
 	_hurt = maxf(_hurt - delta / HURT_SECONDS, 0.0)
 	_material.set_shader_parameter("hurt", _hurt)
+	var fade := _fade
 	if dying:
 		_death = minf(_death + delta / DEATH_SECONDS, 1.0)
 		_root.rotation.z = smoothstep(0.0, 0.4, _death) * PI * 0.5
-		_material.set_shader_parameter("fade", smoothstep(0.45, 1.0, _death))
+		fade = maxf(fade, smoothstep(0.45, 1.0, _death))
 		finished = _death >= 1.0
+	_material.set_shader_parameter("fade", fade)
 
 
-## Diagonal pairs of legs swing together (a trot); a fowl's two in turn.
+## Diagonal pairs of legs swing together (a trot); a fowl's or a lurker's
+## two in turn, its arms against them; a mimic's six in two sets.
 func _animate_legs() -> void:
 	var stride := sin(_phase) * _swing
-	for name: String in ["leg_fl", "leg_br"]:
+	for name: String in ["leg_fl", "leg_br", "leg_l", "leg_1", "leg_3", "leg_5"]:
 		if _joints.has(name):
 			_joints[name].rotation.x = stride
-	for name: String in ["leg_fr", "leg_bl"]:
+	for name: String in ["leg_fr", "leg_bl", "leg_r", "leg_2", "leg_4", "leg_6"]:
 		if _joints.has(name):
 			_joints[name].rotation.x = -stride
+	if _joints.has("arm_l"):
+		var reach := -1.5 if state == Creature.State.STRIKE else 0.0
+		_joints["arm_l"].rotation.x = lerpf(_joints["arm_l"].rotation.x, reach - stride * 0.6, 0.3)
+		_joints["arm_r"].rotation.x = lerpf(_joints["arm_r"].rotation.x, reach + stride * 0.6, 0.3)
 
 
 ## Grazing, the head dips and nibbles; walking, it nods.
@@ -137,16 +162,38 @@ func _animate_head(delta: float) -> void:
 	if head == null:
 		return
 	var pitch := sin(_phase * 2.0) * _swing * 0.12
-	if state == Animal.State.GRAZE and not dying:
+	if state == Creature.State.GRAZE and not dying:
 		pitch = GRAZE_PITCH + sin(_time * 9.0) * 0.06
 	head.rotation.x = lerpf(head.rotation.x, pitch, 1.0 - exp(-6.0 * delta))
 
 
-## Running or in the air, a fowl flaps its wings.
+## Running or in the air, a fowl flaps its wings; a moth all the time.
 func _animate_wings() -> void:
 	if not _joints.has("wing_l"):
 		return
-	var flapping := state == Animal.State.FLEE or absf(_climb) > 1.0
+	var moth := kind == Species.Id.LANTERN_MOTH
+	var flapping := moth or state == Creature.State.FLEE or absf(_climb) > 1.0
 	var open := (0.5 + sin(_time * 28.0) * 0.5) * 0.9 if flapping else 0.0
+	if moth:
+		open = sin(_time * 16.0 + id) * 0.8
 	_joints["wing_l"].rotation.z = -open
 	_joints["wing_r"].rotation.z = open
+
+
+## A mimic sits as a rock while dormant (its legs and face hidden), rises
+## on its legs awake; a wisp pulses; a lurker pales in the light.
+func _animate_monster(delta: float) -> void:
+	match kind:
+		Species.Id.ROCK_MIMIC:
+			var dormant := state == Creature.State.DORMANT and not dying
+			_sink = move_toward(_sink, 1.0 if dormant else 0.0, delta * 4.0)
+			_root.position.y -= _sink * MIMIC_SINK * VOXEL
+			for name: String in _joints:
+				if name.begins_with("leg_") or name == "face":
+					_joints[name].visible = _sink < 0.9
+		Species.Id.WISP:
+			var pulse := 1.0 + sin(_time * 6.0 + id) * 0.08
+			_joints["body"].scale = Vector3.ONE * pulse
+		Species.Id.SHADE_LURKER:
+			var pale := FROZEN_FADE if state == Creature.State.FROZEN else 0.0
+			_fade = move_toward(_fade, pale, delta * 2.0)

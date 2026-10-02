@@ -289,18 +289,26 @@ func _draw() -> void:
 			break
 
 
-## The chapters' tabs over the book, each as wide as its name (all
-## narrower when they would not fit, TAB_SIZE at most).
+## The chapters' tabs over the book, each as wide as its name (less room
+## around the names, then all narrower, when they would not fit; TAB_SIZE
+## at most).
 func _draw_tabs(font: Font, book: Rect2) -> void:
 	var shown := _chapter_shown()
 	var count := GuideBook.CHAPTERS.size()
+	var names: Array[float] = []
+	var named := 0.0
+	for key in GuideBook.CHAPTERS:
+		names.append(font.get_string_size(tr(key), HORIZONTAL_ALIGNMENT_LEFT, -1, SMALL_SIZE).x)
+		named += names[-1]
+	# The room around the names shrinks before the tabs do.
+	var room := book.size.x - 24.0 - 2.0 * count
+	var padding := clampf((room - named) / count, 2.0, TAB_PADDING)
 	var widths: Array[float] = []
 	var total := 0.0
-	for key in GuideBook.CHAPTERS:
-		var text := font.get_string_size(tr(key), HORIZONTAL_ALIGNMENT_LEFT, -1, SMALL_SIZE)
-		widths.append(minf(text.x + TAB_PADDING, TAB_SIZE.x))
-		total += widths[-1] + 2.0
-	var fit := minf((book.size.x - 24.0) / total, 1.0)
+	for width in names:
+		widths.append(minf(width + padding, TAB_SIZE.x))
+		total += widths[-1]
+	var fit := minf(room / total, 1.0)
 	var x := book.position.x + 12.0
 	for i in count:
 		var tab := Vector2(floorf(widths[i] * fit), TAB_SIZE.y)

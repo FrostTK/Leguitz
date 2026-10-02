@@ -61,6 +61,7 @@ const ORES := {
 }
 ## How long each fuel burns (seconds; Minecraft's: coal smelts 8 items).
 const FUEL_SECONDS := {
+	Items.Id.WISP_EMBER: 200.0,
 	Items.Id.COAL: 80.0,
 	Items.Id.CHARCOAL: 80.0,
 	Items.Id.OAK_LOG: 15.0,

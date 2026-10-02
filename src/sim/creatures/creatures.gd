@@ -1,17 +1,19 @@
 class_name Creatures
 extends RefCounted
-## The animals of a world, run by the server. A chunk gets its herd (or
-## none) the first time it loads, the same for a seed: a chance in
-## HERD_CHANCE, a species of its biome (Species.BIOMES), on free ground;
-## never in a chunk players built in. Animals live (think, move) within
-## ACTIVE_RADIUS chunks of a player, every other tick (half of them each
-## tick), and sleep elsewhere; they are saved
-## with the world (WorldStorage creatures file). Each player is shown the
-## animals of the chunks it has: Msg.ENTITY_SPAWN, then ENTITY_MOVE every
-## SYNC_TICKS while they move, ENTITY_REMOVE when they leave its view or
-## die. Players hit them (Msg.ATTACK, Combat): hurt, they run away with
-## their herd; dead, they leave what they give. Never holds the server
-## (the calls needing it are given it).
+## The creatures of a world, run by the server: animals and monsters.
+## A chunk gets its herd of animals (or none) the first time it loads, the
+## same for a seed: a chance in HERD_CHANCE, a species of its biome
+## (Species.BIOMES), on free ground; never in a chunk players built in.
+## Monsters come out in the dark around players and go when far or in
+## daylight (Monsters). Creatures live (think, move) within ACTIVE_RADIUS
+## chunks of a player, every other tick (half of them each tick), and sleep
+## elsewhere; animals are saved with the world (WorldStorage creatures
+## file), monsters are not. Each player is shown the creatures of the
+## chunks it has: Msg.ENTITY_SPAWN, then ENTITY_MOVE every SYNC_TICKS
+## while they move, ENTITY_REMOVE when they leave its view or die. Players
+## hit them (Msg.ATTACK, Combat): hurt, animals run away with their herd;
+## dead, creatures leave what they give. Never holds the server (the calls
+## needing it are given it).
 
 const SALT := 0x5A11E7
 const HERD_CHANCE := 0.3
@@ -19,13 +21,16 @@ const HERD_CHANCE := 0.3
 const SPOT_TRIES := 6
 const ACTIVE_RADIUS := 3
 const SYNC_TICKS := 2
-## New chunks get their herd this often (ticks).
+## New chunks get their herd this often (ticks); monsters come and go this
+## often.
 const POPULATE_TICKS := 10
+const MONSTER_TICKS := 20
 ## One of a herd hurt, the others within this many tiles run away too.
 const HERD_PANIC := 6.0
 
 var world: WorldState
-var animals: Dictionary[int, Animal] = {}
+## Every creature, by id.
+var living: Dictionary[int, Creature] = {}
 ## The chunks whose herd was placed (with or without animals).
 var populated: Dictionary[Vector2i, bool] = {}
 var rng := RandomNumberGenerator.new()
@@ -41,23 +46,44 @@ func _init(world_state: WorldState, world_seed: int) -> void:
 	rng.randomize()
 
 
+## A new creature of `kind` (an Animal or a Monster).
+static func make(kind: int, feet: Vector2, height: float) -> Creature:
+	if Species.is_monster(kind):
+		return Monster.create(kind, feet, height)
+	return Animal.create(kind, feet, height)
+
+
+## A creature saved by Creature.to_dict (null if its kind is unknown).
+static func from_dict(data: Dictionary) -> Creature:
+	var kind := int(data.get("species", -1))
+	if not Species.is_valid(kind):
+		return null
+	var creature := make(kind, data.get("feet", Vector2.ZERO), float(data.get("height", 0.0)))
+	creature.load_dict(data)
+	return creature
+
+
 ## A voxel where its chunk is loaded, else Voxels.UNKNOWN (never makes a
-## chunk: animals stop at the edge of the loaded world).
+## chunk: creatures stop at the edge of the loaded world).
 func voxel_at(cell: Vector3i) -> int:
 	return world.loaded_voxel_at(cell)
 
 
-## A new animal standing with its feet at `feet` (world pixels, see
-## Animal) and `height` (levels).
-func add(kind: int, feet: Vector2, height: float) -> Animal:
-	var animal := Animal.create(kind, feet, height)
-	animal.id = _next_id
+## A new creature standing with its feet at `feet` (world pixels, see
+## Creature) and `height` (levels).
+func add(kind: int, feet: Vector2, height: float) -> Creature:
+	return adopt(make(kind, feet, height))
+
+
+## Lets a creature live in the world (gives it its id).
+func adopt(creature: Creature) -> Creature:
+	creature.id = _next_id
 	_next_id += 1
-	animals[animal.id] = animal
-	return animal
+	living[creature.id] = creature
+	return creature
 
 
-## Puts `count` animals of a kind where they can stand around a spot
+## Puts `count` creatures of a kind where they can stand around a spot
 ## (feet in world pixels, height in levels; developer option, tests).
 func spawn_near(kind: int, feet: Vector2, height: float, count: int) -> void:
 	var around := Coords.world_to_tile(feet)
@@ -75,90 +101,116 @@ func spawn_near(kind: int, feet: Vector2, height: float, count: int) -> void:
 			placed += 1
 
 
-## One tick: new chunks get their herd, the animals near players live.
-func update(delta: float, sessions: Array) -> void:
+## One tick: new chunks get their herd, monsters come and go, the
+## creatures near players live (monsters hunt and strike).
+func update(server: GameServer, delta: float) -> void:
 	_ticks += 1
+	var sessions := server.sessions
 	if _ticks % POPULATE_TICKS == 1:
 		_populate_new()
+	if _ticks % MONSTER_TICKS == 0:
+		Monsters.come_and_go(server, self)
 	var active := _active_chunks(sessions)
 	if active.is_empty():
 		return
 	var at := voxel_at
 	var half := _ticks % 2
-	for animal: Animal in animals.values():
-		if animal.id % 2 == half and active.has(Coords.tile_to_chunk(animal.tile())):
-			animal.think(delta * 2.0, at, rng)
-			animal.move(delta * 2.0, at)
+	for creature: Creature in living.values():
+		if creature.id % 2 != half or not active.has(Coords.tile_to_chunk(creature.tile())):
+			continue
+		var monster := creature as Monster
+		if monster != null:
+			Monsters.sense(server, self, monster, delta * 2.0)
+		creature.think(delta * 2.0, at, rng)
+		creature.move(delta * 2.0, at)
+		if monster != null and monster.strike:
+			Monsters.land_blow(server, monster)
 
 
-## Shows each player the animals of the chunks it has (see the class).
+## Shows each player the creatures of the chunks it has (see the class).
 func sync(sessions: Array) -> void:
 	if _ticks % SYNC_TICKS != 0:
 		return
 	for session: GameServer.PlayerSession in sessions:
 		if not session.joined:
 			continue
-		var seen := session.seen_animals
+		var seen := session.seen_creatures
 		for id: int in seen.keys():
-			var gone: Animal = animals.get(id)
+			var gone: Creature = living.get(id)
 			if gone == null or not session.sent_chunks.has(_chunk_of(gone)):
 				seen.erase(id)
 				session.transport.send(Msg.entity_remove(id, false))
-		for animal: Animal in animals.values():
-			if not session.sent_chunks.has(_chunk_of(animal)):
+		for creature: Creature in living.values():
+			if not session.sent_chunks.has(_chunk_of(creature)):
 				continue
-			if not seen.has(animal.id):
-				seen[animal.id] = true
-				session.transport.send(Msg.entity_spawn(animal))
-			elif animal.dirty:
-				session.transport.send(Msg.entity_move(animal))
-	for animal: Animal in animals.values():
-		animal.dirty = false
+			if not seen.has(creature.id):
+				seen[creature.id] = true
+				session.transport.send(Msg.entity_spawn(creature))
+			elif creature.dirty:
+				session.transport.send(Msg.entity_move(creature))
+	for creature: Creature in living.values():
+		creature.dirty = false
 
 
-## A player hits the animal `id` with the hotbar slot `slot` in hand
+## A player hits the creature `id` with the hotbar slot `slot` in hand
 ## (Msg.ATTACK): within Combat.REACH of their eye, not sooner than
-## Combat.BLOW_SECONDS after their last blow. It is hurt and runs away
-## with its herd; a tool in hand wears (not in creative); dead, it leaves
-## what it gives where it fell.
+## Combat.BLOW_SECONDS after their last blow. It is hurt (an animal runs
+## away with its herd); a tool in hand wears (not in creative); dead, it
+## leaves what it gives where it fell.
 func attack(server: GameServer, session: GameServer.PlayerSession, id: int, slot: int) -> void:
-	var animal: Animal = animals.get(id)
-	if animal == null or not session.joined or not session.alive():
+	var target: Creature = living.get(id)
+	if target == null or not session.joined or not session.alive():
 		return
 	var now := server.tick_count * GameConst.TICK_DELTA
 	if now - session.last_blow < Combat.BLOW_SECONDS - Combat.BLOW_LEEWAY:
 		return
 	var feet := session.position / GameConst.TILE_SIZE
 	var eye := Vector3(feet.x, session.height + Mining.EYE_HEIGHT, feet.y)
-	var bounds := animal.bounds()
+	var bounds := target.bounds()
 	if eye.distance_to(eye.clamp(bounds.position, bounds.end)) > Combat.REACH + Combat.REACH_LEEWAY:
 		return
 	session.last_blow = now
 	var bag := session.inventory
 	var held := bag.items[slot] if slot >= 0 and slot < Inventory.HOTBAR else Items.Id.NONE
-	if not animal.hurt_by(session.position, Combat.damage_of(held)):
+	if not target.hurt_by(session.position, Combat.damage_of(held)):
 		return
-	for other in server.sessions:
-		if other.seen_animals.has(id):
-			other.transport.send(Msg.entity_hurt(id))
+	tell_seers(server, id, Msg.entity_hurt(id))
 	if Items.durability(held) > 0 and not GameModes.creative(server):
 		bag.wear_out(slot)
 		session.transport.send(Msg.inventory(bag))
 	Survival.spend(server, session, Vitals.BREAK_EFFORT)
-	var reach := HERD_PANIC * GameConst.TILE_SIZE
-	for other: Animal in animals.values():
-		if other != animal and other.species == animal.species:
-			if other.center().distance_to(animal.center()) <= reach:
-				other.scare(session.position)
-	if animal.health <= 0:
-		_die(server, animal)
+	if target is Animal:
+		var reach := HERD_PANIC * GameConst.TILE_SIZE
+		for other: Creature in living.values():
+			if other is Animal and other != target and other.species == target.species:
+				if other.center().distance_to(target.center()) <= reach:
+					(other as Animal).scare(session.position)
+	if target.health <= 0:
+		_die(server, target)
+
+
+## Sends a message to every player shown creature `id`.
+func tell_seers(server: GameServer, id: int, message: Dictionary) -> void:
+	for session in server.sessions:
+		if session.seen_creatures.has(id):
+			session.transport.send(message)
+
+
+## Takes a creature out of the world: its players see it go (`died`: it
+## tips over and fades).
+func remove(server: GameServer, creature: Creature, died: bool) -> void:
+	living.erase(creature.id)
+	for session in server.sessions:
+		if session.seen_creatures.erase(creature.id):
+			session.transport.send(Msg.entity_remove(creature.id, died))
 
 
 ## Everything to save: the animals and the chunks already given theirs.
 func to_save() -> Dictionary:
 	var list: Array[Dictionary] = []
-	for animal: Animal in animals.values():
-		list.append(animal.to_dict())
+	for creature: Creature in living.values():
+		if creature is Animal:
+			list.append(creature.to_dict())
 	var done := PackedInt32Array()
 	for coord: Vector2i in populated:
 		done.append(coord.x)
@@ -168,11 +220,9 @@ func to_save() -> Dictionary:
 
 func load_save(data: Dictionary) -> void:
 	for entry: Dictionary in data.get("animals", []):
-		var animal := Animal.from_dict(entry)
-		if animal != null:
-			animal.id = _next_id
-			_next_id += 1
-			animals[animal.id] = animal
+		var creature := from_dict(entry)
+		if creature is Animal:
+			adopt(creature)
 	var done: PackedInt32Array = data.get("populated", PackedInt32Array())
 	for i in range(0, done.size() - 1, 2):
 		populated[Vector2i(done[i], done[i + 1])] = true
@@ -200,7 +250,7 @@ func populate(chunk: ChunkData) -> void:
 		var spot := HashUtil.hash2(_seed + 7919 * (i + 1), coord.x, coord.y)
 		var local := Vector2i(spot & 15, (spot >> 4) & 15)
 		var row := chunk.top_row(local)
-		if not _free_spot(chunk, local, row, Species.TALL[kind]):
+		if not free_spot(chunk, local, row, Species.TALL[kind]):
 			continue
 		var tile := coord * GameConst.CHUNK_SIZE + local
 		var box: Vector2 = Species.BOX[kind]
@@ -209,9 +259,9 @@ func populate(chunk: ChunkData) -> void:
 		placed += 1
 
 
-## Whether an animal `tall` levels high can stand on a column's ground:
+## Whether a creature `tall` levels high can stand on a column's ground:
 ## a natural ground (not water, not what players build) with room above.
-static func _free_spot(chunk: ChunkData, local: Vector2i, row: int, tall: float) -> bool:
+static func free_spot(chunk: ChunkData, local: Vector2i, row: int, tall: float) -> bool:
 	if row < 1 or row + ceili(tall) >= GameConst.WORLD_HEIGHT:
 		return false
 	var ground := chunk.get_voxel(Vector3i(local.x, row - 1, local.y))
@@ -246,21 +296,17 @@ func _active_chunks(sessions: Array) -> Dictionary:
 	return active
 
 
-static func _chunk_of(animal: Animal) -> Vector2i:
-	return Coords.tile_to_chunk(animal.tile())
+static func _chunk_of(creature: Creature) -> Vector2i:
+	return Coords.tile_to_chunk(creature.tile())
 
 
-## An animal died: what it gives falls where it was; its players see it
+## A creature died: what it gives falls where it was; its players see it
 ## go.
-func _die(server: GameServer, animal: Animal) -> void:
-	animals.erase(animal.id)
-	var bounds := animal.bounds()
-	var middle := bounds.get_center()
-	for drop: Array in Species.DROPS[animal.species]:
+func _die(server: GameServer, creature: Creature) -> void:
+	var middle := creature.bounds().get_center()
+	for drop: Array in Species.DROPS[creature.species]:
 		var count := rng.randi_range(drop[1], drop[2])
 		if count > 0:
 			var speed := Vector3(rng.randf_range(-1.0, 1.0), 3.0, rng.randf_range(-1.0, 1.0))
 			server.spawn_item(drop[0], count, middle, speed)
-	for session in server.sessions:
-		if session.seen_animals.erase(animal.id):
-			session.transport.send(Msg.entity_remove(animal.id, true))
+	remove(server, creature, true)

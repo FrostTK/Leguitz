@@ -137,6 +137,12 @@ static func build(item: int) -> VoxelGrid:
 			return _feather()
 		Items.Id.HIDE:
 			return _hide()
+		Items.Id.MOTH_DUST:
+			return _moth_dust()
+		Items.Id.SHADE_ESSENCE:
+			return _shade_essence()
+		Items.Id.WISP_EMBER:
+			return _wisp_ember()
 	return null
 
 
@@ -473,6 +479,43 @@ static func _hide() -> VoxelGrid:
 	for x in range(7, 12):
 		for z in range(0, 12 - x):
 			grid.set_voxel(Vector3i(x, 2, z), _v("#c9a477" if (x + z) % 3 else "#b8935f"))
+	return grid
+
+
+## A little heap of a lantern moth's wing dust: pale, glinting blue.
+static func _moth_dust() -> VoxelGrid:
+	var grid := VoxelGrid.new(Vector3i(10, 4, 10))
+	for x in 10:
+		for z in 10:
+			var d := Vector2(x - 4.5, z - 4.5).length()
+			var height := int(3.4 - d * 0.75)
+			for y in height:
+				var n := HashUtil.unit2(0x307D, x * 5 + y, z)
+				if n > 0.86:
+					grid.set_voxel(Vector3i(x, y, z), _v("#bfe8ff", VoxelGrid.Kind.GLOW))
+				else:
+					grid.set_voxel(Vector3i(x, y, z), _v("#d8d2c4" if n > 0.4 else "#b9b2a4"))
+	return grid
+
+
+## A shade lurker's essence: a shard of night, violet light in its heart.
+static func _shade_essence() -> VoxelGrid:
+	var grid := VoxelGrid.new(Vector3i(7, 10, 7))
+	for y in 10:
+		var radius := 2.8 - absf(y - 3.5) * 0.45
+		grid.disc(Vector2(3.5, 3.5), maxf(radius, 0.6), y, _v("#1d1426" if y % 3 else "#2c1f3a"))
+	grid.box(Vector3i(3, 2, 3), Vector3i(3, 5, 3), _v("#9a62e0", VoxelGrid.Kind.GLOW))
+	grid.set_voxel(Vector3i(4, 4, 4), _v("#c9a0ff", VoxelGrid.Kind.GLOW))
+	return grid
+
+
+## A will-o'-wisp's ember: a glowing coal, green-gold at its heart.
+static func _wisp_ember() -> VoxelGrid:
+	var grid := VoxelGrid.new(Vector3i(8, 6, 8))
+	grid.ellipsoid(Vector3(4, 2.6, 4), Vector3(3.2, 2.4, 3.2), _v("#3a2a1e"))
+	grid.ellipsoid(Vector3(4, 2.8, 4), Vector3(2.2, 2.0, 2.2), _v("#c8e05a", VoxelGrid.Kind.GLOW))
+	grid.set_voxel(Vector3i(4, 4, 4), _v("#f4ffb0", VoxelGrid.Kind.GLOW))
+	grid.set_voxel(Vector3i(2, 4, 3), _v("#e8a030", VoxelGrid.Kind.GLOW))
 	return grid
 
 

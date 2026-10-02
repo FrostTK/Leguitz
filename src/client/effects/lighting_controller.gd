@@ -80,6 +80,8 @@ var quality: Quality = Quality.HIGH
 
 ## 0 in daylight, 1 in the dark (read by the particles and the lantern).
 var darkness := 0.0
+## Seconds the lantern stays out (lantern_out).
+var _lantern_out := 0.0
 
 var _sky_material := ProceduralSkyMaterial.new()
 
@@ -161,9 +163,16 @@ static func sky_direction(angle: float) -> Vector3:
 	return Vector3(horizontal.x * cos(elevation), sin(elevation), horizontal.y * cos(elevation))
 
 
-func _process(_delta: float) -> void:
+## A lantern moth's blow: the lantern goes out for `seconds`, sputtering
+## back at the end.
+func lantern_out(seconds: float) -> void:
+	_lantern_out = seconds
+
+
+func _process(delta: float) -> void:
 	if clock == null or client_world == null:
 		return
+	_lantern_out = maxf(_lantern_out - delta, 0.0)
 	var hours := clock.time_of_day() / 3600.0
 	var angle := sun_angle(hours)
 	var sun_height := sin(angle)
@@ -191,6 +200,10 @@ func _process(_delta: float) -> void:
 	environment.background_color = environment.fog_light_color.darkened(0.2)
 	_update_sky(daylight, twilight, storm, underground)
 	lantern.light_energy = clampf(darkness * 2.0 - 0.4, 0.0, 1.6)
+	if _lantern_out > 0.0:
+		# Out; in its last second it sputters back.
+		var sputter := 1.0 - _lantern_out if _lantern_out < 1.0 else 0.0
+		lantern.light_energy *= sputter * (0.5 + 0.5 * sin(_lantern_out * 40.0))
 	lantern.visible = lantern.light_energy > 0.02
 	clouds.visible = quality >= Quality.HIGH and not underground
 	clouds.set_sky(weather.weather.wind_vector(), 0.3 + storm * 0.55)

@@ -25,7 +25,7 @@ var client: GameClient
 ## What is aimed at (null: nothing within reach).
 var target: VoxelRay.Hit
 ## The animal aimed at (-1: none; then `target` is null).
-var target_animal := -1
+var target_creature := -1
 ## The break button is held.
 var breaking := false
 ## Aim at what is in front of the player (gamepad) instead of the mouse.
@@ -60,12 +60,12 @@ func _process(delta: float) -> void:
 	if not client.joined or client.transport == null:
 		return
 	target = null
-	target_animal = -1
+	target_creature = -1
 	if not client.modes.watching:
 		target = _aim()
 	var box := _whole_box(target)
-	if target_animal >= 0:
-		box = client.animals.bounds_of(target_animal)
+	if target_creature >= 0:
+		box = client.creatures.bounds_of(target_creature)
 	_highlight.outline(box, _frame_thickness(box))
 	_update_breaking(delta)
 	if place_soon and target != null:
@@ -162,10 +162,10 @@ func stop() -> void:
 func _update_breaking(delta: float) -> void:
 	_pause = maxf(_pause - delta, 0.0)
 	_blow_wait = maxf(_blow_wait - delta, 0.0)
-	if target_animal >= 0:
+	if target_creature >= 0:
 		_reset_breaking()
 		if breaking:
-			_hit_animal()
+			_hit_creature()
 		return
 	if not breaking or target == null:
 		_reset_breaking()
@@ -222,15 +222,15 @@ func _break(hit: VoxelRay.Hit) -> void:
 
 ## The break button held on an animal: a blow every Combat.BLOW_SECONDS
 ## (it reddens at once; the server says the rest).
-func _hit_animal() -> void:
+func _hit_creature() -> void:
 	client.player_model.swinging = true
-	_face(client.animals.bounds_of(target_animal).get_center())
+	_face(client.creatures.bounds_of(target_creature).get_center())
 	if _blow_wait > 0.0:
 		return
 	_blow_wait = Combat.BLOW_SECONDS
 	var slot := -1 if client.book_in_hand else client.inventory.selected
-	client.transport.send(Msg.attack(target_animal, slot))
-	client.animals.hurt(target_animal)
+	client.transport.send(Msg.attack(target_creature, slot))
+	client.creatures.hurt(target_creature)
 
 
 ## The tool in hand wears when it breaks something (as the server will
@@ -318,10 +318,10 @@ func _face(point: Vector3) -> void:
 
 
 ## What the player aims at: a ray in local units, kept within reach; an
-## animal nearer than the block met is aimed at instead (`target_animal`,
+## animal nearer than the block met is aimed at instead (`target_creature`,
 ## then null).
 func _aim() -> VoxelRay.Hit:
-	target_animal = -1
+	target_creature = -1
 	if client.first_person > 0.0 and client.first_person < 1.0:
 		return null
 	var root_inverse := client.world_root.global_transform.affine_inverse()
@@ -350,10 +350,10 @@ func _aim() -> VoxelRay.Hit:
 	var reach := _reach_span(origin, direction, eye, Combat.REACH)
 	if reach.x <= reach.y:
 		var start := origin + direction * reach.x
-		var animal := client.animals.pick(start, direction, reach.y - reach.x)
+		var animal := client.creatures.pick(start, direction, reach.y - reach.x)
 		var block := INF if hit == null else (hit.point - origin).dot(direction)
 		if animal.x >= 0.0 and reach.x + animal.y < block:
-			target_animal = int(animal.x)
+			target_creature = int(animal.x)
 			return null
 	return hit
 

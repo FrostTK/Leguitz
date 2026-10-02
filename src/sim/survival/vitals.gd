@@ -9,7 +9,7 @@ extends RefCounted
 ## clients show it (VitalsBar).
 
 ## What hurt a player (said when they pass out).
-enum Cause { NONE, FALL, LAVA, STARVATION, POISON, DROWNING }
+enum Cause { NONE, FALL, LAVA, STARVATION, POISON, DROWNING, MOTH, LURKER, MIMIC, WISP }
 
 const MAX_HEALTH := 20
 ## Falls up to this many levels are harmless; each level more costs a
@@ -62,6 +62,10 @@ const CAUSE_KEYS := {
 	Cause.STARVATION: "DEATH_CAUSE_STARVATION",
 	Cause.POISON: "DEATH_CAUSE_POISON",
 	Cause.DROWNING: "DEATH_CAUSE_DROWNING",
+	Cause.MOTH: "DEATH_CAUSE_MOTH",
+	Cause.LURKER: "DEATH_CAUSE_LURKER",
+	Cause.MIMIC: "DEATH_CAUSE_MIMIC",
+	Cause.WISP: "DEATH_CAUSE_WISP",
 }
 
 

@@ -19,6 +19,7 @@ const CHAPTERS: Array[String] = [
 	"BOOK_CHAPTER_FURNACES",
 	"BOOK_CHAPTER_SURVIVAL",
 	"BOOK_CHAPTER_ANIMALS",
+	"BOOK_CHAPTER_MONSTERS",
 	"BOOK_CHAPTER_MODES",
 ]
 const TIP_COUNT := 15
@@ -48,6 +49,7 @@ static func chapters() -> Array[Array]:
 		_furnaces(),
 		_survival(),
 		_animals(),
+		_monsters(),
 		_modes(),
 	]
 
@@ -211,7 +213,7 @@ static func _survival() -> Array:
 ## to hunt and to cook.
 static func _animals() -> Array:
 	var entries := [_title(CHAPTERS[7]), _text("BOOK_ANIMALS_INTRO")]
-	for kind: int in Species.Id.values():
+	for kind: int in Species.BIOMES:
 		var gifts := PackedStringArray()
 		for drop: Array in Species.DROPS[kind]:
 			gifts.append(_t(Items.name_key(drop[0])).to_lower())
@@ -224,10 +226,23 @@ static func _animals() -> Array:
 	return entries
 
 
+## Each monster: where and when it comes out, how it hunts (the icon of
+## what it leaves).
+static func _monsters() -> Array:
+	var entries := [_title(CHAPTERS[8]), _text("BOOK_MONSTERS_INTRO")]
+	for kind: int in Species.MONSTERS:
+		var text := (
+			_t("BOOK_ANIMALS_ENTRY")
+			% [_t(Species.NAME_KEYS[kind]), _t(Species.HOME_KEYS[kind]), _t(Species.HOW_KEYS[kind])]
+		)
+		entries.append(_icon(Species.DROPS[kind][0][0], text))
+	return entries
+
+
 ## Creative (flight, the catalog, its debug keys), survival, hardcore.
 static func _modes() -> Array:
 	return [
-		_title(CHAPTERS[8]),
+		_title(CHAPTERS[9]),
 		_heading("GAME_MODE_CREATIVE"),
 		_text("BOOK_MODES_CREATIVE"),
 		_combo("BOOK_FLY", "BOOK_FLY_HOW"),

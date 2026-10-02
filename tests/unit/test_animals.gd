@@ -42,9 +42,14 @@ func test_every_species_is_described() -> void:
 			Species.WALK_SPEED,
 			Species.FLEE_SPEED,
 			Species.DROPS,
-			Species.BIOMES,
-			Species.HERD,
 		]:
+			assert_true(table.has(kind), "%s described" % Species.Id.find_key(kind))
+		var own := (
+			[Species.CHASE_SPEED, Species.DAMAGE, Species.CAUSE, Monsters.MAX_OF]
+			if Species.is_monster(kind)
+			else [Species.BIOMES, Species.HERD]
+		)
+		for table: Dictionary in own:
 			assert_true(table.has(kind), "%s described" % Species.Id.find_key(kind))
 		for drop: Array in Species.DROPS[kind]:
 			assert_true(Items.is_valid(drop[0]))
@@ -107,7 +112,7 @@ func test_an_animal_wanders_on_the_ground_and_runs_away_when_hurt() -> void:
 	var from := sheep.center() + Vector2(-20.0, 0.0)
 	assert_true(sheep.hurt_by(from, 3))
 	assert_eq(sheep.health, health - 3)
-	assert_eq(sheep.state, Animal.State.FLEE)
+	assert_eq(sheep.state, Creature.State.FLEE)
 	assert_false(sheep.hurt_by(from, 3), "not twice at once")
 	var before := sheep.center()
 	for i in 20 * 2:
@@ -115,7 +120,7 @@ func test_an_animal_wanders_on_the_ground_and_runs_away_when_hurt() -> void:
 		sheep.move(GameConst.TICK_DELTA, _voxel_at)
 	assert_true(sheep.center().x - before.x > 2.0 * TS, "away from the blow")
 	assert_true(sheep.speed > Species.WALK_SPEED[Species.Id.SHEEP], "at a run")
-	var again := Animal.from_dict(sheep.to_dict())
+	var again := Creatures.from_dict(sheep.to_dict())
 	assert_eq(again.health, sheep.health, "saved")
 	assert_eq(again.body.box, Species.BOX[Species.Id.SHEEP])
 
@@ -142,7 +147,7 @@ func test_chunks_get_their_herds_once_and_the_same_for_a_seed() -> void:
 		server.tick()
 	var creatures := server.creatures
 	assert_eq(creatures.populated.size(), server.world.chunks.size(), "every loaded chunk")
-	for animal: Animal in creatures.animals.values():
+	for animal: Animal in creatures.living.values():
 		var chunk := server.world.chunks[Coords.tile_to_chunk(animal.tile())]
 		var biome := chunk.get_biome(Vector2i(8, 8))
 		assert_true(animal.species in Species.living_in(biome), "where it lives")
@@ -154,17 +159,17 @@ func test_chunks_get_their_herds_once_and_the_same_for_a_seed() -> void:
 			twins[i].populate(server.world.chunks[coord])
 	var herds: Array[Array] = [[], []]
 	for i in 2:
-		for animal: Animal in twins[i].animals.values():
+		for animal: Animal in twins[i].living.values():
 			herds[i].append([animal.species, animal.body.feet])
 	assert_eq(herds[0], herds[1])
-	assert_eq(herds[0].size(), creatures.animals.size())
+	assert_eq(herds[0].size(), creatures.living.size())
 	var twin := twins[0]
 	# Never where players built.
 	var built := ChunkData.new(Vector2i(500, 500))
 	built.modified = true
-	var count := twin.animals.size()
+	var count := twin.living.size()
 	twin.populate(built)
-	assert_eq(twin.animals.size(), count)
+	assert_eq(twin.living.size(), count)
 
 
 func test_players_see_hit_and_hunt_animals() -> void:
@@ -172,18 +177,18 @@ func test_players_see_hit_and_hunt_animals() -> void:
 	var server: GameServer = setup[0]
 	var client: LocalTransport = setup[1]
 	var session: GameServer.PlayerSession = setup[2]
-	server.creatures.animals.clear()
+	server.creatures.living.clear()
 	server.creatures.populated.clear()
 	for coord: Vector2i in server.world.chunks:
 		server.creatures.populated[coord] = true
 	server.creatures.spawn_near(Species.Id.CHICKEN, session.position, session.height, 3)
-	assert_eq(server.creatures.animals.size(), 3)
+	assert_eq(server.creatures.living.size(), 3)
 	server.tick()
 	server.tick()
 	var shown := _said(client, Msg.ENTITY_SPAWN)
 	assert_eq(shown.size(), 3, "the player sees them")
 	assert_eq(shown[0]["kind"], Species.Id.CHICKEN)
-	var prey: Animal = server.creatures.animals.values()[0]
+	var prey: Animal = server.creatures.living.values()[0]
 	# Out of reach: nothing.
 	session.position = prey.center() + Vector2(10.0 * TS, 0.0)
 	client.send(Msg.attack(prey.id))
@@ -201,9 +206,9 @@ func test_players_see_hit_and_hunt_animals() -> void:
 	assert_eq(session.inventory.wear[0], 1, "the pickaxe wore")
 	assert_eq(_said(client, Msg.ENTITY_HURT).size(), 1)
 	var panic := Creatures.HERD_PANIC * TS
-	for animal: Animal in server.creatures.animals.values():
+	for animal: Animal in server.creatures.living.values():
 		if animal.center().distance_to(prey.center()) <= panic:
-			assert_eq(animal.state, Animal.State.FLEE, "the herd runs away")
+			assert_eq(animal.state, Creature.State.FLEE, "the herd runs away")
 	# Too soon after: nothing.
 	client.send(Msg.attack(prey.id, 0))
 	server.process_messages()
@@ -215,7 +220,7 @@ func test_players_see_hit_and_hunt_animals() -> void:
 	client.poll()
 	client.send(Msg.attack(prey.id, 0))
 	server.process_messages()
-	assert_false(server.creatures.animals.has(prey.id), "it fell")
+	assert_false(server.creatures.living.has(prey.id), "it fell")
 	var gone := _said(client, Msg.ENTITY_REMOVE)
 	assert_eq(gone.size(), 1)
 	assert_true(gone[0]["died"])
@@ -234,7 +239,7 @@ func test_blocks_are_not_placed_on_animals_and_they_are_saved() -> void:
 	var session: GameServer.PlayerSession = setup[2]
 	server.use_storage(storage, {})
 	server.creatures.spawn_near(Species.Id.DEER, session.position, session.height, 1)
-	var deer: Animal = server.creatures.animals.values()[-1]
+	var deer: Animal = server.creatures.living.values()[-1]
 	var tile := deer.tile()
 	var cell := Vector3i(tile.x, floori(deer.body.height + 0.01) + SEA, tile.y)
 	session.inventory.add(Items.Id.WOOL, 4)
@@ -246,7 +251,7 @@ func test_blocks_are_not_placed_on_animals_and_they_are_saved() -> void:
 	assert_true(server.save())
 	var again := GameServer.new(server.settings, null, false)
 	again.use_storage(WorldStorage.new(FOLDER), storage.read_world())
-	assert_eq(again.creatures.animals.size(), server.creatures.animals.size(), "saved")
+	assert_eq(again.creatures.living.size(), server.creatures.living.size(), "saved")
 	assert_eq(again.creatures.populated.size(), server.creatures.populated.size())
 	storage.erase()
 

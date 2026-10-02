@@ -324,10 +324,21 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   screen's button then watches (GameModeView.watch: LocalPlayer.ghost flies through everything,
   PlayerModel.set_ghost, no hotbar, a banner).
 - Creatures (`src/sim/creatures/`): `Species` (ids saved: only append; size BOX/TALL, HEALTH,
-  WALK/FLEE_SPEED, DROPS, BIOMES, HERD), `Animal` (server; its body a PlayerBody with its own
-  `box`/`tall`; State IDLE/GRAZE/WANDER/FLEE; `think` picks, `move` walks its way, jumps up a
-  level, swims; `hurt_by` throws it back and makes it flee; resting ones only move every
-  REST_CHECK), `Pathfinder` (A* over tiles, 8 ways without cutting corners, up one level, down
+  WALK/FLEE_SPEED, DROPS; animals BIOMES, HERD; monsters MONSTERS, FLIERS, CHASE_SPEED, DAMAGE,
+  CAUSE, HOW_KEYS), `Creature` (server; the base: its body a PlayerBody with its own `box`/`tall`,
+  `flying` for fliers; Creature.State IDLE/GRAZE/WANDER/FLEE/CHASE/STRIKE/DORMANT/FROZEN, seen by
+  clients; `move` walks its way, jumps up a level, swims; `hurt_by` throws it back, then
+  `_on_hurt`; resting ones only move every REST_CHECK; `Creatures.make`/`from_dict`), `Animal`
+  (grazes, wanders, flees with its herd), `Monster` (given its prey by `Monsters.sense`, `lit`
+  for the lurker; the moth circles and dives, the wisp keeps WISP_NEAR..FAR away and darts,
+  fliers through PlayerBody.fly; the lurker walks up in the dark and freezes lit; the mimic lies
+  DORMANT until WAKE_RANGE or a blow, lunges, settles after CALM_SECONDS; `strike` set when a
+  blow lands), `Monsters` (static: `come_and_go` every Creatures.MONSTER_TICKS: COME_CHANCE, at
+  SPAWN_DISTANCE around players it `hunts` (never creative players nor spectators), MAX_NEAR /
+  MAX_OF, dark spots (`Light`: daylight under the open sky, lava and lit furnaces within
+  Light.REACH): surface at night, caves CAVE_DEPTH down by day too; gone past GONE_DISTANCE,
+  NIGHT_ONLY ones melt in daylight under the sky; `land_blow`: Survival.hurt with the species'
+  cause, Msg.PUSH, the moth's Msg.LANTERN_OUT; monsters are never saved), `Pathfinder` (A* over tiles, 8 ways without cutting corners, up one level, down
   MAX_DROP, room for `tall`, never into liquids or solid objects' tiles; `ground_at`),
   `Creatures` (held by GameServer, never holding it: populates each chunk once per seed,
   `populated`, skipping modified chunks; animals within ACTIVE_RADIUS chunks of a player think and
@@ -335,11 +346,13 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   sent chunks, `PlayerSession.seen_animals`; `attack` (Msg.ATTACK: Combat.REACH, BLOW_SECONDS
   per session `last_blow`, `Combat.damage_of`, tool wear, herd panic, drops); saved in
   creatures.cfg; `voxel_at` is WorldState.loaded_voxel_at: never makes chunks). Blocks are not
-  placed on animals. Client: AnimalsView (in the world root: one AnimalBody per animal, parts from
-  AnimalModels built at runtime: body, head, legs, wings, antlers on joints; trot, grazing,
-  flapping, hurt glow, tipping over and fading, a burst of bits; `pick` for aiming,
-  `bounds_of`); BlockInteraction aims at an animal nearer than the block (`target_animal`, the
-  frame around its box) and the break button hits it. Meat roasts in the food furnace (raw
+  placed on creatures. Client: CreaturesView (in the world root: one CreatureBody per creature,
+  parts from CreatureModels / MonsterModels built at runtime: body, head, legs, arms, wings,
+  antlers, a mimic's face on joints; trot, grazing, flapping, the lurker paling frozen, the mimic
+  sitting dormant, the wisp pulsing with an OmniLight in world space (`light_parent`), hurt glow,
+  tipping over and fading, a burst of bits; `pick` for aiming, `bounds_of`, `name_of`);
+  BlockInteraction aims at a creature nearer than the block (`target_creature`, the frame around
+  its box) and the break button hits it. LocalPlayer.push (Msg.PUSH), LightingController.lantern_out. Meat roasts in the food furnace (raw
   chicken makes sick: Vitals.POISONS); the WOOL cube block. `--animals=sheep:3,...` brings
   animals around the player.
 - Saves (`src/sim/save/world_storage.gd`, server side only): `user://worlds/<folder>/` holds

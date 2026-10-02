@@ -1,9 +1,9 @@
-class_name AnimalModels
+class_name CreatureModels
 extends RefCounted
-## The animals' voxel models (Species), in parts that move: a body, a head
-## (with the neck), legs, and for some wings, antlers. One voxel is one
-## art pixel; the model stands on y = 0 and looks towards +Z. Built when
-## first needed (a few small grids), not saved.
+## The creatures' voxel models (Species), in parts that move: a body, a head
+## (with the neck), legs, and for some wings, antlers; the monsters' in
+## MonsterModels. One voxel is one art pixel; the model stands on y = 0 and
+## looks towards +Z. Built when first needed (a few small grids), not saved.
 
 
 ## A part of a model: its voxels, where it turns (its joint, model voxels)
@@ -47,8 +47,10 @@ static func parts(kind: int) -> Array:
 				_parts[kind] = _boar()
 			Species.Id.CHICKEN:
 				_parts[kind] = _chicken()
-			_:
+			Species.Id.DEER:
 				_parts[kind] = _deer()
+			_:
+				_parts[kind] = MonsterModels.build(kind)
 	return _parts[kind]
 
 
@@ -62,7 +64,7 @@ static func _noise(p: Vector3i, salt: int) -> float:
 
 ## A part whose grid has its lowest corner at `corner` and turns about
 ## `joint` (model voxels).
-static func _part(name: String, grid: VoxelGrid, corner: Vector3, joint: Vector3) -> Part:
+static func make_part(name: String, grid: VoxelGrid, corner: Vector3, joint: Vector3) -> Part:
 	var part := Part.new()
 	part.name = name
 	part.grid = grid
@@ -127,7 +129,7 @@ static func _four_legs(leg: VoxelGrid, half: int, front: int, back: int) -> Arra
 	]
 	for spot: Array in spots:
 		var corner := Vector3(spot[1], 0.0, spot[2])
-		legs.append(_part(spot[0], leg, corner, corner + Vector3(w * 0.5, leg.size.y, w * 0.5)))
+		legs.append(make_part(spot[0], leg, corner, corner + Vector3(w * 0.5, leg.size.y, w * 0.5)))
 	return legs
 
 
@@ -150,7 +152,7 @@ static func _sheep() -> Array:
 	_fleece(body, Vector3(6.5, 5.2, 8.5), Vector3(5.6, 4.6, 7.6), 41)
 	# A little tail of wool.
 	body.ellipsoid(Vector3(6.5, 7.5, 0.6), Vector3(1.6, 1.6, 1.2), _v(WOOL[2]))
-	parts.append(_part("body", body, Vector3(-6.5, 4.0, -8.5), Vector3(0.0, 4.0, 0.0)))
+	parts.append(make_part("body", body, Vector3(-6.5, 4.0, -8.5), Vector3(0.0, 4.0, 0.0)))
 	var head := VoxelGrid.new(Vector3i(9, 7, 7))
 	head.box(Vector3i(2, 0, 1), Vector3i(6, 4, 6), _shaded(SHEEP_FACE, 0.0, 4.0, 7))
 	head.box(Vector3i(3, 0, 5), Vector3i(5, 1, 6), _v("#7a6658"))
@@ -163,7 +165,7 @@ static func _sheep() -> Array:
 	head.set_voxel(Vector3i(0, 2, 2), _v("#3b302b"))
 	head.set_voxel(Vector3i(8, 2, 2), _v("#3b302b"))
 	head.ellipsoid(Vector3(4.5, 5.2, 3.0), Vector3(2.8, 1.8, 2.4), _shaded(WOOL, 4.0, 7.0, 9))
-	parts.append(_part("head", head, Vector3(-4.5, 8.0, 5.0), Vector3(0.0, 10.0, 6.0)))
+	parts.append(make_part("head", head, Vector3(-4.5, 8.0, 5.0), Vector3(0.0, 10.0, 6.0)))
 	return parts
 
 
@@ -185,7 +187,7 @@ static func _boar() -> Array:
 	# A thin tail with a tuft.
 	body.box(Vector3i(5, 6, 0), Vector3i(5, 7, 0), _v("#2c1f18"))
 	body.set_voxel(Vector3i(5, 5, 0), _v("#1a120d"))
-	parts.append(_part("body", body, Vector3(-5.5, 3.0, -8.5), Vector3(0.0, 3.0, 0.0)))
+	parts.append(make_part("body", body, Vector3(-5.5, 3.0, -8.5), Vector3(0.0, 3.0, 0.0)))
 	var head := VoxelGrid.new(Vector3i(8, 8, 9))
 	head.box(Vector3i(1, 0, 0), Vector3i(6, 5, 5), _shaded(BOAR_HIDE, 0.0, 5.0, 17))
 	head.box(Vector3i(2, 0, 6), Vector3i(5, 3, 7), _shaded(BOAR_HIDE, 0.0, 3.0, 19))
@@ -200,7 +202,7 @@ static func _boar() -> Array:
 	# Small pointed ears.
 	head.box(Vector3i(1, 6, 1), Vector3i(2, 7, 1), _v("#2c1f18"))
 	head.box(Vector3i(5, 6, 1), Vector3i(6, 7, 1), _v("#2c1f18"))
-	parts.append(_part("head", head, Vector3(-4.0, 3.5, 6.0), Vector3(0.0, 7.0, 7.0)))
+	parts.append(make_part("head", head, Vector3(-4.0, 3.5, 6.0), Vector3(0.0, 7.0, 7.0)))
 	return parts
 
 
@@ -218,7 +220,7 @@ static func _chicken() -> Array:
 	leg.set_voxel(Vector3i(1, 0, 1), _v("#c98f24"))
 	for spot in [["leg_fl", -2.5], ["leg_fr", -0.5]]:
 		var corner := Vector3(spot[1], 0.0, -1.5)
-		parts.append(_part(spot[0], leg, corner, corner + Vector3(1.5, 4.0, 1.5)))
+		parts.append(make_part(spot[0], leg, corner, corner + Vector3(1.5, 4.0, 1.5)))
 	var body := VoxelGrid.new(Vector3i(7, 10, 11))
 	body.ellipsoid(Vector3(3.5, 3.4, 5.2), Vector3(2.9, 2.8, 3.8), _shaded(FOWL, 1.0, 6.0, 23))
 	# Golden hackles over the breast and the neck's base.
@@ -229,13 +231,13 @@ static func _chicken() -> Array:
 		var y := 4.0 + i
 		body.box(Vector3i(2, int(y), int(z)), Vector3i(4, int(y), int(z) + 1), _v(FOWL_TAIL[i % 4]))
 	body.box(Vector3i(3, 9, 0), Vector3i(3, 9, 1), _v(FOWL_TAIL[3]))
-	parts.append(_part("body", body, Vector3(-3.5, 3.0, -5.5), Vector3(0.0, 3.0, 0.0)))
+	parts.append(make_part("body", body, Vector3(-3.5, 3.0, -5.5), Vector3(0.0, 3.0, 0.0)))
 	for side in [["wing_l", -3.5, -0.5], ["wing_r", 2.5, 0.5]]:
 		var wing := VoxelGrid.new(Vector3i(1, 3, 5))
 		wing.box(Vector3i(0, 0, 0), Vector3i(0, 2, 4), _v(FOWL_WING[1]))
 		wing.box(Vector3i(0, 0, 0), Vector3i(0, 0, 3), _v(FOWL_WING[0]))
 		var corner := Vector3(side[1], 4.5, -2.5)
-		parts.append(_part(side[0], wing, corner, corner + Vector3(0.5 - side[2], 3.0, 3.0)))
+		parts.append(make_part(side[0], wing, corner, corner + Vector3(0.5 - side[2], 3.0, 3.0)))
 	var head := VoxelGrid.new(Vector3i(3, 6, 5))
 	head.box(Vector3i(0, 0, 0), Vector3i(2, 2, 2), _v(FOWL[3]))
 	head.box(Vector3i(1, 3, 0), Vector3i(1, 3, 2), _v(COMB))
@@ -244,7 +246,7 @@ static func _chicken() -> Array:
 	head.set_voxel(Vector3i(1, 0, 3), _v(COMB))
 	head.set_voxel(Vector3i(0, 2, 2), _v(EYE))
 	head.set_voxel(Vector3i(2, 2, 2), _v(EYE))
-	parts.append(_part("head", head, Vector3(-1.5, 7.0, 2.5), Vector3(0.0, 7.0, 3.0)))
+	parts.append(make_part("head", head, Vector3(-1.5, 7.0, 2.5), Vector3(0.0, 7.0, 3.0)))
 	return parts
 
 
@@ -262,7 +264,7 @@ static func _deer() -> Array:
 	# A pale rump and a short tail, dark on top.
 	body.ellipsoid(Vector3(4.5, 5.0, 1.2), Vector3(2.6, 2.4, 1.2), _v("#f2ece0"))
 	body.box(Vector3i(4, 6, 0), Vector3i(4, 7, 0), _v("#3a2616"))
-	parts.append(_part("body", body, Vector3(-4.5, 8.0, -8.5), Vector3(0.0, 8.0, 0.0)))
+	parts.append(make_part("body", body, Vector3(-4.5, 8.0, -8.5), Vector3(0.0, 8.0, 0.0)))
 	var head := VoxelGrid.new(Vector3i(10, 12, 9))
 	var coat := _shaded(DEER, 0.0, 11.0, 31)
 	# The neck leans forward from the shoulders.
@@ -278,7 +280,7 @@ static func _deer() -> Array:
 	for x: int in [1, 2, 7, 8]:
 		head.set_voxel(Vector3i(x, 10, 4), _v(DEER[2]))
 		head.set_voxel(Vector3i(x, 9, 4), _v(DEER_BELLY if x in [2, 7] else DEER[1]))
-	parts.append(_part("head", head, Vector3(-5.0, 12.0, 4.0), Vector3(0.0, 13.0, 5.0)))
+	parts.append(make_part("head", head, Vector3(-5.0, 12.0, 4.0), Vector3(0.0, 13.0, 5.0)))
 	var antlers := VoxelGrid.new(Vector3i(11, 7, 4))
 	var paint := _shaded(ANTLER, 0.0, 6.0, 37)
 	for side: int in [-1, 1]:
@@ -290,5 +292,5 @@ static func _deer() -> Array:
 		var top := base + Vector3(side * 2.6, 4.0, 0.0)
 		antlers.line(top, base + Vector3(side * 2.2, 6.5, 0.5), 0.4, paint)
 	var on_head := Vector3(-5.5, 22.0, 5.5)
-	parts.append(_part("antlers", antlers, on_head, Vector3(0.0, 13.0, 5.0)))
+	parts.append(make_part("antlers", antlers, on_head, Vector3(0.0, 13.0, 5.0)))
 	return parts

@@ -16,6 +16,8 @@ const FLY_MULTIPLIER := 2.5
 ## Two presses of jump this close (seconds) start or stop flying.
 const DOUBLE_JUMP_SECONDS := 0.3
 const SEND_INTERVAL := GameConst.TICK_DELTA
+## A push fades this fast (per second).
+const PUSH_DRAG := 6.0
 
 var client_world: ClientWorld
 var transport: Transport
@@ -54,6 +56,8 @@ var height: float:
 		return body.height
 
 var _send_timer := 0.0
+## A blow's push (world pixels per second), fading.
+var _push := Vector2.ZERO
 ## When jump was last pressed (seconds; see DOUBLE_JUMP_SECONDS).
 var _jumped_at := -INF
 ## How far the body fell, for the next report to the server.
@@ -105,6 +109,11 @@ func step(delta: float) -> void:
 			speed *= LAVA_SPEED if lava else WATER_SPEED
 		# Cap the step so a frame hitch never tunnels through a tile.
 		motion = input * speed * minf(delta, 0.1)
+	if _push != Vector2.ZERO and not ghost and not noclip:
+		motion += _push * minf(delta, 0.1)
+		_push *= exp(-PUSH_DRAG * delta)
+		if _push.length() < 1.0:
+			_push = Vector2.ZERO
 	var before := body.feet
 	var up := controls_enabled and Input.is_action_pressed(InputBindings.JUMP)
 	var down := controls_enabled and Input.is_action_pressed(InputBindings.SPRINT)
@@ -143,6 +152,15 @@ func _toggle_flight() -> void:
 	body.flying = not body.flying
 	if not body.flying:
 		body.vertical_speed = 0.0
+
+
+## A monster's blow pushes the body back (`speed`: world pixels per
+## second, fading) and up (`hop`: levels per second, from the ground).
+func push(speed: Vector2, hop: float) -> void:
+	_push = speed
+	if body.on_ground and not body.flying and not body.in_liquid:
+		body.vertical_speed = hop
+		body.on_ground = false
 
 
 ## True until the ground under a new position is known.

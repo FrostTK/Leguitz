@@ -103,6 +103,9 @@ enum Id {
 	COOKED_VENISON,
 	FEATHER,
 	HIDE,
+	MOTH_DUST,
+	SHADE_ESSENCE,
+	WISP_EMBER,
 }
 ## What a tool is made for (Mining.tool_for: what it breaks faster).
 enum Tool { NONE, PICKAXE, AXE, SHOVEL }

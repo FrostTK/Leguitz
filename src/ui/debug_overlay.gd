@@ -130,13 +130,13 @@ func _lines() -> PackedStringArray:
 		lines.append(tr("DEBUG_NOCLIP"))
 	if client.interaction.target != null:
 		lines.append(_target_line(client.interaction.target))
-	var animal := client.interaction.target_animal
+	var animal := client.interaction.target_creature
 	if animal >= 0:
 		var damage := Combat.damage_of(client.held_item())
 		lines.append(
 			(
 				"%s: %s #%d  |  -%d"
-				% [tr("DEBUG_TARGET"), client.animals.name_of(animal), animal, damage]
+				% [tr("DEBUG_TARGET"), client.creatures.name_of(animal), animal, damage]
 			)
 		)
 	lines.append("%s %d  %s  |  %s  |  %s x%.2f  |  %s %d/8" % time_args)

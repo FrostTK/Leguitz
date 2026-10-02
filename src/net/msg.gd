@@ -61,6 +61,8 @@ const ENTITY_SPAWN := "entity_spawn"
 const ENTITY_MOVE := "entity_move"
 const ENTITY_HURT := "entity_hurt"
 const ENTITY_REMOVE := "entity_remove"
+const PUSH := "push"
+const LANTERN_OUT := "lantern_out"
 
 
 ## The player hits the creature `id` with the hotbar slot `slot` in hand
@@ -71,24 +73,35 @@ static func attack(id: int, slot := -1) -> Dictionary:
 
 ## A creature comes into a player's view: its kind (Species), its feet
 ## (world pixels) and their height (levels), where it looks, what it does
-## (Animal.State).
-static func entity_spawn(animal: Animal) -> Dictionary:
-	var message := entity_move(animal)
+## (Creature.State).
+static func entity_spawn(creature: Creature) -> Dictionary:
+	var message := entity_move(creature)
 	message["t"] = ENTITY_SPAWN
-	message["kind"] = animal.species
+	message["kind"] = creature.species
 	return message
 
 
 ## A creature moved, turned or does something else.
-static func entity_move(animal: Animal) -> Dictionary:
+static func entity_move(creature: Creature) -> Dictionary:
 	return {
 		"t": ENTITY_MOVE,
-		"id": animal.id,
-		"pos": animal.body.feet,
-		"h": animal.body.height,
-		"heading": animal.heading,
-		"state": animal.state,
+		"id": creature.id,
+		"pos": creature.body.feet,
+		"h": creature.body.height,
+		"heading": creature.heading,
+		"state": creature.state,
 	}
+
+
+## A blow pushes the player back: `speed` along the ground (world pixels
+## per second, fading), `hop` up (levels per second).
+static func push(speed: Vector2, hop: float) -> Dictionary:
+	return {"t": PUSH, "speed": speed, "hop": hop}
+
+
+## The player's lantern goes out for `seconds` (a lantern moth's blow).
+static func lantern_out(seconds: float) -> Dictionary:
+	return {"t": LANTERN_OUT, "seconds": seconds}
 
 
 ## A creature was hurt.
