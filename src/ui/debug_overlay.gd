@@ -1,6 +1,8 @@
 class_name DebugOverlay
 extends PanelContainer
 ## F3 debug screen (like Minecraft): performance, position, world and time.
+## Without it, a small frame rate counter if the settings ask for one
+## (Settings.show_fps).
 
 const REFRESH_INTERVAL := 0.25
 
@@ -22,18 +24,28 @@ func _ready() -> void:
 	_label.add_theme_color_override("font_color", Color(0.95, 0.95, 0.95))
 	add_child(_label)
 	set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT, Control.PRESET_MODE_MINSIZE, 4)
-	visible = Settings.show_debug
+	visible = Settings.show_debug or Settings.show_fps
+	Settings.changed.connect(_on_setting_changed)
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(InputBindings.TOGGLE_DEBUG):
-		visible = not visible
-		Settings.set_show_debug(visible)
+		Settings.set_show_debug(not Settings.show_debug)
 		get_viewport().set_input_as_handled()
+
+
+func _on_setting_changed(key: StringName) -> void:
+	if key in [&"show_debug", &"show_fps"]:
+		visible = Settings.show_debug or Settings.show_fps
+		_refresh_timer = 0.0
+		reset_size()
 
 
 func _process(delta: float) -> void:
 	if not visible or client == null:
+		return
+	if not Settings.show_debug:
+		_label.text = "%d FPS" % Engine.get_frames_per_second()
 		return
 	# Measure the 3D world's GPU time (from the first time the overlay shows).
 	RenderingServer.viewport_set_measure_render_time(

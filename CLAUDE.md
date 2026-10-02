@@ -151,6 +151,19 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   above, FINE_DROP in first person and HD.
 - Keep the GPU cool: Settings.max_fps (default 60, 15 in the background), the world SubViewport
   stops rendering while paused, and the client only asks for the chunks its view needs.
+- Player settings (Settings autoload, user://settings.cfg; the pause menu's SettingsPanel, in
+  sections Display, Graphics, Game, each choice applied and saved at once through
+  `Settings.choose(key, value)`; new display keys in Settings.DISPLAY_KEYS): window mode
+  (DisplayModes.Mode: windowed at `resolution`, centered, ZERO keeps the window's size;
+  FULLSCREEN a borderless window at the screen's own resolution; EXCLUSIVE), `screen` (shown
+  when there are several), `vsync` (DisplayModes.Sync), `max_fps` (Settings.FPS_CHOICES; 0 the
+  screen's refresh rate, -1 no limit: DisplayModes.fps_cap), `show_fps` (DebugOverlay shows only
+  the frame rate when F3 is off), `far_view` (chunks loaded in first person; the haze follows:
+  LightingController.FIRST_PERSON_HAZE_PER_CHUNK), `brightness` (Environment adjustment),
+  `ui_scale`, `first_person_fov` (WorldViewport.first_person_fov, dive_frame's `end_fov`),
+  `mouse_sensitivity`. A game cannot change a screen's resolution or refresh rate (the system
+  does). DisplayModes does nothing under the headless display server (tests). Never call
+  Settings.choose or save_settings in tests: they write the user's real settings file.
 - Movement is Minecraft-like (`src/sim/physics/player_body.gd`, shared client/server) among voxels
   (`voxel_at` callable, Voxels.UNKNOWN = not loaded = solid): body 1.7 levels tall, walk up 0.2,
   jump 1.25, bump ceilings, fall off edges; solid objects block their footprint up their height

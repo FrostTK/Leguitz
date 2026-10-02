@@ -22,6 +22,7 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Végétation qui pousse : un arbre abattu donne des pousses de son espèce ; plantées, elles deviennent de jeunes arbres puis des arbres à la lumière ; la terre nue reverdit à côté de l'herbe | ✅ |
 | Houe, champs et graines : terre labourée humide près de l'eau, blé, carottes et pommes de terre en 4 stades, récolte, pain et pommes de terre cuites au four | ✅ |
 | Ciel en 1re personne : levers et couchers de soleil, lune dans sa phase, étoiles et voie lactée, nuages raccord avec leurs ombres | ✅ |
+| Réglages d'affichage : plein écran, résolution, écran, synchro verticale, limite d'images (dont 100), compteur d'images, distance de vue, luminosité, taille de l'interface, champ de vision et sensibilité de la souris | ✅ |
 | Arrosage, compost, nouvelles cultures et arbres fruitiers | à venir |
 | Élevage (reproduction, bébés, produits sans tuer), animaux de ferme, animaux sauvages et prédateurs | à venir |
 | Cuisine, pêche, chien et chat, saisons | à venir |

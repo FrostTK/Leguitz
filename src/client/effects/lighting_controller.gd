@@ -61,7 +61,9 @@ const SHADOW_MARGIN := 20.0
 ## First person: the haze reaches this much at this distance (world units),
 ## underground the fog closes in; shadows reach this far from the eye.
 const FIRST_PERSON_HAZE := 0.6
-const FIRST_PERSON_HAZE_DISTANCE := 80.0
+## The haze's distance for each chunk seen in first person (Settings.far_view;
+## 80 for 6).
+const FIRST_PERSON_HAZE_PER_CHUNK := 80.0 / 6.0
 const FIRST_PERSON_CAVE_FOG := 0.5
 const FIRST_PERSON_CAVE_FOG_DISTANCE := 28.0
 const FIRST_PERSON_SHADOW_DISTANCE := 45.0
@@ -203,6 +205,8 @@ func _process(delta: float) -> void:
 	ambient_energy *= 1.0 - storm * 0.25
 	environment.ambient_light_color = ambient
 	environment.ambient_light_energy = ambient_energy + weather.flash() * 2.5
+	environment.adjustment_enabled = not is_equal_approx(Settings.brightness, 1.0)
+	environment.adjustment_brightness = Settings.brightness
 	sky_seen = lerpf(sky_seen, sky_here, 1.0 - exp(-SKY_SHARPNESS * delta))
 	darkness = clampf(1.0 - daylight * (1.0 - storm * 0.4), 0.0, 1.0)
 	darkness = maxf(darkness, 1.0 - smoothstep(0.0, 1.0, sky_seen))
@@ -274,7 +278,9 @@ func _update_fog(
 	if first_person > 0.0:
 		var far_amount := FIRST_PERSON_CAVE_FOG if underground else FIRST_PERSON_HAZE
 		var far_distance := (
-			FIRST_PERSON_CAVE_FOG_DISTANCE if underground else FIRST_PERSON_HAZE_DISTANCE
+			FIRST_PERSON_CAVE_FOG_DISTANCE
+			if underground
+			else FIRST_PERSON_HAZE_PER_CHUNK * Settings.far_view
 		)
 		amount = lerpf(amount, maxf(amount, far_amount), first_person)
 		distance = lerpf(distance, far_distance, first_person)

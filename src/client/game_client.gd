@@ -33,7 +33,6 @@ const ENTRY_LOOK_PITCH := -0.2
 ## The ceiling closes over the view (the cut stops) this far into the dive.
 const CUT_UNTIL := 0.95
 ## Radius (chunks) loaded around the player in first person.
-const FIRST_PERSON_VIEW_DISTANCE := 6
 ## Where the lantern is carried in first person (right, up, back of the
 ## eye, in its frame).
 const LANTERN_IN_HAND := Vector3(-0.5, -0.3, 0.05)
@@ -248,6 +247,7 @@ func _setup_world() -> void:
 	world_viewport.process_mode = Node.PROCESS_MODE_PAUSABLE
 	add_child(world_viewport)
 	move_child(world_viewport, 0)
+	world_viewport.first_person_fov = Settings.first_person_fov
 	var root := world_viewport.world_root()
 	var world_environment := WorldEnvironment.new()
 	world_environment.environment = environment
@@ -284,6 +284,8 @@ func _on_settings_changed(key: StringName) -> void:
 	elif key == &"guide_book" and not Settings.guide_book:
 		book_in_hand = false
 		book_screen.close()
+	elif key == &"first_person_fov":
+		world_viewport.first_person_fov = Settings.first_person_fov
 
 
 func _apply_quality() -> void:
@@ -312,7 +314,7 @@ func needed_view_distance() -> int:
 	var half := maxf(c * ground.x + s * ground.y, s * ground.x + c * ground.y) * 0.5
 	var radius := ceili(half / GameConst.CHUNK_SIZE) + 2
 	if view_mode.first_person or first_person > 0.0:
-		radius = maxi(radius, FIRST_PERSON_VIEW_DISTANCE)
+		radius = maxi(radius, Settings.far_view)
 	return clampi(
 		maxi(radius, _min_view_distance), GameConst.MIN_VIEW_DISTANCE, GameConst.MAX_VIEW_DISTANCE
 	)
@@ -395,7 +397,7 @@ func _update_orbit(delta: float) -> void:
 	)
 	if stick != Vector2.ZERO:
 		if view_mode.first_person:
-			var scale := world_viewport.look_scale() * delta
+			var scale := world_viewport.look_scale() * Settings.mouse_sensitivity * delta
 			_look(-stick.x * STICK_LOOK_SPEED.x * scale, -stick.y * STICK_LOOK_SPEED.y * scale)
 		else:
 			world_viewport.orbit(-stick.x * STICK_ORBIT_SPEED.x * delta, 0.0)
@@ -881,7 +883,8 @@ func _handle_camera_input(event: InputEvent) -> bool:
 func _handle_look_input(event: InputEvent) -> bool:
 	var motion := event as InputEventMouseMotion
 	if motion != null and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		var turn := motion.screen_relative * MOUSE_LOOK_SPEED * world_viewport.look_scale()
+		var speed := MOUSE_LOOK_SPEED * Settings.mouse_sensitivity * world_viewport.look_scale()
+		var turn := motion.screen_relative * speed
 		_look(-turn.x, -turn.y)
 		return true
 	if event.is_action_pressed(InputBindings.CAMERA_RESET):

@@ -1,7 +1,7 @@
 class_name PauseMenu
 extends Control
-## Pause menu: resume, the world's game mode and time settings, language,
-## zoom, graphics, quit.
+## Pause menu: resume, the world's game mode and time settings, the
+## player's own settings (SettingsPanel: display, graphics, game), quit.
 ## World settings are sent to the server (they belong to the world);
 ## user preferences go to the Settings autoload.
 
@@ -19,17 +19,10 @@ const FROZEN_CHOICES := [
 	["FROZEN_SUNSET", WorldClock.FROZEN_SUNSET],
 	["FROZEN_MIDNIGHT", WorldClock.FROZEN_MIDNIGHT],
 ]
-const LANGUAGE_CHOICES := [
-	["LANGUAGE_AUTO", "auto"],
-	["LANGUAGE_FR", "fr"],
-	["LANGUAGE_EN", "en"],
-]
-const ZOOM_CHOICES := [0, 2, 3, 4, 5, 6, 8]
 ## The panel's width and the room kept around it (UI units): taller than
 ## the window, it scrolls.
 const WIDTH := 230.0
 const SCREEN_MARGIN := 8.0
-const QUALITY_KEYS := ["QUALITY_LOW", "QUALITY_MEDIUM", "QUALITY_HIGH", "QUALITY_ULTRA"]
 
 var clock: WorldClock
 ## The world's game mode (WorldSettings.GameMode, set by GameModeView).
@@ -43,13 +36,7 @@ var _frozen_at := OptionButton.new()
 var _day_length_row: Control
 var _frozen_row: Control
 var _pace_info := Label.new()
-var _language := OptionButton.new()
-var _zoom := OptionButton.new()
-var _quality := OptionButton.new()
-var _hd := CheckButton.new()
-var _cave_first_person := CheckButton.new()
-var _guide_book := CheckButton.new()
-var _max_fps := OptionButton.new()
+var _settings := SettingsPanel.new()
 var _scroll := ScrollContainer.new()
 var _box := VBoxContainer.new()
 var _updating := false
@@ -114,35 +101,8 @@ func _ready() -> void:
 	_pace_info.add_theme_font_size_override("font_size", 6)
 	box.add_child(_pace_info)
 
-	box.add_child(_section("MENU_GAME_SETTINGS"))
-	for choice in LANGUAGE_CHOICES:
-		_language.add_item(choice[0])
-	_language.item_selected.connect(_on_language_selected)
-	box.add_child(_row("SETTING_LANGUAGE", _language))
-
-	for zoom in ZOOM_CHOICES:
-		_zoom.add_item("")
-	_zoom.item_selected.connect(_on_zoom_selected)
-	box.add_child(_row("SETTING_ZOOM", _zoom))
-
-	for key in QUALITY_KEYS:
-		_quality.add_item(key)
-	_quality.item_selected.connect(_on_quality_selected)
-	box.add_child(_row("SETTING_QUALITY", _quality))
-
-	_hd.toggled.connect(_on_hd_toggled)
-	box.add_child(_row("SETTING_HD", _hd))
-
-	for fps in Settings.FPS_CHOICES:
-		_max_fps.add_item("")
-	_max_fps.item_selected.connect(_on_max_fps_selected)
-	box.add_child(_row("SETTING_MAX_FPS", _max_fps))
-
-	_cave_first_person.toggled.connect(_on_cave_first_person_toggled)
-	box.add_child(_row("SETTING_CAVE_FIRST_PERSON", _cave_first_person))
-
-	_guide_book.toggled.connect(_on_guide_book_toggled)
-	box.add_child(_row("SETTING_GUIDE_BOOK", _guide_book))
+	_settings.layout_changed.connect(_fit_height.call_deferred)
+	box.add_child(_settings)
 
 	var quit := Button.new()
 	quit.text = "MENU_QUIT"
@@ -182,16 +142,7 @@ func refresh_from_state() -> void:
 	_time_mode.select(clock.mode)
 	_day_length.select(_closest_preset(clock.day_minutes))
 	_frozen_at.select(_closest_frozen_choice(clock.time_of_day()))
-	var language_index := (
-		LANGUAGE_CHOICES.map(func(c: Array) -> String: return c[1]).find(Settings.language)
-	)
-	_language.select(maxi(0, language_index))
-	_zoom.select(maxi(0, ZOOM_CHOICES.find(Settings.world_zoom)))
-	_quality.select(Settings.graphics_quality)
-	_hd.button_pressed = Settings.hd_rendering
-	_cave_first_person.button_pressed = Settings.cave_first_person
-	_guide_book.button_pressed = Settings.guide_book
-	_max_fps.select(maxi(0, Settings.FPS_CHOICES.find(Settings.max_fps)))
+	_settings.refresh()
 	_updating = false
 	_refresh_dynamic_texts()
 
@@ -226,50 +177,9 @@ func _on_game_mode_selected(index: int) -> void:
 		game_mode_requested.emit(index)
 
 
-func _on_language_selected(index: int) -> void:
-	if not _updating:
-		Settings.set_language(LANGUAGE_CHOICES[index][1])
-
-
-func _on_zoom_selected(index: int) -> void:
-	if not _updating:
-		Settings.set_world_zoom(ZOOM_CHOICES[index])
-
-
-func _on_quality_selected(index: int) -> void:
-	if not _updating:
-		Settings.set_graphics_quality(index)
-
-
-func _on_max_fps_selected(index: int) -> void:
-	if not _updating:
-		Settings.set_max_fps(Settings.FPS_CHOICES[index])
-
-
-func _on_hd_toggled(enabled: bool) -> void:
-	if not _updating:
-		Settings.set_hd_rendering(enabled)
-
-
-func _on_cave_first_person_toggled(enabled: bool) -> void:
-	if not _updating:
-		Settings.set_cave_first_person(enabled)
-
-
-func _on_guide_book_toggled(enabled: bool) -> void:
-	if not _updating:
-		Settings.set_guide_book(enabled)
-
-
 func _refresh_dynamic_texts() -> void:
 	for i in WorldClock.DAY_MINUTES_PRESETS.size():
 		_day_length.set_item_text(i, tr("DAY_LENGTH_VALUE") % WorldClock.DAY_MINUTES_PRESETS[i])
-	for i in ZOOM_CHOICES.size():
-		var zoom: int = ZOOM_CHOICES[i]
-		_zoom.set_item_text(i, tr("ZOOM_AUTO") if zoom == 0 else "x%d" % zoom)
-	for i in Settings.FPS_CHOICES.size():
-		var fps: int = Settings.FPS_CHOICES[i]
-		_max_fps.set_item_text(i, tr("FPS_SCREEN") if fps == 0 else str(fps))
 	var mode := _time_mode.selected
 	_day_length_row.visible = mode == WorldClock.Mode.NORMAL
 	_frozen_row.visible = mode == WorldClock.Mode.FROZEN

@@ -63,6 +63,8 @@ var look_yaw := 0.0
 var look_pitch := 0.0
 ## First person: how far it is zoomed in (0: not at all, 1: ZOOM_FOV).
 var zoom := 0.0
+## First person: the field of view (degrees; Settings.first_person_fov).
+var first_person_fov := FIRST_PERSON_FOV
 
 var _render_scale := 4
 
@@ -196,15 +198,16 @@ func zoom_towards(to: float, delta: float) -> void:
 ## How much slower looking around turns the eye at the current zoom (the
 ## view moves on screen as fast as unzoomed).
 func look_scale() -> float:
-	return lerpf(FIRST_PERSON_FOV, ZOOM_FOV, zoom) / FIRST_PERSON_FOV
+	return lerpf(first_person_fov, ZOOM_FOV, zoom) / first_person_fov
 
 
 ## Camera of the dive between the top-down view and the first-person one.
 ## `amount` 0: the top-down view (`top_basis`), seen through a nearly
 ## orthographic perspective showing `view_height` units at `target`;
 ## 1: at `eye`, looking along `look_basis`. Depths in front of the target
-## (`front`) and behind it (`back`) stay in view. Returns [Transform3D,
-## field of view (degrees), near, far].
+## (`front`) and behind it (`back`) stay in view; `fov` the first person's
+## field of view (degrees). Returns [Transform3D, field of view (degrees),
+## near, far].
 static func dive_frame(
 	amount: float,
 	top_basis: Basis,
@@ -213,15 +216,16 @@ static func dive_frame(
 	look_basis: Basis,
 	eye_position: Vector3,
 	front: float,
-	back: float
+	back: float,
+	end_fov := FIRST_PERSON_FOV
 ) -> Array:
 	var a := smoothstep(0.0, 1.0, amount)
 	var basis := top_basis.slerp(look_basis, a)
-	var fov := lerpf(DIVE_START_FOV, FIRST_PERSON_FOV, a)
+	var fov := lerpf(DIVE_START_FOV, end_fov, a)
 	# The height in view shrinks steadily (in ratio) down to the head.
 	var height := view_height * pow(DIVE_END_HEIGHT / view_height, a)
 	var distance := height / (2.0 * tan(deg_to_rad(fov) * 0.5))
-	var end_distance := DIVE_END_HEIGHT / (2.0 * tan(deg_to_rad(FIRST_PERSON_FOV) * 0.5))
+	var end_distance := DIVE_END_HEIGHT / (2.0 * tan(deg_to_rad(end_fov) * 0.5))
 	# Ends looking at a point just ahead of the eye, from the eye.
 	var focus := target.lerp(eye_position - look_basis.z * end_distance, a)
 	var near := lerpf(maxf(FIRST_PERSON_NEAR, distance - front), FIRST_PERSON_NEAR, a)
@@ -244,7 +248,8 @@ func _process(_delta: float) -> void:
 			look_basis,
 			eye,
 			camera_distance - 1.0,
-			spread + DEPTH_BELOW
+			spread + DEPTH_BELOW,
+			first_person_fov
 		)
 		camera.projection = Camera3D.PROJECTION_PERSPECTIVE
 		camera.global_transform = frame[0]

@@ -10,7 +10,7 @@ MENU_PAUSE_TITLE,Paused,Pause
 MENU_RESUME,Resume,Reprendre
 MENU_QUIT,Save and quit,Sauvegarder et quitter
 MENU_WORLD_SETTINGS,World,Monde
-MENU_GAME_SETTINGS,Settings,Paramètres
+MENU_GAME_SETTINGS,Game,Jeu
 SETTING_TIME_MODE,Time,Temps
 TIME_MODE_NORMAL,Normal,Normal
 TIME_MODE_SYNCED,Sync with device,Synchroniser avec l'appareil
@@ -30,7 +30,7 @@ LANGUAGE_FR,Français,Français
 LANGUAGE_EN,English,English
 SETTING_ZOOM,Zoom,Zoom
 ZOOM_AUTO,Automatic,Automatique
-SETTING_QUALITY,Graphics,Graphismes
+SETTING_QUALITY,Quality,Qualité
 QUALITY_LOW,Low,Bas
 QUALITY_MEDIUM,Medium,Moyen
 QUALITY_HIGH,High,Élevé
@@ -38,7 +38,7 @@ QUALITY_ULTRA,Ultra,Ultra
 SETTING_HD,HD rendering,Rendu HD
 SETTING_MAX_FPS,Max frame rate,Images par seconde max
 SETTING_CAVE_FIRST_PERSON,First person in caves,1re personne dans les grottes
-FPS_SCREEN,Screen rate (VSync),Fréquence de l'écran (VSync)
+FPS_SCREEN,Screen (%d Hz),Écran (%d Hz)
 HUD_DAY_TIME,Day %d - %s,Jour %d - %s
 HUD_FROZEN,(frozen),(figé)
 HUD_SYNCED,(synced),(synchro)
@@ -493,3 +493,26 @@ BOOK_FARM_TILL,"A hoe tills grass or dirt into farmland (right click; the tall g
 BOOK_FARM_SOW,"Sow on farmland (right click): wheat seeds come from tall grass, now and then a wild carrot or potato too. Crops grow in four stages in the light, faster on wet farmland.","Sème sur la terre labourée (clic droit) : les graines de blé viennent des hautes herbes, avec de temps en temps une carotte ou une pomme de terre sauvage. Les cultures poussent en quatre stades à la lumière, plus vite sur une terre humide."
 BOOK_FARM_HARVEST,"Ripe (golden wheat, orange carrot tops, flowering potatoes), a crop gives its harvest: wheat and seeds, 2 to 4 carrots or potatoes. Broken too soon, only its seed back.","Mûre (blé doré, collet orange des carottes, pommes de terre en fleur), une culture donne sa récolte : du blé et des graines, 2 à 4 carottes ou pommes de terre. Cassée trop tôt, elle ne rend que sa graine."
 BOOK_FARM_BREAD,"Three wheat make dough (crafting grid); the food furnace bakes it into bread, and potatoes into baked potatoes.","Trois blés font une pâte à pain (grille de fabrication) ; le four alimentaire la cuit en pain, et les pommes de terre en pommes de terre cuites."
+MENU_DISPLAY_SETTINGS,Display,Affichage
+MENU_GRAPHICS_SETTINGS,Graphics,Graphismes
+SETTING_WINDOW_MODE,Display mode,Mode d'affichage
+WINDOW_WINDOWED,Windowed,Fenêtré
+WINDOW_FULLSCREEN,Fullscreen,Plein écran
+WINDOW_EXCLUSIVE,Exclusive fullscreen,Plein écran exclusif
+SETTING_SCREEN,Screen,Écran
+SCREEN_ITEM,"%d: %d × %d, %d Hz","%d : %d × %d, %d Hz"
+SETTING_RESOLUTION,Resolution,Résolution
+RESOLUTION_FREE,Window (%d × %d),Fenêtre (%d × %d)
+RESOLUTION_SCREEN,Screen (%d × %d),Écran (%d × %d)
+SETTING_VSYNC,Vertical sync,Synchro verticale
+VSYNC_OFF,Off,Désactivée
+VSYNC_ON,On,Activée
+VSYNC_ADAPTIVE,Adaptive,Adaptative
+FPS_UNLIMITED,Unlimited,Illimitées
+SETTING_SHOW_FPS,Frame counter,Compteur d'images
+SETTING_FAR_VIEW,View distance (first person),Distance de vue (1re pers.)
+CHUNKS_COUNT,%d chunks,%d chunks
+SETTING_BRIGHTNESS,Brightness,Luminosité
+SETTING_UI_SCALE,Interface size,Taille de l'interface
+SETTING_FOV,Field of view (first person),Champ de vision (1re pers.)
+SETTING_MOUSE,Mouse sensitivity,Sensibilité de la souris

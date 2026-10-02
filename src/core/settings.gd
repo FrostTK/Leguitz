@@ -10,10 +10,22 @@ const LANGUAGE_AUTO := "auto"
 const SUPPORTED_LANGUAGES: Array[String] = ["fr", "en"]
 const MAX_UI_SCALE := 8
 const MAX_WORLD_ZOOM := 12
-## Frame rate limits offered (0 = the screen's rate, with VSync).
-const FPS_CHOICES: Array[int] = [30, 60, 120, 144, 0]
+## Frame rate limits offered (0: the screen's rate, -1: none).
+const FPS_CHOICES: Array[int] = [30, 60, 100, 120, 144, 165, 240, 0, -1]
 ## While the game window is in the background.
 const BACKGROUND_FPS := 15
+## The display settings saved with their own names (see choose).
+const DISPLAY_KEYS: Array[StringName] = [
+	&"window_mode",
+	&"screen",
+	&"resolution",
+	&"vsync",
+	&"show_fps",
+	&"far_view",
+	&"brightness",
+	&"first_person_fov",
+	&"mouse_sensitivity",
+]
 
 ## "auto" follows the system language, otherwise one of SUPPORTED_LANGUAGES.
 var language := LANGUAGE_AUTO
@@ -28,9 +40,26 @@ var graphics_quality := 2
 ## Renders the 3D world at full screen resolution instead of one texel per
 ## art pixel: smoother lighting and shadows, same pixel-art textures.
 var hd_rendering := false
-## Frames per second at most (0 = the screen's refresh rate): no need to
-## keep the graphics card at full power for a calm pixel-art world.
+## Frames per second at most (0: the screen's refresh rate, -1: no limit):
+## no need to keep the graphics card at full power for a calm pixel-art
+## world.
 var max_fps := 60
+## The window (DisplayModes): its mode, its screen (-1: where it is), its
+## size when windowed (ZERO: as it opens or was resized), vertical sync.
+var window_mode := DisplayModes.Mode.WINDOWED
+var screen := -1
+var resolution := Vector2i.ZERO
+var vsync := DisplayModes.Sync.ON
+## A small frame rate counter in a corner (the F3 screen tells more).
+var show_fps := false
+## Chunks loaded around the player in first person: how far one sees (the
+## haze follows).
+var far_view := 6
+## The picture's brightness (1: as made; the caves' dark stays dark).
+var brightness := 1.0
+## First person: the field of view (degrees) and the mouse's speed.
+var first_person_fov := 70.0
+var mouse_sensitivity := 1.0
 ## Goes first person when entering a cave (V switches by hand anyway).
 var cave_first_person := true
 ## The player's book in a 10th slot beside the hotbar (see BookScreen).
@@ -46,7 +75,7 @@ func _ready() -> void:
 	InputBindings.register_defaults()
 	load_settings()
 	apply_language()
-	apply_max_fps()
+	apply_display()
 	get_tree().root.size_changed.connect(apply_ui_scale)
 	apply_ui_scale()
 
@@ -102,7 +131,26 @@ func set_max_fps(value: int) -> void:
 
 
 func apply_max_fps() -> void:
-	Engine.max_fps = max_fps
+	Engine.max_fps = DisplayModes.fps_cap(max_fps, DisplayModes.refresh_rate(screen))
+
+
+## The window, the vertical sync and the frame limit (DisplayModes).
+func apply_display() -> void:
+	DisplayModes.apply(window_mode, screen, resolution, vsync, max_fps)
+
+
+## Sets one of the settings chosen in the menu, applies it, saves it.
+func choose(key: StringName, value: Variant) -> void:
+	if key == &"language":
+		set_language(value)
+		return
+	set(key, value)
+	if key in [&"window_mode", &"screen", &"resolution", &"vsync", &"max_fps"]:
+		apply_display()
+	elif key == &"ui_scale":
+		apply_ui_scale()
+	_save_choice(key)
+	changed.emit(key)
 
 
 func _notification(what: int) -> void:
@@ -157,6 +205,8 @@ func load_settings() -> void:
 	graphics_quality = file.get_value("display", "graphics_quality", graphics_quality)
 	hd_rendering = file.get_value("display", "hd_rendering", hd_rendering)
 	max_fps = file.get_value("display", "max_fps", max_fps)
+	for key: StringName in DISPLAY_KEYS:
+		set(key, file.get_value("display", key, get(key)))
 	cave_first_person = file.get_value("display", "cave_first_person", cave_first_person)
 	guide_book = file.get_value("display", "guide_book", guide_book)
 	show_debug = file.get_value("debug", "show_debug", show_debug)
@@ -179,6 +229,8 @@ func save_settings() -> void:
 	file.set_value("display", "graphics_quality", _saved(&"graphics_quality"))
 	file.set_value("display", "hd_rendering", _saved(&"hd_rendering"))
 	file.set_value("display", "max_fps", _saved(&"max_fps"))
+	for key: StringName in DISPLAY_KEYS:
+		file.set_value("display", key, _saved(key))
 	file.set_value("display", "cave_first_person", _saved(&"cave_first_person"))
 	file.set_value("display", "guide_book", _saved(&"guide_book"))
 	file.set_value("debug", "show_debug", _saved(&"show_debug"))
