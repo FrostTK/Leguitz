@@ -40,7 +40,7 @@ static func order() -> Array[int]:
 static func _rank(item: int) -> int:
 	var group := 2
 	var voxel := Items.placed_voxel(item)
-	if Items.TOOLS.has(item):
+	if Items.TOOLS.has(item) or item == Items.Id.WATERING_CAN:
 		group = 4
 	elif Armor.is_armor(item) or item in [Items.Id.BOW, Items.Id.ARROW]:
 		group = 5

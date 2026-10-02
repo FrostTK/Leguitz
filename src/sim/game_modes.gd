@@ -63,19 +63,20 @@ static func _restore(session: GameServer.PlayerSession) -> void:
 ## `bag`'s cursor: with empty hands, left takes a stack of it, right one;
 ## with it in hand, left fills the stack, right adds one; with something
 ## else in hand, that goes away. Shift puts a stack of it into the slots
-## (hotbar first).
+## (hotbar first). A watering can comes full.
 static func take_from_catalog(bag: Inventory, item: int, right: bool, shift: bool) -> void:
 	if not Items.is_valid(item) or item == Items.Id.GUIDE_BOOK:
 		return
 	var stack := Items.max_stack(item)
+	var fresh := Items.CAN_WATER if item == Items.Id.WATERING_CAN else 0
 	if shift:
-		bag.add(item, stack)
+		bag.add(item, stack, fresh)
 		return
 	var held := bag.items[Inventory.CURSOR]
 	if held == Items.Id.NONE:
 		bag.items[Inventory.CURSOR] = item
 		bag.counts[Inventory.CURSOR] = 1 if right else stack
-		bag.wear[Inventory.CURSOR] = 0
+		bag.wear[Inventory.CURSOR] = fresh
 	elif held == item:
 		var more := mini(bag.counts[Inventory.CURSOR] + 1, stack)
 		bag.counts[Inventory.CURSOR] = more if right else stack

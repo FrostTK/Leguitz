@@ -83,7 +83,7 @@ static func is_soil(voxel: int) -> bool:
 
 
 ## Whether something set in a cell may grow: a sapling, a young tree, an
-## unripe crop, dirt, farmland.
+## unripe crop, dirt, farmland, a full composter (rotting).
 static func may_grow(voxel: int) -> bool:
 	var block := Voxels.block_of(voxel)
 	return (
@@ -92,16 +92,20 @@ static func may_grow(voxel: int) -> bool:
 		or Farming.STAGES.has(block)
 		or voxel == Voxels.of_ground(Tiles.Ground.DIRT)
 		or Farming.is_farmland(voxel)
+		or block == Tiles.Block.COMPOSTER_FULL
 	)
 
 
 ## A voxel of a chunk changed (WorldState.set_voxel): what may grow there,
-## and the dirt under it laid bare.
+## and the dirt under it laid bare; what is no farmland any more forgets
+## its water.
 static func note(chunk: ChunkData, cell: Vector3i, voxel: int) -> void:
 	if may_grow(voxel):
 		chunk.growing[cell] = true
 	else:
 		chunk.growing.erase(cell)
+	if not Farming.is_farmland(voxel):
+		chunk.watered.erase(cell)
 	if cell.y > 0 and not Voxels.is_cube(voxel) and not Voxels.is_liquid(voxel):
 		var local := Coords.tile_to_local(Vector2i(cell.x, cell.z))
 		var under := chunk.get_voxel(Vector3i(local.x, cell.y - 1, local.y))
@@ -129,7 +133,13 @@ static func _grow(
 	var dirt := voxel == Voxels.of_ground(Tiles.Ground.DIRT)
 	if Farming.is_farmland(voxel):
 		var fallow := seconds / server.clock.scale_duration(Farming.FALLOW_SECONDS)
-		Farming.settle_farmland(server, cell, voxel, chance if chance >= 0.0 else fallow)
+		var watered := Watering.dry_out(server, chunk, cell, seconds)
+		Farming.settle_farmland(server, cell, voxel, chance if chance >= 0.0 else fallow, watered)
+		return
+	if block == Tiles.Block.COMPOSTER_FULL:
+		var rot := seconds / server.clock.scale_duration(Composting.ROT_SECONDS)
+		if server.rng.randf() < (chance if chance >= 0.0 else rot):
+			server.change_voxel(cell, Voxels.of_block(Tiles.Block.COMPOSTER_READY))
 		return
 	var mean := GRASS_SECONDS
 	if SAPLINGS.has(block):
@@ -149,13 +159,13 @@ static func _grow(
 	var lit_at := cell + Vector3i.UP if dirt else cell
 	if Light.level(world, lit_at, server.clock) < LIGHT:
 		return
-	var next := _next(world, chunk, cell, voxel)
+	var next := next_stage(world, chunk, cell, voxel)
 	if next != voxel:
 		server.change_voxel(cell, next)
 
 
 ## What a cell grows into now (itself: not yet, no room).
-static func _next(world: WorldState, chunk: ChunkData, cell: Vector3i, voxel: int) -> int:
+static func next_stage(world: WorldState, chunk: ChunkData, cell: Vector3i, voxel: int) -> int:
 	var block := Voxels.block_of(voxel)
 	if voxel == Voxels.of_ground(Tiles.Ground.DIRT):
 		for side in AROUND:

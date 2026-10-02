@@ -2,8 +2,9 @@ class_name ItemSlot
 extends Control
 ## One inventory slot: a small frame, the item's icon and how many there
 ## are, or for a worn tool what is left of it (a bar going from green to
-## red). Draws itself (see show_stack); clicks are reported by `clicked`.
-## Empty, it may show the shape of what goes in it (`hint`, armor slots).
+## red), for a watering can the water it holds (blue). Draws itself (see
+## show_stack); clicks are reported by `clicked`. Empty, it may show the
+## shape of what goes in it (`hint`, armor slots).
 
 signal clicked(slot: int, right: bool, shift: bool)
 
@@ -18,6 +19,7 @@ const NAME_FILL := Color(0.13, 0.07, 0.03, 0.94)
 const NAME_PADDING := Vector2(4.0, 2.0)
 const NAME_OFFSET := Vector2(9.0, -15.0)
 const HINT := Color(0.0, 0.0, 0.0, 0.35)
+const CAN_WATER_COLOR := Color("4aa8e8")
 
 var slot := 0
 var selected := false
@@ -116,8 +118,8 @@ static func draw_name(canvas: Control, item: int, at: Vector2) -> void:
 	)
 
 
-## Draws a stack (icon and count, or a worn tool's bar) centered at
-## `center` on any control.
+## Draws a stack (icon and count, a worn tool's bar, the water left in a
+## watering can) centered at `center` on any control.
 static func draw_stack(
 	canvas: Control, items: ItemLibrary, item: int, count: int, center: Vector2, wear := 0
 ) -> void:
@@ -129,14 +131,20 @@ static func draw_stack(
 			icon, Rect2(center - Vector2.ONE * ICON * 0.5, Vector2.ONE * ICON), false
 		)
 	var durability := Items.durability(item)
+	var bar := Rect2(
+		center + Vector2(-ICON * 0.5 + 2.0, ICON * 0.5 - 2.0), Vector2(ICON - 4.0, 2.0)
+	)
 	if wear > 0 and durability > 0:
 		var left := 1.0 - float(wear) / durability
-		var bar := Rect2(
-			center + Vector2(-ICON * 0.5 + 2.0, ICON * 0.5 - 2.0), Vector2(ICON - 4.0, 2.0)
-		)
 		canvas.draw_rect(bar, Color(0.05, 0.05, 0.05))
 		var fill := Rect2(bar.position, Vector2(maxf(roundf(bar.size.x * left), 1.0), 1.0))
 		canvas.draw_rect(fill, Color.from_hsv(left / 3.0, 0.9, 0.95))
+	elif item == Items.Id.WATERING_CAN:
+		canvas.draw_rect(bar, Color(0.05, 0.05, 0.05))
+		if wear > 0:
+			var full := float(wear) / Items.CAN_WATER
+			var water := Rect2(bar.position, Vector2(maxf(roundf(bar.size.x * full), 1.0), 1.0))
+			canvas.draw_rect(water, CAN_WATER_COLOR)
 	if count > 1:
 		var font := canvas.get_theme_default_font()
 		var text := str(count)

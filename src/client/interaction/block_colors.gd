@@ -57,6 +57,8 @@ static func _compute(voxel: int) -> Color:
 		return Color(WorkbenchModel.TOP[1])
 	if ObjectShapes.is_chest(block):
 		return Color(ChestModel.WOOD[2])
+	if Composting.is_composter(block):
+		return Color(FarmModels.BIN[2])
 	if DecorModels.build(ObjectShapes.base_kind(block), 0) != null:
 		return DecorModels.color_of(ObjectShapes.base_kind(block))
 	var kind := ObjectShapes.kind_of(block)

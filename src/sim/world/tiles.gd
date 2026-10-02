@@ -218,6 +218,17 @@ enum Block {
 	POTATOES_1,
 	POTATOES_2,
 	POTATOES_3,
+	# A composter (Composting), empty, filling up a level per item, full
+	# (rotting) and ready.
+	COMPOSTER,
+	COMPOSTER_1,
+	COMPOSTER_2,
+	COMPOSTER_3,
+	COMPOSTER_4,
+	COMPOSTER_5,
+	COMPOSTER_6,
+	COMPOSTER_FULL,
+	COMPOSTER_READY,
 }
 
 const FLOWERS: Array[Block] = [

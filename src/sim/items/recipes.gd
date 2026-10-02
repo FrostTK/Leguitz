@@ -62,6 +62,13 @@ const SHAPED := [
 		"ingredients": [Items.Id.WHEAT, Items.Id.WHEAT, Items.Id.WHEAT],
 		"result": [Items.Id.DOUGH, 1],
 	},
+	# The farm's: a watering can (its spout up a corner), a composter.
+	{
+		"pattern": ["C  ", " CC", " CC"],
+		"keys": {"C": Items.Id.COPPER_INGOT},
+		"result": [Items.Id.WATERING_CAN, 1],
+	},
+	{"pattern": ["P P", "P P", "PPP"], "keys": {"P": PLANKS}, "result": [Items.Id.COMPOSTER, 1]},
 	{
 		"pattern": ["P", "S", "F"],
 		"keys": {"P": STONES, "S": Items.Id.STICK, "F": Items.Id.FEATHER},

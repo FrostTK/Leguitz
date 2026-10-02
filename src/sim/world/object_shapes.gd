@@ -214,6 +214,7 @@ const TOPS := {
 	Tiles.Block.TOILET: 8,
 	Tiles.Block.TABLE: 14,
 	Tiles.Block.CHAIR: 10,
+	Tiles.Block.COMPOSTER: 14,
 }
 ## Other solid things players place, by kind: the square they block
 ## (voxels; the others facing them: BOX_SIZE).
@@ -225,6 +226,7 @@ const FOOTPRINTS := {
 	Tiles.Block.FENCE: 16,
 	Tiles.Block.GATE: 16,
 	Tiles.Block.CAMPFIRE: 12,
+	Tiles.Block.COMPOSTER: 14,
 }
 ## What keeps bodies out (fences, closed gates): two levels high, nobody
 ## jumps over.
@@ -267,6 +269,18 @@ const SHAPE_OF := {
 	Tiles.Block.LANTERN_HANGING: Tiles.Block.LANTERN,
 	Tiles.Block.LANTERN_WALL: Tiles.Block.LANTERN,
 }
+## The stages of one thing (a composter filling up): its kind (base_kind),
+## each with a model of its own.
+const STAGE_OF := {
+	Tiles.Block.COMPOSTER_1: Tiles.Block.COMPOSTER,
+	Tiles.Block.COMPOSTER_2: Tiles.Block.COMPOSTER,
+	Tiles.Block.COMPOSTER_3: Tiles.Block.COMPOSTER,
+	Tiles.Block.COMPOSTER_4: Tiles.Block.COMPOSTER,
+	Tiles.Block.COMPOSTER_5: Tiles.Block.COMPOSTER,
+	Tiles.Block.COMPOSTER_6: Tiles.Block.COMPOSTER,
+	Tiles.Block.COMPOSTER_FULL: Tiles.Block.COMPOSTER,
+	Tiles.Block.COMPOSTER_READY: Tiles.Block.COMPOSTER,
+}
 ## Fences join their neighbors (fences, gates and cubes): their version is
 ## the sides they join (FENCE_SIDES bits, 16 versions), not their tile's.
 const FENCE_SIDES: Array[Vector2i] = [
@@ -280,6 +294,7 @@ const SINGLE := {
 	Tiles.Block.TORCH: true,
 	Tiles.Block.LANTERN: true,
 	Tiles.Block.LANTERN_HANGING: true,
+	Tiles.Block.COMPOSTER: true,
 }
 ## Small things stand anywhere in their tile (whole voxels), not centered.
 const WANDERING := {
@@ -309,7 +324,7 @@ static func is_tree(block: int) -> bool:
 
 
 static func variant_count(block: int) -> int:
-	if _facing.has(block) or _wide_ends.has(block) or SINGLE.has(block):
+	if _facing.has(block) or _wide_ends.has(block) or SINGLE.has(base_kind(block)):
 		return 1
 	if block == Tiles.Block.FENCE:
 		return FENCE_VARIANTS
@@ -322,13 +337,13 @@ static func kind_of(block: int) -> int:
 
 
 ## The kind of anything placed: a facing object's, a wide object's (either
-## end), else the block itself.
+## end), a composter's however full, else the block itself.
 static func base_kind(block: int) -> int:
 	if _facing.has(block):
 		return _facing[block].x
 	if _wide_ends.has(block):
 		return _wide_ends[block][1]
-	return block
+	return STAGE_OF.get(block, block)
 
 
 ## The kind of a wide object, either end (-1: not one).
