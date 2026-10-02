@@ -363,6 +363,27 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   FIRST_OWN_SEED_GROUND draw from their own generators (older textures unchanged). ChunkSky (the
   sky light of a build) and LiquidFaces were split from ChunkMesher (1000 lines). The book's tip
   16. Not saved: the cells waiting to settle (a flow stopped by quitting stays until touched).
+- Growing plants (phase 7, step 1; `src/sim/world/growth.gd`, Growth: static, given the server):
+  saplings (Tiles.Block *_SAPLING, items of the same names: a felled tree gives 1-2 of its
+  species, Items.SAPLING_OF; a young tree its own back and a stick) are planted on soil
+  (Growth.is_soil: grasses, dirt, podzol, mud, mycelium; Mining.placement, never in water) and
+  become YOUNG_* trees (ObjectShapes.TREES entries with small trunks, modeled by TreeModels with
+  their species' generator and lower leaf floors, YOUNG_LEAF_FLOOR), then trees (a spruce in a
+  SNOWY_BIOMES column comes out SNOWY_SPRUCE: Growth.tree_for). Bare dirt next to grass turns
+  into that grass (Growth.GRASSES; dirt under a plant counts as bare). ChunkData.growing (server
+  only, saved with the region as "growing") holds the cells that may grow: Growth.note, called
+  by WorldState.set_voxel (only changes, never generation), adds saplings, young trees and dirt
+  (also dirt laid bare by what was over it), drops the rest. GameServer.tick runs Growth.update
+  every CHECK_TICKS over the loaded chunks: each cell gets its chance (CHECK_TICKS / the mean
+  duration paced by WorldClock.scale_duration: SAPLING_SECONDS, YOUNG_SECONDS, GRASS_SECONDS;
+  tests pass `chance`), then needs Light.level >= LIGHT (the night stops it, a torch near makes
+  it grow) and room (`_room`: the rows over it, a tree's trunk levels + CROWN_ROWS, free of
+  anything solid; `_spaced`: no solid object on the 8 tiles around, as WorldGenerator._spaced).
+  Models: SaplingModels (a stem and tufts of the species' bark and leaves; a spruce's cone, an
+  acacia's flat tuft, a jungle tree's broad leaves, a swamp oak's moss; also the items).
+  gen_models takes `--only=a,b,c`. The book's Farm chapter (GuideBook._farm). No offline growth.
+  ItemSlot waits for a hint's icon in `_process` (asking a redraw from `_draw` crashed Godot when
+  the inventory opened before the icons were rendered).
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made

@@ -34,10 +34,17 @@ const SNOW := ["#c7d4e4", "#e1e9f3", "#f6f9fc"]
 ## out of the crowns, and walking under trees shows their trunks.
 const LEAF_FLOOR := 32
 const STRAND_FLOOR := 30
+## A young tree's (Growth) come lower: it is small, and blocks bodies anyway.
+const YOUNG_LEAF_FLOOR := 10
+const YOUNG_STRAND_FLOOR := 8
 
 ## Leaves while a crown is being shaped, before the lighting pass paints
 ## them.
 static var _leaf := VoxelGrid.voxel(Color("#00ff00"), VoxelGrid.Kind.FOLIAGE)
+## The floors of the tree being built (see build; models are built one at
+## a time, by tools/gen_models.gd).
+static var _leaf_floor := LEAF_FLOOR
+static var _strand_floor := STRAND_FLOOR
 
 
 ## The working space of a tree: a grid larger than needed (cropped at the
@@ -68,7 +75,11 @@ static func build(block: int, variant: int) -> VoxelGrid:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = HashUtil.hash2(0x7EE5, block, variant)
 	var trunk := ObjectShapes.trunk(block, variant)
-	match block:
+	var young := Growth.YOUNG.has(block)
+	_leaf_floor = YOUNG_LEAF_FLOOR if young else LEAF_FLOOR
+	_strand_floor = YOUNG_STRAND_FLOOR if young else STRAND_FLOOR
+	# A young tree is its species' with a small trunk (ObjectShapes.TREES).
+	match Growth.YOUNG.get(block, block):
 		Tiles.Block.BIRCH:
 			return _birch(rng, trunk)
 		Tiles.Block.DARK_OAK:
@@ -289,7 +300,7 @@ static func _spruce(rng: RandomNumberGenerator, trunk: Vector2i, snowy: bool) ->
 	var wood := _wood_paint(SPRUCE_BARK, salt)
 	sketch.add_leaf_box(Vector3i.ZERO, sketch.grid.size)
 	# The lowest whorl starts at the height leaves may grow from.
-	var first := maxi(int(h * rng.randf_range(0.1, 0.16)), LEAF_FLOOR + 2)
+	var first := maxi(int(h * rng.randf_range(0.1, 0.16)), _leaf_floor + 2)
 	var y := float(first)
 	var angle := rng.randf() * TAU
 	while y < h - 3:
@@ -490,7 +501,7 @@ static func _bough(
 				continue
 			for dy in range(-2, 1):
 				var spot := Vector3i((p + side * k + Vector3(0, dy, 0)).floor())
-				if spot.y < LEAF_FLOOR or grid.get_voxel(spot) != 0:
+				if spot.y < _leaf_floor or grid.get_voxel(spot) != 0:
 					continue
 				if _noise(spot / 2, 41) > 0.1:
 					grid.set_voxel(spot, _leaf)
@@ -523,7 +534,7 @@ static func _cluster(sketch: Sketch, center: Vector3, radii: Vector3, salt: int)
 	var grid := sketch.grid
 	var low := Vector3i((center - radii * 1.2).floor())
 	var high := Vector3i((center + radii * 1.2).ceil())
-	low.y = maxi(low.y, LEAF_FLOOR)
+	low.y = maxi(low.y, _leaf_floor)
 	sketch.add_leaf_box(low, high)
 	for z in range(low.z, high.z + 1):
 		for y in range(low.y, high.y + 1):
@@ -554,7 +565,7 @@ static func _umbrella(
 				var thick := 2 if d < edge - 3.0 else 1
 				for dy in thick:
 					var p := Vector3i(x, y + dy, z)
-					if p.y >= LEAF_FLOOR and sketch.grid.get_voxel(p) == 0:
+					if p.y >= _leaf_floor and sketch.grid.get_voxel(p) == 0:
 						sketch.grid.set_voxel(p, _leaf)
 
 
@@ -597,7 +608,7 @@ static func _smooth_leaves(sketch: Sketch) -> void:
 						leaves += 1
 				if value == _leaf and leaves <= 1:
 					changes[index] = 0
-				elif value == 0 and leaves >= 4 and y >= LEAF_FLOOR:
+				elif value == 0 and leaves >= 4 and y >= _leaf_floor:
 					changes[index] = _leaf
 	for index in changes:
 		grid.voxels[index] = changes[index]
@@ -671,7 +682,7 @@ static func _hang(
 					var length := rng.randi_range(longest / 4, longest)
 					for k in range(1, length):
 						var p := Vector3i(x, y - k, z)
-						if y - k < STRAND_FLOOR or grid.get_voxel(p) != 0:
+						if y - k < _strand_floor or grid.get_voxel(p) != 0:
 							break
 						grid.set_voxel(p, color)
 				break

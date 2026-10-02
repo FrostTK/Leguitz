@@ -31,6 +31,9 @@ var chests: Dictionary[Vector3i, Inventory] = {}
 ## Server side: the furnaces standing in the chunk (see
 ## WorldState.furnace_at), saved with it; the server runs them.
 var furnaces: Dictionary[Vector3i, Furnace] = {}
+## Server side: the cells where something may grow (see Growth), saved
+## with it.
+var growing: Dictionary[Vector3i, bool] = {}
 
 
 func _init(chunk_coord := Vector2i.ZERO) -> void:

@@ -20,6 +20,7 @@ const CHAPTERS: Array[String] = [
 	"BOOK_CHAPTER_CRAFT",
 	"BOOK_CHAPTER_FURNACES",
 	"BOOK_CHAPTER_HOME",
+	"BOOK_CHAPTER_FARM",
 	"BOOK_CHAPTER_SURVIVAL",
 	"BOOK_CHAPTER_ANIMALS",
 	"BOOK_CHAPTER_MONSTERS",
@@ -53,6 +54,7 @@ static func chapters() -> Array[Array]:
 		_craft(),
 		_furnaces(),
 		_home(),
+		_farm(),
 		_survival(),
 		_animals(),
 		_monsters(),
@@ -226,6 +228,20 @@ static func _home() -> Array:
 		_icon(Items.Id.GATE, _t("BOOK_HOME_GATE")),
 		_icon(Items.Id.BIG_GATE, _t("BOOK_HOME_BIG_GATE")),
 		_icon(Items.Id.CAMPFIRE, _t("BOOK_HOME_CAMPFIRE")),
+	]
+
+
+## What grows: saplings into trees, grass back on bare dirt (crops and
+## animals later in phase 7).
+static func _farm() -> Array:
+	return [
+		_title("BOOK_CHAPTER_FARM"),
+		_text("BOOK_FARM_INTRO"),
+		_heading("BOOK_FARM_TREES"),
+		_icon(Items.Id.OAK_SAPLING, _t("BOOK_FARM_SAPLING")),
+		_icon(Items.Id.SPRUCE_SAPLING, _t("BOOK_FARM_YOUNG")),
+		_heading("BOOK_FARM_GRASS"),
+		_icon(Items.Id.DIRT, _t("BOOK_FARM_GRASS_BACK")),
 	]
 
 

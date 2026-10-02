@@ -2,25 +2,25 @@ extends SceneTree
 ## Builds the voxel models (VoxelModels) into meshes saved under
 ## assets/models/. Run after changing a model:
 ##
-##   godot --headless --path . -s res://tools/gen_models.gd [-- --only=oak]
+##   godot --headless --path . -s res://tools/gen_models.gd [-- --only=oak,birch]
 
 
 func _initialize() -> void:
-	var only := ""
+	var only := PackedStringArray()
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--only="):
-			only = arg.trim_prefix("--only=")
+			only = arg.trim_prefix("--only=").split(",")
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(VoxelModels.BLOCK_DIR))
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(VoxelModels.PLAYER_DIR))
 	var started := Time.get_ticks_msec()
 	var triangles := 0
 	for block in VoxelModels.modeled_blocks():
 		var name := String(Tiles.Block.find_key(block)).to_lower()
-		if not only.is_empty() and name != only:
+		if not only.is_empty() and not only.has(name):
 			continue
 		for variant in ObjectShapes.variant_count(block):
 			triangles += _save_lods(block, variant)
-	if only.is_empty() or only == "player":
+	if only.is_empty() or only.has("player"):
 		for part in VoxelModels.PLAYER_PARTS:
 			triangles += _save(VoxelModels.build_player_part(part), VoxelModels.player_path(part))
 	print(

@@ -112,8 +112,9 @@ const BLOCK_SECONDS := {
 	Tiles.Block.LANTERN_HANGING: 1.0,
 	Tiles.Block.LANTERN_WALL: 1.0,
 }
-## Trees by hand: chopping a trunk takes a while.
+## Trees by hand: chopping a trunk takes a while (a young one less).
 const TREE_SECONDS := 3.5
+const YOUNG_TREE_SECONDS := 1.2
 ## How far up (rows) a lantern placed with Shift looks for a ceiling.
 const CEILING_SEARCH := 3
 ## After a break, the next one waits this long (Minecraft's quarter of a
@@ -221,6 +222,7 @@ static func can_place(voxel: int) -> bool:
 		Voxels.is_cube(voxel)
 		or ObjectShapes.front_of(block) != Vector2i.ZERO
 		or FLOOR_OBJECTS.has(block)
+		or Growth.SAPLINGS.has(block)
 	)
 
 
@@ -275,6 +277,11 @@ static func placement(
 		return {cell: Voxels.of_block(ObjectShapes.facing(kind, front))}
 	if FLOOR_OBJECTS.has(block):
 		return {cell: voxel} if _bench_room(cell, voxel_at) else {}
+	if Growth.SAPLINGS.has(block):
+		var there: int = voxel_at.call(cell)
+		var soil: int = voxel_at.call(cell + Vector3i.DOWN)
+		var free := is_replaceable(there) and not Voxels.is_liquid(there)
+		return {cell: voxel} if free and Growth.is_soil(soil) else {}
 	return {cell: voxel} if is_replaceable(voxel_at.call(cell)) else {}
 
 
@@ -463,6 +470,8 @@ static func hand_seconds(voxel: int) -> float:
 	var block := Voxels.block_of(voxel)
 	if block == Tiles.Block.AIR:
 		return GROUND_SECONDS.get(Voxels.ground_of(voxel), SOIL_SECONDS)
+	if Growth.YOUNG.has(block):
+		return YOUNG_TREE_SECONDS
 	if ObjectShapes.is_tree(block):
 		return TREE_SECONDS
 	if BLOCK_SECONDS.has(block):

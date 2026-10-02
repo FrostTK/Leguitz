@@ -13,9 +13,20 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 
 ![Leguitz : vue par défaut, fin d'après-midi caméra tournée, neige, nuit à la lanterne](docs/screenshots/phase2-3d-jour-nuit.png)
 
-## État actuel : phase 6 (souterrain et structures) en cours
+## État actuel : phase 7 (agriculture et élevage) en cours
 
-### Phase 6 : souterrain et structures (en cours)
+### Phase 7 : agriculture et élevage (en cours)
+
+| Fonction | État |
+|---|---|
+| Végétation qui pousse : un arbre abattu donne des pousses de son espèce ; plantées, elles deviennent de jeunes arbres puis des arbres à la lumière ; la terre nue reverdit à côté de l'herbe | ✅ |
+| Houe, champs et graines, arrosage, compost, nouvelles cultures et arbres fruitiers | à venir |
+| Élevage (reproduction, bébés, produits sans tuer), animaux de ferme, animaux sauvages et prédateurs | à venir |
+| Cuisine, pêche, chien et chat, saisons | à venir |
+
+![Leguitz : trois rangées plantées des 7 espèces : arbres, jeunes arbres et pousses, vus de dessus et en 1re personne ; les pousses dans l'inventaire](docs/screenshots/phase7-vegetation.png)
+
+### Phase 6 : souterrain et structures (en pause : la suite viendra après la phase 7)
 
 | Fonction | État |
 |---|---|
@@ -262,8 +273,8 @@ Pour le multijoueur, il suffira de brancher un transport réseau.
 3. ✅ Joueur et interactions (minage, construction, objets, inventaire, outils, livre du joueur)
 4. ✅ Craft (recettes, établi, usure, coffres, fours, blocs de construction)
 5. ✅ Survie et combat (vie, faim, nage, modes de jeu, animaux, monstres, combat et armures)
-6. Souterrain et structures (en cours : maison et jardin, torches et lanternes, lumière des grottes, coulées d'eau et de lave)
-7. Agriculture et élevage
+6. Souterrain et structures (en pause : maison et jardin, torches et lanternes, lumière des grottes, coulées d'eau et de lave faits)
+7. Agriculture et élevage (en cours : végétation qui pousse)
 8. Mode Arcade : scénario n°1 « Restauration » (restaurer une terre désolée avec éoliennes,
    irrigateurs et purificateurs, faire revenir forêts, rivières et animaux, puis recycler les
    bâtiments et continuer en survie)

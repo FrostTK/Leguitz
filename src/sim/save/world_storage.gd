@@ -135,6 +135,8 @@ func load_chunk(coord: Vector2i) -> ChunkData:
 		chunk.chests[cell] = chest
 	for cell: Vector3i in data.get("furnaces", {}):
 		chunk.furnaces[cell] = Furnace.from_dict(data["furnaces"][cell])
+	for cell: Vector3i in data.get("growing", []):
+		chunk.growing[cell] = true
 	return chunk
 
 
@@ -153,6 +155,7 @@ func store_chunk(chunk: ChunkData) -> void:
 		"biome": chunk.biome,
 		"chests": chests,
 		"furnaces": furnaces,
+		"growing": chunk.growing.keys(),
 	}
 	_dirty[key] = true
 

@@ -36,6 +36,15 @@ var _icon: Texture2D
 func _init() -> void:
 	custom_minimum_size = Vector2.ONE * SIZE
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	set_process(false)
+
+
+## Waits for the hint's icon (icons come after the start; asking for a
+## redraw from _draw itself crashes Godot when it is shown early).
+func _process(_delta: float) -> void:
+	if library == null or library.icon(hint) != null:
+		set_process(false)
+		queue_redraw()
 
 
 func show_stack(item: int, count: int, is_selected := false, wear := 0) -> void:
@@ -81,8 +90,8 @@ func _draw() -> void:
 			var corner := size * 0.5 - Vector2.ONE * ICON * 0.5
 			draw_texture_rect(shape, Rect2(corner, Vector2.ONE * ICON), false, HINT)
 		else:
-			# Icons come after the start: try again.
-			queue_redraw.call_deferred()
+			# Icons come after the start: drawn again once it is there.
+			set_process(true)
 
 
 ## Draws an item's name in a dark box beside `at` (the mouse) on any

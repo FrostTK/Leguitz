@@ -58,6 +58,8 @@ static func player_path(part: String) -> String:
 static func build(block: int, variant: int) -> VoxelGrid:
 	if ObjectShapes.is_tree(block):
 		return TreeModels.build(block, variant)
+	if Growth.SAPLINGS.has(block):
+		return SaplingModels.build(block, variant)
 	var decor := DecorModels.build(block, variant)
 	if decor != null:
 		return decor

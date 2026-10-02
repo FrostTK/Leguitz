@@ -50,6 +50,7 @@ func set_voxel(cell: Vector3i, voxel: int) -> void:
 	chunk.set_voxel(Vector3i(local.x, cell.y, local.y), voxel)
 	chunk.modified = true
 	_changed[chunk.coord] = true
+	Growth.note(chunk, cell, voxel)
 
 
 ## The chest standing in a cell (its Inventory, empty the first time).

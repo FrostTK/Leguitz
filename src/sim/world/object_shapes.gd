@@ -25,6 +25,15 @@ const TREES := {
 	Tiles.Block.ACACIA: [Vector2i(4, 6), Vector2i(36, 48)],
 	Tiles.Block.SPRUCE: [Vector2i(4, 6), Vector2i(84, 120)],
 	Tiles.Block.SNOWY_SPRUCE: [Vector2i(4, 6), Vector2i(84, 120)],
+	# Young trees (Growth): a thin trunk a level or two high under a small
+	# crown.
+	Tiles.Block.YOUNG_OAK: [Vector2i(2, 4), Vector2i(26, 36)],
+	Tiles.Block.YOUNG_BIRCH: [Vector2i(2, 4), Vector2i(30, 42)],
+	Tiles.Block.YOUNG_SPRUCE: [Vector2i(2, 4), Vector2i(34, 48)],
+	Tiles.Block.YOUNG_DARK_OAK: [Vector2i(4, 6), Vector2i(24, 34)],
+	Tiles.Block.YOUNG_JUNGLE_TREE: [Vector2i(2, 4), Vector2i(34, 46)],
+	Tiles.Block.YOUNG_ACACIA: [Vector2i(2, 4), Vector2i(22, 32)],
+	Tiles.Block.YOUNG_SWAMP_OAK: [Vector2i(2, 4), Vector2i(26, 36)],
 }
 ## Other solid objects: the size of the square they block (voxels) and how
 ## many levels up.

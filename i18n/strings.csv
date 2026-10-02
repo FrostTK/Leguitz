@@ -460,3 +460,17 @@ BOOK_HOME_LIGHTS,Lights,Lumières
 BOOK_HOME_TORCH,"Torch: on the ground, or in a torch bracket (aim at it, torch in hand).","Torche : au sol, ou dans un support mural (vise-le, la torche en main)."
 BOOK_HOME_LANTERN,"Lantern: on the ground, on a wall, or hung from a ceiling: aim at the underside of a block, or at the floor under it holding {sprint}.","Lanterne : au sol, au mur, ou suspendue au plafond : vise le dessous d'un bloc, ou le sol en dessous en tenant {sprint}."
 BOOK_HOME_LIGHTS_KEEP,"Torches, lanterns and fires light up around them and keep monsters away. Daylight comes in through openings and windows, fading a little at each step: without lights, the depths of a cave or a closed room are black.","Torches, lanternes et feux éclairent autour d'eux et tiennent les monstres à distance. Le jour entre par les ouvertures et les fenêtres et faiblit à chaque pas : sans lumières, le fond d'une grotte ou une pièce fermée sont noirs."
+ITEM_OAK_SAPLING,Oak sapling,Pousse de chêne
+ITEM_BIRCH_SAPLING,Birch sapling,Pousse de bouleau
+ITEM_SPRUCE_SAPLING,Spruce sapling,Pousse d'épicéa
+ITEM_DARK_OAK_SAPLING,Dark oak sapling,Pousse de chêne noir
+ITEM_JUNGLE_SAPLING,Jungle sapling,Pousse d'acajou
+ITEM_ACACIA_SAPLING,Acacia sapling,Pousse d'acacia
+ITEM_SWAMP_OAK_SAPLING,Swamp oak sapling,Pousse de chêne des marais
+BOOK_CHAPTER_FARM,Farm,La ferme
+BOOK_FARM_INTRO,"Plants grow by themselves in the light: by day, or near a torch or a lantern. At night and in the dark, they wait.","Les plantes poussent toutes seules à la lumière : le jour, ou près d'une torche ou d'une lanterne. La nuit et dans le noir, elles attendent."
+BOOK_FARM_TREES,Trees,Arbres
+BOOK_FARM_SAPLING,"A felled tree gives one or two saplings of its kind. Plant them in grass or dirt: they become young trees, then trees, if nothing is over them and no rock or tree stands right beside.","Un arbre abattu donne une ou deux pousses de son espèce. Plante-les dans l'herbe ou la terre : elles deviennent de jeunes arbres, puis des arbres, si rien n'est au-dessus et qu'aucun rocher ni arbre ne se tient juste à côté."
+BOOK_FARM_YOUNG,"A young tree you fell gives its sapling back. A spruce growing in the snow comes out snowy.","Un jeune arbre abattu rend sa pousse. Un épicéa qui grandit dans la neige sort enneigé."
+BOOK_FARM_GRASS,Grass,Herbe
+BOOK_FARM_GRASS_BACK,"Bare dirt next to grass turns green again after a while in the light.","La terre nue à côté de l'herbe reverdit au bout d'un moment à la lumière."

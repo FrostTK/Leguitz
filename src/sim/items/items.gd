@@ -149,6 +149,13 @@ enum Id {
 	CAMPFIRE,
 	TORCH,
 	LANTERN,
+	OAK_SAPLING,
+	BIRCH_SAPLING,
+	SPRUCE_SAPLING,
+	DARK_OAK_SAPLING,
+	JUNGLE_SAPLING,
+	ACACIA_SAPLING,
+	SWAMP_OAK_SAPLING,
 }
 ## What a tool is made for (Mining.tool_for: what it breaks faster).
 enum Tool { NONE, PICKAXE, AXE, SHOVEL, SWORD }
@@ -241,6 +248,13 @@ const PLACES_BLOCK := {
 	Id.CAMPFIRE: Tiles.Block.CAMPFIRE,
 	Id.TORCH: Tiles.Block.TORCH,
 	Id.LANTERN: Tiles.Block.LANTERN,
+	Id.OAK_SAPLING: Tiles.Block.OAK_SAPLING,
+	Id.BIRCH_SAPLING: Tiles.Block.BIRCH_SAPLING,
+	Id.SPRUCE_SAPLING: Tiles.Block.SPRUCE_SAPLING,
+	Id.DARK_OAK_SAPLING: Tiles.Block.DARK_OAK_SAPLING,
+	Id.JUNGLE_SAPLING: Tiles.Block.JUNGLE_SAPLING,
+	Id.ACACIA_SAPLING: Tiles.Block.ACACIA_SAPLING,
+	Id.SWAMP_OAK_SAPLING: Tiles.Block.SWAMP_OAK_SAPLING,
 }
 
 ## What a ground gives (soil gives dirt); grounds left out give nothing.
@@ -382,6 +396,25 @@ const TREE_LOGS := {
 	Tiles.Block.JUNGLE_TREE: Id.JUNGLE_LOG,
 	Tiles.Block.ACACIA: Id.ACACIA_LOG,
 }
+## The sapling a tree (grown or young) gives: a felled tree one or two, a
+## young one its own back.
+const SAPLING_OF := {
+	Tiles.Block.OAK: Id.OAK_SAPLING,
+	Tiles.Block.SWAMP_OAK: Id.SWAMP_OAK_SAPLING,
+	Tiles.Block.BIRCH: Id.BIRCH_SAPLING,
+	Tiles.Block.SPRUCE: Id.SPRUCE_SAPLING,
+	Tiles.Block.SNOWY_SPRUCE: Id.SPRUCE_SAPLING,
+	Tiles.Block.DARK_OAK: Id.DARK_OAK_SAPLING,
+	Tiles.Block.JUNGLE_TREE: Id.JUNGLE_SAPLING,
+	Tiles.Block.ACACIA: Id.ACACIA_SAPLING,
+	Tiles.Block.YOUNG_OAK: Id.OAK_SAPLING,
+	Tiles.Block.YOUNG_SWAMP_OAK: Id.SWAMP_OAK_SAPLING,
+	Tiles.Block.YOUNG_BIRCH: Id.BIRCH_SAPLING,
+	Tiles.Block.YOUNG_SPRUCE: Id.SPRUCE_SAPLING,
+	Tiles.Block.YOUNG_DARK_OAK: Id.DARK_OAK_SAPLING,
+	Tiles.Block.YOUNG_JUNGLE_TREE: Id.JUNGLE_SAPLING,
+	Tiles.Block.YOUNG_ACACIA: Id.ACACIA_SAPLING,
+}
 
 ## Block kind -> the item placing it (see drops).
 static var _placed_by := _build_placed_by()
@@ -464,6 +497,11 @@ static func drops(voxel: int, tile: Vector2i, rng: RandomNumberGenerator) -> Arr
 		var variant := ObjectShapes.variant_at(block, tile)
 		result.append(Vector2i(TREE_LOGS[block], ObjectShapes.blocking_levels(block, variant)))
 		result.append(Vector2i(Id.STICK, rng.randi_range(1, 2)))
+		result.append(Vector2i(SAPLING_OF[block], rng.randi_range(1, 2)))
+	elif SAPLING_OF.has(block):
+		# A young tree: its sapling back, and a stick.
+		result.append(Vector2i(SAPLING_OF[block], 1))
+		result.append(Vector2i(Id.STICK, 1))
 	elif BLOCK_DROPS.has(block):
 		var drop: Array = BLOCK_DROPS[block]
 		result.append(Vector2i(drop[0], rng.randi_range(drop[1], drop[2])))

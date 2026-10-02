@@ -21,7 +21,7 @@ conventions de code ; ce fichier-ci raconte le projet.
    > Lis `CLAUDE.md` et `CLAUDE-README.md`, vérifie que le projet compile et que les tests
    > passent, puis résume-moi où on en est. Attends mon « go » avant de commencer la suite.
 
-4. Dire **« go »** : Claude reprend à la **section 5** (phase 6). Les phases suivantes se lancent
+4. Dire **« go »** : Claude reprend à la **section 5** (phase 7 ; la phase 6 est en pause). Les phases suivantes se lancent
    de la même façon, une par une, chacune avec son « go ».
 
 **Manière de travailler convenue** : phase par phase ; Claude explique son plan, attend le
@@ -117,7 +117,9 @@ Godot **4.7.2** (GDScript), rendu Forward+. 186 tests unitaires, lint propre.
 | 6.0b Identifiants élargis | Les voxels passent d'un octet (191 sortes de blocs au plus, dont 61 libres) à **16 bits : des dizaines de milliers de sortes de blocs**, orientations et stades de culture compris ; les textures de cubes passent de 31 à **255**, les sols de 32 à 64 dans les shaders ; même vitesse de génération et de maillage (mesurée), un peu plus de mémoire (environ +10 Mo à la distance de vue par défaut) ; les mondes déjà sauvegardés se chargent tels quels et sont réécrits au nouveau format quand un chunk change (vérifié sur une copie du monde du propriétaire) | `b87d49c` |
 | 6.1 Torches et lanternes | **Torche** (charbon ou charbon de bois sur un bâton → 4) posée **au sol** ou **dans un support mural** (on vise le support vide, la torche en main ; jamais directement contre un mur), **lanterne** (une torche entre deux lingots de fer) **au sol, au mur** (sur un bras en fer) ou **suspendue au plafond** par une chaîne : on vise le dessous d'un bloc en 1re personne, ou **le sol avec Maj** en vue de dessus (la caméra ne voit jamais le dessous d'un plafond) ; elles **éclairent** (couleur et intensité à elles, les flammes **vacillent**, les lanternes à peine) et **tiennent les monstres à distance** ; une lanterne suspendue tombe avec son plafond, pas avec le sol ; un support allumé rend support et torche ; ce qui ne bloque pas se pose même là où l'on se tient ; les objets posés par le joueur ne sont plus remplacés comme une plante quand on pose un bloc dessus ; section « Lumières » du chapitre Maison et jardin | `31299f3` |
 | 6.2 Lumière des grottes | Un **niveau de lumière** de 0 à 15 (`LightField`, partagé) : le **jour descend** jusqu'au premier cube (le verre et les fenêtres le laissent passer, l'eau l'atténue), puis **entre par les ouvertures** en perdant un niveau par case ; le rendu le cuit dans chaque face et chaque objet : **sans lumière, une grotte ou une pièce fermée est noire**, seules la lanterne, les torches, les feux, la lave et les minerais brillants éclairent ; le joueur et les créatures s'assombrissent dans le noir ; la **lanterne** s'allume selon la lumière où l'on se tient et, en vue de dessus sous un plafond, pend sous le plafond (avant, elle flottait dans la roche) ; le **serveur** mesure la lumière d'une case (ciel le jour, faible la nuit, torches, lanternes, feux, fours, lave ; jamais la lanterne du joueur) : les **monstres ne sortent que là où elle est sous 7**, le rôdeur se fige au-dessus ; textes du livre mis à jour | `49e3562` |
-| 6.3 Coulées d'eau et de lave | L'eau et la lave du monde **restent immobiles jusqu'à ce qu'on touche à côté** ; alors elles **s'écoulent** (`Fluids`, serveur) : l'eau un pas tous les quarts de seconde, à **4 cases** sur le plat, la lave toutes les 1,5 s, à **2 cases**, en baissant d'un niveau par case (la surface descend par pixels), et toutes deux **tombent** à chaque à-pic (cascades) puis repartent en bas ; coupées de leur source elles **sèchent** ; deux sources d'eau côte à côte en remplissent une troisième ; elles noient l'herbe et les fleurs mais pas ce qu'on a posé ; un bloc posé en travers les arrête ; **eau + lave = pierre** ; on marche dans une coulée mince et on nage dans l'eau profonde ; casser un bloc à côté de l'eau ne la remplit plus d'un coup : elle coule dedans ; rendu : surfaces abaissées, **cascades** (côtés de l'eau en filets qui descendent, lave qui coule) ; la lave brille par elle-même (plus blanche en plein soleil) ; astuce 16 du livre | « Flowing water and lava » |
+| 6.3 Coulées d'eau et de lave | L'eau et la lave du monde **restent immobiles jusqu'à ce qu'on touche à côté** ; alors elles **s'écoulent** (`Fluids`, serveur) : l'eau un pas tous les quarts de seconde, à **4 cases** sur le plat, la lave toutes les 1,5 s, à **2 cases**, en baissant d'un niveau par case (la surface descend par pixels), et toutes deux **tombent** à chaque à-pic (cascades) puis repartent en bas ; coupées de leur source elles **sèchent** ; deux sources d'eau côte à côte en remplissent une troisième ; elles noient l'herbe et les fleurs mais pas ce qu'on a posé ; un bloc posé en travers les arrête ; **eau + lave = pierre** ; on marche dans une coulée mince et on nage dans l'eau profonde ; casser un bloc à côté de l'eau ne la remplit plus d'un coup : elle coule dedans ; rendu : surfaces abaissées, **cascades** (côtés de l'eau en filets qui descendent, lave qui coule) ; la lave brille par elle-même (plus blanche en plein soleil) ; astuce 16 du livre | `fba46bf` |
+| 7.0 Touches V et C | La 1re personne se bascule avec **V** (au lieu de F5) ; **C maintenu** zoome en 1re personne (70° → 20°, en douceur ; le regard tourne moins vite, l'objet en main se baisse) ; les deux touches dans la page Touches du livre | `9853880` |
+| 7.1 Végétation qui pousse | Le moteur de croissance du serveur (`Growth`) : un arbre abattu donne **une ou deux pousses** de son espèce (7 espèces), plantées dans l'herbe ou la terre (pas dans l'eau) ; à la lumière (le jour, ou près d'une torche ou d'une lanterne ; la nuit et le noir les arrêtent) elles deviennent de **jeunes arbres** (modèles à eux : petit tronc, petite couronne) puis des **arbres**, s'il y a la place au-dessus et qu'aucun rocher ni arbre n'est juste à côté ; un épicéa qui grandit dans la neige sort enneigé ; un jeune arbre abattu rend sa pousse ; la **terre nue reverdit** à côté de l'herbe (trous creusés, terre posée) ; durées adaptées au rythme du monde (une pousse devient un arbre en un jour de jeu environ) ; chapitre « La ferme » du livre ; corrigé au passage : l'inventaire ouvert dans les toutes premières secondes faisait planter le jeu | « Growing plants » |
 
 **Pas encore fait** (prévu) : structures, agriculture, menus de départ, sons, mode Arcade,
 mobile.
@@ -244,7 +246,54 @@ xvfb-run -a -s "-screen 0 960x540x24" godot --path . --audio-driver Dummy --reso
 
 ---
 
-## 5. Prochaine étape au « go » : Phase 6 — Souterrain et structures (en cours)
+## 5. Prochaine étape au « go » : Phase 7 — Agriculture et élevage (en cours)
+
+**Décision du propriétaire (octobre 2026)** : on passe tout de suite à la phase 7 ; la phase 6
+est **en pause après son étape 3** (coulées d'eau et de lave) et reprendra plus tard à son
+étape 4 (profondeurs), voir plus bas. Le propriétaire garde **toutes** les idées proposées pour
+la phase 7, **avec les saisons**, le **chien et le chat** ; le **cheval (monture) plus tard** ;
+**oui aux produits sans tuer** (tonte, lait, œufs). Une étape par « go », chacune avec tests,
+captures, commit et retour :
+
+1. ✅ **Végétation qui pousse** (voir section 3, ligne 7.1) : le moteur de croissance du serveur (`Growth`) ;
+   pousses d'arbres de chaque espèce (un arbre abattu en donne), plantées sur de la terre ou de
+   l'herbe, qui deviennent de **jeunes arbres** puis des **arbres** à la lumière (les nuits et
+   le noir les arrêtent, une torche les fait pousser) s'il y a la place ; l'herbe **repousse**
+   sur la terre nue à côté de l'herbe. Base de la phase 8 (la nature qui repousse).
+2. **Houe, champs, graines** (prochaine étape) : labourer l'herbe ou la terre en terre labourée (humide près de
+   l'eau, sinon elle sèche), graines (hautes herbes, récoltes), blé, carotte, pomme de terre en
+   stades visibles, récolte, pain au four.
+3. **Arrosage et soins** : arrosoir (rempli à l'eau), la pluie arrose, irrigation par canaux
+   (l'eau qui coule), composteur et compost (un stade de plus), lumière nécessaire (serres,
+   fermes souterraines à la lanterne).
+4. **Plus de cultures** : betterave, maïs, tomate, fraise, chou, citrouille et pastèque (le
+   fruit pousse à côté de la tige), riz (dans l'eau peu profonde), canne à sucre (au bord de
+   l'eau), lin ou coton (ficelle, tissu), vigne sur treillis ; arbres fruitiers (pommier,
+   cerisier, oranger).
+5. **Élevage** : nourrir pour reproduire (bébés qui grandissent), mener à la corde, enclos,
+   produits sans tuer (tondre aux cisailles, traire au seau, œufs dans un pondoir), affection
+   (caresser et nourrir chaque jour : de meilleurs produits), abris (poulailler, étable : les
+   bêtes y dorment la nuit).
+6. **Animaux de ferme** : vache (lait, cuir), chèvre (lait, montagnes), canard (œufs, nage),
+   lapin, cochon (sanglier apprivoisé), abeilles et ruches (miel ; les cultures voisines poussent
+   plus vite).
+7. **Animaux sauvages, prédateurs et ravageurs** : renard (vole les poules la nuit), loup (en
+   meute), ours (taïga), grenouille, tortue (œufs sur les plages), castor (bâtit des barrages),
+   écureuil, hibou, poissons ; créatures à nous : taupe qui ravage les champs par en dessous,
+   corbeaux qui picorent les semis (chassés par l'épouvantail), bourdon-lanterne qui pollinise
+   la nuit.
+8. **Cuisine** : plan de cuisine (recettes à plusieurs ingrédients : pain, soupe, ragoût, tarte,
+   omelette, gâteau, confiture), moulin (farine), baratte (beurre), tonneau (jus, cidre), cave
+   à fromage ; des plats à effets (satiété, régénération, bonus temporaires).
+9. **Pêche** : canne, poissons selon le biome, l'heure et la météo, appâts, nasses.
+10. **Compagnons** : chien (suit, garde le troupeau, aboie contre les monstres), chat (chasse les
+    ravageurs).
+11. **Saisons** (réglage du monde) : cultures de saison, neige en hiver, arbres qui roussissent
+    à l'automne.
+
+Plus tard (après la phase 7) : le **cheval** que l'on monte.
+
+### Phase 6 — en pause après l'étape 3
 
 La phase 5 (survie et combat) est terminée : voir les lignes 5.1 à 5.7 de la section 3
 (vitalité, faim, nage, modes de jeu, animaux, monstres originaux, combat et armures ; tout ce
@@ -270,7 +319,7 @@ chacune avec tests, captures, commit et retour :
    qui sortent selon ce niveau.
 3. ✅ **Coulées d'eau et de lave simples** (voir section 3, ligne 6.3) : l'eau et la lave s'écoulent quand on ouvre une poche
    (sources, descente, étalement limité), lave + eau = pierre.
-4. **Profondeurs** (prochaine étape) : biomes souterrains (grottes luxuriantes, grottes de cristal, profondeurs de
+4. **Profondeurs** (reprise de la phase 6, quand le propriétaire le dira) : biomes souterrains (grottes luxuriantes, grottes de cristal, profondeurs de
    magma), des niveaux profonds plus dangereux (monstres des profondeurs, à inventer).
 5. **Ruines et donjons** : salles enfouies générées par graine, coffres avec du butin.
 6. **Mines abandonnées** : galeries étayées de bois, coffres.
@@ -294,9 +343,10 @@ chacune avec tests, captures, commit et retour :
 - Structures générées : villages, ruines, donjons, mines abandonnées, avec coffres.
 - Niveaux profonds plus dangereux, biomes souterrains.
 
-### Phase 7 — Agriculture et élevage
+### Phase 7 — Agriculture et élevage (en cours : voir la section 5)
 - Labourer, semer, arroser, cultures qui poussent (durées adaptées au rythme), récoltes.
-- Élevage (nourrir, enclos, reproduction), cuisine.
+- Élevage (nourrir, enclos, reproduction, produits sans tuer), nouveaux animaux, cuisine,
+  pêche, compagnons, saisons. Le cheval plus tard.
 
 ### Phase 8 — Mode Arcade (nouvelle idée du propriétaire)
 
