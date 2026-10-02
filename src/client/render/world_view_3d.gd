@@ -10,6 +10,10 @@ extends Node3D
 ## cuts the world above their head (see set_view; under a roof only over
 ## the building, CutRegion): caves show, and the top shader's surface maps
 ## are rebuilt for the cut where it reaches.
+##
+## Builds bake the sky light (LightField) into the faces and props; it
+## reaches up to LightField.MAX cells, so a change letting light in or out
+## rebuilds the chunks it may reach (voxel_changed). `sky_at` tells it.
 
 const TOP_SHADER := preload("res://src/client/shaders/terrain3d_top.gdshader")
 const FACE_SHADER := preload("res://src/client/shaders/terrain3d_faces.gdshader")
@@ -40,6 +44,10 @@ const MAX_JOBS := 24
 ## A chunk waits this many frames for its neighbors before being built
 ## anyway (each neighbor that comes later rebuilds it: border faces).
 const NEIGHBOR_WAIT_FRAMES := 20
+## A cell's six neighbors.
+const SIDES: Array[Vector3i] = [
+	Vector3i.UP, Vector3i.DOWN, Vector3i.LEFT, Vector3i.RIGHT, Vector3i.FORWARD, Vector3i.BACK
+]
 
 var client_world: ClientWorld
 ## Chunk the camera is over: pending builds closest to it go first.
@@ -274,15 +282,31 @@ func set_view(row: int, caves: bool, cut := true, region: CutRegion = null) -> v
 
 
 ## A voxel changed (mined, placed): its chunk is built again, and the
-## neighbors whose border it lies on (their faces and surface maps see it).
+## neighbors whose border it lies on (their faces and surface maps see it),
+## or that the sky light around it reaches (it may change as far: see
+## LightField).
 func voxel_changed(cell: Vector3i) -> void:
+	var reach := 1
+	for side in SIDES:
+		reach = maxi(reach, sky_at(cell + side) - 1)
 	var touched := {}
-	for dy in range(-1, 2):
-		for dx in range(-1, 2):
+	for dy: int in [-reach, 0, reach]:
+		for dx: int in [-reach, 0, reach]:
 			touched[Coords.tile_to_chunk(Vector2i(cell.x + dx, cell.z + dy))] = true
 	for coord: Vector2i in touched:
 		if _views.has(coord):
 			_mark_pending(coord, true)
+
+
+## The sky light (0..LightField.MAX) of a cell (tile x, row, tile y) as
+## the last build of its chunk saw it; MAX where nothing is built.
+func sky_at(cell: Vector3i) -> int:
+	var tile := Vector2i(cell.x, cell.z)
+	var view: ChunkView3D = _views.get(Coords.tile_to_chunk(tile))
+	if view == null:
+		return LightField.MAX
+	var local := Coords.tile_to_local(tile)
+	return view.sky_at(Vector3i(local.x, cell.y, local.y))
 
 
 ## Re-places the world-space lights after the world root turned.

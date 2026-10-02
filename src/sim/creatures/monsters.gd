@@ -6,9 +6,11 @@ extends RefCounted
 ## out one at a time (a chance in COME_CHANCE every
 ## Creatures.MONSTER_TICKS), up to MAX_NEAR within
 ## NEAR tiles (MAX_OF of a kind), SPAWN_DISTANCE away from every player,
-## where it is dark (Light): at night under the open sky the lantern moth,
-## the shade lurker and over swamps the will-o'-wisp; in caves (CAVE_DEPTH
-## under the surface) the lurker and the rock mimic, by day too. They go
+## where it is dark (Light.is_lit: the sky's light spreading into covered
+## places, torches, lanterns, fires, lava): at night under the open sky the
+## lantern moth, the shade lurker and over swamps the will-o'-wisp; in caves
+## (CAVE_DEPTH under the surface) the lurker and the rock mimic, by day too
+## where the daylight coming in does not reach. They go
 ## when no player is within GONE_DISTANCE; under the open sky, the moth,
 ## the lurker and the wisp melt in daylight. Each hunts the nearest such
 ## player within SENSE tiles (`sense`); its blows (`land_blow`) hurt them
@@ -178,10 +180,11 @@ static func _choices(
 	var local := Coords.tile_to_local(tile)
 	var top := chunk.top_row(local)
 	var choices := []
-	var at := creatures.voxel_at
+	var world := creatures.world
+	var clock := server.clock
 	var swamp := SWAMPS.has(chunk.get_biome(local))
-	if server.clock.is_night() and top > 0 and top < GameConst.WORLD_HEIGHT - 4:
-		if not Light.near_fire(at, Vector3i(tile.x, top, tile.y)):
+	if clock.is_night() and top > 0 and top < GameConst.WORLD_HEIGHT - 4:
+		if not Light.is_lit(world, Vector3i(tile.x, top, tile.y), clock):
 			var surface := chunk.get_voxel(Vector3i(local.x, top - 1, local.y))
 			var ground := float(top - sea)
 			if swamp:
@@ -191,7 +194,7 @@ static func _choices(
 				if Creatures.free_spot(chunk, local, top, Species.TALL[Species.Id.SHADE_LURKER]):
 					choices.append([Species.Id.SHADE_LURKER, ground])
 	var cave := _cave_floor(chunk, local, top - CAVE_DEPTH, creatures.rng)
-	if cave > 0 and not Light.near_fire(at, Vector3i(tile.x, cave, tile.y)):
+	if cave > 0 and not Light.is_lit(world, Vector3i(tile.x, cave, tile.y), clock):
 		choices.append([Species.Id.SHADE_LURKER, float(cave - sea)])
 		choices.append([Species.Id.ROCK_MIMIC, float(cave - sea)])
 	return choices

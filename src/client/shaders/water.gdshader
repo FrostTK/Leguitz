@@ -7,13 +7,15 @@ shader_type spatial;
 // sparkles and the foam of the shores are drawn on top; where the ground of
 // a shore spreads over the water's edge, that ground is drawn.
 //
-// UV and UV2 as on the terrain tops (see terrain3d_top.gdshader).
+// UV and UV2 as on the terrain tops (see terrain3d_top.gdshader), COLOR.b
+// the sky light over the water (see sky_light.gdshaderinc).
 
 render_mode cull_back;
 
 #include "res://src/client/shaders/terrain3d_common.gdshaderinc"
 #include "res://src/client/shaders/terrain3d_surface.gdshaderinc"
 #include "res://src/client/shaders/see_through.gdshaderinc"
+#include "res://src/client/shaders/sky_light.gdshaderinc"
 
 uniform sampler2D screen_texture : hint_screen_texture, filter_nearest;
 uniform sampler2D depth_texture : hint_depth_texture, filter_nearest;
@@ -37,10 +39,12 @@ uniform float caustics_depth = 5.0;
 
 varying vec3 local_vertex;
 varying flat vec2 top_info;
+varying flat float sky;
 
 void vertex() {
 	top_info = UV2;
 	local_vertex = VERTEX;
+	sky = COLOR.b;
 }
 
 // Local position (chunk units) of what the depth buffer shows at `uv`.
@@ -183,4 +187,6 @@ void fragment() {
 	EMISSION = emission;
 	ROUGHNESS = roughness;
 	SPECULAR = specular;
+	AO = sky_ambient(sky);
+	AO_LIGHT_AFFECT = 0.0;
 }

@@ -5,8 +5,10 @@ extends Node
 ## - the sky light: one shadow-casting DirectionalLight3D that is the sun by
 ##   day and the moon by night (it switches while both are at the horizon,
 ##   where its energy is zero),
-## - ambient light and background: dawn, day, dusk, moonlit nights, caves,
-## - the player's lantern at night and underground,
+## - ambient light and background: dawn, day, dusk, moonlit nights (the
+##   sky light baked into the world lets as much of it reach each face:
+##   none in a closed cave, see LightField),
+## - the player's lantern at night and in the dark (`sky_here`),
 ## - fog (haze in the valleys below the player, morning mist, rain), cloud
 ##   shadows, glow (bloom) and lightning flashes,
 ## - in first person: a sky over the horizon, a distance haze (the loaded
@@ -18,7 +20,6 @@ const NIGHT := Color(0.34, 0.4, 0.66)
 const FULL_MOON_NIGHT := Color(0.42, 0.5, 0.78)
 const TWILIGHT := Color(1.0, 0.66, 0.5)
 const DAY := Color(0.8, 0.84, 0.92)
-const UNDERGROUND := Color(0.42, 0.38, 0.46)
 const STORM_TINT := Color(0.62, 0.66, 0.74)
 const SUN_WARM := Color(1.0, 0.68, 0.45)
 const SUN_NOON := Color(1.0, 0.96, 0.88)
@@ -33,7 +34,6 @@ const TWILIGHT_SKY := Color(0.45, 0.42, 0.7)
 
 const DAY_AMBIENT_ENERGY := 0.62
 const NIGHT_AMBIENT_ENERGY := 0.3
-const UNDERGROUND_AMBIENT_ENERGY := 0.3
 const SUN_ENERGY := 0.95
 const MOON_ENERGY := 0.3
 const MIN_ELEVATION := 12.0
@@ -57,11 +57,18 @@ const FIRST_PERSON_HAZE_DISTANCE := 80.0
 const FIRST_PERSON_CAVE_FOG := 0.5
 const FIRST_PERSON_CAVE_FOG_DISTANCE := 28.0
 const FIRST_PERSON_SHADOW_DISTANCE := 45.0
+## How fast `sky_seen` follows `sky_here` (per second).
+const SKY_SHARPNESS := 4.0
 
 var clock: WorldClock
 var client_world: ClientWorld
-## Deep under the rock: cave light, no sun, the lantern lit.
+## Deep under the rock: no sun, cave fog.
 var underground := false
+## The sky light where the player is (0..1, see WorldView3D.sky_at), and
+## the one their eyes got used to (following it): in the dark, the lantern
+## lights up and the body darkens.
+var sky_here := 1.0
+var sky_seen := 1.0
 var weather: WeatherEffects
 var environment: Environment
 var sun: DirectionalLight3D
@@ -187,12 +194,11 @@ func _process(delta: float) -> void:
 	ambient = ambient * Color.WHITE.lerp(STORM_TINT, storm * 0.85)
 	var ambient_energy := lerpf(NIGHT_AMBIENT_ENERGY, DAY_AMBIENT_ENERGY, daylight)
 	ambient_energy *= 1.0 - storm * 0.25
-	if underground:
-		ambient = UNDERGROUND
-		ambient_energy = UNDERGROUND_AMBIENT_ENERGY
 	environment.ambient_light_color = ambient
 	environment.ambient_light_energy = ambient_energy + weather.flash() * 2.5
-	darkness = 1.0 if underground else clampf(1.0 - daylight * (1.0 - storm * 0.4), 0.0, 1.0)
+	sky_seen = lerpf(sky_seen, sky_here, 1.0 - exp(-SKY_SHARPNESS * delta))
+	darkness = clampf(1.0 - daylight * (1.0 - storm * 0.4), 0.0, 1.0)
+	darkness = maxf(darkness, 1.0 - smoothstep(0.0, 1.0, sky_seen))
 	weather.darkness = darkness
 
 	_update_sky_light(angle, moon, storm, underground)

@@ -209,7 +209,7 @@ BOOK_TIP_6,Water fills the holes dug next to it.,L'eau comble les trous creusés
 BOOK_TIP_7,"In the inventory, a right click takes half a stack or puts one item down; Shift + click sends a stack between the bar and the bag.","Dans l'inventaire, le clic droit prend la moitié d'une pile ou pose un seul objet ; Maj + clic envoie une pile entre la barre et le sac."
 BOOK_TIP_8,Click beside the inventory to throw what the cursor holds.,Clique à côté de l'inventaire pour lancer ce que tient le curseur.
 BOOK_TIP_9,"The world saves itself every 2 minutes, when you pause and when you quit.","Le monde se sauvegarde tout seul toutes les 2 minutes, en pause et en quittant."
-BOOK_TIP_10,"At night, your lantern lights the way; caves stay dark.","La nuit, ta lanterne éclaire le chemin ; les grottes restent sombres."
+BOOK_TIP_10,"At night and in the dark, your lantern lights a few steps around you; deep in a cave it is black: bring torches.","La nuit et dans le noir, ta lanterne éclaire quelques pas autour de toi ; au fond d'une grotte il fait noir : emporte des torches."
 BOOK_TIP_11,This book can be hidden in the pause menu.,Ce livre peut être masqué dans le menu pause.
 BOOK_TOOLS_INTRO,"Everything can be mined by hand, slowly. The right tool is much faster.","Tout se mine à la main, lentement. Le bon outil va bien plus vite."
 BOOK_TOOLS_PICKAXE,"Pickaxe: stone, ores, ice, terracotta","Pioche : pierre, minerais, glace, terre cuite"
@@ -375,7 +375,7 @@ DEATH_CAUSE_LURKER,A shade lurker caught you in the dark.,Un rôdeur d'ombre t'a
 DEATH_CAUSE_MIMIC,That rock was not a rock.,Ce rocher n'en était pas un.
 DEATH_CAUSE_WISP,You followed the wisp's light too close.,Tu as suivi la lueur du feu follet de trop près.
 BOOK_CHAPTER_MONSTERS,Monsters,Monstres
-BOOK_MONSTERS_INTRO,"At night and in the dark, monsters come out. Light keeps them at bay: lava, a burning furnace, daylight. Hit back ({break}): they leave something behind. They leave you alone in creative.","La nuit et dans le noir, des monstres sortent. La lumière les tient à distance : la lave, un four allumé, le jour. Riposte ({break}) : ils laissent quelque chose derrière eux. En créatif, ils te laissent tranquille."
+BOOK_MONSTERS_INTRO,"At night and in the dark, monsters come out. Light keeps them at bay: daylight (it comes a few steps into a cave), torches, lanterns, fires, lava, a burning furnace; not your own lantern. Hit back ({break}): they leave something behind. They leave you alone in creative.","La nuit et dans le noir, des monstres sortent. La lumière les tient à distance : le jour (il entre de quelques pas dans une grotte), les torches, les lanternes, les feux, la lave, un four allumé ; pas ta propre lanterne. Riposte ({break}) : ils laissent quelque chose derrière eux. En créatif, ils te laissent tranquille."
 ITEM_WOODEN_SWORD,Wooden sword,Épée en bois
 ITEM_STONE_SWORD,Stone sword,Épée en pierre
 ITEM_COPPER_SWORD,Copper sword,Épée en cuivre
@@ -457,4 +457,4 @@ ITEM_LANTERN,Lantern,Lanterne
 BOOK_HOME_LIGHTS,Lights,Lumières
 BOOK_HOME_TORCH,"Torch: on the ground, or in a torch bracket (aim at it, torch in hand).","Torche : au sol, ou dans un support mural (vise-le, la torche en main)."
 BOOK_HOME_LANTERN,"Lantern: on the ground, on a wall, or hung from a ceiling: aim at the underside of a block, or at the floor under it holding {sprint}.","Lanterne : au sol, au mur, ou suspendue au plafond : vise le dessous d'un bloc, ou le sol en dessous en tenant {sprint}."
-BOOK_HOME_LIGHTS_KEEP,"Torches, lanterns and fires light up around them and keep monsters away.","Torches, lanternes et feux éclairent autour d'eux et tiennent les monstres à distance."
+BOOK_HOME_LIGHTS_KEEP,"Torches, lanterns and fires light up around them and keep monsters away. Daylight comes in through openings and windows, fading a little at each step: without lights, the depths of a cave or a closed room are black.","Torches, lanternes et feux éclairent autour d'eux et tiennent les monstres à distance. Le jour entre par les ouvertures et les fenêtres et faiblit à chaque pas : sans lumières, le fond d'une grotte ou une pièce fermée sont noirs."

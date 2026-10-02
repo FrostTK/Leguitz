@@ -14,6 +14,8 @@ const SHADER := preload("res://src/client/shaders/voxel.gdshader")
 const VOXEL := 1.0 / 16.0
 const FOLLOW_SHARPNESS := 12.0
 const TURN_SHARPNESS := 7.0
+## How fast the body's light follows the sky light it walks into.
+const SKY_SHARPNESS := 4.0
 ## Farther than this (local units) from where it should be: it jumps there.
 const SNAP_DISTANCE := 4.0
 ## Strides per tile walked, how far the legs swing (radians), how low the
@@ -39,6 +41,9 @@ var state := Creature.State.IDLE
 ## Dead: it tips over and fades; `finished` once gone.
 var dying := false
 var finished := false
+## The sky light it stands in (0..1, see LightField): it darkens in a cave
+## (smoothly, as it walks).
+var sky_light := 1.0
 
 var _root := Node3D.new()
 var _joints: Dictionary[String, Node3D] = {}
@@ -53,6 +58,7 @@ var _last := Vector3.INF
 var _climb := 0.0
 var _sink := 0.0
 var _fade := 0.0
+var _sky := -1.0
 
 
 ## Builds the model of `animal_kind` from `meshes` (part name -> mesh).
@@ -138,6 +144,8 @@ func animate(delta: float) -> void:
 		fade = maxf(fade, smoothstep(0.45, 1.0, _death))
 		finished = _death >= 1.0
 	_material.set_shader_parameter("fade", fade)
+	_sky = sky_light if _sky < 0.0 else lerpf(_sky, sky_light, 1.0 - exp(-SKY_SHARPNESS * delta))
+	_material.set_shader_parameter("sky_light", _sky)
 
 
 ## Diagonal pairs of legs swing together (a trot); a fowl's or a lurker's

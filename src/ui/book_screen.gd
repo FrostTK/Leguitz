@@ -388,12 +388,19 @@ func _draw_contents(font: Font, area: Rect2) -> void:
 	var title := {"kind": GuideBook.Kind.TITLE, "text": tr("BOOK_CONTENTS")}
 	_draw_entry(font, title, area.position, area.size.x)
 	var y := area.position.y + _entry_height(title) + 6.0
-	var line := font.get_height(BODY_SIZE)
-	for chapter in GuideBook.CHAPTERS.size():
+	# Every chapter fits on the page: closer rows, then smaller letters.
+	var count := GuideBook.CHAPTERS.size()
+	var size := BODY_SIZE
+	var line := font.get_height(size)
+	if (line + 1.0) * count > area.end.y - y:
+		size = SMALL_SIZE
+		line = font.get_height(size)
+	var step := minf(line + 5.0, (area.end.y - y) / count)
+	for chapter in count:
 		var rect := Rect2(area.position.x - 2.0, y - 1.0, area.size.x + 4.0, line + 2.0)
 		if _hit(rect, "chapter", chapter):
 			draw_rect(rect, Color(UiTheme.BUTTON, 0.6))
-		var baseline := y + font.get_ascent(BODY_SIZE)
+		var baseline := y + font.get_ascent(size)
 		var chapter_name := tr(GuideBook.CHAPTERS[chapter])
 		var number := str(_starts[chapter] + 1) if chapter < _starts.size() else ""
 		draw_string(
@@ -402,7 +409,7 @@ func _draw_contents(font: Font, area: Rect2) -> void:
 			chapter_name,
 			HORIZONTAL_ALIGNMENT_LEFT,
 			-1,
-			BODY_SIZE,
+			size,
 			UiTheme.INK
 		)
 		draw_string(
@@ -411,17 +418,17 @@ func _draw_contents(font: Font, area: Rect2) -> void:
 			number,
 			HORIZONTAL_ALIGNMENT_RIGHT,
 			area.size.x,
-			BODY_SIZE,
+			size,
 			UiTheme.WOOD
 		)
 		# Dots from the name to its page.
-		var from := area.position.x + _string_width(font, chapter_name, BODY_SIZE) + 3.0
-		var to := area.end.x - _string_width(font, number, BODY_SIZE) - 3.0
+		var from := area.position.x + _string_width(font, chapter_name, size) + 3.0
+		var to := area.end.x - _string_width(font, number, size) - 3.0
 		var x := ceilf(from)
 		while x < to:
 			draw_rect(Rect2(x, baseline - 1.0, 1.0, 1.0), UiTheme.WOOD)
 			x += 3.0
-		y += line + 5.0
+		y += step
 
 
 ## An entry's height, the space after it included.

@@ -6,7 +6,7 @@ extends Node3D
 ## it shows through; it casts no shadow), its 3D props (trees, plants,
 ## rocks...: one MultiMesh per model) and the warm lights of its lava pools,
 ## fires, torches and lanterns (flames flicker). Built from a
-## ChunkMesher.Result.
+## ChunkMesher.Result, whose sky light it keeps (sky_at).
 
 const LAVA_LIGHT_RANGE := 7.0
 ## How much a flame's light wavers (a share of its energy).
@@ -48,6 +48,10 @@ var _lava_deep: Array[bool] = []
 var _lava_energy: Array[float] = []
 var _lava_flicker: Array[float] = []
 var _flickers := false
+## The chunk's sky light (see ChunkMesher.Result.sky_open, sky_levels;
+## empty until built).
+var _sky_open := PackedInt32Array()
+var _sky_levels := PackedByteArray()
 
 
 func _init(
@@ -91,6 +95,8 @@ func apply(result: ChunkMesher.Result, library: PropLibrary, lod: int) -> void:
 	_lava_energy = result.lava_strength
 	_lava_flicker = result.lava_flicker
 	_flickers = _lava_flicker.any(func(amount: float) -> bool: return amount > 0.0)
+	_sky_open = result.sky_open
+	_sky_levels = result.sky_levels
 	for i in _lava_spots.size():
 		var light := _lava_light(i)
 		light.light_energy = result.lava_strength[i]
@@ -99,6 +105,17 @@ func apply(result: ChunkMesher.Result, library: PropLibrary, lod: int) -> void:
 		_lava_lights[i].visible = false
 	show_caves(caves_shown)
 	place_lights()
+
+
+## The sky light (0..LightField.MAX) of a cell of the chunk (`local`: x
+## and z in the chunk, y a row); MAX until built.
+func sky_at(local: Vector3i) -> int:
+	if _sky_open.is_empty() or local.y >= ChunkData.HEIGHT:
+		return LightField.MAX
+	var column := local.z * GameConst.CHUNK_SIZE + local.x
+	if local.y >= _sky_open[column]:
+		return LightField.MAX
+	return _sky_levels[column * ChunkData.HEIGHT + maxi(local.y, 0)]
 
 
 ## The flames' lights waver (`time`: seconds, the same for every chunk).

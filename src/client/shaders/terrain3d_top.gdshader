@@ -7,13 +7,15 @@ shader_type spatial;
 // of their column blend with their neighbors (see
 // terrain3d_surface.gdshaderinc), and so do beds with the beds around;
 // other tops (ledges under an overhang) are drawn plainly. Everything is
-// computed per art pixel.
+// computed per art pixel. COLOR.b: the sky light over the face (see
+// sky_light.gdshaderinc).
 
 render_mode cull_disabled;
 
 #include "res://src/client/shaders/terrain3d_common.gdshaderinc"
 #include "res://src/client/shaders/terrain3d_surface.gdshaderinc"
 #include "res://src/client/shaders/see_through.gdshaderinc"
+#include "res://src/client/shaders/sky_light.gdshaderinc"
 
 uniform sampler2D wall_atlas : source_color, filter_nearest;
 uniform sampler2D wall_normals : filter_nearest;
@@ -27,9 +29,11 @@ uniform int see_through_walls[256];
 uniform bool cap = false;
 
 varying flat vec2 top_info;
+varying flat float sky;
 
 void vertex() {
 	top_info = UV2;
+	sky = COLOR.b;
 }
 
 void fragment() {
@@ -161,6 +165,8 @@ void fragment() {
 	EMISSION = emission * emission_strength;
 	ROUGHNESS = roughness;
 	SPECULAR = specular;
+	AO = sky_ambient(sky);
+	AO_LIGHT_AFFECT = 0.0;
 	if (section) {
 		ALBEDO = vec3(0.0);
 		NORMAL_MAP = vec3(0.5, 0.5, 1.0);

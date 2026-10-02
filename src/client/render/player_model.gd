@@ -44,8 +44,9 @@ const BOW_SIZE := 0.75
 static var _armor_meshes: Dictionary[Vector2i, Mesh] = {}
 
 var lantern := OmniLight3D.new()
-## Set by the first-person view: the lantern is carried at the eye instead
-## (world space; INF: above the head as usual).
+## Set by the first-person view: the lantern is carried at the eye instead,
+## and under cover under the ceiling (world space; INF: high above the
+## head, an even circle of light seen from above).
 var lantern_override := Vector3.INF
 ## The right arm strikes again and again (breaking a block).
 var swinging := false
@@ -247,6 +248,12 @@ func swing() -> void:
 ## Reddens the body (0: not at all; a hurt flashes it).
 func set_hurt(amount: float) -> void:
 	_material.set_shader_parameter("hurt", amount)
+
+
+## The sky light the body stands in (0..1, see LightField): it darkens in
+## a cave.
+func set_sky_light(amount: float) -> void:
+	_material.set_shader_parameter("sky_light", amount)
 
 
 ## Hides the body (a spectator is unseen; their lantern still lights).

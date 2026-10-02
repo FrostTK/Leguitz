@@ -284,7 +284,7 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   Mining.needs_support), fences joining fences, gates and cubes (`fence_joins`; their model
   version is the sides joined, FENCE_SIDES bits, 16 versions, ChunkMesher._fence_sides; no
   random turn for Mining.FLOOR_OBJECTS), the campfire `is_lit` (light, glowing flames,
-  Light.near_fire). Gates swing with E (Mining.swings / swung_cells; BlockInteraction predicts,
+  LightField.SHINE). Gates swing with E (Mining.swings / swung_cells; BlockInteraction predicts,
   Msg.SWING_GATE, Fixtures.swing_gate refuses shutting on a body). Items.drops: what players
   place gives its item back (Items._placed_by, open gates too); Mining seconds and tools by
   base kind. ChunkData.raised (column -> 1 + the highest object rising more than a row over its
@@ -304,11 +304,38 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   block bodies; placing what does not block is allowed where a body stands (server and client
   check only solid voxels; Fixtures.someone_in). What players placed is no longer replaceable
   like a plant (Mining.is_replaceable: Items.item_placing). ObjectShapes.LIGHTS: is_lit (with lit
-  furnaces): Light.near_fire keeps monsters away, ChunkMesher._add_flame lights them
+  furnaces): their light (LightField.SHINE) keeps monsters away, ChunkMesher._add_flame lights them
   (ChunkMesher.FLAMES: where the flame is, energy, color, flicker; lava keeps LAVA_COLOR), and
   ChunkView3D.flicker (driven by WorldView3D) makes flames waver (lanterns hardly). Models in
   DecorModels (`_torch`, `_lantern`; their flames and glass are GLOW voxels). Small aiming bodies
   (VoxelRay.SMALL_BODIES; a wall lantern deeper, LANTERN_SLICE).
+- Sky light (phase 6, step 2; `src/sim/world/light_field.gd`, shared): levels 0 to 15
+  (Minecraft's). LightField.sky: per column `open`, the first row from which the sky is fully
+  seen (down through CLEAR voxels: air, objects, glass and windows, CLEAR_BLOCKS), water under it
+  dimming a level a cell; then it spreads into covered places a level less a cell (two through
+  water; only shore water cells are queued, `_under_water`); cubes and lava are OPAQUE.
+  ChunkMesher (full builds) works it out over the chunk and its 8 neighbors (a 48 x 48 region,
+  missing neighbors are rock: `_sky_field`) and bakes the level of the cell in front of each face
+  (`_sky`: COLOR.b of tops, sides, undersides and water; faces only merge in the same light; caps
+  get 15) and of each prop (INSTANCE_CUSTOM.a = level + wind phase); Result.sky_open /
+  sky_levels are kept by ChunkView3D (WorldView3D.sky_at). The shaders (`sky_light.gdshaderinc`,
+  `sky_ambient`) turn it into AO with AO_LIGHT_AFFECT 0: it only dims the ambient light, never
+  the lights (voxel.gdshader keeps its occlusion on direct light through the albedo), so a
+  closed cave or room is black but for lanterns, torches, fires, lava and glowing ores. Bodies
+  get `sky_light` (PlayerModel.set_sky_light, CreatureBody.sky_light from CreaturesView.sky_at);
+  dropped items and items in hand are not darkened. WorldView3D.voxel_changed also rebuilds the
+  chunks the light around a changed voxel reaches. The ambient light no longer changes
+  underground (the sun still goes out there): LightingController.sky_here (GameClient._sky_here,
+  feet or head) eases into `sky_seen`, which sets `darkness` and so lights the lantern; under
+  cover, top-down, the lantern hangs under the ceiling (GameClient.LANTERN_UNDER_COVER), not
+  high over the head (inside the rock). Meshing costs about a quarter more (bench: 25 chunks
+  ~650 ms instead of ~520). Server: `Light.level` looks REACH (LightField.MAX - LIT) cells around
+  a cell (`level_at`, a search paying a level a cell, two through water): the sky's MAX by day,
+  NIGHT_SKY at night, over each column's open row; LightField.shine of what shines (lava through
+  its opaque body); players' lanterns never count. `is_lit` from LIT (7): Monsters._choices only
+  brings monsters out where it is not lit, the lurker freezes when lit; NIGHT_ONLY ones still
+  melt by `sky_open`. `near_fire` is the same without the sky. The book's contents page shrinks its rows, then
+  its letters, to fit every chapter (BookScreen._draw_contents).
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made
@@ -391,8 +418,8 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   DORMANT until WAKE_RANGE or a blow, lunges, settles after CALM_SECONDS; `strike` set when a
   blow lands), `Monsters` (static: `come_and_go` every Creatures.MONSTER_TICKS: COME_CHANCE, at
   SPAWN_DISTANCE around players it `hunts` (never creative players nor spectators), MAX_NEAR /
-  MAX_OF, dark spots (`Light`: daylight under the open sky, lava and lit furnaces within
-  Light.REACH): surface at night, caves CAVE_DEPTH down by day too; gone past GONE_DISTANCE,
+  MAX_OF, dark spots (not `Light.is_lit`, see the sky light): surface at night, caves
+  CAVE_DEPTH down by day too; gone past GONE_DISTANCE,
   NIGHT_ONLY ones melt in daylight under the sky; `land_blow`: Survival.hurt with the species'
   cause, Msg.PUSH, the moth's Msg.LANTERN_OUT; monsters are never saved), `Pathfinder` (A* over tiles, 8 ways without cutting corners, up one level, down
   MAX_DROP, room for `tall`, never into liquids or solid objects' tiles; `ground_at`),

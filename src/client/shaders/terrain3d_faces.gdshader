@@ -4,12 +4,14 @@ shader_type spatial;
 //   UV   = (pixels along the face, pixels down from the top of the face;
 //          for undersides: world pixels along x and z)
 //   UV2  = (face kind: 0-3 cliff materials, 4+ wall kinds; lip ground + 1)
-//   COLOR.r = variant (0 or 1), COLOR.g = lip ground variant / 3
+//   COLOR.r = variant (0 or 1), COLOR.g = lip ground variant / 3,
+//   COLOR.b = the sky light in front of the face (see sky_light.gdshaderinc)
 
 render_mode cull_disabled;
 
 #include "res://src/client/shaders/terrain3d_common.gdshaderinc"
 #include "res://src/client/shaders/see_through.gdshaderinc"
+#include "res://src/client/shaders/sky_light.gdshaderinc"
 
 uniform sampler2D face_atlas : source_color, filter_nearest;
 uniform sampler2D face_normals : filter_nearest;
@@ -24,10 +26,12 @@ const int WALL_KIND_OFFSET = 4;
 varying flat vec4 face_data;
 // 1 for undersides (they face down).
 varying flat float underside;
+varying flat float sky;
 
 void vertex() {
 	face_data = vec4(UV2, COLOR.r, COLOR.g * 3.0);
 	underside = NORMAL.y < -0.5 ? 1.0 : 0.0;
+	sky = COLOR.b;
 }
 
 void fragment() {
@@ -83,6 +87,8 @@ void fragment() {
 	NORMAL_MAP = normal * 0.5 + 0.5;
 	EMISSION = emission * emission_strength;
 	ROUGHNESS = mix(0.95, 0.4, weather_wetness);
+	AO = sky_ambient(sky);
+	AO_LIGHT_AFFECT = 0.0;
 	if (section) {
 		ALBEDO = vec3(0.0);
 		NORMAL_MAP = vec3(0.5, 0.5, 1.0);

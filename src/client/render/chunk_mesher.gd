@@ -25,7 +25,11 @@ extends RefCounted
 ## the faces of their neighbors, but two of the same hide each other's.
 ## Also gathers the props (trees, plants... in object voxels), the lava
 ## spots that light their surroundings, and the surface map of the top
-## shader (see surface_map).
+## shader (see surface_map). The sky light (LightField) of the cell in
+## front of each face, and of each prop's, is baked in (COLOR.b of the
+## faces, the props' INSTANCE_CUSTOM.a integer part): the shaders let that
+## much of the ambient light reach them, none in a closed cave; faces only
+## merge with faces in the same light.
 
 enum Part { TOPS, FACES, DEEP_TOPS, DEEP_FACES, WATER, DEEP_WATER, CAPS }
 enum Side { NORTH, EAST, SOUTH, WEST }
@@ -78,6 +82,11 @@ const THICK_COVER := 2
 ## Horizontal faces are gathered per row of the chunk before being merged
 ## into rectangles: tops, or undersides (see _record_flat).
 const FLAT_UNDERSIDE := 1
+## The sky light is worked out over the chunk and its 8 neighbors (light
+## goes 15 cells at most): that region's span, and where a padded column
+## (see pad) lies in it.
+const REGION_SPAN := SIZE * 3
+const REGION_OFFSET := (SIZE - 1) * REGION_SPAN + SIZE - 1
 
 ## Face kind and top material code of every voxel id (see face_kind), and
 ## 1 for the liquids the eye sees through (water, not lava).
@@ -88,6 +97,10 @@ static var _clear := _build_clear()
 static var _flags := _build_flags()
 ## 1 for the building blocks capped at the view's cut.
 static var _capped := _build_capped()
+## A row of columns standing for a missing neighbor: rock (no light from
+## there), and their tops.
+static var _solid_row := _build_solid_row()
+static var _solid_tops := _build_solid_tops()
 
 
 ## What a build reads: the voxels and column tops of the chunk and of its
@@ -144,6 +157,10 @@ class Result:
 	var lava_colors: Array[Color] = []
 	var lava_flicker: Array[float] = []
 	var surface_map := PackedFloat32Array()
+	## The chunk's sky light (see LightField.sky): per column, the row from
+	## which the sky is fully seen, and below it each cell's level.
+	var sky_open := PackedInt32Array()
+	var sky_levels := PackedByteArray()
 
 
 class Surface:
@@ -230,6 +247,9 @@ static func build(job: Job) -> Result:
 	var kinds := _face_kinds.duplicate()
 	var codes := _top_codes.duplicate()
 	var tables := [flags, kinds, codes, clear]
+	var sky := _sky_field(job)
+	tables.append_array(sky)
+	_keep_sky(result, sky)
 	# Horizontal faces of the chunk, merged at the end: see _record_flat.
 	var flats := {}
 	for lz in SIZE:
@@ -266,7 +286,8 @@ static func build(job: Job) -> Result:
 					var part := Part.DEEP_TOPS if deep else Part.TOPS
 					if clear[voxel] != 0:
 						part = Part.DEEP_WATER if deep else Part.WATER
-					_record_flat(flats, y, voxel, part, 0, lx, lz)
+					var light := _sky(tables, index + 1) if y + 1 < HEIGHT else LightField.MAX
+					_record_flat(flats, y, voxel, part, 0, lx, lz, light)
 					if voxel == Voxels.of_ground(Tiles.Ground.LAVA):
 						var quarter := (
 							(lz / LAVA_QUARTER) * 2 + lx / LAVA_QUARTER + (4 if deep else 0)
@@ -274,7 +295,10 @@ static func build(job: Job) -> Result:
 						lava_sums[quarter] += Vector3(lx + 0.5, y + 2 - SEA, lz + 0.5)
 						lava_counts[quarter] += 1
 				else:
-					_add_prop(result, job.variants, voxel, voxels, base, lx, y, lz, origin)
+					var prop_sky := _sky(tables, index)
+					_add_prop(
+						result, job.variants, voxel, voxels, base, lx, y, lz, origin, prop_sky
+					)
 					var block := Voxels.block_of(voxel)
 					if ObjectShapes.is_lit(block):
 						_add_flame(result, block, Vector3(lx + 0.5, y - SEA, lz + 0.5))
@@ -532,9 +556,12 @@ static func _add_cube(
 	if _open(flags, clear, above) and above != voxel:
 		var rows := tops[column] - y
 		var sky := rows <= 1 or _sky_through(voxels, flags, clear, index, rows)
-		_record_flat(flats, y, codes[voxel], Part.TOPS if sky else Part.DEEP_TOPS, 0, lx, lz)
+		var part := Part.TOPS if sky else Part.DEEP_TOPS
+		var light := _sky(tables, index + 1) if y + 1 < HEIGHT else LightField.MAX
+		_record_flat(flats, y, codes[voxel], part, 0, lx, lz, light)
 	if y > 0 and flags[voxels[index - 1]] & CUBE == 0 and voxels[index - 1] != voxel:
-		_record_flat(flats, y, kinds[voxel], Part.DEEP_FACES, FLAT_UNDERSIDE, lx, lz)
+		var below := _sky(tables, index - 1)
+		_record_flat(flats, y, kinds[voxel], Part.DEEP_FACES, FLAT_UNDERSIDE, lx, lz, below)
 	var kind := kinds[voxel]
 	for side in 4:
 		var dx := 0
@@ -553,17 +580,16 @@ static func _add_cube(
 		var deep := _side_deep(voxels, tops, flags, clear, index, step, other, y)
 		if deep < 0:
 			continue
+		var light := _sky(tables, index + step)
+		var run := Vector3i(kind, deep, light)
 		# The run below took this voxel already: same material, open too.
-		if (
-			y > 0
-			and _continues_run(voxels, tops, tables, index - 1, step, other, y - 1, kind, deep)
-		):
+		if y > 0 and _continues_run(voxels, tops, tables, index - 1, step, other, y - 1, run):
 			continue
 		var bottom := y
 		var top := y + 1
 		while (
 			top < HEIGHT
-			and _continues_run(voxels, tops, tables, index + top - y, step, other, top, kind, deep)
+			and _continues_run(voxels, tops, tables, index + top - y, step, other, top, run)
 		):
 			top += 1
 		var top_voxel := voxels[column * HEIGHT + top - 1]
@@ -583,7 +609,7 @@ static func _add_cube(
 			bottom - SEA,
 			top - SEA,
 			Vector2(kind, lip),
-			Color(variant, ground_variant(tile) / 3.0, 0.0)
+			Color(variant, ground_variant(tile) / 3.0, light / float(LightField.MAX))
 		)
 
 
@@ -618,10 +644,11 @@ static func _side_deep(
 	return 0
 
 
-## True if the cube at `index` (row `y`) continues a run of side faces of
-## `kind` open the `deep` way: same material, side open the same way. A run
-## ends at the first voxel open to the sky, whose ground may hang over it
-## as a lip.
+## True if the cube at `index` (row `y`) continues a run of side faces
+## (`run`: their kind, the way they are open, see _side_deep, and the sky
+## light in front of them): same material, open the same way, in the same
+## light. A run ends at the first voxel open to the sky, whose ground may
+## hang over it as a lip.
 static func _continues_run(
 	voxels: PackedInt32Array,
 	tops: PackedByteArray,
@@ -630,16 +657,76 @@ static func _continues_run(
 	step: int,
 	other: int,
 	y: int,
-	kind: int,
-	deep: int
+	run: Vector3i
 ) -> bool:
 	var flags: PackedByteArray = tables[0]
 	var kinds: PackedInt32Array = tables[1]
 	var clear: PackedByteArray = tables[3]
 	var voxel := voxels[index]
-	if flags[voxel] & CUBE == 0 or kinds[voxel] != kind:
+	if flags[voxel] & CUBE == 0 or kinds[voxel] != run.x:
 		return false
-	return _side_deep(voxels, tops, flags, clear, index, step, other, y) == deep
+	if _side_deep(voxels, tops, flags, clear, index, step, other, y) != run.y:
+		return false
+	return _sky(tables, index + step) == run.z
+
+
+## The sky light (0..LightField.MAX) of the padded cell at `index` (see
+## pad), from the region's (tables[4]: levels, tables[5]: open; see
+## _sky_field).
+static func _sky(tables: Array, index: int) -> int:
+	var levels: PackedByteArray = tables[4]
+	var open: PackedInt32Array = tables[5]
+	var pz := index / (SPAN * HEIGHT)
+	var at := index + (REGION_OFFSET + pz * (REGION_SPAN - SPAN)) * HEIGHT
+	if at % HEIGHT >= open[at / HEIGHT]:
+		return LightField.MAX
+	return levels[at]
+
+
+## The sky light over the chunk and its neighbors (LightField.sky; a
+## missing neighbor is rock).
+static func _sky_field(job: Job) -> Array:
+	var voxels := PackedInt32Array()
+	var tops := PackedByteArray()
+	for rz in REGION_SPAN:
+		var lz := rz % SIZE
+		for chunk_x in 3:
+			# A row of a chunk's columns lies in one piece.
+			var source := (rz / SIZE) * 3 + chunk_x
+			var chunk := job.voxels[source]
+			if chunk.is_empty():
+				voxels.append_array(_solid_row)
+				tops.append_array(_solid_tops)
+				continue
+			voxels.append_array(chunk.slice(lz * SIZE * HEIGHT, (lz + 1) * SIZE * HEIGHT))
+			tops.append_array(job.tops[source].slice(lz * SIZE, (lz + 1) * SIZE))
+	return LightField.sky(voxels, tops, REGION_SPAN)
+
+
+## Keeps the chunk's own part of the region's sky light (Result.sky_open,
+## sky_levels).
+static func _keep_sky(result: Result, sky: Array) -> void:
+	var levels: PackedByteArray = sky[0]
+	var open: PackedInt32Array = sky[1]
+	for lz in SIZE:
+		for lx in SIZE:
+			var column := (lz + SIZE) * REGION_SPAN + lx + SIZE
+			result.sky_open.append(open[column])
+			result.sky_levels.append_array(levels.slice(column * HEIGHT, (column + 1) * HEIGHT))
+
+
+static func _build_solid_row() -> PackedInt32Array:
+	var row := PackedInt32Array()
+	row.resize(SIZE * HEIGHT)
+	row.fill(Voxels.of_block(Tiles.Block.STONE))
+	return row
+
+
+static func _build_solid_tops() -> PackedByteArray:
+	var tops := PackedByteArray()
+	tops.resize(SIZE)
+	tops.fill(HEIGHT)
+	return tops
 
 
 ## Whether the eye sees through a voxel from above: air, plants... or
@@ -671,12 +758,20 @@ static func _sky_through(
 
 
 ## Notes a horizontal face of voxel row `y` at (lx, lz): a top (`code`:
-## its material) or an underside (`code`: its face kind). Faces of the same
-## row, material and part are merged into rectangles by _add_flats.
+## its material) or an underside (`code`: its face kind), in `light` (the
+## sky's in front of it). Faces of the same row, material, part and light
+## are merged into rectangles by _add_flats.
 static func _record_flat(
-	flats: Dictionary, y: int, code: int, part: int, underside: int, lx: int, lz: int
+	flats: Dictionary,
+	y: int,
+	code: int,
+	part: int,
+	underside: int,
+	lx: int,
+	lz: int,
+	light := LightField.MAX
 ) -> void:
-	var key := Vector4i(y, code, part * 2 + underside, lz)
+	var key := Vector4i(y, code, part * 2 + underside + (light << 4), lz)
 	flats[key] = flats.get(key, 0) | (1 << lx)
 
 
@@ -726,7 +821,9 @@ static func _runs(mask: int) -> Array[Vector2i]:
 static func _add_flat(result: Result, group: Vector3i, run: Vector2i, z0: int, z1: int) -> void:
 	var y := group.x
 	var code := group.y
-	var surface := result.parts[group.z >> 1]
+	var part := (group.z & 15) >> 1
+	var light := Color(0.0, 0.0, (group.z >> 4) / float(LightField.MAX))
+	var surface := result.parts[part]
 	var x0 := float(run.x)
 	var x1 := float(run.y + 1)
 	if group.z & FLAT_UNDERSIDE != 0:
@@ -741,13 +838,13 @@ static func _add_flat(result: Result, group: Vector3i, run: Vector2i, z0: int, z
 		var texels: Array[Vector2] = []
 		for corner in below:
 			texels.append(Vector2(corner.x, corner.z) * FACE_PX_PER_UNIT)
-		surface.quad(below, texels, Vector3.DOWN, Vector3.RIGHT, Vector2(code, 0))
+		surface.quad(below, texels, Vector3.DOWN, Vector3.RIGHT, Vector2(code, 0), light)
 		return
 	var level := y + 1 - SEA
 	var height := float(level)
 	if Voxels.is_liquid(code):
 		height -= ChunkData.WATER_DROP
-	if group.z >> 1 == Part.CAPS:
+	if part == Part.CAPS:
 		# A hair under the cut, so the cut keeps it.
 		height -= 0.002
 	var corners: Array[Vector3] = [
@@ -760,7 +857,7 @@ static func _add_flat(result: Result, group: Vector3i, run: Vector2i, z0: int, z
 	var uvs: Array[Vector2] = []
 	for corner in corners:
 		uvs.append(Vector2(corner.x, corner.z) / SIZE)
-	surface.quad(corners, uvs, Vector3.UP, Vector3.RIGHT, Vector2(code, level))
+	surface.quad(corners, uvs, Vector3.UP, Vector3.RIGHT, Vector2(code, level), light)
 
 
 ## One underside under the whole chunk: the bottom of the world closes the
@@ -840,7 +937,8 @@ static func _add_prop(
 	lx: int,
 	y: int,
 	lz: int,
-	origin: Vector2i
+	origin: Vector2i,
+	sky := LightField.MAX
 ) -> void:
 	var block := Voxels.block_of(voxel)
 	var count := variants[block]
@@ -864,7 +962,8 @@ static func _add_prop(
 		foot += Vector3(right.x, 0.0, right.y) * 0.5
 	var shade := 0.93 + ((h >> 16) & 15) / 15.0 * 0.14
 	var warmth := 0.97 + ((h >> 20) & 7) / 7.0 * 0.06
-	var custom := Color(shade * warmth, shade, shade / warmth, ((h >> 24) & 255) / 255.0)
+	# Its wind phase, after the sky light it stands in (see voxel.gdshader).
+	var custom := Color(shade * warmth, shade, shade / warmth, sky + ((h >> 24) & 255) / 256.0)
 	var variant := ObjectShapes.variant_at(block, tile)
 	if block == Tiles.Block.FENCE:
 		variant = _fence_sides(voxels, base + y)

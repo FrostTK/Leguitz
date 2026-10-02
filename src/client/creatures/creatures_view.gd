@@ -28,6 +28,9 @@ const WISP_ENERGY := 1.6
 
 ## Where the wisps' lights go (the 3D world, outside the stretched root).
 var light_parent: Node
+## The sky light of a cell (tile x, row, tile y; see WorldView3D.sky_at):
+## bodies darken in caves.
+var sky_at := Callable()
 
 var _bodies: Dictionary[int, CreatureBody] = {}
 ## Per species: part name -> mesh.
@@ -136,6 +139,12 @@ func pick(origin: Vector3, direction: Vector3, length: float) -> Vector2:
 
 func _process(delta: float) -> void:
 	for body: CreatureBody in _bodies.values():
+		if sky_at.is_valid():
+			var at := body.target
+			var cell := Vector3i(
+				floori(at.x), floori(at.y + 0.5) + GameConst.SEA_LEVEL, floori(at.z)
+			)
+			body.sky_light = sky_at.call(cell) / float(LightField.MAX)
 		body.animate(delta)
 	if not _lights.is_empty() and is_inside_tree():
 		var root := global_transform

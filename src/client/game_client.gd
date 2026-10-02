@@ -37,6 +37,11 @@ const FIRST_PERSON_VIEW_DISTANCE := 6
 ## Where the lantern is carried in first person (right, up, back of the
 ## eye, in its frame).
 const LANTERN_IN_HAND := Vector3(-0.5, -0.3, 0.05)
+## Under cover (top-down), the lantern hangs this high over the feet
+## (levels: under a ceiling two levels up) and this far towards the camera
+## (tiles), lighting the body seen from above.
+const LANTERN_UNDER_COVER := 1.8
+const LANTERN_TOWARDS_CAMERA := 0.45
 ## A right click moving less than this (screen pixels) places a block; more
 ## is a drag turning the camera.
 const CLICK_SLOP := 6.0
@@ -248,6 +253,7 @@ func _setup_world() -> void:
 	world_environment.environment = environment
 	root.add_child(world_environment)
 	creatures.light_parent = root
+	creatures.sky_at = world_view.sky_at
 	root.add_child(sun)
 	root.add_child(world_root)
 	world_root.add_child(world_view)
@@ -423,6 +429,11 @@ func _update_view(delta: float) -> void:
 	if first_person > 0.5:
 		var look := Basis.from_euler(Vector3(_look_pitch, _look_yaw, 0.0))
 		player_model.lantern_override = eye + look * LANTERN_IN_HAND
+	elif covered:
+		var yaw := world_viewport.current_yaw
+		var low := Render3D.world_px_to_local(feet, local_player.height + LANTERN_UNDER_COVER)
+		low += Vector3(sin(yaw), 0.0, cos(yaw)) * LANTERN_TOWARDS_CAMERA
+		player_model.lantern_override = root * low
 	player_model.set_fade(smoothstep(0.55, 0.85, first_person))
 	player_model.animate(
 		Render3D.world_px_to_local(feet, local_player.height),
@@ -432,6 +443,8 @@ func _update_view(delta: float) -> void:
 		delta
 	)
 	player_model.swimming = local_player.body.in_liquid and not local_player.body.on_ground
+	lighting.sky_here = _sky_here()
+	player_model.set_sky_light(lighting.sky_seen)
 	if local_player.body.in_liquid and not _was_in_liquid:
 		interaction.splash(Voxels.ground_of(local_player.body.liquid) == Tiles.Ground.LAVA)
 	_was_in_liquid = local_player.body.in_liquid
@@ -472,6 +485,16 @@ func _update_view(delta: float) -> void:
 	var center := Vector2(_camera_local.x, _camera_local.z)
 	world_view.set_view_area(center, ground * 0.5, world_viewport.current_yaw)
 	_update_view_distance()
+
+
+## The sky light (0..1) where the player is: around their feet or their
+## head, the brighter.
+func _sky_here() -> float:
+	var tile := local_player.current_tile()
+	var row := floori(local_player.height + 0.5) + GameConst.SEA_LEVEL
+	var feet := world_view.sky_at(Vector3i(tile.x, row, tile.y))
+	var head := world_view.sky_at(Vector3i(tile.x, row + 1, tile.y))
+	return maxi(feet, head) / float(LightField.MAX)
 
 
 ## Under cover (a cave, a tunnel, a roof), cuts the world above the
