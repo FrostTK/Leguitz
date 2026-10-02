@@ -4,6 +4,8 @@ extends RefCounted
 ## - world.cfg: the world's settings, clock and weather, and when it was
 ##   last saved,
 ## - players/<name>.cfg: where each player stands (inventory later),
+## - creatures.cfg: the animals and the chunks already given theirs
+##   (Creatures.to_save),
 ## - regions/r.<x>.<z>.bin: the chunks players changed, REGION_SIZE x
 ##   REGION_SIZE chunks per file, voxels compressed (the other chunks are
 ##   generated again from the seed).
@@ -18,6 +20,7 @@ const FIRST_WORLD := "world_1"
 const REGION_SIZE := 32
 const COMPRESSION := FileAccess.COMPRESSION_ZSTD
 const WORLD_FILE := "world.cfg"
+const CREATURES_FILE := "creatures.cfg"
 
 var folder := ""
 ## Saved chunks of the regions read so far: region -> {chunk coord: data}.
@@ -81,6 +84,18 @@ func save_world(
 	file.set_value("world", "items", items)
 	file.set_value("world", "saved_unix", Time.get_unix_time_from_system())
 	return _save_config(file, WORLD_FILE)
+
+
+## The saved animals (see Creatures.load_save), empty if none.
+func read_creatures() -> Dictionary:
+	var file := _load_config(CREATURES_FILE)
+	return file.get_value("creatures", "state", {}) if file != null else {}
+
+
+func save_creatures(state: Dictionary) -> bool:
+	var file := ConfigFile.new()
+	file.set_value("creatures", "state", state)
+	return _save_config(file, CREATURES_FILE)
 
 
 ## A player's saved state (see GameServer.player_state), empty if none.

@@ -32,6 +32,7 @@ const OPEN_FURNACE := "open_furnace"
 const FURNACE_CLICK := "furnace_click"
 const SET_GAME_MODE := "set_game_mode"
 const CATALOG_CLICK := "catalog_click"
+const ATTACK := "attack"
 
 ## map_request() row for a map of the surface.
 const MAP_SURFACE := -1
@@ -56,6 +57,48 @@ const VITALS := "vitals"
 const DIED := "died"
 const FURNACE := "furnace"
 const GAME_MODE := "game_mode"
+const ENTITY_SPAWN := "entity_spawn"
+const ENTITY_MOVE := "entity_move"
+const ENTITY_HURT := "entity_hurt"
+const ENTITY_REMOVE := "entity_remove"
+
+
+## The player hits the creature `id` with the hotbar slot `slot` in hand
+## (-1: nothing of it, the player's book).
+static func attack(id: int, slot := -1) -> Dictionary:
+	return {"t": ATTACK, "id": id, "slot": slot}
+
+
+## A creature comes into a player's view: its kind (Species), its feet
+## (world pixels) and their height (levels), where it looks, what it does
+## (Animal.State).
+static func entity_spawn(animal: Animal) -> Dictionary:
+	var message := entity_move(animal)
+	message["t"] = ENTITY_SPAWN
+	message["kind"] = animal.species
+	return message
+
+
+## A creature moved, turned or does something else.
+static func entity_move(animal: Animal) -> Dictionary:
+	return {
+		"t": ENTITY_MOVE,
+		"id": animal.id,
+		"pos": animal.body.feet,
+		"h": animal.body.height,
+		"heading": animal.heading,
+		"state": animal.state,
+	}
+
+
+## A creature was hurt.
+static func entity_hurt(id: int) -> Dictionary:
+	return {"t": ENTITY_HURT, "id": id}
+
+
+## A creature leaves a player's view, or died.
+static func entity_remove(id: int, died: bool) -> Dictionary:
+	return {"t": ENTITY_REMOVE, "id": id, "died": died}
 
 
 ## The player asks for another game mode for the world (GameModes.set_mode).

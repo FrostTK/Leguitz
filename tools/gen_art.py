@@ -40,7 +40,7 @@ WALLS = [
     "RUBY_ORE", "DIAMOND_ORE", "EMERALD_ORE", "SANDSTONE", "PACKED_ICE",
     "OAK_PLANKS", "BIRCH_PLANKS", "SPRUCE_PLANKS", "DARK_OAK_PLANKS", "JUNGLE_PLANKS",
     "ACACIA_PLANKS", "STONE_BRICKS", "SMOOTH_STONE", "BRICKS", "DEEPSLATE_BRICKS",
-    "CUT_SANDSTONE", "GLASS",
+    "CUT_SANDSTONE", "GLASS", "WOOL",
 ]
 # Walls from this row on draw from random generators of their own, so the
 # textures made before them (and the cliffs after) stay the same.
@@ -541,6 +541,30 @@ def glass(rng, variant):
     return c, height
 
 
+def wool(rng, face):
+    """Wool: soft cream fleece in little curls, a shade darker on the sides."""
+    base = "#ece6d6" if not face else "#ddd5c2"
+    dark, light = shade(base, -0.12), shade(base, 0.06)
+    c = Canvas(TILE, TILE)
+    c.fill(0, 0, TILE, TILE, base)
+    height = np.full((TILE, TILE), 0.6, dtype=np.float32)
+    # Curls: a light crescent over a dark one, in a loose grid.
+    for gy in range(0, TILE, 4):
+        for gx in range(0, TILE, 4):
+            x = (gx + int(rng.integers(0, 3)) + (2 if (gy // 4) % 2 else 0)) % TILE
+            y = gy + int(rng.integers(0, 2))
+            c.fill(x, y, 2, 1, light)
+            c.put((x + 2) % TILE, y + 1, dark)
+            c.put(x, y + 1, dark)
+            height[y % TILE, x] = 0.85
+            height[y % TILE, (x + 1) % TILE] = 0.85
+    speckle(rng, c, [shade(base, -0.05), shade(base, 0.03)], 0.15)
+    if face:
+        c.fill(0, TILE - 1, TILE, 1, shade(base, -0.22))
+    height += luminance(c.img) * 0.1
+    return c, height
+
+
 def wall_tile(rng, name, is_top, variant):
     """The tile of a wall added after the first ones (own generator)."""
     if name in PLANKS:
@@ -551,6 +575,8 @@ def wall_tile(rng, name, is_top, variant):
         return smooth_stone(rng, not is_top)
     if name == "CUT_SANDSTONE":
         return cut_sandstone(rng, not is_top)
+    if name == "WOOL":
+        return wool(rng, not is_top)
     return glass(rng, variant)
 
 

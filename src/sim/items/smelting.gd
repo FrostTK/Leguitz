@@ -2,7 +2,7 @@ class_name Smelting
 extends RefCounted
 ## What furnaces make, shared by the server (which runs them, see Furnace)
 ## and the client (which shows them and predicts clicks). The food furnace
-## cooks food: berries dry, mushrooms simmer into a stew; ore melted in it
+## cooks food: berries dry, mushrooms simmer into a stew, meat roasts; ore melted in it
 ## is too hot for it and breaks it. The factory furnace smelts ores into
 ## ingots, chars logs into charcoal, melts sand into glass, smooths stone
 ## and fires mud into bricks; food put in it comes out charred.
@@ -16,6 +16,10 @@ const FOOD := {
 	Items.Id.BERRIES: Items.Id.DRIED_BERRIES,
 	Items.Id.MUSHROOM_RED: Items.Id.MUSHROOM_STEW,
 	Items.Id.MUSHROOM_BROWN: Items.Id.MUSHROOM_STEW,
+	Items.Id.RAW_MUTTON: Items.Id.COOKED_MUTTON,
+	Items.Id.RAW_PORK: Items.Id.COOKED_PORK,
+	Items.Id.RAW_CHICKEN: Items.Id.COOKED_CHICKEN,
+	Items.Id.RAW_VENISON: Items.Id.COOKED_VENISON,
 }
 ## Food, raw or cooked: it chars in the factory furnace.
 const FOODS := {
@@ -24,6 +28,14 @@ const FOODS := {
 	Items.Id.MUSHROOM_BROWN: true,
 	Items.Id.DRIED_BERRIES: true,
 	Items.Id.MUSHROOM_STEW: true,
+	Items.Id.RAW_MUTTON: true,
+	Items.Id.COOKED_MUTTON: true,
+	Items.Id.RAW_PORK: true,
+	Items.Id.COOKED_PORK: true,
+	Items.Id.RAW_CHICKEN: true,
+	Items.Id.COOKED_CHICKEN: true,
+	Items.Id.RAW_VENISON: true,
+	Items.Id.COOKED_VENISON: true,
 }
 ## What the factory furnace makes of the rest.
 const FACTORY := {

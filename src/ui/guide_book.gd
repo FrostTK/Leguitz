@@ -2,8 +2,8 @@ class_name GuideBook
 extends RefCounted
 ## What the player's book says (the 10th slot, shown by BookScreen): the
 ## controls as they are bound (in the player's keyboard layout), the
-## gamepad, tips, tools, the recipes, the furnaces, survival and the game
-## modes (creative's flight and debug keys). A chapter is a list of entries:
+## gamepad, tips, tools, the recipes, the furnaces, survival, the animals
+## and the game modes (creative's flight and debug keys). A chapter is a list of entries:
 ## Dictionaries with a "kind" (Kind) and their text already translated,
 ## built again when the language changes.
 
@@ -18,6 +18,7 @@ const CHAPTERS: Array[String] = [
 	"BOOK_CHAPTER_CRAFT",
 	"BOOK_CHAPTER_FURNACES",
 	"BOOK_CHAPTER_SURVIVAL",
+	"BOOK_CHAPTER_ANIMALS",
 	"BOOK_CHAPTER_MODES",
 ]
 const TIP_COUNT := 15
@@ -39,7 +40,15 @@ const TOOL_ROWS := [
 ## The entries of every chapter, in CHAPTERS order.
 static func chapters() -> Array[Array]:
 	return [
-		_controls(), _gamepad(), _tips(), _tools(), _craft(), _furnaces(), _survival(), _modes()
+		_controls(),
+		_gamepad(),
+		_tips(),
+		_tools(),
+		_craft(),
+		_furnaces(),
+		_survival(),
+		_animals(),
+		_modes(),
 	]
 
 
@@ -198,10 +207,27 @@ static func _survival() -> Array:
 	return entries
 
 
+## Where each animal lives and what it gives (its first gift's icon), how
+## to hunt and to cook.
+static func _animals() -> Array:
+	var entries := [_title(CHAPTERS[7]), _text("BOOK_ANIMALS_INTRO")]
+	for kind: int in Species.Id.values():
+		var gifts := PackedStringArray()
+		for drop: Array in Species.DROPS[kind]:
+			gifts.append(_t(Items.name_key(drop[0])).to_lower())
+		var text := (
+			_t("BOOK_ANIMALS_ENTRY")
+			% [_t(Species.NAME_KEYS[kind]), _t(Species.HOME_KEYS[kind]), ", ".join(gifts)]
+		)
+		entries.append(_icon(Species.DROPS[kind][0][0], text))
+	entries.append(_text("BOOK_ANIMALS_COOK"))
+	return entries
+
+
 ## Creative (flight, the catalog, its debug keys), survival, hardcore.
 static func _modes() -> Array:
 	return [
-		_title(CHAPTERS[7]),
+		_title(CHAPTERS[8]),
 		_heading("GAME_MODE_CREATIVE"),
 		_text("BOOK_MODES_CREATIVE"),
 		_combo("BOOK_FLY", "BOOK_FLY_HOW"),
@@ -263,5 +289,6 @@ static func _t(key: String) -> String:
 		"place": String(TranslationServer.translate("MOUSE_RIGHT")).to_lower(),
 		"jump": " / ".join(InputNames.keys(InputBindings.JUMP)),
 		"sprint": " / ".join(InputNames.keys(InputBindings.SPRINT)),
+		"break": String(TranslationServer.translate("MOUSE_LEFT")).to_lower(),
 	}
 	return text.format(keys)

@@ -142,6 +142,8 @@ func _start_dev_actions() -> void:
 	client.interaction.breaking = dev.hold_break
 	client.interaction.place_soon = dev.place_once
 	var session := server.first_session()
+	for entry in dev.animals:
+		server.creatures.spawn_near(entry.x, session.position, session.height, entry.y)
 	for entry in dev.give:
 		session.inventory.add(entry.x, entry.y)
 	for row in mini(dev.grid.size(), Inventory.GRID):

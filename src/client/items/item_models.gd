@@ -55,6 +55,19 @@ const INGOTS := {
 	Items.Id.IRON_INGOT: Items.Tier.IRON,
 	Items.Id.GOLD_INGOT: Items.Tier.GOLD,
 }
+## Meat (dark, base, light), raw and roasted, by item; bones and fat.
+const MEATS := {
+	Items.Id.RAW_MUTTON: ["#9e3b40", "#c9545a", "#e07a7a"],
+	Items.Id.COOKED_MUTTON: ["#6e3a1c", "#9a5a2c", "#c08048"],
+	Items.Id.RAW_PORK: ["#c97275", "#e8999a", "#f6c2bf"],
+	Items.Id.COOKED_PORK: ["#7a4320", "#a8622f", "#cf8f55"],
+	Items.Id.RAW_CHICKEN: ["#d49880", "#ecbba4", "#f8d9c8"],
+	Items.Id.COOKED_CHICKEN: ["#8a4e22", "#b8742f", "#dca159"],
+	Items.Id.RAW_VENISON: ["#6b1d22", "#8f2a2e", "#b4474b"],
+	Items.Id.COOKED_VENISON: ["#4a2a16", "#6e4022", "#94603a"],
+}
+const BONE := ["#cfc4aa", "#f2ead8"]
+const FAT := "#f4e8dc"
 ## Tools lie on the diagonal of a TOOL_SIZE grid, like the icons of block
 ## games: the handle from the bottom left, the head at the top right. The
 ## hand holds the handle at TOOL_GRIP (grid units), its axis TOOL_AXIS;
@@ -79,6 +92,8 @@ static func build(item: int) -> VoxelGrid:
 		return _tool(Items.tool_of(item), TOOL_HEADS[Items.tier_of(item)])
 	if INGOTS.has(item):
 		return _ingot(TOOL_HEADS[INGOTS[item]])
+	if MEATS.has(item):
+		return _meat(item)
 	match item:
 		Items.Id.STICK:
 			return _stick()
@@ -118,12 +133,16 @@ static func build(item: int) -> VoxelGrid:
 			return _charred()
 		Items.Id.BRICK:
 			return _ingot(BRICK)
+		Items.Id.FEATHER:
+			return _feather()
+		Items.Id.HIDE:
+			return _hide()
 	return null
 
 
 ## Thin flat items (tools, sticks): their icon faces the camera.
 static func is_flat(item: int) -> bool:
-	return Items.TOOLS.has(item) or item == Items.Id.STICK
+	return Items.TOOLS.has(item) or item in [Items.Id.STICK, Items.Id.FEATHER]
 
 
 static func _v(hex: String, kind := VoxelGrid.Kind.SOLID) -> int:
@@ -362,6 +381,98 @@ static func _stew() -> VoxelGrid:
 		grid.set_voxel(p, _v("#efe6d4"))
 	grid.set_voxel(Vector3i(6, 5, 4), _v("#c7302f"))
 	grid.set_voxel(Vector3i(3, 5, 6), _v("#9c6d46"))
+	return grid
+
+
+## Meat by the animal it comes from: a leg of mutton, a pork chop with its
+## fat, a drumstick, a venison steak; roasted, browned with a crust.
+static func _meat(item: int) -> VoxelGrid:
+	var colors: Array = MEATS[item]
+	var cooked := not String(Items.Id.find_key(item)).begins_with("RAW")
+	var paint := func(p: Vector3i) -> int:
+		var n := HashUtil.unit2(item * 31, p.x + p.z * 13, p.y)
+		var index := 1
+		if p.y == 0 or n < 0.22:
+			index = 0
+		elif n > 0.8 or (cooked and p.y >= 2 and n > 0.55):
+			index = 2
+		return _v(colors[index])
+	var grid: VoxelGrid
+	match item:
+		Items.Id.RAW_MUTTON, Items.Id.COOKED_MUTTON:
+			grid = VoxelGrid.new(Vector3i(13, 6, 7))
+			grid.ellipsoid(Vector3(5.0, 2.7, 3.5), Vector3(4.6, 2.7, 3.1), paint)
+			_bone(grid, Vector3(8.5, 2.6, 3.5), Vector3(11.6, 3.0, 3.5))
+		Items.Id.RAW_CHICKEN, Items.Id.COOKED_CHICKEN:
+			grid = VoxelGrid.new(Vector3i(12, 6, 6))
+			grid.ellipsoid(Vector3(4.0, 2.7, 3.0), Vector3(3.7, 2.7, 2.7), paint)
+			grid.ellipsoid(Vector3(7.0, 2.4, 3.0), Vector3(2.0, 1.6, 1.6), paint)
+			_bone(grid, Vector3(8.5, 2.4, 3.0), Vector3(10.6, 2.6, 3.0))
+		Items.Id.RAW_PORK, Items.Id.COOKED_PORK:
+			grid = VoxelGrid.new(Vector3i(12, 4, 10))
+			grid.ellipsoid(Vector3(6.0, 1.2, 5.0), Vector3(5.6, 1.9, 4.6), paint)
+			var rim := _v(FAT if not cooked else colors[2])
+			for x in 12:
+				for y in 3:
+					for z in range(6, 10):
+						var p := Vector3i(x, y, z)
+						var next := p + Vector3i(0, 0, 1)
+						if grid.get_voxel(p) != 0 and grid.get_voxel(next) == 0:
+							grid.set_voxel(p, rim)
+			_bone(grid, Vector3(2.0, 1.5, 3.0), Vector3(3.0, 1.5, 4.5))
+		_:
+			grid = VoxelGrid.new(Vector3i(12, 4, 9))
+			grid.ellipsoid(Vector3(6.0, 1.3, 4.5), Vector3(5.4, 1.8, 3.9), paint)
+			# Marbled raw; roasted, the grill's marks across the top.
+			for i in 3:
+				var x := 3 + i * 3
+				for z in range(1, 8):
+					var p := Vector3i(x + z / 3, 2, z)
+					if grid.get_voxel(p) != 0:
+						grid.set_voxel(p, _v(colors[0] if cooked else "#d98c8c"))
+	return grid
+
+
+## A bone from `from` to `to`, a knob at its end.
+static func _bone(grid: VoxelGrid, from: Vector3, to: Vector3) -> void:
+	grid.line(from, to, 0.6, _v(BONE[1]))
+	grid.ellipsoid(to + Vector3(0.4, 0.0, 0.0), Vector3(0.9, 1.1, 1.4), _v(BONE[1]))
+	grid.set_voxel(Vector3i(to.floor()) + Vector3i(0, -1, 0), _v(BONE[0]))
+
+
+## A feather, white with a brown tip, lying on the diagonal like a tool.
+static func _feather() -> VoxelGrid:
+	var grid := VoxelGrid.new(Vector3i(13, 13, 1))
+	for i in range(1, 12):
+		grid.set_voxel(Vector3i(i, i, 0), _v("#d9cfb8"))
+		if i < 3:
+			continue
+		var tip := i >= 9
+		var vane := _v("#6e4a2c" if tip else ("#f2efe8" if i % 2 else "#dcd7cc"))
+		grid.set_voxel(Vector3i(i - 1, i, 0), vane)
+		grid.set_voxel(Vector3i(i, i - 1, 0), vane)
+		if i > 3 and i < 11:
+			grid.set_voxel(Vector3i(i - 2, i, 0), vane)
+			grid.set_voxel(Vector3i(i, i - 2, 0), _v("#c9c3b6" if not tip else "#4e331e"))
+	return grid
+
+
+## A hide: a pelt, fur on top, its leather showing at a folded corner.
+static func _hide() -> VoxelGrid:
+	var grid := VoxelGrid.new(Vector3i(12, 3, 10))
+	for x in 12:
+		for z in 10:
+			var corner := Vector2(x, z).distance_to(Vector2(0, 0)) < 2.5
+			corner = corner or Vector2(x, z).distance_to(Vector2(11, 9)) < 2.0
+			if corner:
+				continue
+			var n := HashUtil.unit2(0x41DE, x, z)
+			grid.set_voxel(Vector3i(x, 0, z), _v("#6a4a2c"))
+			grid.set_voxel(Vector3i(x, 1, z), _v("#8a6440" if n > 0.7 else "#755232"))
+	# A corner folded over: the pale leather side up.
+	for x in range(7, 12):
+		for z in range(0, 12 - x):
+			grid.set_voxel(Vector3i(x, 2, z), _v("#c9a477" if (x + z) % 3 else "#b8935f"))
 	return grid
 
 

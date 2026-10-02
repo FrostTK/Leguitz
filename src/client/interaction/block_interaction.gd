@@ -12,7 +12,9 @@ extends Node
 ## the last word. The block placed is the one in hand (GameClient.inventory).
 ## In creative, everything breaks at once (a short pause between two),
 ## blocks placed are not used up and tools do not wear; a spectator aims
-## at nothing.
+## at nothing. An animal nearer than the block aimed at (within
+## Combat.REACH) is aimed at instead: the break button hits it, every
+## Combat.BLOW_SECONDS while held (Msg.ATTACK).
 
 ## Seconds between two chips flying off what is being broken.
 const CHIP_INTERVAL := 0.16
@@ -22,6 +24,8 @@ const PAD_AIM_PITCH := 0.6
 var client: GameClient
 ## What is aimed at (null: nothing within reach).
 var target: VoxelRay.Hit
+## The animal aimed at (-1: none; then `target` is null).
+var target_animal := -1
 ## The break button is held.
 var breaking := false
 ## Aim at what is in front of the player (gamepad) instead of the mouse.
@@ -33,8 +37,10 @@ var place_soon := false
 
 var _progress := 0.0
 var _breaking_cell := Vector3i.MAX
-## Seconds left before the next block starts breaking (Mining.BREAK_PAUSE).
+## Seconds left before the next block starts breaking (Mining.BREAK_PAUSE),
+## and before the next blow.
 var _pause := 0.0
+var _blow_wait := 0.0
 var _chip_timer := 0.0
 ## Changes shown before the server confirmed them: cell -> voxel before.
 var _predicted: Dictionary[Vector3i, int] = {}
@@ -53,8 +59,13 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if not client.joined or client.transport == null:
 		return
-	target = _aim() if not client.modes.watching else null
+	target = null
+	target_animal = -1
+	if not client.modes.watching:
+		target = _aim()
 	var box := _whole_box(target)
+	if target_animal >= 0:
+		box = client.animals.bounds_of(target_animal)
 	_highlight.outline(box, _frame_thickness(box))
 	_update_breaking(delta)
 	if place_soon and target != null:
@@ -150,6 +161,12 @@ func stop() -> void:
 
 func _update_breaking(delta: float) -> void:
 	_pause = maxf(_pause - delta, 0.0)
+	_blow_wait = maxf(_blow_wait - delta, 0.0)
+	if target_animal >= 0:
+		_reset_breaking()
+		if breaking:
+			_hit_animal()
+		return
 	if not breaking or target == null:
 		_reset_breaking()
 		return
@@ -201,6 +218,19 @@ func _break(hit: VoxelRay.Hit) -> void:
 	var slot := -1 if client.book_in_hand else client.inventory.selected
 	client.transport.send(Msg.block_break(hit.cell, slot))
 	_wear_tool(slot, hit.voxel)
+
+
+## The break button held on an animal: a blow every Combat.BLOW_SECONDS
+## (it reddens at once; the server says the rest).
+func _hit_animal() -> void:
+	client.player_model.swinging = true
+	_face(client.animals.bounds_of(target_animal).get_center())
+	if _blow_wait > 0.0:
+		return
+	_blow_wait = Combat.BLOW_SECONDS
+	var slot := -1 if client.book_in_hand else client.inventory.selected
+	client.transport.send(Msg.attack(target_animal, slot))
+	client.animals.hurt(target_animal)
 
 
 ## The tool in hand wears when it breaks something (as the server will
@@ -287,8 +317,11 @@ func _face(point: Vector3) -> void:
 		player.heading = towards.normalized()
 
 
-## What the player aims at: a ray in local units, kept within reach.
+## What the player aims at: a ray in local units, kept within reach; an
+## animal nearer than the block met is aimed at instead (`target_animal`,
+## then null).
 func _aim() -> VoxelRay.Hit:
+	target_animal = -1
 	if client.first_person > 0.0 and client.first_person < 1.0:
 		return null
 	var root_inverse := client.world_root.global_transform.affine_inverse()
@@ -309,11 +342,20 @@ func _aim() -> VoxelRay.Hit:
 		direction = root_inverse.basis * camera.project_ray_normal(pixel)
 	direction = direction.normalized()
 	var span := _reach_span(origin, direction, eye)
-	if span.x > span.y:
-		return null
-	return VoxelRay.cast(
-		origin + direction * span.x, direction, span.y - span.x, client.world.voxel_at
-	)
+	var hit: VoxelRay.Hit = null
+	if span.x <= span.y:
+		hit = VoxelRay.cast(
+			origin + direction * span.x, direction, span.y - span.x, client.world.voxel_at
+		)
+	var reach := _reach_span(origin, direction, eye, Combat.REACH)
+	if reach.x <= reach.y:
+		var start := origin + direction * reach.x
+		var animal := client.animals.pick(start, direction, reach.y - reach.x)
+		var block := INF if hit == null else (hit.point - origin).dot(direction)
+		if animal.x >= 0.0 and reach.x + animal.y < block:
+			target_animal = int(animal.x)
+			return null
+	return hit
 
 
 ## The player's eye (local units).
@@ -335,15 +377,22 @@ func _viewport_pixel() -> Vector2:
 
 ## The part of a ray within reach of the eye: [enter, leave] distances
 ## (enter > leave: never within reach).
-static func _reach_span(origin: Vector3, direction: Vector3, eye: Vector3) -> Vector2:
+static func _reach_span(
+	origin: Vector3, direction: Vector3, eye: Vector3, reach := Mining.REACH
+) -> Vector2:
 	var offset := origin - eye
 	var b := direction.dot(offset)
-	var c := offset.length_squared() - Mining.REACH * Mining.REACH
+	var c := offset.length_squared() - reach * reach
 	var discriminant := b * b - c
 	if discriminant < 0.0:
 		return Vector2(1.0, 0.0)
 	var root := sqrt(discriminant)
 	return Vector2(maxf(-b - root, 0.0), -b + root)
+
+
+## Bits of `color` bursting from `at` (local units: an animal dying).
+func burst(at: Vector3, color: Color) -> void:
+	_debris.throw(_world_point(at), color, 18, 0.3)
 
 
 ## A few crumbs of `color` at the player's mouth (eating; not in first

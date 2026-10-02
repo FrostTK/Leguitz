@@ -118,6 +118,7 @@ enum Block {
 	DEEPSLATE_BRICKS,
 	CUT_SANDSTONE,
 	GLASS,
+	WOOL,
 }
 
 const FLOWERS: Array[Block] = [
@@ -190,6 +191,7 @@ const CUBE_BLOCKS := {
 	Block.DEEPSLATE_BRICKS: true,
 	Block.CUT_SANDSTONE: true,
 	Block.GLASS: true,
+	Block.WOOL: true,
 }
 
 const NON_SOLID_BLOCKS := {

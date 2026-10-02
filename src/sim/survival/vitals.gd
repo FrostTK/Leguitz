@@ -53,7 +53,7 @@ const DROWN_SECONDS := 1.0
 ## Air is told to the player in steps this small (seconds).
 const AIR_STEP := 0.25
 ## Foods that make one sick raw: the vitality they cost.
-const POISONS := {Items.Id.MUSHROOM_RED: 2}
+const POISONS := {Items.Id.MUSHROOM_RED: 2, Items.Id.RAW_CHICKEN: 1}
 ## Translation keys of the causes.
 const CAUSE_KEYS := {
 	Cause.NONE: "DEATH_CAUSE_NONE",

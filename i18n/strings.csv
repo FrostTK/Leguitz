@@ -308,7 +308,7 @@ DEATH_GET_UP,Get up,Se relever
 BOOK_TIP_15,"The red gauge over your items is your vitality, the amber one your satiety: falls, lava and hunger wear you down; well fed, you heal slowly.","La jauge rouge au-dessus de tes objets est ta vitalité, l'ambrée ta satiété : chutes, lave et faim t'usent ; bien nourri, tu guéris doucement."
 HUD_NOT_HUNGRY,You are not hungry.,Tu n'as pas faim.
 DEATH_CAUSE_STARVATION,Hunger got the better of you.,La faim a eu raison de toi.
-DEATH_CAUSE_POISON,A raw red mushroom made you sick.,Un champignon rouge cru t'a rendu malade.
+DEATH_CAUSE_POISON,Something raw made you sick.,Un aliment cru t'a rendu malade.
 BOOK_CHAPTER_SURVIVAL,Survival,Survie
 BOOK_SURVIVAL_VITALITY,"The red gauge is your vitality. Falls of more than 3 levels (unless into water), lava, hunger and some raw food wear it down; well fed, it comes back slowly. Empty, you pass out and what you carried stays there.","La jauge rouge est ta vitalité. Les chutes de plus de 3 niveaux (sauf dans l'eau), la lave, la faim et certains aliments crus l'usent ; bien nourri, elle revient doucement. Vide, tu perds connaissance et ce que tu portais reste sur place."
 BOOK_SURVIVAL_FOOD,"The amber gauge is your satiety: it goes down with time, walking and mining. Hold {place} with food in hand to eat. Too hungry, you cannot run; starving, you weaken.","La jauge ambrée est ta satiété : elle baisse avec le temps, la marche et le minage. Maintiens le {place} avec de la nourriture en main pour manger. Trop affamé, tu ne peux plus courir ; quand tu meurs de faim, tu t'affaiblis."
@@ -332,3 +332,26 @@ BOOK_MODES_CATALOG,"In the catalog, a click takes a stack, a right click one ite
 BOOK_MODES_TOOLS,Creative tools,Outils du créatif
 BOOK_MODES_SURVIVAL,"The game itself: gather, craft, eat and stay alive (see the Survival chapter). The pause menu switches the world between survival and creative.","Le jeu lui-même : récolte, fabrique, mange et reste en vie (voir le chapitre Survie). Le menu pause fait passer le monde de la survie au créatif et inversement."
 BOOK_MODES_HARDCORE,"Survival with one life: passing out ends your adventure, and you can only watch the world, flying through everything. Chosen when the world is created, for good.","La survie avec une seule vie : perdre connaissance met fin à ton aventure, et tu ne peux plus que regarder le monde en volant à travers tout. Choisi à la création du monde, pour de bon."
+ITEM_WOOL,Wool,Laine
+ITEM_RAW_MUTTON,Raw mutton,Mouton cru
+ITEM_COOKED_MUTTON,Roast leg of mutton,Gigot rôti
+ITEM_RAW_PORK,Raw boar meat,Viande de sanglier crue
+ITEM_COOKED_PORK,Roast boar,Rôti de sanglier
+ITEM_RAW_CHICKEN,Raw chicken,Poulet cru
+ITEM_COOKED_CHICKEN,Roast chicken,Poulet rôti
+ITEM_RAW_VENISON,Raw venison,Venaison crue
+ITEM_COOKED_VENISON,Venison steak,Steak de cerf
+ITEM_FEATHER,Feather,Plume
+ITEM_HIDE,Hide,Peau
+CREATURE_SHEEP,Sheep,Mouton
+CREATURE_BOAR,Boar,Sanglier
+CREATURE_CHICKEN,Jungle fowl,Poule sauvage
+CREATURE_DEER,Deer,Cerf
+CREATURE_SHEEP_HOME,"plains, meadows, groves","plaines, prairies, bosquets"
+CREATURE_BOAR_HOME,"forests, dark forests, swamps","forêts, forêts sombres, marais"
+CREATURE_CHICKEN_HOME,"plains, savannas, jungles","plaines, savanes, jungles"
+CREATURE_DEER_HOME,"forests, birch woods, taigas, meadows","forêts, bois de bouleaux, taïgas, prairies"
+BOOK_CHAPTER_ANIMALS,Animals,Animaux
+BOOK_ANIMALS_INTRO,"Herds live in the wild: they graze and wander, climbing one level at a time. Hit one ({break}; an axe hits hardest): it runs away with its herd, and when it falls it leaves what it gives.","Des troupeaux vivent dans la nature : ils broutent et se promènent, en grimpant un niveau à la fois. Frappe un animal ({break} ; une hache frappe le plus fort) : il s'enfuit avec son troupeau, et quand il tombe il laisse ce qu'il donne."
+BOOK_ANIMALS_ENTRY,%s (%s): %s,%s (%s) : %s
+BOOK_ANIMALS_COOK,"Roast meat in the food furnace: it feeds far better than raw, and raw chicken makes you sick. Wool is a soft block to build with; feathers and hides will soon be useful.","Fais rôtir la viande au four alimentaire : elle nourrit bien mieux que crue, et le poulet cru rend malade. La laine est un bloc doux pour construire ; plumes et peaux serviront bientôt."

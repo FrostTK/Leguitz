@@ -80,6 +80,10 @@ class PlayerSession:
 	var drowning := 0.0
 	## Hardcore: they passed out, their one life is over; they only watch.
 	var spectator := false
+	## The animals they are shown (Creatures.sync), and when they last hit
+	## one (seconds of play).
+	var seen_animals: Dictionary[int, bool] = {}
+	var last_blow := -INF
 
 	func alive() -> bool:
 		return health > 0
@@ -109,6 +113,8 @@ var storage: WorldStorage
 var tick_count := 0
 ## Items lying in the world, by id.
 var items: Dictionary[int, DroppedItem] = {}
+## The animals.
+var creatures: Creatures
 ## Debug commands (moving between caves, world map, weather, tools):
 ## creative players use them where the server allows them (operators once
 ## they exist); `cheats_anywhere` (developer options) in every mode.
@@ -130,6 +136,7 @@ func _init(world_settings: WorldSettings, world_clock: WorldClock = null, thread
 	weather = Weather.new(settings.world_seed)
 	var generator := WorldGenerator.new(settings.world_seed)
 	world = WorldState.new(generator)
+	creatures = Creatures.new(world, settings.world_seed)
 	generation = ChunkGenerationQueue.new(generator, threaded)
 	spawn_tile = generator.find_spawn_tile()
 	clock.sync_to_device()
@@ -144,6 +151,7 @@ func use_storage(world_storage: WorldStorage, saved: Dictionary) -> void:
 	if saved.is_empty():
 		save()
 		return
+	creatures.load_save(world_storage.read_creatures())
 	weather.load_dict(saved.get("weather", {}))
 	for data: Dictionary in saved.get("items", []):
 		var dropped := DroppedItem.from_dict(data)
@@ -165,6 +173,7 @@ func save() -> bool:
 	for dropped: DroppedItem in items.values():
 		lying.append(dropped.to_dict())
 	var ok := storage.save_world(settings, clock, weather, lying)
+	ok = storage.save_creatures(creatures.to_save()) and ok
 	for session in sessions:
 		if session.joined:
 			ok = storage.save_player(session.player_name, player_state(session)) and ok
@@ -250,6 +259,8 @@ func tick() -> void:
 		broadcast(Msg.time_state(clock))
 		broadcast(Msg.weather_state(weather))
 	_update_items(GameConst.TICK_DELTA)
+	creatures.update(GameConst.TICK_DELTA, sessions)
+	creatures.sync(sessions)
 	Survival.update(self, sessions, GameConst.TICK_DELTA)
 	if tick_count % FURNACE_TICKS == 0:
 		_update_furnaces(GameConst.TICK_DELTA * FURNACE_TICKS)
@@ -279,6 +290,10 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 			GameModes.set_mode(self, session, int(message.get("mode", -1)))
 		Msg.CATALOG_CLICK:
 			GameModes.catalog_click(self, session, message)
+		Msg.ATTACK:
+			creatures.attack(
+				self, session, int(message.get("id", -1)), int(message.get("slot", -1))
+			)
 		Msg.SET_VIEW_DISTANCE:
 			_on_set_view_distance(session, message)
 		Msg.BLOCK_BREAK:
@@ -510,6 +525,11 @@ func _on_block_place(session: PlayerSession, message: Dictionary) -> void:
 	for other in sessions:
 		for at: Vector3i in cells:
 			if ok and other.joined and Mining.overlaps_body(at, other.position, other.height):
+				ok = false
+	for animal: Animal in creatures.animals.values():
+		var body := animal.body
+		for at: Vector3i in cells:
+			if ok and Mining.overlaps_body(at, body.feet, body.height, body.box, body.tall):
 				ok = false
 	if not ok:
 		# What is really there, where the player guessed it changed.

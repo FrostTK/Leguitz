@@ -43,6 +43,7 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Blocs de construction : briques de pierre, briques d'ardoise, grès taillé, briques (brique cuite au four), pierre lisse, verre transparent (sable au four d'usine) | ✅ |
 | Confort : nom de l'objet survolé (inventaire et livre), glisser une pile au clic droit (un par case) ou gauche (parts égales), double-clic pour rassembler une ressource éparpillée, monter sur les meubles, cadre de visée fin en 1re personne | ✅ |
 | Modes de jeu : Créatif (vol, catalogue de tous les objets, blocs illimités, casse instantanée, outils de debug), Survie, Hardcore (une seule vie, puis spectateur) ; au menu pause et `--game-mode` | ✅ |
+| Animaux en voxel animé (moutons, sangliers, poules sauvages, cerfs) selon les biomes : troupeaux, chemins sur le relief, fuite quand on les frappe, laine, viandes à rôtir, plumes, peaux | ✅ |
 
 ![Leguitz : les blocs de construction à la 1re personne (une fenêtre en verre dans un mur de briques), l'inventaire avec les nouveaux blocs, et vus de dessus (le verre laisse voir le sol et une fleur)](docs/screenshots/phase4-construction.png)
 

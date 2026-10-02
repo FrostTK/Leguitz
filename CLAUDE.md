@@ -317,6 +317,25 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   saved; RESPAWN refused, moves still accepted); Msg.GAME_MODE tells the mode and that; the death
   screen's button then watches (GameModeView.watch: LocalPlayer.ghost flies through everything,
   PlayerModel.set_ghost, no hotbar, a banner).
+- Creatures (`src/sim/creatures/`): `Species` (ids saved: only append; size BOX/TALL, HEALTH,
+  WALK/FLEE_SPEED, DROPS, BIOMES, HERD), `Animal` (server; its body a PlayerBody with its own
+  `box`/`tall`; State IDLE/GRAZE/WANDER/FLEE; `think` picks, `move` walks its way, jumps up a
+  level, swims; `hurt_by` throws it back and makes it flee; resting ones only move every
+  REST_CHECK), `Pathfinder` (A* over tiles, 8 ways without cutting corners, up one level, down
+  MAX_DROP, room for `tall`, never into liquids or solid objects' tiles; `ground_at`),
+  `Creatures` (held by GameServer, never holding it: populates each chunk once per seed,
+  `populated`, skipping modified chunks; animals within ACTIVE_RADIUS chunks of a player think and
+  move, half of them each tick; `sync` sends Msg.ENTITY_SPAWN/MOVE/REMOVE per player from its
+  sent chunks, `PlayerSession.seen_animals`; `attack` (Msg.ATTACK: Combat.REACH, BLOW_SECONDS
+  per session `last_blow`, `Combat.damage_of`, tool wear, herd panic, drops); saved in
+  creatures.cfg; `voxel_at` is WorldState.loaded_voxel_at: never makes chunks). Blocks are not
+  placed on animals. Client: AnimalsView (in the world root: one AnimalBody per animal, parts from
+  AnimalModels built at runtime: body, head, legs, wings, antlers on joints; trot, grazing,
+  flapping, hurt glow, tipping over and fading, a burst of bits; `pick` for aiming,
+  `bounds_of`); BlockInteraction aims at an animal nearer than the block (`target_animal`, the
+  frame around its box) and the break button hits it. Meat roasts in the food furnace (raw
+  chicken makes sick: Vitals.POISONS); the WOOL cube block. `--animals=sheep:3,...` brings
+  animals around the player.
 - Saves (`src/sim/save/world_storage.gd`, server side only): `user://worlds/<folder>/` holds
   world.cfg (settings, clock, weather), players/<name>.cfg and regions/r.<x>.<z>.bin (the chunks
   players changed, 32x32 per file, zstd voxels; the others are generated again). Change voxels

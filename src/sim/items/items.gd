@@ -92,6 +92,17 @@ enum Id {
 	DEEPSLATE_BRICKS,
 	CUT_SANDSTONE,
 	GLASS,
+	WOOL,
+	RAW_MUTTON,
+	COOKED_MUTTON,
+	RAW_PORK,
+	COOKED_PORK,
+	RAW_CHICKEN,
+	COOKED_CHICKEN,
+	RAW_VENISON,
+	COOKED_VENISON,
+	FEATHER,
+	HIDE,
 }
 ## What a tool is made for (Mining.tool_for: what it breaks faster).
 enum Tool { NONE, PICKAXE, AXE, SHOVEL }
@@ -161,6 +172,7 @@ const PLACES_BLOCK := {
 	Id.DEEPSLATE_BRICKS: Tiles.Block.DEEPSLATE_BRICKS,
 	Id.CUT_SANDSTONE: Tiles.Block.CUT_SANDSTONE,
 	Id.GLASS: Tiles.Block.GLASS,
+	Id.WOOL: Tiles.Block.WOOL,
 }
 
 ## What a ground gives (soil gives dirt); grounds left out give nothing.
@@ -260,10 +272,11 @@ const BLOCK_DROPS := {
 	Tiles.Block.DEEPSLATE_BRICKS: [Id.DEEPSLATE_BRICKS, 1, 1],
 	Tiles.Block.CUT_SANDSTONE: [Id.CUT_SANDSTONE, 1, 1],
 	Tiles.Block.GLASS: [Id.GLASS, 1, 1],
+	Tiles.Block.WOOL: [Id.WOOL, 1, 1],
 }
 ## Food: how much satiety eating one gives (Vitals.MAX_FOOD points; see
-## also Vitals.POISONS). Cooking pays: dried berries and the stew feed
-## best, charred food hardly.
+## also Vitals.POISONS). Cooking pays: dried berries, the stew and cooked
+## meat feed best, charred food hardly.
 const FOOD := {
 	Id.BERRIES: 2,
 	Id.DRIED_BERRIES: 4,
@@ -271,6 +284,14 @@ const FOOD := {
 	Id.MUSHROOM_RED: 1,
 	Id.MUSHROOM_STEW: 8,
 	Id.CHARRED_FOOD: 1,
+	Id.RAW_MUTTON: 2,
+	Id.COOKED_MUTTON: 7,
+	Id.RAW_PORK: 3,
+	Id.COOKED_PORK: 8,
+	Id.RAW_CHICKEN: 2,
+	Id.COOKED_CHICKEN: 6,
+	Id.RAW_VENISON: 3,
+	Id.COOKED_VENISON: 8,
 }
 ## The planks each log is sawn into.
 const PLANKS_OF := {

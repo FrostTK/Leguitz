@@ -126,6 +126,21 @@ func voxel_at(cell: Vector3i) -> int:
 	)
 
 
+## Voxel at a cell if its chunk is loaded, else Voxels.UNKNOWN (never
+## makes a chunk).
+func loaded_voxel_at(cell: Vector3i) -> int:
+	if cell.y < 0:
+		return Voxels.UNKNOWN
+	if cell.y >= GameConst.WORLD_HEIGHT:
+		return Voxels.AIR
+	var tile := Vector2i(cell.x, cell.z)
+	var chunk: ChunkData = chunks.get(Coords.tile_to_chunk(tile))
+	if chunk == null:
+		return Voxels.UNKNOWN
+	var local := Coords.tile_to_local(tile)
+	return chunk.get_voxel(Vector3i(local.x, cell.y, local.y))
+
+
 ## Height (levels) of the terrain surface of a column.
 func surface_height(tile: Vector2i) -> float:
 	var chunk := get_or_create_chunk(Coords.tile_to_chunk(tile))

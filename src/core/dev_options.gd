@@ -35,6 +35,7 @@ extends RefCounted
 ## --mine               hold the break button once the world is ready
 ## --place              place a block at what is aimed at, once
 ## --give=ITEM:N,...    put items in the inventory (dirt:20,diamond:3...)
+## --animals=KIND:N,... bring animals around the player (sheep:3,deer:2...)
 ## --inventory          open the inventory once the world is ready
 ## --drop               throw the stack in hand once the world is ready
 ## --book[=SPREAD]      open the player's book (at two pages SPREAD, from 0)
@@ -75,6 +76,8 @@ var hold_break := false
 var place_once := false
 ## [[item, count], ...]
 var give: Array[Vector2i] = []
+## [[species, count], ...]
+var animals: Array[Vector2i] = []
 var open_inventory := false
 var drop_held := false
 ## The spread the player's book opens at (-1: closed).
@@ -165,6 +168,13 @@ static func parse(args: PackedStringArray) -> DevOptions:
 					if item != Items.Id.NONE:
 						var count := parts_of[1].to_int() if parts_of.size() > 1 else 1
 						options.give.append(Vector2i(item, maxi(count, 1)))
+			"animals":
+				for entry in value.split(","):
+					var parts_of := entry.split(":")
+					var kind: int = Species.Id.get(parts_of[0].to_upper(), -1)
+					if kind >= 0:
+						var count := parts_of[1].to_int() if parts_of.size() > 1 else 1
+						options.animals.append(Vector2i(kind, maxi(count, 1)))
 			"inventory":
 				options.open_inventory = true
 			"book":

@@ -31,6 +31,7 @@ const WALL_KINDS := {
 	Tiles.Block.DEEPSLATE_BRICKS: 21,
 	Tiles.Block.CUT_SANDSTONE: 22,
 	Tiles.Block.GLASS: 23,
+	Tiles.Block.WOOL: 24,
 }
 ## Walls one sees through (glass): their textures' clear pixels are cut
 ## out, and what lies behind them is drawn (ChunkMesher).
@@ -51,6 +52,7 @@ const BUILDING_WALLS := {
 	Tiles.Block.DEEPSLATE_BRICKS: true,
 	Tiles.Block.CUT_SANDSTONE: true,
 	Tiles.Block.GLASS: true,
+	Tiles.Block.WOOL: true,
 }
 const GLOWING_WALLS := {
 	Tiles.Block.GOLD_ORE: true,

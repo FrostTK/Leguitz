@@ -90,6 +90,7 @@ const BLOCK_SECONDS := {
 	Tiles.Block.DEEPSLATE_BRICKS: 5.0,
 	Tiles.Block.CUT_SANDSTONE: 2.5,
 	Tiles.Block.GLASS: 0.5,
+	Tiles.Block.WOOL: 0.8,
 }
 ## Trees by hand: chopping a trunk takes a while.
 const TREE_SECONDS := 3.5
@@ -326,12 +327,19 @@ static func reach_to(feet: Vector2, height: float, cell: Vector3i) -> float:
 
 
 ## Whether a voxel cell (one level tall) overlaps a body standing with
-## its feet at `feet` (world pixels) and `height` (levels).
-static func overlaps_body(cell: Vector3i, feet: Vector2, height: float) -> bool:
+## its feet at `feet` (world pixels) and `height` (levels): a player's, or
+## one `box` wide and `tall` high (an animal's).
+static func overlaps_body(
+	cell: Vector3i,
+	feet: Vector2,
+	height: float,
+	box := PlayerBody.BOX,
+	tall := PlayerBody.BODY_HEIGHT
+) -> bool:
 	var level := float(cell.y - GameConst.SEA_LEVEL)
-	if level >= height + PlayerBody.BODY_HEIGHT or level + 1.0 <= height:
+	if level >= height + tall or level + 1.0 <= height:
 		return false
 	var cell_rect := Rect2(
 		Vector2(cell.x, cell.z) * GameConst.TILE_SIZE, Vector2.ONE * GameConst.TILE_SIZE
 	)
-	return cell_rect.intersects(TileCollider.body_rect(feet, PlayerBody.BOX))
+	return cell_rect.intersects(TileCollider.body_rect(feet, box))

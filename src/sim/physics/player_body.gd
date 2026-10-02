@@ -14,9 +14,11 @@ extends RefCounted
 ## `voxel_at` is a Callable(cell: Vector3i) -> int giving the voxel at
 ## (tile x, row, tile y), Voxels.UNKNOWN where the world is not loaded.
 
-## Collision box (width, depth) at the feet, in world pixels.
+## A player's collision box (width, depth) at the feet, in world pixels
+## (animals have theirs: `box`).
 const BOX := Vector2(10.0, 6.0)
-## Height of the body (levels): it fits through two-voxel gaps.
+## Height of a player's body (levels): it fits through two-voxel gaps
+## (animals: `tall`).
 const BODY_HEIGHT := 1.7
 ## Small rises (a water bank) are walked up without jumping.
 const STEP_UP := 0.2
@@ -44,6 +46,9 @@ const FLY_SPEED := 7.0
 const FLY_DRAG := 10.0
 const GHOST_ABOVE := 24.0
 
+## The body's box at the feet (world pixels) and its height (levels).
+var box := BOX
+var tall := BODY_HEIGHT
 var feet := Vector2.ZERO
 var height := 0.0
 var vertical_speed := 0.0
@@ -96,10 +101,10 @@ static func _surface(tile: Vector2i, row: int, voxel_at: Callable) -> float:
 ## top of a cube, or the top of furniture the box is over (liquids are
 ## swum in). -INF while unknown voxels are in the way (or nothing at all
 ## is below).
-static func support(at: Vector2, limit: float, voxel_at: Callable) -> float:
+static func support(at: Vector2, limit: float, voxel_at: Callable, size := BOX) -> float:
 	var best := -INF
-	var body := TileCollider.body_rect(at, BOX)
-	var area := TileCollider.covered_tiles(at, BOX)
+	var body := TileCollider.body_rect(at, size)
+	var area := TileCollider.covered_tiles(at, size)
 	for ty in range(area.position.y, area.end.y):
 		for tx in range(area.position.x, area.end.x):
 			best = maxf(best, _ground_below(Vector2i(tx, ty), limit, voxel_at, body))
@@ -112,9 +117,11 @@ static func support(at: Vector2, limit: float, voxel_at: Callable) -> float:
 ## rising into it (a trunk, a rock, furniture up to its top: ObjectShapes),
 ## or nothing (an empty Rect2). Bodies walk between trees and under their
 ## crowns, and onto furniture once they are as high as its top.
-static func obstacle(tile: Vector2i, height: float, voxel_at: Callable) -> Rect2:
+static func obstacle(
+	tile: Vector2i, height: float, voxel_at: Callable, body_height := BODY_HEIGHT
+) -> Rect2:
 	var low := floori(height + STEP_UP + EPSILON) + GameConst.SEA_LEVEL
-	var high := ceili(height + BODY_HEIGHT - EPSILON) + GameConst.SEA_LEVEL
+	var high := ceili(height + body_height - EPSILON) + GameConst.SEA_LEVEL
 	var whole := Rect2(Vector2(tile * GameConst.TILE_SIZE), Vector2.ONE * GameConst.TILE_SIZE)
 	for row in range(low - MAX_OBJECT_LEVELS, high):
 		var voxel: int = voxel_at.call(Vector3i(tile.x, row, tile.y))
@@ -188,7 +195,7 @@ func take_fall() -> float:
 ## One frame of movement: `motion` on the map (world pixels), `jump` held.
 func step(motion: Vector2, jump: bool, delta: float, voxel_at: Callable) -> void:
 	if needs_landing:
-		var ground := support(feet, height + STEP_UP, voxel_at)
+		var ground := support(feet, height + STEP_UP, voxel_at, box)
 		if ground == -INF:
 			return
 		height = ground
@@ -197,11 +204,12 @@ func step(motion: Vector2, jump: bool, delta: float, voxel_at: Callable) -> void
 	var blocked := false
 	if motion != Vector2.ZERO:
 		var current := height
-		var obstacle_at := func(tile: Vector2i) -> Rect2: return obstacle(tile, current, voxel_at)
+		var obstacle_at := func(tile: Vector2i) -> Rect2:
+			return obstacle(tile, current, voxel_at, tall)
 		var before := feet
-		feet = TileCollider.move(feet, motion, BOX, obstacle_at)
+		feet = TileCollider.move(feet, motion, box, obstacle_at)
 		blocked = feet.distance_to(before) < motion.length() * 0.5
-	var below := support(feet, height + STEP_UP, voxel_at)
+	var below := support(feet, height + STEP_UP, voxel_at, box)
 	if below == -INF:
 		return
 	var was_airborne := not on_ground
@@ -298,9 +306,10 @@ func fly(
 		return
 	if motion != Vector2.ZERO:
 		var current := height
-		var obstacle_at := func(tile: Vector2i) -> Rect2: return obstacle(tile, current, voxel_at)
-		feet = TileCollider.move(feet, motion, BOX, obstacle_at)
-	var below := support(feet, height + STEP_UP, voxel_at)
+		var obstacle_at := func(tile: Vector2i) -> Rect2:
+			return obstacle(tile, current, voxel_at, tall)
+		feet = TileCollider.move(feet, motion, box, obstacle_at)
+	var below := support(feet, height + STEP_UP, voxel_at, box)
 	var next_height := height + vertical_speed * delta
 	if vertical_speed > 0.0:
 		var ceiling := _ceiling_above(next_height, voxel_at)
@@ -321,7 +330,7 @@ func fly(
 ## Ghost movement (debug): through everything, onto the highest ground.
 func glide(motion: Vector2, voxel_at: Callable) -> void:
 	feet += motion
-	var ground := support(feet, GameConst.WORLD_HEIGHT, voxel_at)
+	var ground := support(feet, GameConst.WORLD_HEIGHT, voxel_at, box)
 	if ground != -INF:
 		height = ground
 	vertical_speed = 0.0
@@ -331,10 +340,10 @@ func glide(motion: Vector2, voxel_at: Callable) -> void:
 
 ## Highest feet height under the voxels above the head (INF if clear).
 func _ceiling_above(next_height: float, voxel_at: Callable) -> float:
-	var row := floori(next_height + BODY_HEIGHT) + GameConst.SEA_LEVEL
-	var area := TileCollider.covered_tiles(feet, BOX)
+	var row := floori(next_height + tall) + GameConst.SEA_LEVEL
+	var area := TileCollider.covered_tiles(feet, box)
 	for ty in range(area.position.y, area.end.y):
 		for tx in range(area.position.x, area.end.x):
 			if Voxels.is_cube(voxel_at.call(Vector3i(tx, row, ty))):
-				return float(row - GameConst.SEA_LEVEL) - BODY_HEIGHT
+				return float(row - GameConst.SEA_LEVEL) - tall
 	return INF
