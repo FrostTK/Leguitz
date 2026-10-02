@@ -118,7 +118,7 @@ func _update_veil() -> void:
 	)
 	veil.visible = client.first_person >= 1.0 and eye != Voxels.AIR
 	if veil.visible:
-		var lava := Voxels.ground_of(eye) == Tiles.Ground.LAVA
+		var lava := Voxels.is_lava(eye)
 		veil.color = LAVA_VEIL if lava else WATER_VEIL
 
 

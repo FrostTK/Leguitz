@@ -306,6 +306,7 @@ DEATH_CAUSE_LAVA,The lava burnt you.,La lave t'a brûlé la peau.
 DEATH_THINGS,What you carried lies where you fell. Hurry back for it!,"Ce que tu portais est resté sur place. Vite, va le reprendre !"
 DEATH_GET_UP,Get up,Se relever
 BOOK_TIP_15,"The red gauge over your items is your vitality, the amber one your satiety: falls, lava and hunger wear you down; well fed, you heal slowly.","La jauge rouge au-dessus de tes objets est ta vitalité, l'ambrée ta satiété : chutes, lave et faim t'usent ; bien nourri, tu guéris doucement."
+BOOK_TIP_16,"Open a pocket of water or lava and it flows out: water four steps over flat ground, lava two, both falling down every drop. Where they meet, the lava turns to stone; a block in the way stops them.","Ouvre une poche d'eau ou de lave et elle s'écoule : l'eau à quatre pas sur le plat, la lave à deux, et toutes deux tombent à chaque à-pic. Là où elles se touchent, la lave devient de la pierre ; un bloc en travers les arrête."
 HUD_NOT_HUNGRY,You are not hungry.,Tu n'as pas faim.
 DEATH_CAUSE_STARVATION,Hunger got the better of you.,La faim a eu raison de toi.
 DEATH_CAUSE_POISON,Something raw made you sick.,Un aliment cru t'a rendu malade.

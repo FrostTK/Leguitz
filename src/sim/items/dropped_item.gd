@@ -58,7 +58,7 @@ func step(delta: float, voxel_at: Callable) -> bool:
 		velocity.x *= exp(-3.0 * delta)
 		velocity.z *= exp(-3.0 * delta)
 		var above: int = voxel_at.call(cell + Vector3i.UP)
-		var surface := float(cell.y + 1 - GameConst.SEA_LEVEL) - ChunkData.WATER_DROP
+		var surface := float(cell.y - GameConst.SEA_LEVEL) + Fluids.surface(inside)
 		if not Voxels.is_liquid(above) and position.y >= surface:
 			position.y = surface
 			velocity = Vector3.ZERO

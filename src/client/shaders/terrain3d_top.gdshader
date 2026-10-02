@@ -130,7 +130,10 @@ void fragment() {
 			} else if (heat < 0.3) {
 				albedo = vec3(0.55, 0.16, 0.06);
 			}
-			emission = albedo * (0.9 + 0.5 * heat);
+			// It shines by itself: hardly lit by the sun or its own lights
+			// (white at noon otherwise).
+			emission = albedo * (0.75 + 0.35 * heat);
+			albedo *= LAVA_LIT;
 		} else {
 			ivec2 at = ground_atlas_pos(best, world_tile, tx);
 			albedo = texelFetch(ground_atlas, at, 0).rgb;

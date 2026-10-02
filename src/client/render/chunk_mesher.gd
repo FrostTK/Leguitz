@@ -41,6 +41,8 @@ const SEA := GameConst.SEA_LEVEL
 ## Strides in the padded voxels (see pad).
 const STRIDE_X := HEIGHT
 const STRIDE_Z := SPAN * HEIGHT
+## The step to the neighbor on each Side, in the padded voxels.
+const SIDE_STEPS: Array[int] = [-STRIDE_Z, STRIDE_X, STRIDE_Z, -STRIDE_X]
 ## Face texture pixels per local unit of height (one level = 16 px).
 const FACE_PX_PER_UNIT := 16.0 / Render3D.LEVEL_HEIGHT
 ## Face kinds: cliff materials first, then wall kinds.
@@ -82,11 +84,6 @@ const THICK_COVER := 2
 ## Horizontal faces are gathered per row of the chunk before being merged
 ## into rectangles: tops, or undersides (see _record_flat).
 const FLAT_UNDERSIDE := 1
-## The sky light is worked out over the chunk and its 8 neighbors (light
-## goes 15 cells at most): that region's span, and where a padded column
-## (see pad) lies in it.
-const REGION_SPAN := SIZE * 3
-const REGION_OFFSET := (SIZE - 1) * REGION_SPAN + SIZE - 1
 
 ## Face kind and top material code of every voxel id (see face_kind), and
 ## 1 for the liquids the eye sees through (water, not lava).
@@ -97,10 +94,6 @@ static var _clear := _build_clear()
 static var _flags := _build_flags()
 ## 1 for the building blocks capped at the view's cut.
 static var _capped := _build_capped()
-## A row of columns standing for a missing neighbor: rock (no light from
-## there), and their tops.
-static var _solid_row := _build_solid_row()
-static var _solid_tops := _build_solid_tops()
 
 
 ## What a build reads: the voxels and column tops of the chunk and of its
@@ -247,9 +240,10 @@ static func build(job: Job) -> Result:
 	var kinds := _face_kinds.duplicate()
 	var codes := _top_codes.duplicate()
 	var tables := [flags, kinds, codes, clear]
-	var sky := _sky_field(job)
+	var sky := ChunkSky.field(job)
 	tables.append_array(sky)
-	_keep_sky(result, sky)
+	tables.append_array([LiquidFaces.kinds.duplicate(), LiquidFaces.heights.duplicate()])
+	ChunkSky.keep(result, sky)
 	# Horizontal faces of the chunk, merged at the end: see _record_flat.
 	var flats := {}
 	for lz in SIZE:
@@ -279,16 +273,22 @@ static func build(job: Job) -> Result:
 					_add_cube(result, flats, voxels, tops, tables, column, lx, y, lz, origin)
 				elif flag & LIQUID != 0:
 					var above := voxels[base + y + 1] if y + 1 < HEIGHT else Voxels.AIR
-					if flags[above] & TERRAIN != 0:
+					var covered := flags[above] & TERRAIN != 0
+					var sides := LiquidFaces.sides(voxels, flags, tables[6], tables[7], index)
+					if covered and sides == 0:
 						continue
 					var rows := tops[column] - y
 					var deep := rows > 1 and not _sky_through(voxels, flags, clear, base + y, rows)
 					var part := Part.DEEP_TOPS if deep else Part.TOPS
 					if clear[voxel] != 0:
 						part = Part.DEEP_WATER if deep else Part.WATER
+					if sides != 0:
+						_add_liquid_sides(result, voxels, tables, index, lx, y, lz, deep)
+					if covered:
+						continue
 					var light := _sky(tables, index + 1) if y + 1 < HEIGHT else LightField.MAX
 					_record_flat(flats, y, voxel, part, 0, lx, lz, light)
-					if voxel == Voxels.of_ground(Tiles.Ground.LAVA):
+					if Tiles.is_lava(voxel):
 						var quarter := (
 							(lz / LAVA_QUARTER) * 2 + lx / LAVA_QUARTER + (4 if deep else 0)
 						)
@@ -411,7 +411,7 @@ static func surface_map(
 			var voxel := voxels[base + y]
 			if not Voxels.is_cube(voxel) and not Voxels.is_liquid(voxel):
 				continue
-			values[out] = Voxels.ground_of(voxel)
+			values[out] = Tiles.liquid_source(Voxels.ground_of(voxel))
 			values[out + 1] = TileAtlas.wall_lookup[Voxels.block_of(voxel)]
 			values[out + 2] = y + 1 - SEA
 			if clear[voxel] != 0:
@@ -517,6 +517,51 @@ static func _build_clear() -> PackedByteArray:
 		if Tiles.is_water(ground):
 			table[Voxels.of_ground(ground)] = 1
 	return table
+
+
+## The sides of a liquid open to the air (a waterfall, the edge of a flow)
+## or to the same liquid lower: drawn by the water shader (COLOR.r = 1; its
+## UV2 as on the tops), in the water's parts, `deep` in caves. `tables`:
+## the build's [flags, kinds, codes, clear, sky levels, sky open, liquids,
+## surfaces].
+static func _add_liquid_sides(
+	result: Result,
+	voxels: PackedInt32Array,
+	tables: Array,
+	index: int,
+	lx: int,
+	y: int,
+	lz: int,
+	deep: bool
+) -> void:
+	var flags: PackedByteArray = tables[0]
+	var liquids: PackedByteArray = tables[6]
+	var surfaces: PackedFloat32Array = tables[7]
+	var voxel := voxels[index]
+	var top := LiquidFaces.top(voxels, liquids, surfaces, index)
+	var part := Part.DEEP_WATER if deep else Part.WATER
+	var code := Tiles.liquid_source(voxel)
+	for side in 4:
+		var step: int = SIDE_STEPS[side]
+		var other := voxels[index + step]
+		if flags[other] & CUBE != 0:
+			continue
+		var bottom := 0.0
+		if liquids[other] == liquids[voxel]:
+			bottom = LiquidFaces.top(voxels, liquids, surfaces, index + step)
+			if bottom >= top - 0.001:
+				continue
+		var light := _sky(tables, index + step) / float(LightField.MAX)
+		_add_side(
+			result.parts[part],
+			lx,
+			lz,
+			side,
+			y - SEA + bottom,
+			y - SEA + top,
+			Vector2(code, y + 1 - SEA),
+			Color(1.0, 0.0, light)
+		)
 
 
 static func _build_top_codes() -> PackedInt32Array:
@@ -671,62 +716,9 @@ static func _continues_run(
 
 
 ## The sky light (0..LightField.MAX) of the padded cell at `index` (see
-## pad), from the region's (tables[4]: levels, tables[5]: open; see
-## _sky_field).
+## pad), from the build's sky field (tables[4], tables[5]: ChunkSky).
 static func _sky(tables: Array, index: int) -> int:
-	var levels: PackedByteArray = tables[4]
-	var open: PackedInt32Array = tables[5]
-	var pz := index / (SPAN * HEIGHT)
-	var at := index + (REGION_OFFSET + pz * (REGION_SPAN - SPAN)) * HEIGHT
-	if at % HEIGHT >= open[at / HEIGHT]:
-		return LightField.MAX
-	return levels[at]
-
-
-## The sky light over the chunk and its neighbors (LightField.sky; a
-## missing neighbor is rock).
-static func _sky_field(job: Job) -> Array:
-	var voxels := PackedInt32Array()
-	var tops := PackedByteArray()
-	for rz in REGION_SPAN:
-		var lz := rz % SIZE
-		for chunk_x in 3:
-			# A row of a chunk's columns lies in one piece.
-			var source := (rz / SIZE) * 3 + chunk_x
-			var chunk := job.voxels[source]
-			if chunk.is_empty():
-				voxels.append_array(_solid_row)
-				tops.append_array(_solid_tops)
-				continue
-			voxels.append_array(chunk.slice(lz * SIZE * HEIGHT, (lz + 1) * SIZE * HEIGHT))
-			tops.append_array(job.tops[source].slice(lz * SIZE, (lz + 1) * SIZE))
-	return LightField.sky(voxels, tops, REGION_SPAN)
-
-
-## Keeps the chunk's own part of the region's sky light (Result.sky_open,
-## sky_levels).
-static func _keep_sky(result: Result, sky: Array) -> void:
-	var levels: PackedByteArray = sky[0]
-	var open: PackedInt32Array = sky[1]
-	for lz in SIZE:
-		for lx in SIZE:
-			var column := (lz + SIZE) * REGION_SPAN + lx + SIZE
-			result.sky_open.append(open[column])
-			result.sky_levels.append_array(levels.slice(column * HEIGHT, (column + 1) * HEIGHT))
-
-
-static func _build_solid_row() -> PackedInt32Array:
-	var row := PackedInt32Array()
-	row.resize(SIZE * HEIGHT)
-	row.fill(Voxels.of_block(Tiles.Block.STONE))
-	return row
-
-
-static func _build_solid_tops() -> PackedByteArray:
-	var tops := PackedByteArray()
-	tops.resize(SIZE)
-	tops.fill(HEIGHT)
-	return tops
+	return ChunkSky.level(tables[4], tables[5], index)
 
 
 ## Whether the eye sees through a voxel from above: air, plants... or
@@ -843,7 +835,10 @@ static func _add_flat(result: Result, group: Vector3i, run: Vector2i, z0: int, z
 	var level := y + 1 - SEA
 	var height := float(level)
 	if Voxels.is_liquid(code):
-		height -= ChunkData.WATER_DROP
+		# Flowing liquids fill their cells less (their code is their own
+		# ground; the shaders draw them as what they flow from).
+		height -= 1.0 - Fluids.surface(code)
+		code = Tiles.liquid_source(code)
 	if part == Part.CAPS:
 		# A hair under the cut, so the cut keeps it.
 		height -= 0.002
@@ -948,7 +943,7 @@ static func _add_prop(
 	var h := HashUtil.hash2(ObjectShapes.SALT, tile.x, tile.y)
 	var height := float(y - SEA)
 	if y > 0 and Voxels.is_liquid(voxels[base + y - 1]):
-		height -= ChunkData.WATER_DROP
+		height -= 1.0 - Fluids.surface(voxels[base + y - 1])
 	# Where it stands and which version: the same as physics (ObjectShapes).
 	var offset := Vector2(ObjectShapes.offset_at(block, tile)) / 16.0
 	var foot := Vector3(lx + 0.5 + offset.x, height, lz + 0.5 + offset.y)

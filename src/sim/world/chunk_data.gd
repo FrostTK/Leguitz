@@ -74,12 +74,14 @@ func top_row(local: Vector2i) -> int:
 
 
 ## Height (levels) of the terrain surface of a column (water: a little
-## lower than its voxel).
+## lower than its voxel, flowing water lower still: Fluids.surface).
 func surface_height(local: Vector2i) -> float:
 	var row := top_row(local)
 	var height := float(row - GameConst.SEA_LEVEL)
-	if row > 0 and Voxels.is_liquid(voxels[voxel_index(local.x, row - 1, local.y)]):
-		height -= WATER_DROP
+	if row > 0:
+		var top := voxels[voxel_index(local.x, row - 1, local.y)]
+		if Voxels.is_liquid(top):
+			height -= 1.0 - Fluids.surface(top)
 	return height
 
 

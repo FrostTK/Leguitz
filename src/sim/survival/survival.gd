@@ -138,7 +138,7 @@ static func update(server: GameServer, sessions: Array, delta: float) -> void:
 		session.since_hurt += delta
 		_breathe(server, session, delta)
 		var bathed := PlayerBody.liquid_at(session.position, session.height, server.world.voxel_at)
-		if Voxels.ground_of(bathed) == Tiles.Ground.LAVA:
+		if Voxels.is_lava(bathed):
 			session.burning += delta
 			if session.burning >= Vitals.LAVA_SECONDS:
 				session.burning = 0.0

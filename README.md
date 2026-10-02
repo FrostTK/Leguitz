@@ -23,7 +23,10 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Fondations : des dizaines de milliers de sortes de blocs possibles (identifiants sur 16 bits), 255 textures de cubes ; les mondes existants se chargent tels quels | ✅ |
 | Torches (au sol, dans un support mural) et lanternes (au sol, au mur, suspendues au plafond) : elles éclairent, leurs flammes vacillent, elles tiennent les monstres à distance | ✅ |
 | Lumière des grottes : le jour entre par les ouvertures et faiblit à chaque pas ; sans lumière, le fond d'une grotte est noir (la lanterne, les torches et la lave éclairent) ; les monstres sortent selon la lumière | ✅ |
-| Coulées d'eau et de lave, profondeurs, ruines, donjons, mines, villages | à venir |
+| Coulées d'eau et de lave : une poche ouverte s'écoule (l'eau à 4 cases, la lave à 2, cascades à chaque à-pic), sèche une fois coupée de sa source ; eau + lave = pierre | ✅ |
+| Profondeurs, ruines, donjons, mines, villages | à venir |
+
+![Leguitz : deux bassins sur une falaise, ouverts : l'eau coule et tombe en cascade puis s'étale, la lave tombe et durcit en pierre au contact de l'eau ; la cascade en 1re personne](docs/screenshots/phase6-coulees.png)
 
 ![Leguitz : une salle souterraine éclairée par un puits de jour d'un côté, la lave et une torche de l'autre, le reste noir ; une grotte naturelle à la lanterne vue de dessus ; la torche en 1re personne ; une grotte à la lanterne en 1re personne](docs/screenshots/phase6-lumiere-grottes.png)
 
@@ -258,7 +261,7 @@ Pour le multijoueur, il suffira de brancher un transport réseau.
 3. ✅ Joueur et interactions (minage, construction, objets, inventaire, outils, livre du joueur)
 4. ✅ Craft (recettes, établi, usure, coffres, fours, blocs de construction)
 5. ✅ Survie et combat (vie, faim, nage, modes de jeu, animaux, monstres, combat et armures)
-6. Souterrain et structures (en cours : maison et jardin, torches et lanternes, lumière des grottes)
+6. Souterrain et structures (en cours : maison et jardin, torches et lanternes, lumière des grottes, coulées d'eau et de lave)
 7. Agriculture et élevage
 8. Mode Arcade : scénario n°1 « Restauration » (restaurer une terre désolée avec éoliennes,
    irrigateurs et purificateurs, faire revenir forêts, rivières et animaux, puis recycler les

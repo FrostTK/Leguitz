@@ -152,7 +152,7 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   CaveGenerator carves 3D caves under the terrain (cheese chambers, spaghetti tunnels, lakes, lava,
   ore veins), never closer than a few rows to it. Tune with `tools/render_world_map.gd`.
 - Breaking and placing: rules in `Mining` (sim, shared: reach 5 from the eye, breaking times by hand
-  and with tools, what can be placed, water filling holes next to it), aiming by `VoxelRay` (DDA in
+  and with tools, what can be placed; liquids then flow in: Fluids), aiming by `VoxelRay` (DDA in
   local units; objects are met on their body, trees on their trunk). The client's BlockInteraction
   aims (top-down: the mouse ray through the ortho camera, taken back to local units by the root's
   inverse; first person: the crosshair; gamepad: in front of the player), always clamped to the
@@ -315,7 +315,7 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   dimming a level a cell; then it spreads into covered places a level less a cell (two through
   water; only shore water cells are queued, `_under_water`); cubes and lava are OPAQUE.
   ChunkMesher (full builds) works it out over the chunk and its 8 neighbors (a 48 x 48 region,
-  missing neighbors are rock: `_sky_field`) and bakes the level of the cell in front of each face
+  missing neighbors are rock: ChunkSky.field) and bakes the level of the cell in front of each face
   (`_sky`: COLOR.b of tops, sides, undersides and water; faces only merge in the same light; caps
   get 15) and of each prop (INSTANCE_CUSTOM.a = level + wind phase); Result.sky_open /
   sky_levels are kept by ChunkView3D (WorldView3D.sky_at). The shaders (`sky_light.gdshaderinc`,
@@ -334,8 +334,33 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   NIGHT_SKY at night, over each column's open row; LightField.shine of what shines (lava through
   its opaque body); players' lanterns never count. `is_lit` from LIT (7): Monsters._choices only
   brings monsters out where it is not lit, the lurker freezes when lit; NIGHT_ONLY ones still
-  melt by `sky_open`. `near_fire` is the same without the sky. The book's contents page shrinks its rows, then
-  its letters, to fit every chapter (BookScreen._draw_contents).
+  melt by `sky_open`. `near_fire` is the same without the sky. The book's contents page shrinks
+  its rows, then its letters, to fit every chapter (BookScreen._draw_contents).
+- Flowing liquids (phase 6, step 3; `src/sim/world/fluids.gd`, Fluids held by GameServer):
+  the world's water and lava are sources and stay still until something next to them changes:
+  GameServer.change_voxel calls `Fluids.touch` (the cell and its 6 neighbors settle if water or
+  lava is in or around it, or was), and `update` settles them a step every WATER_TICKS (lava
+  LAVA_TICKS; real time, at most MAX_PER_STEP cells a step). Flowing liquids are grounds of their
+  own appended to Tiles.Ground (WATER_FLOW_1..4, WATER_FALLING, LAVA_FLOW_1..2, LAVA_FALLING;
+  Tiles.WATER_GROUNDS / LAVA_GROUNDS, `liquid_source`, Voxels.is_water / is_lava: use these, never
+  compare with Ground.LAVA), so physics, light, saves and messages carry them as any voxel.
+  Fluids.level_of (0 source, 1 to WATER_REACH 4 / LAVA_REACH 2, FALLING), `voxel_for`,
+  `surface` (how high a liquid fills its cell, by whole art pixels: PlayerBody._surface,
+  DroppedItem, ChunkData.surface_height, the meshes). A cell wants FALLING under the same liquid,
+  else one level more than its lowest neighbor spreading sideways (`_spreads`: standing on
+  something solid, or a still one on a source; falling ones merge into liquids), at most the
+  reach; two water sources around a cell standing on something make it a source; settled, a
+  liquid pushes the free cells around it (`fillable`: air, small plants; never what players
+  placed) to settle too; cut off, flows dry up. Lava meeting water turns into stone (both ways).
+  Breaking no longer fills a hole with water at once (Mining.left_after_break is gone). Meshes:
+  flowing tops lowered (their code is their own ground, drawn as the source: ChunkMesher maps it,
+  and the surface map), sides of liquids open to the air or to the same liquid lower
+  (LiquidFaces.sides, ChunkMesher._add_liquid_sides: in the water parts, COLOR.r = 1) drawn by
+  water.gdshader as streaks running down (lava: its colors, emissive). Lava now shines by itself
+  (LAVA_LIT: its albedo takes little light) so it is not white at noon. gen_art: grounds from
+  FIRST_OWN_SEED_GROUND draw from their own generators (older textures unchanged). ChunkSky (the
+  sky light of a build) and LiquidFaces were split from ChunkMesher (1000 lines). The book's tip
+  16. Not saved: the cells waiting to settle (a flow stopped by quitting stays until touched).
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made

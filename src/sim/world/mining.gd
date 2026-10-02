@@ -420,18 +420,6 @@ static func is_replaceable(voxel: int) -> bool:
 	return Items.item_placing(ObjectShapes.base_kind(Voxels.block_of(voxel))) == Items.Id.NONE
 
 
-## What a broken voxel leaves: the water touching it from above or the
-## side fills the hole (water does not flow yet), else air.
-static func left_after_break(cell: Vector3i, voxel_at: Callable) -> int:
-	for side: Vector3i in [
-		Vector3i.UP, Vector3i.LEFT, Vector3i.RIGHT, Vector3i.FORWARD, Vector3i.BACK
-	]:
-		var voxel: int = voxel_at.call(cell + side)
-		if Voxels.is_liquid(voxel) and Tiles.is_water(Voxels.ground_of(voxel)):
-			return voxel
-	return Voxels.AIR
-
-
 ## Objects stand on the voxel under them: breaking it breaks them too
 ## (not what hangs on a wall or from a ceiling: see hung_on).
 static func needs_support(voxel: int) -> bool:

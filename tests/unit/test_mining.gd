@@ -201,16 +201,6 @@ func test_placing_against_the_terrain_and_out_of_the_way() -> void:
 	assert_eq(session.inventory.counts[1], 3)
 
 
-func test_water_fills_what_is_broken_next_to_it() -> void:
-	_cells.clear()
-	var water := Voxels.of_ground(Tiles.Ground.WATER)
-	_cells[Vector3i(0, SEA - 1, 0)] = water
-	assert_eq(Mining.left_after_break(Vector3i(0, SEA - 2, 0), _voxel_at), water, "under it")
-	assert_eq(Mining.left_after_break(Vector3i(1, SEA - 1, 0), _voxel_at), water, "beside it")
-	assert_eq(Mining.left_after_break(Vector3i(0, SEA, 0), _voxel_at), Voxels.AIR, "not over it")
-	assert_eq(Mining.left_after_break(Vector3i(5, SEA - 1, 5), _voxel_at), Voxels.AIR)
-
-
 func test_a_body_overlaps_the_cells_it_stands_in() -> void:
 	var feet := Vector2(8.0, 12.0)
 	assert_true(Mining.overlaps_body(Vector3i(0, SEA, 0), feet, 0.0), "at the feet")

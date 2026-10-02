@@ -59,6 +59,16 @@ static func is_liquid(voxel: int) -> bool:
 	return _flags[voxel] & FLAG_LIQUID != 0
 
 
+## Water, still or flowing.
+static func is_water(voxel: int) -> bool:
+	return voxel < BLOCK_BASE and Tiles.is_water(voxel)
+
+
+## Lava, still or flowing.
+static func is_lava(voxel: int) -> bool:
+	return voxel < BLOCK_BASE and Tiles.is_lava(voxel)
+
+
 ## Flags (FLAG_*) of every voxel id, for tight loops: read it once into a
 ## local variable (calls and shared statics are slow in loops, more so on
 ## several threads).
@@ -96,7 +106,7 @@ static func _build_flags() -> PackedByteArray:
 			continue
 		if Tiles.is_water(ground):
 			flags[ground] = FLAG_LIQUID
-		elif ground == Tiles.Ground.LAVA:
+		elif Tiles.is_lava(ground):
 			flags[ground] = FLAG_LIQUID | FLAG_SOLID
 		else:
 			flags[ground] = FLAG_CUBE | FLAG_SOLID

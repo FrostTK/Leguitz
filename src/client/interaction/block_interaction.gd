@@ -249,7 +249,7 @@ func _break(hit: VoxelRay.Hit) -> void:
 	var voxel_at := client.world.voxel_at
 	var cells := Mining.object_cells(hit.cell, hit.voxel, voxel_at)
 	for part in cells:
-		_predict(part, Mining.left_after_break(part, voxel_at))
+		_predict(part, Voxels.AIR)
 	for part in cells:
 		var above := part + Vector3i.UP
 		var standing := client.world.voxel_at(above)

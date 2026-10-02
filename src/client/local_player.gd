@@ -105,7 +105,7 @@ func step(delta: float) -> void:
 		elif can_sprint and Input.is_action_pressed(InputBindings.SPRINT):
 			speed *= SPRINT_MULTIPLIER
 		if body.in_liquid and not flying:
-			var lava := Voxels.ground_of(body.liquid) == Tiles.Ground.LAVA
+			var lava := Voxels.is_lava(body.liquid)
 			speed *= LAVA_SPEED if lava else WATER_SPEED
 		# Cap the step so a frame hitch never tunnels through a tile.
 		motion = input * speed * minf(delta, 0.1)

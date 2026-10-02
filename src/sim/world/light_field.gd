@@ -186,7 +186,7 @@ static func _build_passing() -> PackedByteArray:
 	var table := PackedByteArray()
 	table.resize(Voxels.used_ids())
 	for voxel in table.size():
-		if voxel == Voxels.of_ground(Tiles.Ground.LAVA):
+		if Voxels.is_lava(voxel):
 			table[voxel] = OPAQUE
 		elif Voxels.is_cube(voxel) and not CLEAR_BLOCKS.has(Voxels.block_of(voxel)):
 			table[voxel] = OPAQUE
@@ -201,5 +201,6 @@ static func _build_shining() -> PackedByteArray:
 	for voxel in table.size():
 		var block := Voxels.block_of(voxel)
 		table[voxel] = SHINE.get(ObjectShapes.base_kind(block), 0)
-	table[Voxels.of_ground(Tiles.Ground.LAVA)] = LAVA_SHINE
+		if Voxels.is_lava(voxel):
+			table[voxel] = LAVA_SHINE
 	return table

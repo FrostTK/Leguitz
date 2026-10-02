@@ -33,7 +33,12 @@ GROUNDS = [
     "DIRT", "PODZOL", "DRY_GRASS", "JUNGLE_GRASS", "SWAMP_GRASS", "MEADOW_GRASS", "TAIGA_GRASS",
     "RED_SAND", "TERRACOTTA", "TERRACOTTA_LIGHT", "GRAVEL", "ICE", "MUD", "MYCELIUM",
     "DEEPSLATE_FLOOR", "LAVA", "SWAMP_WATER", "WARM_WATER",
+    "WATER_FLOW_1", "WATER_FLOW_2", "WATER_FLOW_3", "WATER_FLOW_4", "WATER_FALLING",
+    "LAVA_FLOW_1", "LAVA_FLOW_2", "LAVA_FALLING",
 ]
+# Grounds from this row on draw from random generators of their own, so the
+# textures made before them (and the walls after) stay the same.
+FIRST_OWN_SEED_GROUND = 26
 # Solid terrain blocks drawn by the terrain shader (order = wall atlas row).
 WALLS = [
     "STONE", "DEEPSLATE", "COAL_ORE", "COPPER_ORE", "IRON_ORE", "GOLD_ORE", "LAPIS_ORE",
@@ -315,6 +320,15 @@ GROUND_MAKERS = {
     "WARM_WATER": flat("#35b3c9"),
     "SWAMP_WATER": flat("#4d7a5e"),
     "LAVA": flat("#e8552a"),
+    # Flowing liquids are drawn as what they flow from (ChunkMesher).
+    "WATER_FLOW_1": flat("#3f90d8"),
+    "WATER_FLOW_2": flat("#3f90d8"),
+    "WATER_FLOW_3": flat("#3f90d8"),
+    "WATER_FLOW_4": flat("#3f90d8"),
+    "WATER_FALLING": flat("#3f90d8"),
+    "LAVA_FLOW_1": flat("#e8552a"),
+    "LAVA_FLOW_2": flat("#e8552a"),
+    "LAVA_FALLING": flat("#e8552a"),
     "SAND": sandy("#ecd592", "#d6b970", "#f7e9b8"),
     "RED_SAND": sandy("#d98a4a", "#bf713a", "#eba56a"),
     "GRASS": grass("#6aae3f", "#4d9034", "#94cf57", "#b8e07a"),
@@ -343,8 +357,9 @@ def build_grounds(rng):
     for row, name in enumerate(GROUNDS):
         if name == "NONE":
             continue
+        own = np.random.default_rng(7000 + row) if row >= FIRST_OWN_SEED_GROUND else rng
         for variant in range(VARIANTS):
-            atlas.blit(GROUND_MAKERS[name](rng), variant * TILE, row * TILE)
+            atlas.blit(GROUND_MAKERS[name](own), variant * TILE, row * TILE)
     save(atlas.img, OUT / "tiles/ground_atlas.png")
     save(normal_image(atlas.img, "flat", strength=1.6), OUT / "tiles/ground_atlas_n.png")
 

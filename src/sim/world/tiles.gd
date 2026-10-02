@@ -34,6 +34,15 @@ enum Ground {
 	LAVA,
 	SWAMP_WATER,
 	WARM_WATER,
+	# Flowing liquids (Fluids): their level, or falling from above.
+	WATER_FLOW_1,
+	WATER_FLOW_2,
+	WATER_FLOW_3,
+	WATER_FLOW_4,
+	WATER_FALLING,
+	LAVA_FLOW_1,
+	LAVA_FLOW_2,
+	LAVA_FALLING,
 }
 
 enum Block {
@@ -218,10 +227,38 @@ const WATER_GROUNDS := {
 	Ground.WATER: true,
 	Ground.SWAMP_WATER: true,
 	Ground.WARM_WATER: true,
+	Ground.WATER_FLOW_1: true,
+	Ground.WATER_FLOW_2: true,
+	Ground.WATER_FLOW_3: true,
+	Ground.WATER_FLOW_4: true,
+	Ground.WATER_FALLING: true,
+}
+const LAVA_GROUNDS := {
+	Ground.LAVA: true,
+	Ground.LAVA_FLOW_1: true,
+	Ground.LAVA_FLOW_2: true,
+	Ground.LAVA_FALLING: true,
+}
+## The liquid a flowing one comes from (its look, its speed...).
+const FLOWING_FROM := {
+	Ground.WATER_FLOW_1: Ground.WATER,
+	Ground.WATER_FLOW_2: Ground.WATER,
+	Ground.WATER_FLOW_3: Ground.WATER,
+	Ground.WATER_FLOW_4: Ground.WATER,
+	Ground.WATER_FALLING: Ground.WATER,
+	Ground.LAVA_FLOW_1: Ground.LAVA,
+	Ground.LAVA_FLOW_2: Ground.LAVA,
+	Ground.LAVA_FALLING: Ground.LAVA,
 }
 
 ## Grounds you cannot walk on (for now: lava).
-const SOLID_GROUNDS := {Ground.LAVA: true, Ground.NONE: true}
+const SOLID_GROUNDS := {
+	Ground.LAVA: true,
+	Ground.LAVA_FLOW_1: true,
+	Ground.LAVA_FLOW_2: true,
+	Ground.LAVA_FALLING: true,
+	Ground.NONE: true,
+}
 ## Full cube blocks (stone and the like): one level tall; on the surface a
 ## player can jump on top of them. Other solid blocks (trees, boulders...)
 ## are obstacles nobody stands on.
@@ -315,11 +352,20 @@ static func is_ground_solid(ground: int) -> bool:
 
 
 static func ground_speed(ground: int) -> float:
-	return GROUND_SPEED.get(ground, 1.0)
+	return GROUND_SPEED.get(liquid_source(ground), 1.0)
 
 
 static func is_water(ground: int) -> bool:
 	return WATER_GROUNDS.has(ground)
+
+
+static func is_lava(ground: int) -> bool:
+	return LAVA_GROUNDS.has(ground)
+
+
+## The still liquid a flowing one comes from (any other ground: itself).
+static func liquid_source(ground: int) -> int:
+	return FLOWING_FROM.get(ground, ground)
 
 
 static func is_ore(block: int) -> bool:

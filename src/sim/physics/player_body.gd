@@ -89,12 +89,17 @@ static func eye_in_water(at: Vector2, at_height: float, voxel_at: Callable) -> b
 	return eye != Voxels.AIR and Tiles.is_water(Voxels.ground_of(eye))
 
 
-## The surface (levels) of the liquid in a column, from one of its voxels.
+## The surface (levels) of the liquid in a column, from one of its voxels
+## (a flowing one fills its cell only so high: Fluids.surface).
 static func _surface(tile: Vector2i, row: int, voxel_at: Callable) -> float:
 	var top := row
-	while Voxels.is_liquid(voxel_at.call(Vector3i(tile.x, top + 1, tile.y))):
+	var voxel: int = voxel_at.call(Vector3i(tile.x, top, tile.y))
+	var above: int = voxel_at.call(Vector3i(tile.x, top + 1, tile.y))
+	while Voxels.is_liquid(above):
 		top += 1
-	return float(top + 1 - GameConst.SEA_LEVEL) - ChunkData.WATER_DROP
+		voxel = above
+		above = voxel_at.call(Vector3i(tile.x, top + 1, tile.y))
+	return float(top - GameConst.SEA_LEVEL) + Fluids.surface(voxel)
 
 
 ## Highest place to stand at or below `limit` (levels) under a box: the

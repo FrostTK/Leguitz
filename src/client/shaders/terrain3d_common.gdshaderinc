@@ -12,6 +12,8 @@ global uniform vec2 weather_wind;
 uniform vec2 see_through_size = vec2(1.0, 1.6);
 
 const int HASH_OFFSET = 16777216;
+// How much light lava takes from the sun and the lights (it shines by itself).
+const float LAVA_LIT = 0.2;
 
 uint hash2(ivec2 p) {
 	uvec2 q = uvec2(p + ivec2(HASH_OFFSET));

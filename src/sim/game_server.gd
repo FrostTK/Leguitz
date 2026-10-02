@@ -120,6 +120,7 @@ var items: Dictionary[int, DroppedItem] = {}
 ## The animals and monsters, and the arrows in flight.
 var creatures: Creatures
 var archery := Archery.new()
+var fluids := Fluids.new()
 ## Debug commands (moving between caves, world map, weather, tools):
 ## creative players use them where the server allows them (operators once
 ## they exist); `cheats_anywhere` (developer options) in every mode.
@@ -267,6 +268,7 @@ func tick() -> void:
 	creatures.update(self, GameConst.TICK_DELTA)
 	creatures.sync(sessions)
 	archery.update(self, GameConst.TICK_DELTA)
+	fluids.update(self)
 	Survival.update(self, sessions, GameConst.TICK_DELTA)
 	if tick_count % FURNACE_TICKS == 0:
 		_update_furnaces(GameConst.TICK_DELTA * FURNACE_TICKS)
@@ -462,7 +464,7 @@ func _on_block_break(session: PlayerSession, message: Dictionary) -> void:
 	# The whole object goes (both ends of a workbench), and what stood on it.
 	var cells := Mining.object_cells(cell, voxel, world.voxel_at)
 	for part in cells:
-		change_voxel(part, Mining.left_after_break(part, world.voxel_at))
+		change_voxel(part, Voxels.AIR)
 	if drops:
 		drop_from(cell, voxel)
 	_spill_contents(cell)
@@ -809,9 +811,12 @@ func _collect(session: PlayerSession, dropped: DroppedItem) -> void:
 	session.transport.send(Msg.inventory(session.inventory))
 
 
-## Sets a voxel and tells every player who has its chunk.
+## Sets a voxel and tells every player who has its chunk; the liquids
+## around it may start flowing (Fluids).
 func change_voxel(cell: Vector3i, voxel: int) -> void:
+	var before := world.loaded_voxel_at(cell)
 	world.set_voxel(cell, voxel)
+	fluids.touch(world.loaded_voxel_at, cell, before)
 	var coord := Coords.tile_to_chunk(Vector2i(cell.x, cell.z))
 	for session in sessions:
 		if session.joined and session.sent_chunks.has(coord):

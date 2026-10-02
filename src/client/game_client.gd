@@ -446,7 +446,7 @@ func _update_view(delta: float) -> void:
 	lighting.sky_here = _sky_here()
 	player_model.set_sky_light(lighting.sky_seen)
 	if local_player.body.in_liquid and not _was_in_liquid:
-		interaction.splash(Voxels.ground_of(local_player.body.liquid) == Tiles.Ground.LAVA)
+		interaction.splash(Voxels.is_lava(local_player.body.liquid))
 	_was_in_liquid = local_player.body.in_liquid
 	# The camera follows the ground the player stands on (not each jump).
 	var focus := Render3D.world_px_to_local(feet, local_player.view_height)
