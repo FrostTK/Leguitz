@@ -60,6 +60,8 @@ static func build(block: int, variant: int) -> VoxelGrid:
 		return TreeModels.build(block, variant)
 	if Growth.SAPLINGS.has(block):
 		return SaplingModels.build(block, variant)
+	if Farming.is_crop(block):
+		return FarmModels.build(block, variant)
 	var decor := DecorModels.build(block, variant)
 	if decor != null:
 		return decor

@@ -59,6 +59,10 @@ const SHAPED := [
 	{"pattern": ["BB", "BB"], "keys": {"B": Items.Id.BRICK}, "result": [Items.Id.BRICKS, 1]},
 	{"ingredients": [Items.Id.WOOL], "result": [Items.Id.STRING, 4]},
 	{
+		"ingredients": [Items.Id.WHEAT, Items.Id.WHEAT, Items.Id.WHEAT],
+		"result": [Items.Id.DOUGH, 1],
+	},
+	{
 		"pattern": ["P", "S", "F"],
 		"keys": {"P": STONES, "S": Items.Id.STICK, "F": Items.Id.FEATHER},
 		"result": [Items.Id.ARROW, 4],
@@ -158,6 +162,7 @@ const TOOL_PATTERNS := {
 	Items.Tool.AXE: ["MM", "MS", " S"],
 	Items.Tool.SHOVEL: ["M", "S", "S"],
 	Items.Tool.SWORD: ["M", "M", "S"],
+	Items.Tool.HOE: ["MM", " S", " S"],
 }
 const TOOL_MATERIALS := {
 	Items.Tier.WOOD: PLANKS,

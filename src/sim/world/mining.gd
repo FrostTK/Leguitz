@@ -223,6 +223,7 @@ static func can_place(voxel: int) -> bool:
 		or ObjectShapes.front_of(block) != Vector2i.ZERO
 		or FLOOR_OBJECTS.has(block)
 		or Growth.SAPLINGS.has(block)
+		or Farming.SOWN.has(block)
 	)
 
 
@@ -277,11 +278,12 @@ static func placement(
 		return {cell: Voxels.of_block(ObjectShapes.facing(kind, front))}
 	if FLOOR_OBJECTS.has(block):
 		return {cell: voxel} if _bench_room(cell, voxel_at) else {}
-	if Growth.SAPLINGS.has(block):
+	if Growth.SAPLINGS.has(block) or Farming.SOWN.has(block):
 		var there: int = voxel_at.call(cell)
 		var soil: int = voxel_at.call(cell + Vector3i.DOWN)
 		var free := is_replaceable(there) and not Voxels.is_liquid(there)
-		return {cell: voxel} if free and Growth.is_soil(soil) else {}
+		var bed := Farming.is_farmland(soil) if Farming.SOWN.has(block) else Growth.is_soil(soil)
+		return {cell: voxel} if free and bed else {}
 	return {cell: voxel} if is_replaceable(voxel_at.call(cell)) else {}
 
 
@@ -423,6 +425,8 @@ static func is_replaceable(voxel: int) -> bool:
 	if voxel == Voxels.AIR or Voxels.is_liquid(voxel):
 		return true
 	if not Voxels.is_object(voxel) or Voxels.is_solid(voxel):
+		return false
+	if Farming.is_crop(Voxels.block_of(voxel)):
 		return false
 	return Items.item_placing(ObjectShapes.base_kind(Voxels.block_of(voxel))) == Items.Id.NONE
 

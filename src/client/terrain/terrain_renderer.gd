@@ -30,6 +30,8 @@ const PRIORITY := {
 	Tiles.Ground.STONE_FLOOR: 7,
 	Tiles.Ground.DEEPSLATE_FLOOR: 7,
 	Tiles.Ground.DIRT: 8,
+	Tiles.Ground.FARMLAND: 8,
+	Tiles.Ground.FARMLAND_WET: 8,
 	Tiles.Ground.TERRACOTTA: 9,
 	Tiles.Ground.TERRACOTTA_LIGHT: 9,
 	Tiles.Ground.PODZOL: 10,

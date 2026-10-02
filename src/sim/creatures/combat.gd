@@ -20,6 +20,7 @@ const TOOL_DAMAGE := {
 	Items.Tool.AXE: [3, 3, 4, 4, 3, 5],
 	Items.Tool.PICKAXE: [2, 2, 3, 3, 2, 4],
 	Items.Tool.SHOVEL: [2, 2, 2, 3, 2, 3],
+	Items.Tool.HOE: [1, 2, 2, 2, 1, 3],
 }
 
 

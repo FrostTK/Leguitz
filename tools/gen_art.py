@@ -35,6 +35,7 @@ GROUNDS = [
     "DEEPSLATE_FLOOR", "LAVA", "SWAMP_WATER", "WARM_WATER",
     "WATER_FLOW_1", "WATER_FLOW_2", "WATER_FLOW_3", "WATER_FLOW_4", "WATER_FALLING",
     "LAVA_FLOW_1", "LAVA_FLOW_2", "LAVA_FALLING",
+    "FARMLAND", "FARMLAND_WET",
 ]
 # Grounds from this row on draw from random generators of their own, so the
 # textures made before them (and the walls after) stay the same.
@@ -269,6 +270,24 @@ def pebbly(base, dark, light, count=6):
     return make
 
 
+def farmland(base, furrow, ridge):
+    """Tilled soil: furrows across the tile, a ridge of loose earth along
+    each, a few clods."""
+    def make(rng):
+        c = base_tile(rng, base, [shade(base, -0.06), shade(base, 0.05)], 0.25)
+        for y in (2, 6, 10, 14):
+            for x in range(TILE):
+                if rng.random() < 0.9:
+                    c.put(x, y, furrow)
+                if rng.random() < 0.55:
+                    c.put(x, y - 1, ridge)
+        for _ in range(3):
+            x, y = int(rng.integers(0, TILE - 1)), int(rng.integers(0, TILE))
+            c.put(x, y, ridge)
+        return c
+    return make
+
+
 def stone_floor(base, dark, light):
     def make(rng):
         c = base_tile(rng, base, [shade(base, -0.07), shade(base, 0.05)], 0.3)
@@ -345,6 +364,8 @@ GROUND_MAKERS = {
     "SNOW": snow,
     "ICE": ice,
     "DIRT": pebbly("#8c5f3c", "#6f4a2f", "#a8794f"),
+    "FARMLAND": farmland("#86593a", "#5f3d26", "#a5764d"),
+    "FARMLAND_WET": farmland("#5e3e28", "#3f2819", "#77513a"),
     "GRAVEL": pebbly("#918e8b", "#6e6b6a", "#b3b0ad", 10),
     "MUD": pebbly("#5c4838", "#4a392c", "#735c49", 4),
     "TERRACOTTA": terracotta("#c46a3a", "#a95a31"),

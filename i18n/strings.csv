@@ -135,7 +135,7 @@ ITEM_DARK_OAK_LOG,Dark oak log,Bûche de chêne noir
 ITEM_JUNGLE_LOG,Jungle log,Bûche d'acajou
 ITEM_ACACIA_LOG,Acacia log,Bûche d'acacia
 ITEM_STICK,Stick,Bâton
-ITEM_SEEDS,Seeds,Graines
+ITEM_SEEDS,Wheat seeds,Graines de blé
 ITEM_BERRIES,Berries,Baies
 ITEM_FLOWER_RED,Red flower,Fleur rouge
 ITEM_FLOWER_YELLOW,Yellow flower,Fleur jaune
@@ -474,3 +474,22 @@ BOOK_FARM_SAPLING,"A felled tree gives one or two saplings of its kind. Plant th
 BOOK_FARM_YOUNG,"A young tree you fell gives its sapling back. A spruce growing in the snow comes out snowy.","Un jeune arbre abattu rend sa pousse. Un épicéa qui grandit dans la neige sort enneigé."
 BOOK_FARM_GRASS,Grass,Herbe
 BOOK_FARM_GRASS_BACK,"Bare dirt next to grass turns green again after a while in the light.","La terre nue à côté de l'herbe reverdit au bout d'un moment à la lumière."
+ITEM_WOODEN_HOE,Wooden hoe,Houe en bois
+ITEM_STONE_HOE,Stone hoe,Houe en pierre
+ITEM_COPPER_HOE,Copper hoe,Houe en cuivre
+ITEM_IRON_HOE,Iron hoe,Houe en fer
+ITEM_GOLDEN_HOE,Golden hoe,Houe en or
+ITEM_DIAMOND_HOE,Diamond hoe,Houe en diamant
+ITEM_WHEAT,Wheat,Blé
+ITEM_CARROT,Carrot,Carotte
+ITEM_POTATO,Potato,Pomme de terre
+ITEM_BAKED_POTATO,Baked potato,Pomme de terre cuite
+ITEM_DOUGH,Dough,Pâte à pain
+ITEM_BREAD,Bread,Pain
+BOOK_TOOLS_HOE,"Hoe: tilling grass and dirt into fields (right click)","Houe : labourer l'herbe et la terre en champs (clic droit)"
+BOOK_CRAFT_HOE,Hoes (every material),Houes (tous les matériaux)
+BOOK_FARM_FIELDS,Fields,Champs
+BOOK_FARM_TILL,"A hoe tills grass or dirt into farmland (right click; the tall grass on it goes). Within 4 steps of water it stays wet and dark; dry, and with nothing sown, it turns back to dirt after a while.","Une houe laboure l'herbe ou la terre en terre labourée (clic droit ; l'herbe haute dessus s'en va). À moins de 4 pas de l'eau, elle reste humide et sombre ; sèche et sans rien de semé, elle redevient de la terre au bout d'un moment."
+BOOK_FARM_SOW,"Sow on farmland (right click): wheat seeds come from tall grass, now and then a wild carrot or potato too. Crops grow in four stages in the light, faster on wet farmland.","Sème sur la terre labourée (clic droit) : les graines de blé viennent des hautes herbes, avec de temps en temps une carotte ou une pomme de terre sauvage. Les cultures poussent en quatre stades à la lumière, plus vite sur une terre humide."
+BOOK_FARM_HARVEST,"Ripe (golden wheat, orange carrot tops, flowering potatoes), a crop gives its harvest: wheat and seeds, 2 to 4 carrots or potatoes. Broken too soon, only its seed back.","Mûre (blé doré, collet orange des carottes, pommes de terre en fleur), une culture donne sa récolte : du blé et des graines, 2 à 4 carottes ou pommes de terre. Cassée trop tôt, elle ne rend que sa graine."
+BOOK_FARM_BREAD,"Three wheat make dough (crafting grid); the food furnace bakes it into bread, and potatoes into baked potatoes.","Trois blés font une pâte à pain (grille de fabrication) ; le four alimentaire la cuit en pain, et les pommes de terre en pommes de terre cuites."

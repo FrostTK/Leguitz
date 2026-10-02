@@ -2,10 +2,11 @@ class_name Growth
 extends RefCounted
 ## What grows by itself, on the server (stateless, given the server):
 ## saplings become young trees, then trees; bare dirt next to grass turns
-## into grass. The cells where something may grow are kept per chunk
-## (ChunkData.growing: noted by WorldState.set_voxel, saved with the
-## chunk). Every CHECK_TICKS each has a chance to go a stage further (on
-## average after SAPLING_SECONDS, YOUNG_SECONDS, GRASS_SECONDS, paced by
+## into grass; crops grow and farmland gets wet or dries (Farming). The
+## cells where something may grow are kept per chunk (ChunkData.growing:
+## noted by WorldState.set_voxel, saved with the chunk). Every CHECK_TICKS
+## each has a chance to go a stage further (on average after
+## SAPLING_SECONDS, YOUNG_SECONDS, GRASS_SECONDS, paced by
 ## WorldClock.scale_duration), only in the light (Light.level from LIGHT:
 ## the night and the dark stop them, a torch or a lantern near makes them
 ## grow) and with room: a tree wants the rows over it free and no solid
@@ -81,10 +82,17 @@ static func is_soil(voxel: int) -> bool:
 	return voxel < Voxels.BLOCK_BASE and (SOILS.has(voxel) or GRASSES.has(voxel))
 
 
-## Whether something set in a cell may grow: a sapling, a young tree, dirt.
+## Whether something set in a cell may grow: a sapling, a young tree, an
+## unripe crop, dirt, farmland.
 static func may_grow(voxel: int) -> bool:
 	var block := Voxels.block_of(voxel)
-	return SAPLINGS.has(block) or YOUNG.has(block) or voxel == Voxels.of_ground(Tiles.Ground.DIRT)
+	return (
+		SAPLINGS.has(block)
+		or YOUNG.has(block)
+		or Farming.STAGES.has(block)
+		or voxel == Voxels.of_ground(Tiles.Ground.DIRT)
+		or Farming.is_farmland(voxel)
+	)
 
 
 ## A voxel of a chunk changed (WorldState.set_voxel): what may grow there,
@@ -119,11 +127,19 @@ static func _grow(
 	var voxel := world.loaded_voxel_at(cell)
 	var block := Voxels.block_of(voxel)
 	var dirt := voxel == Voxels.of_ground(Tiles.Ground.DIRT)
+	if Farming.is_farmland(voxel):
+		var fallow := seconds / server.clock.scale_duration(Farming.FALLOW_SECONDS)
+		Farming.settle_farmland(server, cell, voxel, chance if chance >= 0.0 else fallow)
+		return
 	var mean := GRASS_SECONDS
 	if SAPLINGS.has(block):
 		mean = SAPLING_SECONDS
 	elif YOUNG.has(block):
 		mean = YOUNG_SECONDS
+	elif Farming.STAGES.has(block):
+		if not Farming.is_farmland(world.loaded_voxel_at(cell + Vector3i.DOWN)):
+			return
+		mean = Farming.stage_seconds(world, cell)
 	elif not dirt or not _bare(world, cell):
 		chunk.growing.erase(cell)
 		return
@@ -148,6 +164,8 @@ static func _next(world: WorldState, chunk: ChunkData, cell: Vector3i, voxel: in
 				if GRASSES.has(other) and _bare(world, cell + Vector3i(side.x, dy, side.y)):
 					return other
 		return voxel
+	if Farming.STAGES.has(block):
+		return Voxels.of_block(Farming.STAGES[block])
 	if not _spaced(world, cell):
 		return voxel
 	if SAPLINGS.has(block):

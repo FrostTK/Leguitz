@@ -156,9 +156,21 @@ enum Id {
 	JUNGLE_SAPLING,
 	ACACIA_SAPLING,
 	SWAMP_OAK_SAPLING,
+	WOODEN_HOE,
+	STONE_HOE,
+	COPPER_HOE,
+	IRON_HOE,
+	GOLDEN_HOE,
+	DIAMOND_HOE,
+	WHEAT,
+	CARROT,
+	POTATO,
+	BAKED_POTATO,
+	DOUGH,
+	BREAD,
 }
 ## What a tool is made for (Mining.tool_for: what it breaks faster).
-enum Tool { NONE, PICKAXE, AXE, SHOVEL, SWORD }
+enum Tool { NONE, PICKAXE, AXE, SHOVEL, SWORD, HOE }
 ## What a tool is made of.
 enum Tier { WOOD, STONE, COPPER, IRON, GOLD, DIAMOND }
 
@@ -189,6 +201,12 @@ const TOOLS := {
 	Id.IRON_SWORD: [Tool.SWORD, Tier.IRON],
 	Id.GOLDEN_SWORD: [Tool.SWORD, Tier.GOLD],
 	Id.DIAMOND_SWORD: [Tool.SWORD, Tier.DIAMOND],
+	Id.WOODEN_HOE: [Tool.HOE, Tier.WOOD],
+	Id.STONE_HOE: [Tool.HOE, Tier.STONE],
+	Id.COPPER_HOE: [Tool.HOE, Tier.COPPER],
+	Id.IRON_HOE: [Tool.HOE, Tier.IRON],
+	Id.GOLDEN_HOE: [Tool.HOE, Tier.GOLD],
+	Id.DIAMOND_HOE: [Tool.HOE, Tier.DIAMOND],
 }
 ## How many shots a bow lasts (Minecraft's).
 const BOW_DURABILITY := 384
@@ -255,6 +273,9 @@ const PLACES_BLOCK := {
 	Id.JUNGLE_SAPLING: Tiles.Block.JUNGLE_SAPLING,
 	Id.ACACIA_SAPLING: Tiles.Block.ACACIA_SAPLING,
 	Id.SWAMP_OAK_SAPLING: Tiles.Block.SWAMP_OAK_SAPLING,
+	Id.SEEDS: Tiles.Block.WHEAT_0,
+	Id.CARROT: Tiles.Block.CARROTS_0,
+	Id.POTATO: Tiles.Block.POTATOES_0,
 }
 
 ## What a ground gives (soil gives dirt); grounds left out give nothing.
@@ -269,6 +290,8 @@ const GROUND_DROPS := {
 	Tiles.Ground.PODZOL: Id.DIRT,
 	Tiles.Ground.MYCELIUM: Id.DIRT,
 	Tiles.Ground.DIRT: Id.DIRT,
+	Tiles.Ground.FARMLAND: Id.DIRT,
+	Tiles.Ground.FARMLAND_WET: Id.DIRT,
 	Tiles.Ground.SAND: Id.SAND,
 	Tiles.Ground.RED_SAND: Id.RED_SAND,
 	Tiles.Ground.GRAVEL: Id.GRAVEL,
@@ -375,6 +398,10 @@ const FOOD := {
 	Id.COOKED_CHICKEN: 6,
 	Id.RAW_VENISON: 3,
 	Id.COOKED_VENISON: 8,
+	Id.CARROT: 3,
+	Id.POTATO: 1,
+	Id.BAKED_POTATO: 5,
+	Id.BREAD: 5,
 }
 ## The planks each log is sawn into.
 const PLANKS_OF := {
@@ -396,6 +423,8 @@ const TREE_LOGS := {
 	Tiles.Block.JUNGLE_TREE: Id.JUNGLE_LOG,
 	Tiles.Block.ACACIA: Id.ACACIA_LOG,
 }
+## The chance that tall grass broken gives a wild carrot or potato too.
+const WILD_ROOTS := 0.08
 ## The sapling a tree (grown or young) gives: a felled tree one or two, a
 ## young one its own back.
 const SAPLING_OF := {
@@ -502,6 +531,13 @@ static func drops(voxel: int, tile: Vector2i, rng: RandomNumberGenerator) -> Arr
 		# A young tree: its sapling back, and a stick.
 		result.append(Vector2i(SAPLING_OF[block], 1))
 		result.append(Vector2i(Id.STICK, 1))
+	elif Farming.STAGES.has(block) or Farming.RIPE.has(block):
+		result.append_array(Farming.harvest(block, rng))
+	elif block == Tiles.Block.TALL_GRASS:
+		result.append(Vector2i(Id.SEEDS, 1))
+		# Now and then a wild carrot or potato in the grass.
+		if rng.randf() < WILD_ROOTS:
+			result.append(Vector2i(Id.CARROT if rng.randf() < 0.5 else Id.POTATO, 1))
 	elif BLOCK_DROPS.has(block):
 		var drop: Array = BLOCK_DROPS[block]
 		result.append(Vector2i(drop[0], rng.randi_range(drop[1], drop[2])))

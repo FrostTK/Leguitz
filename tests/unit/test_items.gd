@@ -70,7 +70,7 @@ func test_tools_do_not_stack() -> void:
 	assert_eq(bag.items[Inventory.CURSOR], Items.Id.IRON_PICKAXE, "swapped instead")
 	for tier in Items.Tier.size():
 		var tools := Items.tools_of_tier(tier)
-		assert_eq(tools.size(), 4, "a pickaxe, an axe, a shovel and a sword")
+		assert_eq(tools.size(), 5, "a pickaxe, an axe, a shovel, a sword and a hoe")
 		assert_eq(Items.tool_of(tools[0]), Items.Tool.PICKAXE)
 		assert_eq(Items.tool_of(tools[1]), Items.Tool.AXE)
 		assert_eq(Items.tool_of(tools[2]), Items.Tool.SHOVEL)
@@ -222,11 +222,12 @@ func test_the_debug_key_gives_tools_in_creative() -> void:
 	assert_eq(session.inventory.items[1], Items.Id.IRON_AXE)
 	assert_eq(session.inventory.items[2], Items.Id.IRON_SHOVEL)
 	assert_eq(session.inventory.items[3], Items.Id.IRON_SWORD)
+	assert_eq(session.inventory.items[4], Items.Id.IRON_HOE)
 	assert_true(client.poll().any(func(m: Dictionary) -> bool: return m["t"] == Msg.INVENTORY))
 	server.allow_debug_commands = false
 	client.send(Msg.debug_give_tools(Items.Tier.GOLD))
 	server.process_messages()
-	assert_eq(session.inventory.items[4], Items.Id.NONE, "only with debug commands")
+	assert_eq(session.inventory.items[5], Items.Id.NONE, "only with debug commands")
 
 
 func test_thrown_items_are_not_picked_up_at_once() -> void:

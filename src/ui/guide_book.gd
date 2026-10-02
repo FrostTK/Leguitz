@@ -41,6 +41,7 @@ const TOOL_ROWS := [
 	[Items.Id.IRON_SHOVEL, "BOOK_TOOLS_SHOVEL"],
 	[Items.Id.IRON_AXE, "BOOK_TOOLS_AXE"],
 	[Items.Id.IRON_SWORD, "BOOK_TOOLS_SWORD"],
+	[Items.Id.IRON_HOE, "BOOK_TOOLS_HOE"],
 ]
 
 
@@ -231,8 +232,8 @@ static func _home() -> Array:
 	]
 
 
-## What grows: saplings into trees, grass back on bare dirt (crops and
-## animals later in phase 7).
+## What grows: saplings into trees, grass back on bare dirt, fields and
+## crops (animals later in phase 7).
 static func _farm() -> Array:
 	return [
 		_title("BOOK_CHAPTER_FARM"),
@@ -242,6 +243,11 @@ static func _farm() -> Array:
 		_icon(Items.Id.SPRUCE_SAPLING, _t("BOOK_FARM_YOUNG")),
 		_heading("BOOK_FARM_GRASS"),
 		_icon(Items.Id.DIRT, _t("BOOK_FARM_GRASS_BACK")),
+		_heading("BOOK_FARM_FIELDS"),
+		_icon(Items.Id.IRON_HOE, _t("BOOK_FARM_TILL")),
+		_icon(Items.Id.SEEDS, _t("BOOK_FARM_SOW")),
+		_icon(Items.Id.WHEAT, _t("BOOK_FARM_HARVEST")),
+		_icon(Items.Id.BREAD, _t("BOOK_FARM_BREAD")),
 	]
 
 

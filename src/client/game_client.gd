@@ -694,7 +694,7 @@ func _handle_item_input(event: InputEvent) -> bool:
 ## The player holds the right button (or the left trigger) with food in
 ## hand, free to act: they eat (VitalsView).
 func wants_to_eat() -> bool:
-	return Items.is_food(held_item()) and wants_to_use()
+	return Items.is_food(held_item()) and wants_to_use() and not interaction.sows_here()
 
 
 ## The player holds the right button (or the left trigger), free to act,

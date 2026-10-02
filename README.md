@@ -20,9 +20,12 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Fonction | État |
 |---|---|
 | Végétation qui pousse : un arbre abattu donne des pousses de son espèce ; plantées, elles deviennent de jeunes arbres puis des arbres à la lumière ; la terre nue reverdit à côté de l'herbe | ✅ |
-| Houe, champs et graines, arrosage, compost, nouvelles cultures et arbres fruitiers | à venir |
+| Houe, champs et graines : terre labourée humide près de l'eau, blé, carottes et pommes de terre en 4 stades, récolte, pain et pommes de terre cuites au four | ✅ |
+| Arrosage, compost, nouvelles cultures et arbres fruitiers | à venir |
 | Élevage (reproduction, bébés, produits sans tuer), animaux de ferme, animaux sauvages et prédateurs | à venir |
 | Cuisine, pêche, chien et chat, saisons | à venir |
+
+![Leguitz : un champ le long d'un canal (blé, carottes, pommes de terre à leurs 4 stades, terre humide près de l'eau, parcelle sèche plus loin), vu de dessus et en 1re personne ; les houes, graines, blé, carotte, pommes de terre, pâte et pain](docs/screenshots/phase7-champs.png)
 
 ![Leguitz : trois rangées plantées des 7 espèces : arbres, jeunes arbres et pousses, vus de dessus et en 1re personne ; les pousses dans l'inventaire](docs/screenshots/phase7-vegetation.png)
 
@@ -204,6 +207,7 @@ du projet, puis appuyer sur F5.
 | Revenir à la vue par défaut | Début (Home) | Clic du stick droit |
 | Miner (maintenir), frapper une créature | Clic gauche | Gâchette droite |
 | Poser le bloc en main | Clic droit | Gâchette gauche |
+| Labourer (houe en main), semer sur la terre labourée (graines, carotte, pomme de terre en main) | Clic droit | Gâchette gauche |
 | Manger (nourriture en main) | Maintenir le clic droit | Maintenir la gâchette gauche |
 | Bander l'arc (arc en main), relâcher pour tirer | Maintenir le clic droit | Maintenir la gâchette gauche |
 | Utiliser le bloc visé (ouvrir un établi, un coffre, un four) | E | B |
@@ -274,7 +278,7 @@ Pour le multijoueur, il suffira de brancher un transport réseau.
 4. ✅ Craft (recettes, établi, usure, coffres, fours, blocs de construction)
 5. ✅ Survie et combat (vie, faim, nage, modes de jeu, animaux, monstres, combat et armures)
 6. Souterrain et structures (en pause : maison et jardin, torches et lanternes, lumière des grottes, coulées d'eau et de lave faits)
-7. Agriculture et élevage (en cours : végétation qui pousse)
+7. Agriculture et élevage (en cours : végétation qui pousse, champs et cultures)
 8. Mode Arcade : scénario n°1 « Restauration » (restaurer une terre désolée avec éoliennes,
    irrigateurs et purificateurs, faire revenir forêts, rivières et animaux, puis recycler les
    bâtiments et continuer en survie)

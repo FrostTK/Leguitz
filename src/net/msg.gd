@@ -15,6 +15,7 @@ const SET_VIEW_DISTANCE := "set_view_distance"
 const SAVE_REQUEST := "save_request"
 const BLOCK_BREAK := "block_break"
 const BLOCK_PLACE := "block_place"
+const TILL := "till"
 const SELECT_SLOT := "select_slot"
 const SLOT_CLICK := "slot_click"
 const SLOT_SPREAD := "slot_spread"
@@ -154,6 +155,11 @@ static func game_mode(mode: int, spectator: bool) -> Dictionary:
 ## hotbar slot `slot` in hand (-1: nothing of it, the player's book).
 static func block_break(cell: Vector3i, slot := -1) -> Dictionary:
 	return {"t": BLOCK_BREAK, "cell": cell, "slot": slot}
+
+
+## The player tilled `cell` with the hoe in hotbar slot `slot` (Farming).
+static func till(cell: Vector3i, slot: int) -> Dictionary:
+	return {"t": TILL, "cell": cell, "slot": slot}
 
 
 ## The player placed the block of hotbar slot `slot` at `cell` (a

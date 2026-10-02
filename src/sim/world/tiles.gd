@@ -43,6 +43,9 @@ enum Ground {
 	LAVA_FLOW_1,
 	LAVA_FLOW_2,
 	LAVA_FALLING,
+	# Tilled soil (Farming): dry, or wet near water.
+	FARMLAND,
+	FARMLAND_WET,
 }
 
 enum Block {
@@ -202,6 +205,19 @@ enum Block {
 	YOUNG_JUNGLE_TREE,
 	YOUNG_ACACIA,
 	YOUNG_SWAMP_OAK,
+	# Crops (Farming), by stage: the last one is ripe.
+	WHEAT_0,
+	WHEAT_1,
+	WHEAT_2,
+	WHEAT_3,
+	CARROTS_0,
+	CARROTS_1,
+	CARROTS_2,
+	CARROTS_3,
+	POTATOES_0,
+	POTATOES_1,
+	POTATOES_2,
+	POTATOES_3,
 }
 
 const FLOWERS: Array[Block] = [
@@ -358,6 +374,18 @@ const NON_SOLID_BLOCKS := {
 	Block.JUNGLE_SAPLING: true,
 	Block.ACACIA_SAPLING: true,
 	Block.SWAMP_OAK_SAPLING: true,
+	Block.WHEAT_0: true,
+	Block.WHEAT_1: true,
+	Block.WHEAT_2: true,
+	Block.WHEAT_3: true,
+	Block.CARROTS_0: true,
+	Block.CARROTS_1: true,
+	Block.CARROTS_2: true,
+	Block.CARROTS_3: true,
+	Block.POTATOES_0: true,
+	Block.POTATOES_1: true,
+	Block.POTATOES_2: true,
+	Block.POTATOES_3: true,
 }
 
 

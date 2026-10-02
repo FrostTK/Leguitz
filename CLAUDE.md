@@ -194,7 +194,7 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   a chest or a furnace and closing, lives in InventoryActions (GameClient.actions). Wheel
   and 1-9 pick the slot (the wheel zooms with its button held down in the top-down view, or with
   Ctrl: InputBindings.wheel_zooms), Q throws (Ctrl: the stack), shoulders on a gamepad.
-- Tools (`Items.TOOLS`: pickaxe, axe, shovel and sword in 6 materials, `Items.Tier`; they do not stack):
+- Tools (`Items.TOOLS`: pickaxe, axe, shovel, sword and hoe in 6 materials, `Items.Tier`; they do not stack):
   `Mining.break_seconds(voxel, held)` divides the hand's time (`hand_seconds`, the voxel's
   hardness) by `Items.TIER_SPEED` when the tool is the one `Mining.tool_for(voxel)` names; real
   seconds (a player's action, not paced by the day), `Mining.BREAK_PAUSE` between two breaks.
@@ -384,6 +384,26 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   gen_models takes `--only=a,b,c`. The book's Farm chapter (GuideBook._farm). No offline growth.
   ItemSlot waits for a hint's icon in `_process` (asking a redraw from `_draw` crashed Godot when
   the inventory opened before the icons were rendered).
+- Fields and crops (phase 7, step 2; `src/sim/world/farming.gd`, Farming: static, given the
+  server): hoes (Items.Tool.HOE, 6 tiers, TOOL_PATTERNS "MM / S / S" at the workbench; their head
+  in ItemModels._tool_head) till grass or dirt (`tilled`: the small plant over it goes, never
+  under what players placed) into grounds FARMLAND / FARMLAND_WET (gen_art `farmland`, own seeds;
+  TerrainRenderer.PRIORITY like dirt; they give dirt). Client: a hoe in hand makes the right click
+  BlockInteraction._till (predicted, the hoe wears) and sends Msg.TILL, handled by Farming.till
+  (reach, a hoe in that slot, wear unless creative). Crops are object blocks by stage (WHEAT_0..3,
+  CARROTS_0..3, POTATOES_0..3; Farming.STAGES, RIPE, SOWN, `sown_of`), sown from SEEDS (now
+  "wheat seeds"), CARROT, POTATO (Items.PLACES_BLOCK; Mining.placement wants farmland under
+  them; never replaceable); modeled by FarmModels (rows of plants; also the farm items). Growth
+  tracks crops and farmland: farmland settles every check (`settle_farmland`: wet with water
+  within MOIST_REACH on its row or the one above, dry otherwise; dry with nothing sown it may
+  turn back to dirt, FALLOW_SECONDS), crops go a stage on average every STAGE_SECONDS on wet
+  farmland (DRY_SLOWER times longer on dry), in the light. Drops (Farming.harvest through
+  Items.drops): ripe, the harvest and seeds; unripe, the seed back; tall grass gives seeds and
+  now and then (Items.WILD_ROOTS) a carrot or a potato. 3 wheat (shapeless) make DOUGH; the food
+  furnace bakes it into BREAD and POTATO into BAKED_POTATO (Smelting.FOOD; all of them char in the
+  factory furnace). Carrots and potatoes are food too: GameClient.wants_to_eat skips them while
+  BlockInteraction.sows_here (aimed at farmland). The book's Farm chapter (Fields) and Tools
+  (the hoe).
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made

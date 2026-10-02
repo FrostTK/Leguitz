@@ -20,6 +20,10 @@ const CRUMBS := {
 	Items.Id.MUSHROOM_BROWN: Color("8a5a3a"),
 	Items.Id.MUSHROOM_STEW: Color("8a4a2a"),
 	Items.Id.CHARRED_FOOD: Color("1f1a19"),
+	Items.Id.CARROT: Color("e8792a"),
+	Items.Id.POTATO: Color("c9a66b"),
+	Items.Id.BAKED_POTATO: Color("b8853f"),
+	Items.Id.BREAD: Color("c98a3e"),
 }
 const CRUMB_SECONDS := 0.22
 ## The veil over the first-person view with the eye in water or lava.

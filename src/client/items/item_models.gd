@@ -102,6 +102,9 @@ static func build(item: int) -> VoxelGrid:
 	var sapling := SaplingModels.item(item)
 	if sapling != null:
 		return sapling
+	var farm := FarmModels.item(item)
+	if farm != null:
+		return farm
 	match item:
 		Items.Id.STICK:
 			return _stick()
@@ -190,7 +193,13 @@ static func _ingot(colors: Array) -> VoxelGrid:
 static func _tool(kind: int, head: Array) -> VoxelGrid:
 	var grid := VoxelGrid.new(TOOL_SIZE)
 	var handle_end: float = (
-		{Items.Tool.PICKAXE: 15.0, Items.Tool.AXE: 15.3, Items.Tool.SWORD: 5.4}.get(kind, 12.0)
+		{
+			Items.Tool.PICKAXE: 15.0,
+			Items.Tool.AXE: 15.3,
+			Items.Tool.SWORD: 5.4,
+			Items.Tool.HOE: 15.0,
+		}
+		. get(kind, 12.0)
 	)
 	for x in TOOL_SIZE.x:
 		for y in TOOL_SIZE.y:
@@ -261,6 +270,14 @@ static func _tool_head(kind: int, u: float, v: float) -> Vector2i:
 			elif absf(v) < 0.3:
 				shade = 2
 			return Vector2i(shade, 1 if u < 8.0 else 0)
+		Items.Tool.HOE:
+			# A neck out of the handle's top, then a flat blade turned down
+			# along the handle, bright at its edge.
+			if v >= 0.0 and v < 4.4 and u >= 13.2 and u <= 14.9:
+				return Vector2i(0 if v < 1.2 else 1, 1 if v < 2.0 else 0)
+			if v >= 4.4 and v <= 6.4 and u >= 9.4 and u <= 14.9:
+				var shade := 3 if u < 10.4 else (2 if v > 5.6 else 1)
+				return Vector2i(shade, 0)
 		Items.Tool.SHOVEL:
 			# A spade rounded at its tip, behind a collar on the handle.
 			if u >= 11.4 and u < 12.8 and absf(v) <= 1.25:

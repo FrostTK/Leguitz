@@ -102,6 +102,9 @@ func place() -> void:
 		return
 	if target == null:
 		return
+	if Items.tool_of(client.held_item()) == Items.Tool.HOE:
+		_till()
+		return
 	var player := client.local_player
 	var slot := client.inventory.selected
 	var voxel := Items.placed_voxel(client.inventory.items[slot])
@@ -147,6 +150,39 @@ func place() -> void:
 	if not client.modes.creative():
 		client.inventory.take(slot, 1)
 	client.transport.send(Msg.block_place(cell, slot, front, face))
+	client.player_model.swing()
+
+
+## Whether what is in hand would be sown where the player aims (food
+## that is a seed, a carrot, a potato: sown on farmland, eaten elsewhere).
+func sows_here() -> bool:
+	var voxel := Items.placed_voxel(client.held_item())
+	return (
+		target != null
+		and Farming.SOWN.has(Voxels.block_of(voxel))
+		and Farming.is_farmland(target.voxel)
+		and target.normal == Vector3i.UP
+	)
+
+
+## The hoe in hand tills what is aimed at (grass, dirt; the ground under
+## the small plant aimed at), shown at once; the server decides (Msg.TILL).
+func _till() -> void:
+	var player := client.local_player
+	var cell := target.cell
+	if not Voxels.is_cube(target.voxel):
+		cell += Vector3i.DOWN
+	if Mining.reach_to(player.position, player.height, cell) > Mining.REACH:
+		return
+	var voxel_at := client.world.voxel_at
+	var cells := Farming.tilled(cell, voxel_at)
+	if cells.is_empty():
+		return
+	var slot := client.inventory.selected
+	_wear_tool(slot, voxel_at.call(cell))
+	for at: Vector3i in cells:
+		_predict(at, cells[at])
+	client.transport.send(Msg.till(cell, slot))
 	client.player_model.swing()
 
 
