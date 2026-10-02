@@ -21,9 +21,12 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 |---|---|
 | Végétation qui pousse : un arbre abattu donne des pousses de son espèce ; plantées, elles deviennent de jeunes arbres puis des arbres à la lumière ; la terre nue reverdit à côté de l'herbe | ✅ |
 | Houe, champs et graines : terre labourée humide près de l'eau, blé, carottes et pommes de terre en 4 stades, récolte, pain et pommes de terre cuites au four | ✅ |
+| Ciel en 1re personne : levers et couchers de soleil, lune dans sa phase, étoiles et voie lactée, nuages raccord avec leurs ombres | ✅ |
 | Arrosage, compost, nouvelles cultures et arbres fruitiers | à venir |
 | Élevage (reproduction, bébés, produits sans tuer), animaux de ferme, animaux sauvages et prédateurs | à venir |
 | Cuisine, pêche, chien et chat, saisons | à venir |
+
+![Leguitz : le ciel en 1re personne : midi et ses nuages, coucher et lever de soleil, nuit étoilée et voie lactée ; la lune pleine, en demi, en croissant (zoom C)](docs/screenshots/ciel.png)
 
 ![Leguitz : un champ le long d'un canal (blé, carottes, pommes de terre à leurs 4 stades, terre humide près de l'eau, parcelle sèche plus loin), vu de dessus et en 1re personne ; les houes, graines, blé, carotte, pommes de terre, pâte et pain](docs/screenshots/phase7-champs.png)
 

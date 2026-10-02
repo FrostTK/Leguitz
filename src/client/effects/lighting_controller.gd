@@ -11,8 +11,10 @@ extends Node
 ## - the player's lantern at night and in the dark (`sky_here`),
 ## - fog (haze in the valleys below the player, morning mist, rain), cloud
 ##   shadows, glow (bloom) and lightning flashes,
-## - in first person: a sky over the horizon, a distance haze (the loaded
-##   world ends somewhere), sharper shadows near the eye.
+## - in first person: the sky (sky.gdshader: its gradient, glows at sunrise
+##   and sunset, the sun, the moon in its phase, stars, clouds matching their
+##   shadows), a distance haze (the loaded world ends somewhere), sharper
+##   shadows near the eye.
 
 enum Quality { LOW, MEDIUM, HIGH, ULTRA }
 
@@ -31,6 +33,12 @@ const CAVE_FOG := Color(0.05, 0.04, 0.06)
 const DAY_SKY := Color(0.36, 0.56, 0.86)
 const NIGHT_SKY := Color(0.03, 0.04, 0.1)
 const TWILIGHT_SKY := Color(0.45, 0.42, 0.7)
+const SKY_SHADER := preload("res://src/client/shaders/sky.gdshader")
+## The sun's disk: white-gold high up, deep orange low.
+const SUN_HIGH := Color(1.0, 0.94, 0.78)
+const SUN_LOW := Color(1.0, 0.46, 0.16)
+## The clouds' layer over the sea (local units).
+const CLOUD_LEVEL := 70.0
 
 const DAY_AMBIENT_ENERGY := 0.62
 const NIGHT_AMBIENT_ENERGY := 0.3
@@ -90,7 +98,7 @@ var darkness := 0.0
 ## Seconds the lantern stays out (lantern_out).
 var _lantern_out := 0.0
 
-var _sky_material := ProceduralSkyMaterial.new()
+var _sky_material := ShaderMaterial.new()
 
 
 func _ready() -> void:
@@ -116,8 +124,7 @@ func _ready() -> void:
 	sky.radiance_size = Sky.RADIANCE_SIZE_32
 	sky.process_mode = Sky.PROCESS_MODE_INCREMENTAL
 	environment.sky = sky
-	_sky_material.sun_angle_max = 12.0
-	_sky_material.sky_curve = 0.12
+	_sky_material.shader = SKY_SHADER
 
 	sun.shadow_enabled = true
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
@@ -204,7 +211,7 @@ func _process(delta: float) -> void:
 	_update_sky_light(angle, moon, storm, underground)
 	_update_fog(hours, daylight, twilight, storm, underground)
 	environment.background_color = environment.fog_light_color.darkened(0.2)
-	_update_sky(daylight, twilight, storm, underground)
+	_update_sky(daylight, twilight, storm, underground, angle)
 	lantern.light_energy = clampf(darkness * 2.0 - 0.4, 0.0, 1.6)
 	if _lantern_out > 0.0:
 		# Out; in its last second it sputters back.
@@ -277,7 +284,9 @@ func _update_fog(
 
 
 ## The sky behind the horizon, in first person in the open air.
-func _update_sky(daylight: float, twilight: float, storm: float, underground: bool) -> void:
+func _update_sky(
+	daylight: float, twilight: float, storm: float, underground: bool, angle: float
+) -> void:
 	var open_sky := first_person > 0.0 and not underground
 	environment.background_mode = Environment.BG_SKY if open_sky else Environment.BG_COLOR
 	if not open_sky:
@@ -285,10 +294,36 @@ func _update_sky(daylight: float, twilight: float, storm: float, underground: bo
 	var top := NIGHT_SKY.lerp(DAY_SKY, daylight).lerp(TWILIGHT_SKY, twilight * 0.4)
 	top = top.lerp(top * STORM_TINT, storm)
 	var horizon := environment.fog_light_color
-	_sky_material.sky_top_color = top
-	_sky_material.sky_horizon_color = horizon
-	_sky_material.ground_horizon_color = horizon
-	_sky_material.ground_bottom_color = horizon.darkened(0.5)
+	var sky := _sky_material
+	sky.set_shader_parameter("top_color", top)
+	sky.set_shader_parameter("horizon_color", horizon)
+	sky.set_shader_parameter("ground_color", horizon.darkened(0.55))
+	var sun_dir := sky_body_direction(angle)
+	sky.set_shader_parameter("sun_dir", sun_dir)
+	sky.set_shader_parameter("moon_dir", sky_body_direction(angle - PI))
+	var high := smoothstep(0.0, 0.5, sun_dir.y)
+	sky.set_shader_parameter("sun_color", SUN_LOW.lerp(SUN_HIGH, high))
+	sky.set_shader_parameter("twilight", twilight)
+	sky.set_shader_parameter("night", 1.0 - smoothstep(0.0, 0.6, daylight + twilight * 0.3))
+	sky.set_shader_parameter("storm", storm)
+	# Full at phase 0, new halfway (WorldClock.moon_phase).
+	var phase := float(clock.moon_phase()) / WorldClock.MOON_PHASES
+	sky.set_shader_parameter("moon_light", PI - phase * TAU)
+	sky.set_shader_parameter("cloud_coverage", clouds.coverage)
+	sky.set_shader_parameter("cloud_drift", clouds.drift)
+	sky.set_shader_parameter("cloud_scale", CloudShadows3D.CLOUD_SCALE)
+	sky.set_shader_parameter("cloud_height", CLOUD_LEVEL)
+	sky.set_shader_parameter("star_turn", clock.time_of_day() / 86400.0 * TAU)
+
+
+## Where the sun (or the moon: `angle` - PI) shows in the sky, towards it:
+## the azimuth of sky_direction, but on its true arc, down to the horizon
+## and under it at its rise and set (the light keeps a little higher).
+static func sky_body_direction(angle: float) -> Vector3:
+	var arc := sin(angle)
+	var horizontal := Vector2(cos(angle), 0.35 + 0.65 * clampf(arc, 0.0, 1.0)).normalized()
+	var elevation := deg_to_rad(MAX_ELEVATION) * arc
+	return Vector3(horizontal.x * cos(elevation), sin(elevation), horizontal.y * cos(elevation))
 
 
 ## Points a directional light so that it shines from `towards_light`.

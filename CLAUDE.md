@@ -104,6 +104,24 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   dive the backs of faces vanish (`section_on`) so the camera sees through the rock it crosses.
   In first person: caves always shown, props' detail by distance, haze, split sun shadows, a
   procedural sky, 6 chunks loaded; the mouse is captured (released by the pause menu).
+- The sky (seen in first person only: top-down, the ortho camera never sees it; the cloud
+  shadows are its part there): `sky.gdshader` (shader_type sky), set every frame by
+  LightingController._update_sky: a gradient from the horizon (the fog's color, so the haze
+  melts into it) to the top, glows at sunrise and sunset (orange towards the sun, pink around, a
+  pink band opposite), the sun (a disk, halos in steps, orange and larger low), the moon in its
+  phase (WorldClock.moon_phase: full at 0; `moon_light` the angle of its light; seas, the dark
+  side faint, a halo; under the glow threshold so no blur hides its phase), stars on a grid of
+  directions turning with the night (`star_turn`; about a pixel wide whatever the zoom, through
+  fwidth; twinkling; a milky way band), and clouds: CloudShadows3D's noise, CLOUD_SCALE and
+  `drift` (public now) on a layer at CLOUD_LEVEL, lit from the sun's (moon's) side, in flat
+  steps. Its colors are written in sRGB and made linear (`lin`). LightingController
+  .sky_body_direction puts the sun and the moon on their true arc (on the horizon at
+  SUNRISE/SUNSET, under it after), while sky_direction keeps the light higher for readable
+  shadows. No radiance is made from the sky (ambient light is a color, reflections off): it
+  costs ~0.07 ms in HD. Mind pow() of a value a hair under 0 (clamp it): NaN pixels, spread by
+  the glow into big white blots. Weather particles fade out closer to the eye than
+  WeatherEffects.NEAR_FADE (distance fade, dithered): leaves lit by the lantern or fireflies
+  right in front of a first-person eye filled the view.
 - Trees, plants, rocks and the player are voxel models (1 voxel = 1 art pixel = 1/16 tile):
   generators in `src/client/models/voxel_models.gd` (trees: `tree_models.gd`, detailed procedural
   trees: tapering, leaning trunks on roots, forking limbs, lit leaf clusters, bark grooves and

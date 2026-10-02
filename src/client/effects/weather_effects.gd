@@ -63,6 +63,11 @@ const AMOUNTS := {&"rain": 2000, &"snow": 1100, &"leaves": 24, &"fireflies": 60,
 const MAX_SPREAD := 3.0
 ## In first person, the emitters cover this far around the eye.
 const FIRST_PERSON_REACH := 24.0
+## Particles closer to the eye than this fade out (world units): an art
+## pixel or a leaf right in front of a first-person eye filled the view
+## (fireflies glowing, leaves lit by the lantern at night). Top-down the
+## camera is far away.
+const NEAR_FADE := Vector2(0.4, 1.6)
 
 var weather := Weather.new()
 var client_world: ClientWorld
@@ -281,6 +286,9 @@ static func _particle_material(color: Color, billboard: bool, lit: bool) -> Stan
 	material.alpha_scissor_threshold = 0.1
 	material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	material.distance_fade_mode = BaseMaterial3D.DISTANCE_FADE_PIXEL_DITHER
+	material.distance_fade_min_distance = NEAR_FADE.x
+	material.distance_fade_max_distance = NEAR_FADE.y
 	if not lit:
 		material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	if billboard:
