@@ -76,6 +76,7 @@ static func _controls() -> Array:
 		_keys("BOOK_INVENTORY", InputNames.keys(InputBindings.INVENTORY)),
 		_keys("BOOK_DROP", InputNames.keys(InputBindings.DROP_ITEM)),
 		_keys("BOOK_VIEW", InputNames.keys(InputBindings.TOGGLE_VIEW)),
+		_keys("BOOK_ZOOM_VIEW", InputNames.keys(InputBindings.ZOOM_VIEW)),
 		_keys("BOOK_CAMERA_RESET", InputNames.keys(InputBindings.CAMERA_RESET)),
 		_keys("BOOK_PAUSE", InputNames.keys(InputBindings.PAUSE)),
 		_keys("BOOK_DEBUG_SCREEN", InputNames.keys(InputBindings.TOGGLE_DEBUG)),

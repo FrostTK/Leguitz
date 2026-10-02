@@ -31,7 +31,7 @@ var hd_rendering := false
 ## Frames per second at most (0 = the screen's refresh rate): no need to
 ## keep the graphics card at full power for a calm pixel-art world.
 var max_fps := 60
-## Goes first person when entering a cave (F5 switches by hand anyway).
+## Goes first person when entering a cave (V switches by hand anyway).
 var cave_first_person := true
 ## The player's book in a 10th slot beside the hotbar (see BookScreen).
 var guide_book := true

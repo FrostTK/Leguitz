@@ -26,6 +26,10 @@ const DEPTH_BELOW := 240.0
 const ORBIT_SHARPNESS := 18.0
 ## First-person camera: vertical field of view (degrees) and depth range.
 const FIRST_PERSON_FOV := 70.0
+## First person, zoomed in (InputBindings.ZOOM_VIEW held).
+const ZOOM_FOV := 20.0
+## How fast the zoom comes and goes.
+const ZOOM_SHARPNESS := 14.0
 const FIRST_PERSON_NEAR := 0.05
 const FIRST_PERSON_FAR := 240.0
 ## The dive starts with a nearly orthographic perspective (this narrow
@@ -57,6 +61,8 @@ var first_person := 0.0
 var eye := Vector3.ZERO
 var look_yaw := 0.0
 var look_pitch := 0.0
+## First person: how far it is zoomed in (0: not at all, 1: ZOOM_FOV).
+var zoom := 0.0
 
 var _render_scale := 4
 
@@ -180,6 +186,19 @@ func _ground_spread() -> float:
 	return camera.size * 0.5 / tan(current_pitch)
 
 
+## Eases the first-person zoom towards `to` (0 or 1).
+func zoom_towards(to: float, delta: float) -> void:
+	zoom = lerpf(zoom, to, 1.0 - exp(-ZOOM_SHARPNESS * delta))
+	if absf(zoom - to) < 0.002:
+		zoom = to
+
+
+## How much slower looking around turns the eye at the current zoom (the
+## view moves on screen as fast as unzoomed).
+func look_scale() -> float:
+	return lerpf(FIRST_PERSON_FOV, ZOOM_FOV, zoom) / FIRST_PERSON_FOV
+
+
 ## Camera of the dive between the top-down view and the first-person one.
 ## `amount` 0: the top-down view (`top_basis`), seen through a nearly
 ## orthographic perspective showing `view_height` units at `target`;
@@ -229,7 +248,7 @@ func _process(_delta: float) -> void:
 		)
 		camera.projection = Camera3D.PROJECTION_PERSPECTIVE
 		camera.global_transform = frame[0]
-		camera.fov = frame[1]
+		camera.fov = lerpf(frame[1], ZOOM_FOV, zoom)
 		camera.near = frame[2]
 		camera.far = frame[3]
 		display.position = center

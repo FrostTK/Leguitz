@@ -2,7 +2,7 @@ class_name ViewMode
 extends RefCounted
 ## Chooses between the top-down view and the first-person view. Entering a
 ## cave (thick rock over the player's head) goes first person when the
-## setting allows it, the open sky brings the top-down view back. F5 (see
+## setting allows it, the open sky brings the top-down view back. V (see
 ## toggle) switches by hand, until the player next enters or leaves a cave.
 
 var first_person := false
@@ -29,7 +29,7 @@ func update(covered: bool, deep: bool) -> void:
 			first_person = false
 
 
-## Switches by hand (F5).
+## Switches by hand (V).
 func toggle() -> void:
 	first_person = not first_person
 	_manual = true

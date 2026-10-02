@@ -309,6 +309,15 @@ func sky_at(cell: Vector3i) -> int:
 	return view.sky_at(Vector3i(local.x, cell.y, local.y))
 
 
+## The sky light (0..1) where a body stands (`height`: its feet, levels):
+## around its feet or its head, the brighter.
+func sky_of_body(tile: Vector2i, height: float) -> float:
+	var row := floori(height + 0.5) + GameConst.SEA_LEVEL
+	var feet := sky_at(Vector3i(tile.x, row, tile.y))
+	var head := sky_at(Vector3i(tile.x, row + 1, tile.y))
+	return maxi(feet, head) / float(LightField.MAX)
+
+
 ## Re-places the world-space lights after the world root turned.
 func place_lights() -> void:
 	for view: ChunkView3D in _views.values():

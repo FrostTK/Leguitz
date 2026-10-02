@@ -27,6 +27,8 @@ const CAMERA_DOWN := &"camera_down"
 const CAMERA_RESET := &"camera_reset"
 ## Switches between the top-down view and the first-person view.
 const TOGGLE_VIEW := &"toggle_view"
+## Held in first person: the view narrows (a spyglass, WorldViewport.zoom).
+const ZOOM_VIEW := &"zoom_view"
 ## Gamepad triggers: break (held) and place (the mouse buttons are handled
 ## by GameClient: a right click places, a right drag turns the camera).
 const BREAK := &"break"
@@ -107,7 +109,8 @@ static func register_defaults() -> void:
 	_bind(CAMERA_UP, [_axis(JOY_AXIS_RIGHT_Y, -1.0)])
 	_bind(CAMERA_DOWN, [_axis(JOY_AXIS_RIGHT_Y, 1.0)])
 	_bind(CAMERA_RESET, [_key(KEY_HOME), _button(JOY_BUTTON_RIGHT_STICK)])
-	_bind(TOGGLE_VIEW, [_key(KEY_F5), _button(JOY_BUTTON_X)])
+	_bind(TOGGLE_VIEW, [_letter(KEY_V), _button(JOY_BUTTON_X)])
+	_bind(ZOOM_VIEW, [_letter(KEY_C)])
 	_bind(BREAK, [_axis(JOY_AXIS_TRIGGER_RIGHT, 1.0)])
 	_bind(PLACE, [_axis(JOY_AXIS_TRIGGER_LEFT, 1.0)])
 	_bind(TOGGLE_MAP, [_letter(KEY_M), _button(JOY_BUTTON_Y)])

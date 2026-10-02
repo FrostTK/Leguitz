@@ -3,7 +3,7 @@
 Top-down pixel-art open-world sandbox (Stardew visuals, Minecraft mechanics), rendered in full 3D:
 a true voxel world (16x16x128 chunks, cubes textured in pixel art), voxel models for everything else
 (trees, plants, player), orbit camera, cut-away view underground, first person in caves (and with
-F5). Godot 4.7.
+V). Godot 4.7.
 The owner speaks French: talk to them in French. Code, identifiers and comments are in English;
 player-facing text goes through `i18n/strings.csv` (keys + en + fr), never hard-coded.
 
@@ -94,11 +94,13 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   art pixels (only what is under the surface), caustics light the shallows; shores, foam and
   ripples as before. The surface map's 4th channel holds the bed under clear water
   (ChunkMesher.bed_code / bed_of in the shader) so beds blend like land.
-- First person (`ViewMode`: automatic when entering a cave, setting `cave_first_person`; F5 any
+- First person (`ViewMode`: automatic when entering a cave, setting `cave_first_person`; V any
   time): WorldViewport.dive_frame blends the ortho top-down camera into a perspective one at the
   eye (a 1° perspective from far away opening to 70°), the world root stretch fades to identity
   (`Render3D.root_basis(yaw, pitch, amount)`), the body dithers away (shadow kept), the lantern is
-  carried in the left hand. No cut, no see-through hole (globals `cut_height`, `see_through_on`); during the
+  carried in the left hand. C held (InputBindings.ZOOM_VIEW, letter keys) zooms in:
+  WorldViewport.zoom eases to ZOOM_FOV (zoom_towards), looking turns slower (look_scale), the
+  item in hand goes down. No cut, no see-through hole (globals `cut_height`, `see_through_on`); during the
   dive the backs of faces vanish (`section_on`) so the camera sees through the rock it crosses.
   In first person: caves always shown, props' detail by distance, haze, split sun shadows, a
   procedural sky, 6 chunks loaded; the mouse is captured (released by the pause menu).

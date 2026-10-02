@@ -128,7 +128,7 @@ var archer := Archer.new()
 var item_icons := ItemIcons.new()
 ## What is in hand in first person (a child of the camera).
 var first_person_held := MeshInstance3D.new()
-## Chooses between the top-down view and first person (caves, F5).
+## Chooses between the top-down view and first person (caves, V).
 var view_mode := ViewMode.new()
 ## 0 = top-down view, 1 = first person, in between during the dive.
 var first_person := 0.0
@@ -395,7 +395,8 @@ func _update_orbit(delta: float) -> void:
 	)
 	if stick != Vector2.ZERO:
 		if view_mode.first_person:
-			_look(-stick.x * STICK_LOOK_SPEED.x * delta, -stick.y * STICK_LOOK_SPEED.y * delta)
+			var scale := world_viewport.look_scale() * delta
+			_look(-stick.x * STICK_LOOK_SPEED.x * scale, -stick.y * STICK_LOOK_SPEED.y * scale)
 		else:
 			world_viewport.orbit(-stick.x * STICK_ORBIT_SPEED.x * delta, 0.0)
 			world_viewport.orbit(0.0, stick.y * STICK_ORBIT_SPEED.y * delta)
@@ -435,6 +436,15 @@ func _update_view(delta: float) -> void:
 		low += Vector3(sin(yaw), 0.0, cos(yaw)) * LANTERN_TOWARDS_CAMERA
 		player_model.lantern_override = root * low
 	player_model.set_fade(smoothstep(0.55, 0.85, first_person))
+	# Held in first person, the zoom narrows the view (not over a screen).
+	var zooming := (
+		first_person >= 1.0
+		and Input.is_action_pressed(InputBindings.ZOOM_VIEW)
+		and not inventory_screen.visible
+		and not book_screen.visible
+		and not get_tree().paused
+	)
+	world_viewport.zoom_towards(1.0 if zooming else 0.0, delta)
 	player_model.animate(
 		Render3D.world_px_to_local(feet, local_player.height),
 		local_player.heading,
@@ -443,7 +453,8 @@ func _update_view(delta: float) -> void:
 		delta
 	)
 	player_model.swimming = local_player.body.in_liquid and not local_player.body.on_ground
-	lighting.sky_here = _sky_here()
+	var tile := local_player.current_tile()
+	lighting.sky_here = world_view.sky_of_body(tile, local_player.height)
 	player_model.set_sky_light(lighting.sky_seen)
 	if local_player.body.in_liquid and not _was_in_liquid:
 		interaction.splash(Voxels.is_lava(local_player.body.liquid))
@@ -485,16 +496,6 @@ func _update_view(delta: float) -> void:
 	var center := Vector2(_camera_local.x, _camera_local.z)
 	world_view.set_view_area(center, ground * 0.5, world_viewport.current_yaw)
 	_update_view_distance()
-
-
-## The sky light (0..1) where the player is: around their feet or their
-## head, the brighter.
-func _sky_here() -> float:
-	var tile := local_player.current_tile()
-	var row := floori(local_player.height + 0.5) + GameConst.SEA_LEVEL
-	var feet := world_view.sky_at(Vector3i(tile.x, row, tile.y))
-	var head := world_view.sky_at(Vector3i(tile.x, row + 1, tile.y))
-	return maxi(feet, head) / float(LightField.MAX)
 
 
 ## Under cover (a cave, a tunnel, a roof), cuts the world above the
@@ -787,7 +788,8 @@ func furnace_broke(cell: Vector3i) -> void:
 func _update_held() -> void:
 	var held := held_item()
 	var model := items.mesh(held) if held != Items.Id.NONE else null
-	first_person_held.visible = model != null and first_person >= 1.0
+	# Zooming in, the hand goes down (it would fill the narrowed view).
+	first_person_held.visible = model != null and first_person >= 1.0 and world_viewport.zoom < 0.05
 	if held != _shown_held:
 		_shown_held = held
 		first_person_held.mesh = model
@@ -879,7 +881,7 @@ func _handle_camera_input(event: InputEvent) -> bool:
 func _handle_look_input(event: InputEvent) -> bool:
 	var motion := event as InputEventMouseMotion
 	if motion != null and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		var turn := motion.screen_relative * MOUSE_LOOK_SPEED
+		var turn := motion.screen_relative * MOUSE_LOOK_SPEED * world_viewport.look_scale()
 		_look(-turn.x, -turn.y)
 		return true
 	if event.is_action_pressed(InputBindings.CAMERA_RESET):

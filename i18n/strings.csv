@@ -64,7 +64,7 @@ DEBUG_LAYER,Layer,Couche
 DEBUG_BIOME,Biome,Biome
 DEBUG_LEVEL,Level,Niveau
 DEBUG_NOCLIP,Ghost mode (F4),Mode fantôme (F4)
-DEBUG_FIRST_PERSON,First person (F5),1re personne (F5)
+DEBUG_FIRST_PERSON,First person (V),1re personne (V)
 DEBUG_TARGET,Target,Visé
 LAYER_SURFACE,Surface,Surface
 LAYER_UNDERGROUND,Underground %d,Souterrain %d
@@ -191,6 +191,7 @@ BOOK_HAND_KEYS,"Wheel, 1 to 9; 0: this book (0 again opens it)","Molette, 1 à 9
 BOOK_INVENTORY,Inventory,Inventaire
 BOOK_DROP,Throw what is in hand (with Ctrl: the stack),Lancer l'objet en main (avec Ctrl : la pile)
 BOOK_VIEW,First person / top-down view,1re personne / vue de dessus
+BOOK_ZOOM_VIEW,Zoom in (first person; hold),Zoomer (1re personne ; maintenir)
 BOOK_CAMERA_RESET,Back to the default view,Revenir à la vue par défaut
 BOOK_PAUSE,"Pause, settings","Pause, réglages"
 BOOK_DEBUG_SCREEN,Debug screen,Écran de debug

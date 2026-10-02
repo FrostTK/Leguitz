@@ -28,7 +28,7 @@ extends RefCounted
 ## --quality=N          graphics quality 0 (low) to 3 (ultra)
 ## --hd                 render the 3D world at full resolution
 ## --camera=YAW,PITCH   camera orbit angles in degrees (default 0,60)
-## --first-person       start in first person (like F5)
+## --first-person       start in first person (like V)
 ## --look=PITCH         first-person look pitch in degrees (default -11)
 ## --dive=T             hold the dive into first person at T (0..1)
 ## --aim=X,Y            aim at this point (screen units from its center)
