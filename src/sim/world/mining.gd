@@ -111,6 +111,7 @@ const BLOCK_SECONDS := {
 	Tiles.Block.LANTERN: 1.0,
 	Tiles.Block.LANTERN_HANGING: 1.0,
 	Tiles.Block.LANTERN_WALL: 1.0,
+	Tiles.Block.COMPOSTER: 1.5,
 }
 ## Trees by hand: chopping a trunk takes a while (a young one less).
 const TREE_SECONDS := 3.5
@@ -160,6 +161,7 @@ const AXE_BLOCKS := {
 	Tiles.Block.BIG_GATE: true,
 	Tiles.Block.BIG_GATE_OPEN: true,
 	Tiles.Block.CAMPFIRE: true,
+	Tiles.Block.COMPOSTER: true,
 }
 const PICKAXE_BLOCKS := {
 	Tiles.Block.ROCK: true,
@@ -199,6 +201,7 @@ const FLOOR_OBJECTS := {
 	Tiles.Block.CAMPFIRE: true,
 	Tiles.Block.TORCH: true,
 	Tiles.Block.LANTERN: true,
+	Tiles.Block.COMPOSTER: true,
 }
 
 

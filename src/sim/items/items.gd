@@ -168,6 +168,9 @@ enum Id {
 	BAKED_POTATO,
 	DOUGH,
 	BREAD,
+	WATERING_CAN,
+	COMPOSTER,
+	COMPOST,
 }
 ## What a tool is made for (Mining.tool_for: what it breaks faster).
 enum Tool { NONE, PICKAXE, AXE, SHOVEL, SWORD, HOE }
@@ -210,6 +213,9 @@ const TOOLS := {
 }
 ## How many shots a bow lasts (Minecraft's).
 const BOW_DURABILITY := 384
+## How many tiles a full watering can waters (Watering). A can keeps the
+## water it holds in its slot's wear (Inventory.wear: 0, empty, as made).
+const CAN_WATER := 20
 ## How many times faster a tool breaks what it is made for, by tier
 ## (Minecraft's, copper between stone and iron; gold is the fastest but
 ## will be the first to wear out once tools wear).
@@ -276,6 +282,7 @@ const PLACES_BLOCK := {
 	Id.SEEDS: Tiles.Block.WHEAT_0,
 	Id.CARROT: Tiles.Block.CARROTS_0,
 	Id.POTATO: Tiles.Block.POTATOES_0,
+	Id.COMPOSTER: Tiles.Block.COMPOSTER,
 }
 
 ## What a ground gives (soil gives dirt); grounds left out give nothing.
@@ -461,7 +468,9 @@ static func name_key(item: int) -> String:
 static func max_stack(item: int) -> int:
 	if not is_valid(item):
 		return 0
-	if TOOLS.has(item) or item == Id.GUIDE_BOOK or item == Id.BOW or Armor.is_armor(item):
+	if TOOLS.has(item) or item == Id.BOW or Armor.is_armor(item):
+		return 1
+	if item == Id.GUIDE_BOOK or item == Id.WATERING_CAN:
 		return 1
 	return MAX_STACK
 
@@ -493,6 +502,14 @@ static func durability(item: int) -> int:
 	if item == Id.BOW:
 		return BOW_DURABILITY
 	return Armor.durability(item)
+
+
+## The most a slot's wear can be for an item (Inventory.wear): a tool's
+## uses short of breaking, the water a watering can holds.
+static func wear_limit(item: int) -> int:
+	if item == Id.WATERING_CAN:
+		return CAN_WATER
+	return maxi(durability(item) - 1, 0)
 
 
 ## The tools of a tier: its pickaxe, axe and shovel.
@@ -541,6 +558,9 @@ static func drops(voxel: int, tile: Vector2i, rng: RandomNumberGenerator) -> Arr
 	elif BLOCK_DROPS.has(block):
 		var drop: Array = BLOCK_DROPS[block]
 		result.append(Vector2i(drop[0], rng.randi_range(drop[1], drop[2])))
+	elif block == Tiles.Block.COMPOSTER_READY:
+		result.append(Vector2i(Id.COMPOSTER, 1))
+		result.append(Vector2i(Id.COMPOST, 1))
 	elif ObjectShapes.base_kind(block) == Tiles.Block.TORCH_BRACKET_LIT:
 		result.append(Vector2i(Id.TORCH_BRACKET, 1))
 		result.append(Vector2i(Id.TORCH, 1))

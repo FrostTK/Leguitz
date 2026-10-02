@@ -30,7 +30,8 @@ const CHEST := 27
 
 var items := PackedInt32Array()
 var counts := PackedInt32Array()
-## The wear of each slot's tool (uses; 0: new; Items.durability: broken).
+## The wear of each slot's tool (uses; 0: new; Items.durability: broken),
+## the water of a watering can (0: empty; Items.CAN_WATER: full).
 var wear := PackedInt32Array()
 ## The hotbar slot in hand.
 var selected := 0
@@ -398,7 +399,7 @@ func load_dict(data: Dictionary) -> void:
 		items[slot] = item if valid else Items.Id.NONE
 		counts[slot] = mini(count, Items.max_stack(item)) if valid else 0
 		var worn := loaded_wear[slot] if slot < loaded_wear.size() else 0
-		wear[slot] = clampi(worn, 0, maxi(Items.durability(item) - 1, 0)) if valid else 0
+		wear[slot] = clampi(worn, 0, Items.wear_limit(item)) if valid else 0
 	selected = clampi(int(data.get("selected", 0)), 0, HOTBAR - 1)
 
 

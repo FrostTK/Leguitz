@@ -433,8 +433,36 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   now and then (Items.WILD_ROOTS) a carrot or a potato. 3 wheat (shapeless) make DOUGH; the food
   furnace bakes it into BREAD and POTATO into BAKED_POTATO (Smelting.FOOD; all of them char in the
   factory furnace). Carrots and potatoes are food too: GameClient.wants_to_eat skips them while
-  BlockInteraction.sows_here (aimed at farmland). The book's Farm chapter (Fields) and Tools
-  (the hoe).
+  BlockInteraction.tends_here (aimed at farmland: sows_here; at a composter). The book's Farm
+  chapter (Fields) and Tools (the hoe).
+- Watering and care (phase 7, step 3; static, given the server): `Watering`
+  (`src/sim/world/watering.gd`): the WATERING_CAN (5 copper ingots, "C / CC / CC"; one per slot)
+  keeps its water in its slot's wear (Inventory.wear, DroppedItem.wear: 0 empty as crafted,
+  Items.CAN_WATER 20 full; `Items.wear_limit` clamps loads; ItemSlot draws a blue bar; the
+  creative catalog's comes full). Filled at water, still or flowing, or a sink (`fills_from`;
+  Msg.FILL_CAN; client: BlockInteraction._water_aimed casts the aiming ray again with water as
+  solid, `_ray_origin/_direction/_span` kept by `_aim`), it waters a tile of farmland a right
+  click (`bed_of`: aimed at a crop, the farmland under it; Msg.WATER; empty: HUD_CAN_EMPTY;
+  creative uses no water): `wet` turns it FARMLAND_WET and keeps it so WATERED_SECONDS (300, a
+  quarter of the default day, paced) in ChunkData.watered (server, saved with the region as
+  "watered"; Growth.note drops a cell that is no farmland any more; decrements are not saved on
+  their own). Growth's farmland check calls `Watering.dry_out` (the rain, Weather.is_raining,
+  rewets what is `under_sky`: ChunkData.top_row at most a row over it, so glass and roofs keep
+  it off) and passes `watered` to Farming.settle_farmland. Canals need nothing: flowing water
+  counts in Farming.wet_near. Light is Growth's (glass lets the sun through, a lantern lights a
+  cellar field: tested). `Composting` (`src/sim/world/composting.gd`): the COMPOSTER (7 planks,
+  "P P / P P / PPP"; furniture: Mining.FLOOR_OBJECTS, TOPS/FOOTPRINTS 14, axe) is a block by
+  level, LEVELS (COMPOSTER, _1.._6, COMPOSTER_FULL = FILL 7) then COMPOSTER_READY;
+  ObjectShapes.STAGE_OF maps them to COMPOSTER (`base_kind`: drops, seconds, tops, SINGLE; each
+  has a model, FarmModels.composter(level): a slatted bin, two-row gaps so they survive the
+  LODs, the waste showing). `use(block, item)`: a COMPOSTABLE item goes in (a level), a ready one
+  empties (a COMPOST comes out); Msg.COMPOST from the right click (BlockInteraction._tend, before
+  placing) or E (use_target). Growth rots a full one (`may_grow`, ROT_SECONDS 60 paced, in the
+  dark too). Broken ready, it drops its compost too (Items.drops). COMPOST spread (Msg.
+  SPREAD_COMPOST, `spread_on` through Growth.next_stage, public now) makes an unripe crop, a
+  sapling or a young tree (with room) grow a stage at once; the client predicts crops only
+  (`guess_spread`). FarmModels: the can, the composter, compost. The book's Farm chapter
+  (Watering and care).
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made

@@ -318,6 +318,14 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 			Fixtures.swing_gate(self, session, message.get("cell", Vector3i.ZERO))
 		Msg.TILL:
 			Farming.till(self, session, message)
+		Msg.FILL_CAN:
+			Watering.fill(self, session, message)
+		Msg.WATER:
+			Watering.water(self, session, message)
+		Msg.COMPOST:
+			Composting.put(self, session, message)
+		Msg.SPREAD_COMPOST:
+			Composting.spread(self, session, message)
 		Msg.SELECT_SLOT:
 			session.inventory.selected = clampi(
 				int(message.get("slot", 0)), 0, Inventory.HOTBAR - 1

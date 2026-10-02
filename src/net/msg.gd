@@ -16,6 +16,10 @@ const SAVE_REQUEST := "save_request"
 const BLOCK_BREAK := "block_break"
 const BLOCK_PLACE := "block_place"
 const TILL := "till"
+const FILL_CAN := "fill_can"
+const WATER := "water"
+const COMPOST := "compost"
+const SPREAD_COMPOST := "spread_compost"
 const SELECT_SLOT := "select_slot"
 const SLOT_CLICK := "slot_click"
 const SLOT_SPREAD := "slot_spread"
@@ -160,6 +164,30 @@ static func block_break(cell: Vector3i, slot := -1) -> Dictionary:
 ## The player tilled `cell` with the hoe in hotbar slot `slot` (Farming).
 static func till(cell: Vector3i, slot: int) -> Dictionary:
 	return {"t": TILL, "cell": cell, "slot": slot}
+
+
+## The player filled the watering can of hotbar slot `slot` at `cell`
+## (water, a sink: Watering).
+static func fill_can(cell: Vector3i, slot: int) -> Dictionary:
+	return {"t": FILL_CAN, "cell": cell, "slot": slot}
+
+
+## The player watered the farmland at `cell` with the can of hotbar slot
+## `slot` (Watering).
+static func water(cell: Vector3i, slot: int) -> Dictionary:
+	return {"t": WATER, "cell": cell, "slot": slot}
+
+
+## The player used the composter at `cell` with hotbar slot `slot` in hand
+## (Composting.put).
+static func compost(cell: Vector3i, slot: int) -> Dictionary:
+	return {"t": COMPOST, "cell": cell, "slot": slot}
+
+
+## The player spread the compost of hotbar slot `slot` on `cell`
+## (Composting.spread).
+static func spread_compost(cell: Vector3i, slot: int) -> Dictionary:
+	return {"t": SPREAD_COMPOST, "cell": cell, "slot": slot}
 
 
 ## The player placed the block of hotbar slot `slot` at `cell` (a

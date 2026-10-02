@@ -16,6 +16,8 @@ conventions de code ; ce fichier-ci raconte le projet.
 2. Tout le travail est sur la branche **`claude/2d-pixel-minecraft-game-0y9hwf`** (aucune pull
    request n'a été créée, `main` n'a pas reçu ce travail). Si la nouvelle conversation travaille
    sur une autre branche, partir de celle-ci (la fusionner dans la nouvelle branche en premier).
+   L'étape 7.3 (arrosage et soins) a été faite sur la branche `claude/serene-allen-q2ncn8`,
+   partie du même commit (« Display settings ») : la fusionner dans la branche principale.
 3. Copier-coller ce message pour démarrer :
 
    > Lis `CLAUDE.md` et `CLAUDE-README.md`, vérifie que le projet compile et que les tests
@@ -64,7 +66,7 @@ Les questions de goût ou les choix lourds de conséquences sont posés avant de
 
 ## 3. État actuel : ce qui est fait
 
-Godot **4.7.2** (GDScript), rendu Forward+. 186 tests unitaires, lint propre.
+Godot **4.7.2** (GDScript), rendu Forward+. 240 tests unitaires, lint propre.
 
 | Phase | Contenu | Commits |
 |---|---|---|
@@ -124,6 +126,7 @@ Godot **4.7.2** (GDScript), rendu Forward+. 186 tests unitaires, lint propre.
 | 7.2b Correctif : poser des blocs | On ne pouvait plus poser de blocs dans une bande de niveaux (-1 à 4 chez le propriétaire) : des **animaux « perdus »** (un sanglier…) avaient une position NaN (un pas de chemin divisé par une distance nulle quand le point suivant était pile au-dessus d'eux), et une position NaN « chevauche » toutes les cases du monde à sa hauteur ; la division est corrigée, un pas qui casserait la position la remet où elle était, et les créatures sauvegardées perdues sont écartées au chargement (3 dans le monde du propriétaire) ; c'était aussi la cause des erreurs « transform non fini » | `37d8ae3` |
 | 7.2c Ciel | Le ciel en **1re personne** (la vue de dessus ne voit jamais le ciel, seulement l'ombre des nuages au sol) : dégradé de l'horizon (la couleur de la brume) au zénith, **levers et couchers** (lueur orange vers le soleil, rose autour, bande rose à l'opposé), **soleil** (disque et halos en paliers, plus grand et plus rouge bas sur l'horizon, qui se couche vraiment sous l'horizon), **lune dans sa phase** (pleine, croissants, demi ; mers sombres ; nette au zoom C), **étoiles** qui tournent avec la nuit et scintillent, **voie lactée**, **nuages** pixel (le même bruit, la même échelle et la même dérive que leurs ombres au sol), éclairés du côté du soleil, pêche au couchant, sombres la nuit, gris sous la pluie ; coût mesuré : +0,07 ms par image en HD ; corrigé au passage : les particules (feuilles éclairées par la lanterne, lucioles) collées à l'œil en 1re personne remplissaient l'écran | `65ecad3` |
 | 7.2d Réglages d'affichage | Menu pause en trois sections (**Affichage**, **Graphismes**, **Jeu**) : **mode d'affichage** (fenêtré, plein écran sans bords à la résolution de l'écran, plein écran exclusif), **écran** (s'il y en a plusieurs), **résolution** de la fenêtre (tailles qui tiennent dans l'écran, centrée), **synchro verticale** (activée, désactivée, adaptative), **images par seconde max** (30, 60, **100**, 120, 144, 165, 240, fréquence de l'écran, illimitées), **compteur d'images**, **distance de vue en 1re personne** (4 à 12 chunks, la brume suit), **luminosité**, **taille de l'interface**, **champ de vision** (60° à 110°) et **sensibilité de la souris** en 1re personne ; un jeu ne peut pas changer la fréquence (Hz) ni la résolution de l'écran lui-même (c'est Windows) : l'écran du propriétaire est détecté à 100 Hz | « Display settings » |
+| 7.3 Arrosage et soins | **Arrosoir** en cuivre (5 lingots) : clic droit en visant l'eau (même qui coule) ou un **évier** pour le remplir (20 cases d'eau, jauge bleue sous son icône), puis clic droit sur une terre labourée (ou la culture dessus) : elle devient **humide un quart de journée** (au rythme du monde), même loin de l'eau ; vide, « L'arrosoir est vide » ; rien ne s'use en créatif. La **pluie arrose** les champs à ciel ouvert (pas sous un toit ni sous le verre), qui restent humides un moment après. Les **rigoles** d'eau qui coule irriguent comme l'eau dormante (4 cases). **Composteur** (7 planches, caisse à claire-voie) : clic droit ou E avec un déchet végétal (graines, fleurs, pousses, récoltes, pain, nourriture carbonisée…) le remplit d'un niveau, visible entre les planches ; plein (7), il se change en **compost** en une minute environ (même dans le noir), qu'on sort de la même façon ; cassé prêt, il rend aussi son compost. Le **compost** sur une culture ou une pousse la fait **grandir d'un stade** tout de suite (un arbre a toujours besoin de place). Cultures **sous serre** (le jour passe le verre) et **à la lanterne** sous terre vérifiées par les tests ; section « Arrosage et soins » du chapitre La ferme | « Watering and care » |
 
 **Pas encore fait** (prévu) : structures, agriculture, menus de départ, sons, mode Arcade,
 mobile.
@@ -267,10 +270,11 @@ captures, commit et retour :
 2. ✅ **Houe, champs, graines** (voir section 3, ligne 7.2) : labourer l'herbe ou la terre en terre labourée (humide près de
    l'eau, sinon elle sèche), graines (hautes herbes, récoltes), blé, carotte, pomme de terre en
    stades visibles, récolte, pain au four.
-3. **Arrosage et soins** (prochaine étape) : arrosoir (rempli à l'eau), la pluie arrose, irrigation par canaux
+3. ✅ **Arrosage et soins** (voir section 3, ligne 7.3) : arrosoir (rempli à l'eau), la pluie arrose, irrigation par canaux
    (l'eau qui coule), composteur et compost (un stade de plus), lumière nécessaire (serres,
-   fermes souterraines à la lanterne).
-4. **Plus de cultures** : betterave, maïs, tomate, fraise, chou, citrouille et pastèque (le
+   fermes souterraines à la lanterne). Pas fait (à proposer) : des arrosoirs améliorés (fer :
+   3 cases d'un coup, plus d'eau).
+4. **Plus de cultures** (prochaine étape) : betterave, maïs, tomate, fraise, chou, citrouille et pastèque (le
    fruit pousse à côté de la tige), riz (dans l'eau peu profonde), canne à sucre (au bord de
    l'eau), lin ou coton (ficelle, tissu), vigne sur treillis ; arbres fruitiers (pommier,
    cerisier, oranger).

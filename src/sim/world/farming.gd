@@ -4,7 +4,8 @@ extends RefCounted
 ## them). A hoe tills grass or dirt into farmland (`till`: the small plant
 ## over it goes); farmland is wet with water within MOIST_REACH tiles (on
 ## its row or the one above), else dry, and left dry with nothing sown it
-## goes back to dirt after a while (FALLOW_SECONDS). Wheat seeds, carrots
+## goes back to dirt after a while (FALLOW_SECONDS); watered (a can, the
+## rain: Watering), it stays wet for a while too. Wheat seeds, carrots
 ## and potatoes are sown on farmland and grow a stage at a time (STAGES;
 ## on average after STAGE_SECONDS on wet farmland, DRY_SLOWER times longer
 ## on dry), in the light (Growth.LIGHT). A ripe crop gives its harvest and
@@ -148,11 +149,14 @@ static func wet_near(world: WorldState, cell: Vector3i) -> bool:
 	return false
 
 
-## Farmland settles (Growth, every check): wet or dry by the water near;
-## dry with nothing sown, it may go back to dirt (`odds` this time).
-static func settle_farmland(server: GameServer, cell: Vector3i, voxel: int, odds: float) -> void:
+## Farmland settles (Growth, every check): wet or dry by the water near
+## (or `watered`: by a can, the rain); dry with nothing sown, it may go back
+## to dirt (`odds` this time).
+static func settle_farmland(
+	server: GameServer, cell: Vector3i, voxel: int, odds: float, watered := false
+) -> void:
 	var world := server.world
-	var wet := wet_near(world, cell)
+	var wet := watered or wet_near(world, cell)
 	var above := Voxels.block_of(world.loaded_voxel_at(cell + Vector3i.UP))
 	if not wet and not is_crop(above) and server.rng.randf() < odds:
 		server.change_voxel(cell, Voxels.of_ground(Tiles.Ground.DIRT))

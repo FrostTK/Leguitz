@@ -493,6 +493,17 @@ BOOK_FARM_TILL,"A hoe tills grass or dirt into farmland (right click; the tall g
 BOOK_FARM_SOW,"Sow on farmland (right click): wheat seeds come from tall grass, now and then a wild carrot or potato too. Crops grow in four stages in the light, faster on wet farmland.","Sème sur la terre labourée (clic droit) : les graines de blé viennent des hautes herbes, avec de temps en temps une carotte ou une pomme de terre sauvage. Les cultures poussent en quatre stades à la lumière, plus vite sur une terre humide."
 BOOK_FARM_HARVEST,"Ripe (golden wheat, orange carrot tops, flowering potatoes), a crop gives its harvest: wheat and seeds, 2 to 4 carrots or potatoes. Broken too soon, only its seed back.","Mûre (blé doré, collet orange des carottes, pommes de terre en fleur), une culture donne sa récolte : du blé et des graines, 2 à 4 carottes ou pommes de terre. Cassée trop tôt, elle ne rend que sa graine."
 BOOK_FARM_BREAD,"Three wheat make dough (crafting grid); the food furnace bakes it into bread, and potatoes into baked potatoes.","Trois blés font une pâte à pain (grille de fabrication) ; le four alimentaire la cuit en pain, et les pommes de terre en pommes de terre cuites."
+ITEM_WATERING_CAN,Watering can,Arrosoir
+ITEM_COMPOSTER,Composter,Composteur
+ITEM_COMPOST,Compost,Compost
+HUD_CAN_EMPTY,The watering can is empty: fill it at water.,L'arrosoir est vide : remplis-le à l'eau.
+BOOK_FARM_CARE,Watering and care,Arrosage et soins
+BOOK_FARM_CAN,"A watering can (5 copper ingots) is filled at water or a sink (right click): 20 tiles of farmland to water, one per right click. Watered farmland stays wet a quarter of a day, far from any water.","Un arrosoir (5 lingots de cuivre) se remplit à l'eau ou à un évier (clic droit) : 20 cases de terre labourée à arroser, une par clic droit. Une terre arrosée reste humide un quart de journée, même loin de l'eau."
+BOOK_FARM_RAIN,"The rain waters the fields under the open sky (not under a roof, nor under glass); they stay wet a while after it.","La pluie arrose les champs à ciel ouvert (pas sous un toit, ni sous le verre) ; ils restent humides un moment après."
+BOOK_FARM_CANAL,"Dig a ditch from a pond or a river: the water flows along it (four steps over flat ground) and wets every field within 4 steps.","Creuse une rigole depuis une mare ou une rivière : l'eau coule le long (quatre pas sur le plat) et mouille tous les champs à moins de 4 pas."
+BOOK_FARM_COMPOSTER,"Put plant waste in a composter (7 planks), right click or {use}: seeds, flowers, saplings, crops, bread, charred food... Seven pieces fill it; it then rots into compost, taken out the same way.","Mets des déchets végétaux dans un composteur (7 planches), clic droit ou {use} : graines, fleurs, pousses, récoltes, pain, nourriture carbonisée… Sept déchets le remplissent ; il se change alors en compost, que l'on sort de la même façon."
+BOOK_FARM_COMPOST,"Compost spread on a crop or a sapling (right click) makes it grow a stage at once, day or night.","Le compost répandu sur une culture ou une pousse (clic droit) la fait grandir d'un stade tout de suite, de jour comme de nuit."
+BOOK_FARM_LIGHT,"Crops need light: daylight goes through glass (greenhouses), and a lantern or torches light a field underground.","Les cultures ont besoin de lumière : le jour passe à travers le verre (serres), et une lanterne ou des torches éclairent un champ sous terre."
 MENU_DISPLAY_SETTINGS,Display,Affichage
 MENU_GRAPHICS_SETTINGS,Graphics,Graphismes
 SETTING_WINDOW_MODE,Display mode,Mode d'affichage
