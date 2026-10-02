@@ -18,7 +18,8 @@ static func landed(server: GameServer, session: GameServer.PlayerSession, fell: 
 
 
 ## A player loses vitality (not in creative mode, not right after another
-## hurt); at 0 they pass out.
+## hurt; monsters' blows through their armor, Vitals.ARMORED); at 0 they
+## pass out.
 static func hurt(
 	server: GameServer, session: GameServer.PlayerSession, points: int, cause: int
 ) -> void:
@@ -29,7 +30,19 @@ static func hurt(
 		or server.settings.game_mode == WorldSettings.GameMode.CREATIVE
 	):
 		return
-	session.health = maxi(session.health - points, 0)
+	var lost := points
+	if Vitals.ARMORED.has(cause) and Armor.defense(session.inventory) > 0:
+		# Armor takes part of the blow (what is left over carries to the
+		# next) and wears.
+		var taken := Armor.reduce(points, Armor.defense(session.inventory)) + session.hurt_carry
+		lost = floori(taken)
+		session.hurt_carry = taken - lost
+		Armor.wear_out(session.inventory)
+		session.transport.send(Msg.inventory(session.inventory))
+		if lost <= 0:
+			session.immune = Vitals.HURT_IMMUNITY
+			return
+	session.health = maxi(session.health - lost, 0)
 	session.immune = Vitals.HURT_IMMUNITY
 	session.since_hurt = 0.0
 	_tell(session, true, cause)
@@ -47,7 +60,7 @@ static func _pass_out(server: GameServer, session: GameServer.PlayerSession, cau
 	for left in bag.put_back_all():
 		server.throw_item(session, left.x, left.y, left.z)
 	var middle := GameServer.body_middle(session)
-	for slot in Inventory.SLOTS:
+	for slot in range(Inventory.SLOTS) + range(Inventory.ARMOR, Inventory.SIZE):
 		if bag.items[slot] != Items.Id.NONE:
 			var speed := Vector3(
 				server.rng.randf_range(-2.0, 2.0), 3.0, server.rng.randf_range(-2.0, 2.0)

@@ -20,6 +20,8 @@ extends Node
 const CHIP_INTERVAL := 0.16
 ## Gamepad: the player aims ahead and this much down (radians).
 const PAD_AIM_PITCH := 0.6
+## How far (local units) the mouse's ray looks for what a bow aims at.
+const AIM_FAR := 96.0
 
 var client: GameClient
 ## What is aimed at (null: nothing within reach).
@@ -315,6 +317,29 @@ func _face(point: Vector3) -> void:
 	var towards := Vector2(point.x, point.z) * GameConst.TILE_SIZE - player.position
 	if towards.length() > 2.0:
 		player.heading = towards.normalized()
+
+
+## Where the mouse points in the world (local units), far beyond reach (a
+## bow aims there): the creature or the block its ray meets first, else the
+## level of the player's feet; Vector3.INF if none.
+func aim_point() -> Vector3:
+	var root_inverse := client.world_root.global_transform.affine_inverse()
+	var pixel := _viewport_pixel()
+	var camera := client.world_viewport.camera
+	var origin := root_inverse * camera.project_ray_origin(pixel)
+	var direction := (root_inverse.basis * camera.project_ray_normal(pixel)).normalized()
+	var hit := VoxelRay.cast(origin, direction, AIM_FAR, client.world.voxel_at)
+	var far := AIM_FAR if hit == null else (hit.point - origin).dot(direction)
+	var creature := client.creatures.pick(origin, direction, far)
+	if creature.x >= 0.0:
+		return client.creatures.bounds_of(int(creature.x)).get_center()
+	if hit != null:
+		return hit.point
+	var height := client.local_player.height
+	if absf(direction.y) < 0.001:
+		return Vector3.INF
+	var along := (height - origin.y) / direction.y
+	return origin + direction * along if along > 0.0 else Vector3.INF
 
 
 ## What the player aims at: a ray in local units, kept within reach; an

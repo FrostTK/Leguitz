@@ -106,9 +106,38 @@ enum Id {
 	MOTH_DUST,
 	SHADE_ESSENCE,
 	WISP_EMBER,
+	WOODEN_SWORD,
+	STONE_SWORD,
+	COPPER_SWORD,
+	IRON_SWORD,
+	GOLDEN_SWORD,
+	DIAMOND_SWORD,
+	BOW,
+	ARROW,
+	STRING,
+	HIDE_HELMET,
+	HIDE_CHESTPLATE,
+	HIDE_LEGGINGS,
+	HIDE_BOOTS,
+	COPPER_HELMET,
+	COPPER_CHESTPLATE,
+	COPPER_LEGGINGS,
+	COPPER_BOOTS,
+	IRON_HELMET,
+	IRON_CHESTPLATE,
+	IRON_LEGGINGS,
+	IRON_BOOTS,
+	GOLDEN_HELMET,
+	GOLDEN_CHESTPLATE,
+	GOLDEN_LEGGINGS,
+	GOLDEN_BOOTS,
+	DIAMOND_HELMET,
+	DIAMOND_CHESTPLATE,
+	DIAMOND_LEGGINGS,
+	DIAMOND_BOOTS,
 }
 ## What a tool is made for (Mining.tool_for: what it breaks faster).
-enum Tool { NONE, PICKAXE, AXE, SHOVEL }
+enum Tool { NONE, PICKAXE, AXE, SHOVEL, SWORD }
 ## What a tool is made of.
 enum Tier { WOOD, STONE, COPPER, IRON, GOLD, DIAMOND }
 
@@ -133,7 +162,15 @@ const TOOLS := {
 	Id.DIAMOND_PICKAXE: [Tool.PICKAXE, Tier.DIAMOND],
 	Id.DIAMOND_AXE: [Tool.AXE, Tier.DIAMOND],
 	Id.DIAMOND_SHOVEL: [Tool.SHOVEL, Tier.DIAMOND],
+	Id.WOODEN_SWORD: [Tool.SWORD, Tier.WOOD],
+	Id.STONE_SWORD: [Tool.SWORD, Tier.STONE],
+	Id.COPPER_SWORD: [Tool.SWORD, Tier.COPPER],
+	Id.IRON_SWORD: [Tool.SWORD, Tier.IRON],
+	Id.GOLDEN_SWORD: [Tool.SWORD, Tier.GOLD],
+	Id.DIAMOND_SWORD: [Tool.SWORD, Tier.DIAMOND],
 }
+## How many shots a bow lasts (Minecraft's).
+const BOW_DURABILITY := 384
 ## How many times faster a tool breaks what it is made for, by tier
 ## (Minecraft's, copper between stone and iron; gold is the fastest but
 ## will be the first to wear out once tools wear).
@@ -330,7 +367,9 @@ static func name_key(item: int) -> String:
 static func max_stack(item: int) -> int:
 	if not is_valid(item):
 		return 0
-	return 1 if TOOLS.has(item) or item == Id.GUIDE_BOOK else MAX_STACK
+	if TOOLS.has(item) or item == Id.GUIDE_BOOK or item == Id.BOW or Armor.is_armor(item):
+		return 1
+	return MAX_STACK
 
 
 static func is_food(item: int) -> bool:
@@ -352,9 +391,14 @@ static func tool_speed(item: int) -> float:
 	return TIER_SPEED[TOOLS[item][1]] if TOOLS.has(item) else 1.0
 
 
-## How many uses a tool lasts (0: it does not wear).
+## How many uses a tool, a bow or a piece of armor lasts (0: it does not
+## wear).
 static func durability(item: int) -> int:
-	return TIER_DURABILITY[TOOLS[item][1]] if TOOLS.has(item) else 0
+	if TOOLS.has(item):
+		return TIER_DURABILITY[TOOLS[item][1]]
+	if item == Id.BOW:
+		return BOW_DURABILITY
+	return Armor.durability(item)
 
 
 ## The tools of a tier: its pickaxe, axe and shovel.

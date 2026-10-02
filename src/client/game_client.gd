@@ -46,6 +46,10 @@ const HELD_SIZE := 0.28
 const FIRST_PERSON_HELD_SIZE := 0.16
 const FIRST_PERSON_HELD_AT := Vector3(0.36, -0.3, -0.62)
 const FIRST_PERSON_HELD_TURN := Vector3(-0.15, 0.7, 0.0)
+## Where a bow comes to as it is drawn (first person): its middle there,
+## turned upright (its string on the right, leaning a little).
+const FIRST_PERSON_DRAW_AT := Vector3(0.1, -0.1, -0.5)
+const FIRST_PERSON_DRAW_TURN := Vector3(0.0, -0.3, PI * 0.25 + 0.2)
 ## Where food goes while it is eaten (in front of the mouth).
 const FIRST_PERSON_EAT_AT := Vector3(0.14, -0.3, -0.52)
 ## A food furnace breaking is told to players within this many tiles.
@@ -112,8 +116,10 @@ var book_in_hand := false
 ## What the player does in the inventory screen and with what it opens.
 var actions := InventoryActions.new()
 var dropped_items := DroppedItemsView.new()
-## The animals and monsters around.
+## The animals and monsters around, the arrows in flight, and the bow.
 var creatures := CreaturesView.new()
+var arrows := ArrowsView.new()
+var archer := Archer.new()
 var item_icons := ItemIcons.new()
 ## What is in hand in first person (a child of the camera).
 var first_person_held := MeshInstance3D.new()
@@ -165,6 +171,8 @@ func _ready() -> void:
 	add_child(vitals)
 	modes.client = self
 	add_child(modes)
+	archer.client = self
+	add_child(archer)
 	item_icons.library = items
 	add_child(item_icons)
 	hotbar.inventory = inventory
@@ -180,6 +188,9 @@ func _ready() -> void:
 	dropped_items.local_player = local_player
 	world_root.add_child(dropped_items)
 	world_root.add_child(creatures)
+	arrows.library = items
+	arrows.client_world = world
+	world_root.add_child(arrows)
 	creatures.burst.connect(func(at: Vector3, color: Color) -> void: interaction.burst(at, color))
 	first_person_held.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	world_viewport.camera.add_child(first_person_held)
@@ -198,6 +209,7 @@ func _ready() -> void:
 	_ui_root.add_child(save_notice)
 	_ui_root.add_child(vitals.veil)
 	_ui_root.add_child(modes.banner)
+	_ui_root.add_child(archer.meter)
 	_ui_root.add_child(hotbar)
 	_ui_root.add_child(vitals.screen)
 	_ui_root.add_child(debug_overlay)
@@ -311,6 +323,7 @@ func _process(delta: float) -> void:
 		local_player.step(delta)
 		_update_view(delta)
 		_update_held()
+		player_model.set_armor(_worn())
 	hotbar.book_shown = Settings.guide_book
 	hotbar.book_selected = book_in_hand
 	inventory_screen.book_shown = Settings.guide_book
@@ -621,13 +634,24 @@ func _handle_item_input(event: InputEvent) -> bool:
 ## The player holds the right button (or the left trigger) with food in
 ## hand, free to act: they eat (VitalsView).
 func wants_to_eat() -> bool:
+	return Items.is_food(held_item()) and wants_to_use()
+
+
+## The player holds the right button (or the left trigger), free to act,
+## not turning the camera: eating, drawing a bow.
+func wants_to_use() -> bool:
 	if not local_player.controls_enabled or vitals.passed_out or get_tree().paused:
 		return false
-	if not Items.is_food(held_item()):
+	if modes.watching:
 		return false
 	if Input.is_action_pressed(InputBindings.PLACE):
 		return true
 	return Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT) and not _dragging
+
+
+## A right or middle drag is turning the camera.
+func dragging() -> bool:
+	return _dragging
 
 
 ## What is in hand: the player's book or the selected hotbar slot's item.
@@ -669,6 +693,14 @@ func _on_book_requested() -> void:
 
 func _on_book_closed() -> void:
 	local_player.controls_enabled = true
+
+
+## The armor worn (its four slots, Armor.Piece order).
+func _worn() -> Array[int]:
+	var worn: Array[int] = []
+	for piece in Armor.PIECES:
+		worn.append(inventory.items[Inventory.ARMOR + piece])
+	return worn
 
 
 ## A tool in hand just broke (worn out): said over the hotbar.
@@ -725,9 +757,16 @@ func _update_held() -> void:
 			# Up to the mouth, munching.
 			var munch := sin(vitals.eat_time * 18.0) * 0.015
 			at = FIRST_PERSON_EAT_AT + Vector3(0.0, munch, 0.0)
-		first_person_held.position = at
-		first_person_held.rotation = FIRST_PERSON_HELD_TURN + Vector3(-0.6, 0.0, 0.0) * dip
-		first_person_held.scale = Vector3.ONE * FIRST_PERSON_HELD_SIZE * items.fit(held)
+		var turn := FIRST_PERSON_HELD_TURN + Vector3(-0.6, 0.0, 0.0) * dip
+		var size := FIRST_PERSON_HELD_SIZE * items.fit(held)
+		# A bow drawn comes up to the middle of the view.
+		var drawn := smoothstep(0.0, 1.0, archer.power())
+		at = at.lerp(FIRST_PERSON_DRAW_AT, drawn)
+		turn = turn.lerp(FIRST_PERSON_DRAW_TURN, drawn)
+		first_person_held.rotation = turn
+		first_person_held.scale = Vector3.ONE * size
+		var middle := Basis.from_euler(turn) * model.get_aabb().get_center() * size
+		first_person_held.position = at - middle * drawn
 
 
 ## First person: the hand's basis for a tool (its z along the handle, its
@@ -868,6 +907,10 @@ func _handle_message(message: Dictionary) -> void:
 			creatures.remove(message["id"], message["died"])
 		Msg.PUSH:
 			local_player.push(message["speed"], message["hop"])
+		Msg.ARROW_SPAWN:
+			arrows.spawn(message["id"], message["from"], message["velocity"])
+		Msg.ARROW_REMOVE:
+			arrows.remove(message["id"])
 		Msg.LANTERN_OUT:
 			lighting.lantern_out(message["seconds"])
 		var unknown:

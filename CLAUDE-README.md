@@ -21,7 +21,7 @@ conventions de code ; ce fichier-ci raconte le projet.
    > Lis `CLAUDE.md` et `CLAUDE-README.md`, vérifie que le projet compile et que les tests
    > passent, puis résume-moi où on en est. Attends mon « go » avant de commencer la suite.
 
-4. Dire **« go »** : Claude reprend à la **section 5** (phase 5). Les phases suivantes se lancent
+4. Dire **« go »** : Claude reprend à la **section 5** (phase 6). Les phases suivantes se lancent
    de la même façon, une par une, chacune avec son « go ».
 
 **Manière de travailler convenue** : phase par phase ; Claude explique son plan, attend le
@@ -109,10 +109,11 @@ Godot **4.7.2** (GDScript), rendu Forward+. 186 tests unitaires, lint propre.
 | 5.4 Modes de jeu | **Créatif** : on **vole** (Saut deux fois vite ; Saut monte, Maj descend, toucher le sol fait atterrir ; 2,5 fois plus vite que la marche), les blocs posés ne s'épuisent pas, **tout se casse d'un coup** sans rien donner (une courte pause entre deux), les outils ne s'usent pas, ni dégâts ni faim (pas de jauges), un **catalogue** de tous les objets dans l'inventaire (Tab ; à la place de la grille 3×3 : blocs, puis objets posés, matériaux, nourriture, outils ; clic : une pile, clic droit : un objet, Maj + clic : une pile dans le sac, cliquer avec autre chose en main le jette ; molette ou barre pour défiler), et les **outils de debug** (carte, Page ↑/↓, F4, F6, F7) réservés à ce mode (refusés par le serveur ailleurs) ; **Survie** inchangée ; **Hardcore** : une seule vie, perdre connaissance met fin à l'aventure (« Ton aventure s'achève… », bouton « Regarder le monde ») et l'on ne fait plus que **regarder le monde en spectateur** (fantôme invisible qui vole à travers tout, sans barre ni jauges, une ligne en bas de l'écran ; sauvegardé : on revient spectateur) ; choix du mode à la création (`--game-mode`) et dans le **menu pause** (« Mode de jeu » : Survie ⇄ Créatif, un monde Hardcore le reste) ; chapitre « Modes de jeu » du livre (les touches de debug y passent), onglets du livre ajustés à leur nom | `67be9e4` |
 | 5.5 Premiers animaux | Quatre espèces en voxel animé, à notre façon : **mouton** (toison crème bouclée, tête sombre ; plaines, prairies, bosquets), **sanglier** (sombre, crinière, défenses ; forêts, forêts sombres, marais), **poule sauvage** (coq de jungle roux, queue vert sombre, crête ; plaines, savanes, jungles) et **cerf** (fauve, croupe blanche, les mâles portent des bois ; forêts, bois de bouleaux, taïgas, prairies). **Gérés par le serveur** et synchronisés (`Msg.ENTITY_*`) : chaque chunk reçoit son troupeau (ou rien) la première fois qu'il est chargé, le même pour une graine, jamais dans un chunk où l'on a construit ; ils vivent à moins de 3 chunks d'un joueur (la moitié à chaque tick) et sont **sauvegardés** (`creatures.cfg`). Ils broutent (la tête baissée), se promènent par des **chemins** (A* : un niveau à la fois en montant, trois au plus en descendant, jamais dans l'eau ni la lave), nagent s'ils y tombent. **On les frappe** au clic gauche (une hache frappe le plus fort, une main 1) : ils rougissent, sont repoussés, **s'enfuient avec leur troupeau** ; morts, ils basculent, s'effacent en touffes et laissent **laine, viandes, plumes, peaux**. Viandes à **rôtir au four alimentaire** (gigot, rôti de sanglier, poulet rôti, steak de cerf ; le poulet cru rend malade), **bloc de laine** pour construire ; chapitre « Animaux » du livre, l'animal visé à l'écran F3, `--animals=sheep:3,...` pour en amener autour du joueur | `4e68d2a` |
 | 5.5b Pluie | La pluie (et la neige) **ne traverse plus les blocs** : chaque goutte s'arrête sur le premier obstacle vu du ciel (toit, feuillage), grâce à un relevé de hauteur des alentours redessiné quand on se déplace ou que des blocs changent ; gouttes **plus fines** en 1re personne et en rendu HD (vue de dessus normale : un pixel d'art) ; coût non mesurable | `708ce82` |
-| 5.6 Monstres | Quatre monstres à nous, en voxel animé : la **Phalène-lanterne** (grandes ailes pâles aux ocelles lumineux ; dehors la nuit, elle tourne autour du joueur et fonce sur lui : son coup **éteint la lanterne** 8 s), le **Rôdeur d'ombre** (silhouette voûtée aux yeux pâles ; dehors la nuit et dans les grottes, il approche dans le noir, **se fige et pâlit à la lumière** — lave, four allumé, jour — et fond au jour), le **Faux-rocher** (rocher moussu des grottes, **endormi** jusqu'à ce qu'on passe près de lui ou qu'on le frappe : il bondit sur six pattes, yeux ambrés et gueule dentée, et se rendort seul) et le **Feu follet** (orbe vert qui éclaire autour de lui ; au-dessus des marais la nuit, il **recule pour attirer** puis fonce brûler). Ils sortent autour des joueurs qu'ils peuvent chasser (jamais en créatif ni pour un spectateur), un à la fois, à 16-32 cases, là où il fait noir (lumière calculée par le serveur : ciel ouvert le jour, lave et feux à 4 cases), 6 au plus autour d'un joueur ; ils partent au loin (64 cases) ou fondent au jour à découvert ; jamais sauvegardés. Leurs coups font perdre de la vitalité (causes à eux : « Ce rocher n'en était pas un. »…) et **repoussent le joueur** ; on les frappe comme les animaux ; ils laissent poudre de phalène, essence d'ombre, pierres et fer, ou une **braise de follet**, combustible qui brûle 200 s. Base commune `Creature` (animaux et monstres), chapitre « Monstres » du livre | « Monsters » |
+| 5.6 Monstres | Quatre monstres à nous, en voxel animé : la **Phalène-lanterne** (grandes ailes pâles aux ocelles lumineux ; dehors la nuit, elle tourne autour du joueur et fonce sur lui : son coup **éteint la lanterne** 8 s), le **Rôdeur d'ombre** (silhouette voûtée aux yeux pâles ; dehors la nuit et dans les grottes, il approche dans le noir, **se fige et pâlit à la lumière** — lave, four allumé, jour — et fond au jour), le **Faux-rocher** (rocher moussu des grottes, **endormi** jusqu'à ce qu'on passe près de lui ou qu'on le frappe : il bondit sur six pattes, yeux ambrés et gueule dentée, et se rendort seul) et le **Feu follet** (orbe vert qui éclaire autour de lui ; au-dessus des marais la nuit, il **recule pour attirer** puis fonce brûler). Ils sortent autour des joueurs qu'ils peuvent chasser (jamais en créatif ni pour un spectateur), un à la fois, à 16-32 cases, là où il fait noir (lumière calculée par le serveur : ciel ouvert le jour, lave et feux à 4 cases), 6 au plus autour d'un joueur ; ils partent au loin (64 cases) ou fondent au jour à découvert ; jamais sauvegardés. Leurs coups font perdre de la vitalité (causes à eux : « Ce rocher n'en était pas un. »…) et **repoussent le joueur** ; on les frappe comme les animaux ; ils laissent poudre de phalène, essence d'ombre, pierres et fer, ou une **braise de follet**, combustible qui brûle 200 s. Base commune `Creature` (animaux et monstres), chapitre « Monstres » du livre | `8bebacb` |
+| 5.7 Combat et armures | **Épées** des 6 matériaux à l'établi (bois 4 points par coup, pierre 5, cuivre 5, fer 6, or 4, diamant 7 ; la hache frappe presque aussi fort) ; chaque coup **repousse** ce qu'il touche, qui reste **invulnérable un instant** ; **arc et flèches** (ficelle filée de la laine, flèche : pointe de pierre, bâton, plume ; arc à l'établi) : **maintenir le clic droit** (gâchette gauche) bande l'arc, une jauge au-dessus de la tête se remplit, les bras se lèvent et l'arc vient en travers de la poitrine ; relâcher tire : plus l'arc est bandé, plus la flèche va loin et frappe fort ; elle suit une **trajectoire en cloche** qui retombe là où pointe la souris (au centre d'une créature visée), le long du viseur en 1re personne (l'arc s'y redresse) ; la flèche est gérée par le serveur (même vol partout), blesse la créature traversée ou **se plante** là où elle tombe (à ramasser) ; une flèche par tir, l'arc s'use (rien en créatif) ; **armures** casque, plastron, jambières, bottes en **peau**, cuivre, fer, or et diamant, à l'établi (formes de Minecraft) : portées en voxel sur le corps (coques autour de la tête, du torse et des épaules, des jambes, des pieds), **quatre cases d'armure** sous le titre de l'inventaire (silhouette de la pièce quand la case est vide, Maj + clic pour enfiler) avec un bouclier qui compte les points ; chaque point retire 4 % des coups des **monstres** (80 % au plus ; ni chutes, ni lave, ni noyade, ni faim), chaque coup reçu use toutes les pièces, perdues en perdant connaissance ; jauge d'acier au-dessus de la vitalité ; icônes d'armure en silhouettes plates ; chapitre « Combat » du livre, dont les **onglets passent sur le bord droit** (onze chapitres ne tenaient plus en haut) | « Combat and armor » |
 
-**Pas encore fait** (prévu) : survie/combat, créatures, structures, agriculture, menus de départ, sons,
-mode Arcade, mobile.
+**Pas encore fait** (prévu) : structures, agriculture, menus de départ, sons, mode Arcade,
+mobile.
 
 ---
 
@@ -129,6 +130,7 @@ mode Arcade, mobile.
 | Créatures | `src/sim/creatures/` (`species.gd` espèces, `creature.gd` base commune, `animal.gd` et `monster.gd` comportements, `monsters.gd` apparition, chasse et coups des monstres, `light.gd` lumière côté serveur, `pathfinder.gd` chemins, `creatures.gd` troupeaux, vie près des joueurs, synchronisation, coups des joueurs ; `combat.gd` dégâts), `src/client/creatures/` (`creatures_view.gd`, `creature_body.gd` animations), `src/client/models/creature_models.gd` et `monster_models.gd` (modèles en pièces) |
 | Objets | `src/sim/items/` (`items.gd` registre, ce que donne chaque bloc, outils et leurs vitesses, `recipes.gd` recettes, `inventory.gd`, `dropped_item.gd`), `src/client/items/` (modèles, icônes rendues hors écran, objets au sol), `src/ui/hotbar.gd`, `inventory_screen.gd`, `item_slot.gd` |
 | Physique | `src/sim/physics/player_body.gd` (marche, saut, chute, plafonds, parmi les voxels), `tile_collider.gd` (déplacement parmi des boîtes d'obstacles : case entière, tronc, rocher) ; `src/sim/world/object_shapes.gd` (versions des objets, troncs, emprise au sol : partagé avec les modèles) |
+| Combat | `src/sim/creatures/combat.gd` (coups, dégâts des outils et des épées), `src/sim/combat/archery.gd` (tirs et vol des flèches côté serveur), `src/sim/items/armor.gd` (pièces, points de protection, usure, cases d'armure), `src/client/combat/` (`archer.gd` bander et tirer, `arrows_view.gd` les flèches en vol), `src/client/models/armor_models.gd` (armures portées et icônes) |
 | Messages | `src/net/msg.gd` (tous les échanges client ⇄ serveur) |
 | Client | `src/client/game_client.gd` (assemble la scène 3D, entrées, caméra), `local_player.gd` (marche, vol), `modes/game_mode_view.gd` (mode de jeu, spectateur, touches de debug), `survival/vitals_view.gd` |
 | Rendu 3D | `src/client/render/` : `world_viewport.gd` (SubViewport pixel parfait, caméra orbitale), `render_3d.gd` (repères, étirement de la racine du monde), `chunk_mesher.gd` (maillage des voxels sur les fils de travail, carte de surface du shader), `chunk_view_3d.gd` (terrain, grottes, objets 3D, lave d'un chunk) / `world_view_3d.gd` (tâches de maillage, coupe sous terre, niveaux de détail), `player_model.gd`, `prop_library.gd` |
@@ -234,52 +236,33 @@ xvfb-run -a -s "-screen 0 960x540x24" godot --path . --audio-driver Dummy --reso
 
 ---
 
-## 5. Prochaine étape au « go » : Phase 5 — Survie et combat
+## 5. Prochaine étape au « go » : Phase 6 — Souterrain et structures
 
-La phase 4 (craft) est terminée : voir les lignes 4.1 à 4.6 de la section 3 (recettes et grille
-3×3, établi 5×5 aux outils de Minecraft, usure, coffres, four alimentaire et four d'usine avec les
-premiers aliments, blocs de construction dont le verre transparent ; noms au survol, cadre de visée
-fin en 1re personne, monter sur les meubles, glissés au clic droit et gauche). Les aliments
-existent mais ne se mangent pas encore.
+La phase 5 (survie et combat) est terminée : voir les lignes 5.1 à 5.7 de la section 3
+(vitalité, faim, nage, modes de jeu, animaux, monstres originaux, combat et armures ; tout ce
+style-là est à nous, pas celui de Minecraft).
 
-But de la phase 5 : survivre et se battre, avec les modes de jeu (section 6). Découpage proposé,
-**à valider avec le propriétaire avant de commencer**, une étape par « go », chacune avec tests,
-captures, commit et retour :
+But de la phase 6 : rendre le souterrain vivant et semer le monde de lieux à explorer.
+Découpage proposé, **à valider avec le propriétaire avant de commencer**, une étape par « go »,
+chacune avec tests, captures, commit et retour :
 
-Il ne faut pas s'inspirer du style de Minecraft
-
-1. ✅ **Vie et dégâts** (voir section 3) : jauge de vitalité à nous (pas de cœurs), 20 points ; recul
-   quand on est touché : avec les premiers coups (monstres, étape 6). Le plan suivi : 10 cœurs côté serveur (sauvegardés), affichés au-dessus de la barre ;
-   dégâts de chute (au-delà de 3 niveaux sauf si le joueur atteris dans l'eau), de la lave ; rougeur et recul quand on est touché ;
-   mort (écran « Vous êtes mort », le contenu de l'inventaire tombe au sol) et réapparition au
-   point d'apparition.
-2. ✅ **Faim et nourriture** (voir section 3), comme prévu, avec une jauge ambrée à nous et le
-   champignon rouge cru qui rend malade. Le plan suivi : barre de faim qui baisse avec le temps et l'effort (rythme du monde,
-   `WorldClock.scale_duration()`), manger en maintenant le clic droit (baies, baies déshydratées,
-   ragoût, champignons ; la nourriture carbonisée nourrit mal), la vie remonte rassasié, baisse
-   affamé.
-3. ✅ **Nage et noyade** (voir section 3), comme prévu, avec la sortie d'eau en bondissant
-   contre une berge. Le plan suivi : on nage dans l'eau au lieu de marcher dessus (monter, descendre, plus
-   lent), réserve d'air sous l'eau, noyade.
-4. ✅ **Modes de jeu** (voir section 3), comme prévu, avec un catalogue de tous les objets en
-   créatif et le spectateur du hardcore. Le plan suivi : Créatif (vol, blocs illimités, ni dégâts
-   ni faim, F7 et les outils de debug), Survie, Hardcore (une seule vie) ; choix à la création du
-   monde (en attendant les menus de départ : réglage du monde et option de lancement).
-5. ✅ **Premiers animaux** (voir section 3) : moutons, sangliers (à la place des cochons, plus
-   sauvages), poules sauvages et cerfs. Le plan suivi : en voxel animé selon les biomes, entités
-   gérées par le serveur et synchronisées (messages d'entités), errance, fuite quand on les
-   frappe, recherche de chemin sur les hauteurs (sauts d'un niveau), ce qu'ils donnent.
-6. ✅ **Monstres** (voir section 3) : la Phalène-lanterne, le Rôdeur d'ombre, le Faux-rocher et
-   le Feu follet, proposés puis lancés au « go ». Le plan suivi : apparition la nuit et dans le
-   noir (selon la lumière), poursuite, attaque, disparition au loin, il faut être original pour
-   le choix des monstres dans le jeu ; le recul du joueur touché vient avec eux.
-7. **Combat et armures** (prochaine étape) : épées (6 matériaux, à l'établi), coups au corps à corps avec recul et
-   courte invincibilité, arc et flèches, armures (casque, plastron, jambières, bottes) en voxel,
-   qui réduisent les dégâts et s'usent
+1. **Torches et lumières posées** : torche (bâton + charbon ou charbon de bois) posée au sol ou
+   contre un mur, lanterne posable ; elles éclairent (lumières du rendu) et tiennent les monstres
+   à distance (`Light`).
+2. **Lumière des grottes** : un niveau de lumière calculé par le serveur (ciel qui descend par les
+   ouvertures, lumières posées, lave), des grottes vraiment noires sans lumière, les monstres
+   qui sortent selon ce niveau.
+3. **Coulées d'eau et de lave simples** : l'eau et la lave s'écoulent quand on ouvre une poche
+   (sources, descente, étalement limité), lave + eau = pierre.
+4. **Profondeurs** : biomes souterrains (grottes luxuriantes, grottes de cristal, profondeurs de
+   magma), des niveaux profonds plus dangereux (monstres des profondeurs, à inventer).
+5. **Ruines et donjons** : salles enfouies générées par graine, coffres avec du butin.
+6. **Mines abandonnées** : galeries étayées de bois, coffres.
+7. **Villages** : maisons, chemins, puits (habitants plus tard).
 
 ## 6. Feuille de route détaillée (phases restantes)
 
-### Phase 5 — Survie et combat
+### Phase 5 — Survie et combat ✅ (lignes 5.1 à 5.7 de la section 3)
 - Vie, faim (rythme adapté), dégâts de chute (la physique de saut existe déjà), noyade, lave,
   réapparition, mort.
 - **Modes de jeu** : Créatif (vol, blocs illimités, outils de debug), Survie, Hardcore (une seule

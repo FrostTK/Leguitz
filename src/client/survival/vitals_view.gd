@@ -107,6 +107,7 @@ func _process(delta: float) -> void:
 	client.player_model.set_down(smoothstep(0.0, 1.0, _down))
 	_update_eating(delta)
 	_update_veil()
+	client.hotbar.vitals.set_defense(Armor.defense(client.inventory))
 
 
 ## First person with the eye in water or lava: the view is veiled.

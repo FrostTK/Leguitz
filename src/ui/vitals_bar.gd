@@ -5,7 +5,9 @@ extends Control
 ## pale for a moment and melts away; nearly empty, it throbs) and their
 ## satiety over the right half (a loaf and an amber gauge, throbbing when
 ## hungry); over it, while the eye is under water, the air left (a bubble
-## and a slim pale blue gauge, blinking when nearly out).
+## and a slim pale blue gauge, blinking when nearly out). Over the
+## vitality, while armor is worn, its protection (a shield and a slim steel
+## gauge, Armor.defense out of MAX_DEFENSE).
 
 ## Gauge and crystal sizes (UI units).
 const HEIGHT := 15.0
@@ -21,6 +23,11 @@ const AIR_FILL := Color("bfe8f6")
 const AIR_DARK := Color("5aa8cc")
 const BUBBLE := ["#2a6a8c", "#8fd0ec", "#ecfbff"]
 const TRAIL := Color("f2d6a6")
+const SHIELD := ["#3a4652", "#8a9aa8", "#d4e0ea"]
+const STEEL_FILL := Color("c8d4de")
+const STEEL_DARK := Color("6e7e8e")
+## The gauge's full (a whole diamond armor).
+const MAX_DEFENSE := 20
 ## How fast the pale trail of a hurt melts (points per second), after
 ## TRAIL_HOLD seconds.
 const TRAIL_SPEED := 14.0
@@ -31,6 +38,7 @@ const LOW := 5
 var health := Vitals.MAX_HEALTH
 var food := Vitals.MAX_FOOD
 var air := Vitals.MAX_AIR
+var defense := 0
 
 var _trail := float(Vitals.MAX_HEALTH)
 var _hold := 0.0
@@ -63,6 +71,31 @@ func set_air(seconds: float) -> void:
 	queue_redraw()
 
 
+func set_defense(points: int) -> void:
+	if points != defense:
+		defense = points
+		queue_redraw()
+
+
+## A small steel shield (7 x 7) at `at` on any control; dim when `lit` is
+## false (nothing worn).
+static func draw_shield(canvas: CanvasItem, at: Vector2, lit := true) -> void:
+	var rows := [[0, 7], [0, 7], [0, 7], [0, 7], [1, 5], [2, 3], [3, 1]]
+	for y in rows.size():
+		var start: int = rows[y][0]
+		var run: int = rows[y][1]
+		for x in run:
+			var shade := 1
+			if x == 0 or x == run - 1 or y == 0 or y == rows.size() - 1:
+				shade = 0
+			elif start + x == 3 or y == 2:
+				shade = 2
+			var color := Color(SHIELD[shade])
+			if not lit:
+				color = Color(color, 0.35)
+			canvas.draw_rect(Rect2(at + Vector2(start + x, y), Vector2.ONE), color)
+
+
 func _process(delta: float) -> void:
 	_time += delta
 	if _hold > 0.0:
@@ -88,6 +121,22 @@ func _draw() -> void:
 	if air < Vitals.MAX_AIR:
 		_draw_air(Rect2(food_left + 7.0, 1.0, width - 7.0, 3.0))
 		_draw_bubble(Vector2(food_left + 1.0, 0.0))
+	if defense > 0:
+		_draw_defense(Rect2(left + 9.0, 1.0, width - 9.0, 3.0))
+		draw_shield(self, Vector2(left, -1.0))
+
+
+## The protection worn: a slim steel gauge, a notch every two points.
+func _draw_defense(bar: Rect2) -> void:
+	draw_rect(bar.grow(1.0), UiTheme.WOOD_DARK)
+	draw_rect(bar, TRACK)
+	var per_point := bar.size.x / MAX_DEFENSE
+	var filled := roundf(per_point * mini(defense, MAX_DEFENSE))
+	draw_rect(Rect2(bar.position, Vector2(filled, 2.0)), STEEL_FILL)
+	draw_rect(Rect2(bar.position + Vector2(0.0, 2.0), Vector2(filled, 1.0)), STEEL_DARK)
+	for point in range(2, MAX_DEFENSE, 2):
+		var x := bar.position.x + roundf(per_point * point)
+		draw_rect(Rect2(x, bar.position.y, 1.0, 3.0), Color(0, 0, 0, 0.25))
 
 
 func _draw_health(bar: Rect2) -> void:

@@ -30,6 +30,18 @@ const TOOL_SCALE := 0.75
 const TOOL_ROLL := PI * 0.25
 const TOOL_REST := 1.25
 const TOOL_STROKE := Vector2(0.35, -0.8)
+## A bow drawn (`aiming`) lies across in front of the chest (its middle
+## there, body voxels), its curve forward: seen from above as a bow, tipped
+## BOW_TILT (radians) towards the front so that it shows from the front
+## too.
+const BOW_AT := Vector3(0.0, 17.0, 6.0)
+const BOW_TILT := 0.25
+## A drawn bow is bigger than in hand at rest: its box's longest side
+## (local units).
+const BOW_SIZE := 0.75
+
+## The armor's meshes, built once: (item, part) -> mesh.
+static var _armor_meshes: Dictionary[Vector2i, Mesh] = {}
 
 var lantern := OmniLight3D.new()
 ## Set by the first-person view: the lantern is carried at the eye instead
@@ -41,6 +53,8 @@ var swinging := false
 var eating := false
 ## Swimming: arms sweeping, legs kicking.
 var swimming := false
+## Drawing a bow (0..1): both arms raised towards the front.
+var aiming := 0.0
 ## Where the right arm is in its stroke: 0 raised, 1 striking down (-1: no
 ## stroke going on).
 var strike_phase := -1.0
@@ -50,6 +64,11 @@ var _body := Node3D.new()
 ## is a tool (held by its handle, see hold_tool).
 var _held := MeshInstance3D.new()
 var _holds_tool := false
+## Where a held item (not a tool) rests in the hand (see hold).
+var _held_rest := Transform3D()
+## The armor worn (its meshes, and the items they show).
+var _armor: Array[MeshInstance3D] = []
+var _armor_items: Array[int] = []
 var _arms: Array[Node3D] = []
 var _legs: Array[Node3D] = []
 var _yaw := 0.0
@@ -123,6 +142,9 @@ func animate(feet: Vector3, heading: Vector2, speed: float, airborne: bool, delt
 			_legs[i].rotation.x = 0.35 * side
 			_arms[i].rotation.x = -1.1
 	strike_phase = -1.0
+	if aiming > 0.0:
+		_arms[0].rotation.x = lerpf(_arms[0].rotation.x, -1.5, aiming)
+		_arms[1].rotation.x = lerpf(_arms[1].rotation.x, -1.6 - aiming * 0.2, aiming)
 	if eating:
 		_strike += delta * 18.0
 		_arms[0].rotation.x = -2.1 + sin(_strike) * 0.12
@@ -136,6 +158,11 @@ func animate(feet: Vector3, heading: Vector2, speed: float, airborne: bool, delt
 		if strike_phase >= 0.0:
 			pitch = lerpf(TOOL_STROKE.x, TOOL_STROKE.y, strike_phase)
 		_held.transform = ItemLibrary.held_tool(Basis(), TOOL_HAND, pitch, TOOL_SCALE, TOOL_ROLL)
+	elif _held.mesh != null:
+		_held.transform = _held_rest
+		if aiming > 0.0:
+			var drawn := _arms[0].transform.affine_inverse() * _bow_pose()
+			_held.transform = _held_rest.interpolate_with(drawn, aiming)
 	_body.position.y = absf(sin(_phase)) * _swing * VOXEL * 1.2
 	if is_inside_tree():
 		var above := global_position + Vector3(0, LANTERN_HEIGHT, 0)
@@ -146,17 +173,62 @@ func animate(feet: Vector3, heading: Vector2, speed: float, airborne: bool, delt
 		RenderingServer.global_shader_parameter_set(&"player_feet", root * feet)
 
 
+## Puts on the armor `items` (Armor: the four slots, Items.Id.NONE where
+## nothing is worn): their pieces over the head, the torso and the arms,
+## the legs (ArmorModels).
+func set_armor(items: Array[int]) -> void:
+	if items == _armor_items:
+		return
+	_armor_items = items.duplicate()
+	for mesh in _armor:
+		mesh.queue_free()
+	_armor.clear()
+	var anchors := {
+		"body": _body, "arm_r": _arms[0], "arm_l": _arms[1], "leg_r": _legs[0], "leg_l": _legs[1]
+	}
+	for item in items:
+		if item == Items.Id.NONE:
+			continue
+		var index := 0
+		for part: Array in ArmorModels.worn(item):
+			var mesh := MeshInstance3D.new()
+			mesh.mesh = _armor_mesh(item, index, part[1])
+			mesh.material_override = _material
+			mesh.layers = PLAYER_LAYER
+			mesh.position = part[2] * VOXEL
+			anchors[part[0]].add_child(mesh)
+			_armor.append(mesh)
+			index += 1
+
+
+static func _armor_mesh(item: int, index: int, grid: VoxelGrid) -> Mesh:
+	var key := Vector2i(item, index)
+	if not _armor_meshes.has(key):
+		_armor_meshes[key] = VoxelMesher.build(grid)
+	return _armor_meshes[key]
+
+
 ## Puts an item's model in the right hand (null: empty hand), `size` its
 ## size (local units).
 func hold(model: Mesh, size: float) -> void:
 	_held.mesh = model
 	_holds_tool = false
 	if model != null:
-		_held.rotation = Vector3(-0.5, 0.0, 0.0)
-		_held.scale = Vector3.ONE * size
-		_held.position = Vector3(
-			0.0, -8.5 * VOXEL - model.get_aabb().size.y * size * 0.5, 2 * VOXEL
+		_held_rest = Transform3D(
+			Basis.from_euler(Vector3(-0.5, 0.0, 0.0)).scaled(Vector3.ONE * size),
+			Vector3(0.0, -8.5 * VOXEL - model.get_aabb().size.y * size * 0.5, 2 * VOXEL)
 		)
+		_held.transform = _held_rest
+
+
+## Where a drawn bow is, in the body's space (see BOW_AT): the model's
+## diagonal (ItemModels lays it there) across the body, its flat side up.
+func _bow_pose() -> Transform3D:
+	var box := _held.mesh.get_aabb().size
+	var size := BOW_SIZE / maxf(box.x, maxf(box.y, box.z))
+	var turn := Basis(Vector3.RIGHT, PI * 0.5 - BOW_TILT) * Basis(Vector3.BACK, -PI * 0.25)
+	var middle := _held.mesh.get_aabb().get_center()
+	return Transform3D(turn.scaled(Vector3.ONE * size), BOW_AT * VOXEL - turn * middle * size)
 
 
 ## Puts a tool in the right hand, held by its handle (see ItemLibrary.held_tool).

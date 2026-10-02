@@ -2,8 +2,9 @@ class_name GuideBook
 extends RefCounted
 ## What the player's book says (the 10th slot, shown by BookScreen): the
 ## controls as they are bound (in the player's keyboard layout), the
-## gamepad, tips, tools, the recipes, the furnaces, survival, the animals
-## and the game modes (creative's flight and debug keys). A chapter is a list of entries:
+## gamepad, tips, tools, the recipes, the furnaces, survival, the animals,
+## the monsters, combat (swords, the bow, armor) and the game modes
+## (creative's flight and debug keys). A chapter is a list of entries:
 ## Dictionaries with a "kind" (Kind) and their text already translated,
 ## built again when the language changes.
 
@@ -20,6 +21,7 @@ const CHAPTERS: Array[String] = [
 	"BOOK_CHAPTER_SURVIVAL",
 	"BOOK_CHAPTER_ANIMALS",
 	"BOOK_CHAPTER_MONSTERS",
+	"BOOK_CHAPTER_COMBAT",
 	"BOOK_CHAPTER_MODES",
 ]
 const TIP_COUNT := 15
@@ -35,6 +37,7 @@ const TOOL_ROWS := [
 	[Items.Id.IRON_PICKAXE, "BOOK_TOOLS_PICKAXE"],
 	[Items.Id.IRON_SHOVEL, "BOOK_TOOLS_SHOVEL"],
 	[Items.Id.IRON_AXE, "BOOK_TOOLS_AXE"],
+	[Items.Id.IRON_SWORD, "BOOK_TOOLS_SWORD"],
 ]
 
 
@@ -50,6 +53,7 @@ static func chapters() -> Array[Array]:
 		_survival(),
 		_animals(),
 		_monsters(),
+		_combat(),
 		_modes(),
 	]
 
@@ -131,22 +135,27 @@ static func _tools() -> Array:
 
 ## How to craft, then every recipe (the logs sawn into planks in one
 ## entry going through the woods), the workbench's last (each kind of tool
-## in one entry going through the materials, the factory furnace).
+## and each piece of armor in one entry going through the materials, the
+## factory furnace).
 static func _craft() -> Array:
 	var entries := [_title(CHAPTERS[4]), _text("BOOK_CRAFT_HOW")]
 	var planks := []
 	var tools := {}
+	var armor := {}
 	for recipe: Dictionary in Recipes.all():
 		var made: int = recipe["result"][0]
 		if recipe.has("ingredients") and Items.PLANKS_OF.has(recipe["ingredients"][0]):
 			planks.append(recipe)
 		elif Items.TOOLS.has(made):
 			tools.get_or_add(Items.tool_of(made), []).append(recipe)
+		elif Armor.is_armor(made):
+			armor.get_or_add(Armor.piece_of(made), []).append(recipe)
 	var sawn: int = planks[0]["result"][1]
 	entries.append({"kind": Kind.RECIPE, "text": _t("BOOK_CRAFT_PLANKS") % sawn, "recipes": planks})
 	var at_bench := []
 	for recipe: Dictionary in Recipes.all():
-		if not recipe in planks and not Items.TOOLS.has(recipe["result"][0]):
+		var item: int = recipe["result"][0]
+		if not recipe in planks and not Items.TOOLS.has(item) and not Armor.is_armor(item):
 			var result: Array = recipe["result"]
 			var made := _t(Items.name_key(result[0]))
 			if result[1] > 1:
@@ -157,6 +166,9 @@ static func _craft() -> Array:
 	for kind: int in tools:
 		var label := _t("BOOK_CRAFT_" + String(Items.Tool.find_key(kind)))
 		entries.append({"kind": Kind.RECIPE, "text": label, "recipes": tools[kind]})
+	for piece: int in armor:
+		var label := _t("BOOK_CRAFT_" + String(Armor.Piece.find_key(piece)))
+		entries.append({"kind": Kind.RECIPE, "text": label, "recipes": armor[piece]})
 	entries.append_array(at_bench)
 	entries.append(_text("BOOK_CRAFT_MORE"))
 	return entries
@@ -239,10 +251,45 @@ static func _monsters() -> Array:
 	return entries
 
 
+## Blows (what each sword takes off), the bow and arrows, armor (each
+## material's protection and how long it lasts).
+static func _combat() -> Array:
+	var entries := [_title(CHAPTERS[9]), _text("BOOK_COMBAT_MELEE")]
+	entries.append(_heading("BOOK_COMBAT_SWORDS"))
+	for tier in Items.Tier.size():
+		var sword := Items.Id.NONE
+		for tool in Items.tools_of_tier(tier):
+			if Items.tool_of(tool) == Items.Tool.SWORD:
+				sword = tool
+		var name := _t("TIER_" + String(Items.Tier.find_key(tier)))
+		entries.append(_icon(sword, _t("BOOK_COMBAT_DAMAGE") % [name, Combat.damage_of(sword)]))
+	entries.append(_text(_t("BOOK_COMBAT_HAND") % Combat.HAND_DAMAGE, false))
+	entries.append(_heading("ITEM_BOW"))
+	entries.append(_icon(Items.Id.BOW, _t("BOOK_COMBAT_BOW")))
+	entries.append(_icon(Items.Id.ARROW, _t("BOOK_COMBAT_ARROWS")))
+	entries.append(_heading("BOOK_COMBAT_ARMOR"))
+	entries.append(_text("BOOK_COMBAT_ARMOR_HOW"))
+	for kind: int in Armor.DEFENSE:
+		var points := 0
+		var lasts: Array[int] = []
+		var chestplate := Items.Id.NONE
+		for item: int in Armor.ITEMS:
+			if Armor.material_of(item) == kind:
+				points += Armor.points_of(item)
+				lasts.append(Armor.durability(item))
+				if Armor.piece_of(item) == Armor.Piece.CHESTPLATE:
+					chestplate = item
+		var name := _t("ARMOR_" + String(Armor.Kind.find_key(kind)))
+		var text := _t("BOOK_COMBAT_ARMOR_KIND") % [name, points, lasts.min(), lasts.max()]
+		entries.append(_icon(chestplate, text))
+	entries.append(_text("BOOK_COMBAT_FALLS"))
+	return entries
+
+
 ## Creative (flight, the catalog, its debug keys), survival, hardcore.
 static func _modes() -> Array:
 	return [
-		_title(CHAPTERS[9]),
+		_title(CHAPTERS[10]),
 		_heading("GAME_MODE_CREATIVE"),
 		_text("BOOK_MODES_CREATIVE"),
 		_combo("BOOK_FLY", "BOOK_FLY_HOW"),
@@ -274,8 +321,9 @@ static func _heading(key: String) -> Dictionary:
 	return {"kind": Kind.HEADING, "text": _t(key)}
 
 
-static func _text(key: String) -> Dictionary:
-	return {"kind": Kind.TEXT, "text": _t(key)}
+## A paragraph: a key to translate (or, `translate` false, the text).
+static func _text(key: String, translate := true) -> Dictionary:
+	return {"kind": Kind.TEXT, "text": _t(key) if translate else key}
 
 
 ## A control: what it does, and the keys (or buttons) to press.

@@ -86,7 +86,8 @@ func test_the_catalog_gives_any_item_in_creative_only() -> void:
 	var shown := CreativeCatalog.order()
 	assert_eq(shown.size(), Items.Id.size() - 2, "every item but the book")
 	assert_eq(shown[0], Items.Id.DIRT, "blocks first")
-	assert_true(Items.TOOLS.has(shown[-1]), "tools last")
+	assert_true(Armor.is_armor(shown[-1]), "armor last")
+	assert_true(shown.find(Items.Id.DIAMOND_SWORD) < shown.find(Items.Id.BOW), "after the tools")
 	# Through the server: in creative only.
 	var setup := _joined()
 	var server: GameServer = setup[0]

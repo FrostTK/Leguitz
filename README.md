@@ -13,17 +13,21 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 
 ![Leguitz : vue par défaut, fin d'après-midi caméra tournée, neige, nuit à la lanterne](docs/screenshots/phase2-3d-jour-nuit.png)
 
-## État actuel : phase 5 (survie et combat) en cours
+## État actuel : phase 5 (survie et combat) terminée
 
-### Phase 5 : survie et combat (en cours)
+### Phase 5 : survie et combat (terminée)
 
 | Fonction | État |
 |---|---|
 | Vitalité : une jauge au-dessus de la barre ; les chutes de plus de 3 niveaux (sauf dans l'eau) et la lave blessent ; la vitalité revient doucement ; à zéro, on perd connaissance, ses affaires restent sur place et on se relève au point d'apparition | ✅ |
 | Faim et nourriture : une jauge de satiété qui baisse avec le temps, la marche et le minage ; manger en maintenant le clic droit (le ragoût et les baies déshydratées nourrissent bien mieux que le cru ; le champignon rouge cru rend malade) ; la vitalité ne revient que bien nourri, la faim l'use ; chapitre « Survie » du livre | ✅ |
 | Nage et noyade : on coule, on remonte et on flotte en maintenant Saut, on bondit hors de l'eau contre une berge ; une jauge de souffle sous l'eau, puis on se noie ; l'eau amortit les chutes | ✅ |
-| Modes de jeu : Créatif, Survie, Hardcore | à venir |
-| Animaux, monstres (originaux), combat et armures | à venir |
+| Modes de jeu : Créatif (vol, catalogue de tous les objets, blocs illimités, casse instantanée, outils de debug), Survie, Hardcore (une seule vie, puis spectateur) ; au menu pause et `--game-mode` | ✅ |
+| Animaux en voxel animé (moutons, sangliers, poules sauvages, cerfs) selon les biomes : troupeaux, chemins sur le relief, fuite quand on les frappe, laine, viandes à rôtir, plumes, peaux | ✅ |
+| Monstres originaux la nuit et dans le noir (phalène-lanterne, rôdeur d'ombre, faux-rocher, feu follet) : la lumière les tient à distance, coups et recul, ce qu'ils laissent | ✅ |
+| Combat et armures : épées des 6 matériaux, coups qui repoussent (courte invincibilité), arc et flèches (maintenir le clic droit pour bander, tir en cloche vers la souris, flèches à ramasser), armures en peau, cuivre, fer, or et diamant portées en voxel (4 cases dans l'inventaire, jauge de protection, elles réduisent les coups des monstres et s'usent) | ✅ |
+
+![Leguitz : l'arc bandé vers un mouton (jauge au-dessus de la tête), l'inventaire et ses quatre cases d'armure, la flèche qui part ; les armures en peau, cuivre, fer, or et diamant ; l'arc bandé à la 1re personne](docs/screenshots/phase5-combat.png)
 
 ![Leguitz : sous l'eau vue de dessus (la jauge de souffle apparaît), flottant à la surface, sous l'eau en 1re personne](docs/screenshots/phase5-nage.png)
 
@@ -42,9 +46,6 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Four alimentaire (four à pain : baies déshydratées, ragoût de champignons ; du minerai le casse) et four d'usine (lingots de cuivre, fer et or, charbon de bois ; la nourriture y carbonise), combustibles, cuisson au fil du temps, feu qui éclaire | ✅ |
 | Blocs de construction : briques de pierre, briques d'ardoise, grès taillé, briques (brique cuite au four), pierre lisse, verre transparent (sable au four d'usine) | ✅ |
 | Confort : nom de l'objet survolé (inventaire et livre), glisser une pile au clic droit (un par case) ou gauche (parts égales), double-clic pour rassembler une ressource éparpillée, monter sur les meubles, cadre de visée fin en 1re personne | ✅ |
-| Modes de jeu : Créatif (vol, catalogue de tous les objets, blocs illimités, casse instantanée, outils de debug), Survie, Hardcore (une seule vie, puis spectateur) ; au menu pause et `--game-mode` | ✅ |
-| Animaux en voxel animé (moutons, sangliers, poules sauvages, cerfs) selon les biomes : troupeaux, chemins sur le relief, fuite quand on les frappe, laine, viandes à rôtir, plumes, peaux | ✅ |
-| Monstres originaux la nuit et dans le noir (phalène-lanterne, rôdeur d'ombre, faux-rocher, feu follet) : la lumière les tient à distance, coups et recul, ce qu'ils laissent | ✅ |
 
 ![Leguitz : les blocs de construction à la 1re personne (une fenêtre en verre dans un mur de briques), l'inventaire avec les nouveaux blocs, et vus de dessus (le verre laisse voir le sol et une fleur)](docs/screenshots/phase4-construction.png)
 
@@ -170,9 +171,10 @@ du projet, puis appuyer sur F5.
 | Tourner / incliner la caméra | Glisser avec le clic droit (ou la molette enfoncée) | Stick droit |
 | Vue à la 1re personne / vue de dessus | F5 (souris pour regarder autour) | X (stick droit) |
 | Revenir à la vue par défaut | Début (Home) | Clic du stick droit |
-| Miner (maintenir) | Clic gauche | Gâchette droite |
+| Miner (maintenir), frapper une créature | Clic gauche | Gâchette droite |
 | Poser le bloc en main | Clic droit | Gâchette gauche |
 | Manger (nourriture en main) | Maintenir le clic droit | Maintenir la gâchette gauche |
+| Bander l'arc (arc en main), relâcher pour tirer | Maintenir le clic droit | Maintenir la gâchette gauche |
 | Utiliser le bloc visé (ouvrir un établi, un coffre, un four) | E | B |
 | Choisir l'objet en main | Molette, 1 à 9 | RB / LB |
 | Inventaire | Tab | |
@@ -239,7 +241,7 @@ Pour le multijoueur, il suffira de brancher un transport réseau.
 2. ✅ Visuels et lumière en 3D pixel art (ombres, jour/nuit, eau, vent, météo, caméra orbitale)
 3. ✅ Joueur et interactions (minage, construction, objets, inventaire, outils, livre du joueur)
 4. ✅ Craft (recettes, établi, usure, coffres, fours, blocs de construction)
-5. Survie et combat (vie, faim, animaux, monstres, combat, modes de jeu)
+5. ✅ Survie et combat (vie, faim, nage, modes de jeu, animaux, monstres, combat et armures)
 6. Souterrain et structures
 7. Agriculture et élevage
 8. Mode Arcade : scénario n°1 « Restauration » (restaurer une terre désolée avec éoliennes,

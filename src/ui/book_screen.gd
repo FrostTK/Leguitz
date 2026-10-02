@@ -1,7 +1,8 @@
 class_name BookScreen
 extends Control
 ## The player's book, open (what it says: GuideBook): two pages at a time
-## between leather covers, chapter tabs along the top, a title page and
+## between leather covers, chapter tabs down its right edge (a thumb
+## index), a title page and
 ## the contents first, page numbers and arrows. Pages turn with the arrows,
 ## the wheel, the movement keys or a stick; LB/RB jump between chapters;
 ## Esc, Tab, E, the book's key (0) or a right click close it. The name of an
@@ -13,8 +14,12 @@ signal close_requested
 const PAGE_SIZE := Vector2(150, 188)
 const COVER := 6.0
 const SPINE := 4.0
-const TAB_SIZE := Vector2(56, 13)
-## Room around a tab's name.
+## The tabs: how tall (less when they would not fit), how far they reach
+## out of the book at most, where the first begins under the book's top,
+## and the room around a tab's name.
+const TAB_HEIGHT := 13.0
+const TAB_REACH := 60.0
+const TAB_TOP := 10.0
 const TAB_PADDING := 8.0
 ## Inside a page: the margins around the text, and the room at the bottom
 ## for the page number.
@@ -205,7 +210,7 @@ func _gui_input(event: InputEvent) -> void:
 			var hit := _hit_at(button.position)
 			if hit >= 0:
 				_act(_hits[hit][1], _hits[hit][2])
-			elif not _book_rect().grow_side(SIDE_TOP, TAB_SIZE.y).has_point(button.position):
+			elif not _book_rect().grow_side(SIDE_RIGHT, TAB_REACH).has_point(button.position):
 				close()
 
 
@@ -236,7 +241,7 @@ func _hit(rect: Rect2, action: String, value: int) -> bool:
 
 func _book_rect() -> Rect2:
 	var book := Vector2(PAGE_SIZE.x * 2.0 + SPINE + COVER * 2.0, PAGE_SIZE.y + COVER * 2.0)
-	return Rect2(((size - book + Vector2(0.0, TAB_SIZE.y)) * 0.5).floor(), book)
+	return Rect2(((size - book - Vector2(TAB_REACH, 0.0)) * 0.5).floor(), book)
 
 
 ## A page (0: left, 1: right).
@@ -289,32 +294,20 @@ func _draw() -> void:
 			break
 
 
-## The chapters' tabs over the book, each as wide as its name (less room
-## around the names, then all narrower, when they would not fit; TAB_SIZE
-## at most).
+## The chapters' tabs down the book's right edge, from the top, each as
+## wide as its name (TAB_REACH at most), tucked under the cover.
 func _draw_tabs(font: Font, book: Rect2) -> void:
 	var shown := _chapter_shown()
 	var count := GuideBook.CHAPTERS.size()
-	var names: Array[float] = []
-	var named := 0.0
-	for key in GuideBook.CHAPTERS:
-		names.append(font.get_string_size(tr(key), HORIZONTAL_ALIGNMENT_LEFT, -1, SMALL_SIZE).x)
-		named += names[-1]
-	# The room around the names shrinks before the tabs do.
-	var room := book.size.x - 24.0 - 2.0 * count
-	var padding := clampf((room - named) / count, 2.0, TAB_PADDING)
-	var widths: Array[float] = []
-	var total := 0.0
-	for width in names:
-		widths.append(minf(width + padding, TAB_SIZE.x))
-		total += widths[-1]
-	var fit := minf(room / total, 1.0)
-	var x := book.position.x + 12.0
+	var room := book.size.y - TAB_TOP - COVER
+	var height := minf(TAB_HEIGHT, floorf(room / count) - 1.0)
+	var y := book.position.y + TAB_TOP
 	for i in count:
-		var tab := Vector2(floorf(widths[i] * fit), TAB_SIZE.y)
-		var at := Vector2(x, book.position.y + 1.0 - tab.y)
-		x += tab.x + 2.0
-		var rect := Rect2(at, tab + Vector2(0.0, 4.0))
+		var name := tr(GuideBook.CHAPTERS[i])
+		var width := font.get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, SMALL_SIZE).x
+		var reach := minf(ceilf(width + TAB_PADDING), TAB_REACH)
+		var rect := Rect2(book.end.x - 4.0, y, reach + 4.0, height)
+		y += height + 1.0
 		var hovered := _hit(rect, "chapter", i)
 		var fill := PAPER_SHADE.darkened(0.12)
 		if i == shown:
@@ -323,13 +316,13 @@ func _draw_tabs(font: Font, book: Rect2) -> void:
 			fill = PAPER_SHADE
 		draw_rect(rect, fill)
 		draw_rect(rect, LEATHER_DARK, false, 1.0)
-		var baseline := at.y + 3.0 + font.get_ascent(SMALL_SIZE)
+		var baseline := floorf(rect.get_center().y + font.get_ascent(SMALL_SIZE) * 0.5)
 		draw_string(
 			font,
-			Vector2(at.x, baseline),
-			tr(GuideBook.CHAPTERS[i]),
+			Vector2(book.end.x, baseline),
+			name,
 			HORIZONTAL_ALIGNMENT_CENTER,
-			tab.x,
+			reach,
 			SMALL_SIZE,
 			UiTheme.INK
 		)

@@ -21,7 +21,10 @@ const CURSOR := SLOTS
 const GRID := 5
 const OWN_GRID := 3
 const CRAFT := CURSOR + 1
-const SIZE := CRAFT + GRID * GRID
+## What the player wears: Armor.PIECES slots from ARMOR (helmet,
+## chestplate, leggings, boots).
+const ARMOR := CRAFT + GRID * GRID
+const SIZE := ARMOR + Armor.PIECES
 ## A chest's slots (the first ones of an Inventory of its own).
 const CHEST := 27
 
@@ -93,11 +96,17 @@ func wear_out(slot: int) -> bool:
 ## half a stack up or puts one item down; shift moves the stack between
 ## the hotbar and the bag (from the grid: into the slots; with a chest
 ## open, `chest`: into the chest; with a furnace open, `furnace`: what it
-## cooks or burns into it).
+## cooks or burns into it; a piece of armor goes on when its slot is
+## free). Armor slots follow Armor.click.
 func click(
 	slot: int, right: bool, shift: bool, chest: Inventory = null, furnace: Furnace = null
 ) -> void:
 	if slot < 0 or slot >= SIZE or slot == CURSOR:
+		return
+	if slot >= ARMOR:
+		Armor.click(self, slot, shift)
+		return
+	if shift and slot < SLOTS and chest == null and furnace == null and Armor.put_on(self, slot):
 		return
 	if shift and furnace != null and slot < SLOTS:
 		var before := counts[slot]
@@ -209,7 +218,7 @@ func collect(chest: Inventory = null, furnace: Furnace = null) -> void:
 	if item == Items.Id.NONE or stack <= 1:
 		return
 	var sources: Array[Array] = []
-	for slot in range(CRAFT, SIZE):
+	for slot in range(CRAFT, ARMOR):
 		sources.append([self, slot])
 	if chest != null:
 		for slot in CHEST:
@@ -310,7 +319,7 @@ func _holder(target: Vector2i, chest: Inventory, furnace: Furnace) -> Inventory:
 	var slot := target.y
 	match target.x:
 		Holder.OWN:
-			if (slot >= 0 and slot < SLOTS) or (slot >= CRAFT and slot < SIZE):
+			if (slot >= 0 and slot < SLOTS) or (slot >= CRAFT and slot < ARMOR):
 				return self
 		Holder.CHEST:
 			if chest != null and slot >= 0 and slot < CHEST:
@@ -364,7 +373,7 @@ func craft(width: int, shift: bool) -> void:
 ## throw).
 func put_back_all() -> Array[Vector3i]:
 	var left: Array[Vector3i] = []
-	for slot in [CURSOR] + range(CRAFT, SIZE):
+	for slot in [CURSOR] + range(CRAFT, ARMOR):
 		var item := items[slot]
 		if item != Items.Id.NONE:
 			var worn := wear[slot]

@@ -354,7 +354,7 @@ CREATURE_DEER_HOME,"forests, birch woods, taigas, meadows","forêts, bois de bou
 BOOK_CHAPTER_ANIMALS,Animals,Animaux
 BOOK_ANIMALS_INTRO,"Herds live in the wild: they graze and wander, climbing one level at a time. Hit one ({break}; an axe hits hardest): it runs away with its herd, and when it falls it leaves what it gives.","Des troupeaux vivent dans la nature : ils broutent et se promènent, en grimpant un niveau à la fois. Frappe un animal ({break} ; une hache frappe le plus fort) : il s'enfuit avec son troupeau, et quand il tombe il laisse ce qu'il donne."
 BOOK_ANIMALS_ENTRY,%s (%s): %s,%s (%s) : %s
-BOOK_ANIMALS_COOK,"Roast meat in the food furnace: it feeds far better than raw, and raw chicken makes you sick. Wool is a soft block to build with; feathers and hides will soon be useful.","Fais rôtir la viande au four alimentaire : elle nourrit bien mieux que crue, et le poulet cru rend malade. La laine est un bloc doux pour construire ; plumes et peaux serviront bientôt."
+BOOK_ANIMALS_COOK,"Roast meat in the food furnace: it feeds far better than raw, and raw chicken makes you sick. Wool is a soft block to build with, and spins into string for bows; feathers fletch arrows, hides make armor.","Fais rôtir la viande au four alimentaire : elle nourrit bien mieux que crue, et le poulet cru rend malade. La laine est un bloc doux pour construire, et se file en ficelle pour les arcs ; les plumes empennent les flèches, les peaux font des armures."
 ITEM_MOTH_DUST,Moth dust,Poudre de phalène
 ITEM_SHADE_ESSENCE,Shade essence,Essence d'ombre
 ITEM_WISP_EMBER,Wisp ember,Braise de follet
@@ -376,3 +376,54 @@ DEATH_CAUSE_MIMIC,That rock was not a rock.,Ce rocher n'en était pas un.
 DEATH_CAUSE_WISP,You followed the wisp's light too close.,Tu as suivi la lueur du feu follet de trop près.
 BOOK_CHAPTER_MONSTERS,Monsters,Monstres
 BOOK_MONSTERS_INTRO,"At night and in the dark, monsters come out. Light keeps them at bay: lava, a burning furnace, daylight. Hit back ({break}): they leave something behind. They leave you alone in creative.","La nuit et dans le noir, des monstres sortent. La lumière les tient à distance : la lave, un four allumé, le jour. Riposte ({break}) : ils laissent quelque chose derrière eux. En créatif, ils te laissent tranquille."
+ITEM_WOODEN_SWORD,Wooden sword,Épée en bois
+ITEM_STONE_SWORD,Stone sword,Épée en pierre
+ITEM_COPPER_SWORD,Copper sword,Épée en cuivre
+ITEM_IRON_SWORD,Iron sword,Épée en fer
+ITEM_GOLDEN_SWORD,Golden sword,Épée en or
+ITEM_DIAMOND_SWORD,Diamond sword,Épée en diamant
+ITEM_BOW,Bow,Arc
+ITEM_ARROW,Arrow,Flèche
+ITEM_STRING,String,Ficelle
+ITEM_HIDE_HELMET,Hide helmet,Casque en peau
+ITEM_HIDE_CHESTPLATE,Hide chestplate,Plastron en peau
+ITEM_HIDE_LEGGINGS,Hide leggings,Jambières en peau
+ITEM_HIDE_BOOTS,Hide boots,Bottes en peau
+ITEM_COPPER_HELMET,Copper helmet,Casque en cuivre
+ITEM_COPPER_CHESTPLATE,Copper chestplate,Plastron en cuivre
+ITEM_COPPER_LEGGINGS,Copper leggings,Jambières en cuivre
+ITEM_COPPER_BOOTS,Copper boots,Bottes en cuivre
+ITEM_IRON_HELMET,Iron helmet,Casque en fer
+ITEM_IRON_CHESTPLATE,Iron chestplate,Plastron en fer
+ITEM_IRON_LEGGINGS,Iron leggings,Jambières en fer
+ITEM_IRON_BOOTS,Iron boots,Bottes en fer
+ITEM_GOLDEN_HELMET,Golden helmet,Casque en or
+ITEM_GOLDEN_CHESTPLATE,Golden chestplate,Plastron en or
+ITEM_GOLDEN_LEGGINGS,Golden leggings,Jambières en or
+ITEM_GOLDEN_BOOTS,Golden boots,Bottes en or
+ITEM_DIAMOND_HELMET,Diamond helmet,Casque en diamant
+ITEM_DIAMOND_CHESTPLATE,Diamond chestplate,Plastron en diamant
+ITEM_DIAMOND_LEGGINGS,Diamond leggings,Jambières en diamant
+ITEM_DIAMOND_BOOTS,Diamond boots,Bottes en diamant
+ARMOR_HIDE,Hide,Peau
+ARMOR_COPPER,Copper,Cuivre
+ARMOR_IRON,Iron,Fer
+ARMOR_GOLD,Gold,Or
+ARMOR_DIAMOND,Diamond,Diamant
+BOOK_TOOLS_SWORD,Sword: fighting (it hits hardest),Épée : le combat (elle frappe le plus fort)
+BOOK_CRAFT_SWORD,Swords (every material),Épées (tous les matériaux)
+BOOK_CRAFT_HELMET,Helmets (every material),Casques (tous les matériaux)
+BOOK_CRAFT_CHESTPLATE,Chestplates (every material),Plastrons (tous les matériaux)
+BOOK_CRAFT_LEGGINGS,Leggings (every material),Jambières (tous les matériaux)
+BOOK_CRAFT_BOOTS,Boots (every material),Bottes (tous les matériaux)
+BOOK_CHAPTER_COMBAT,Combat,Combat
+BOOK_COMBAT_MELEE,"Hit with {break}. Every blow throws back what it hits, which cannot be hurt again for a moment: strike in rhythm. A sword hits hardest, an axe nearly as hard; a tool wears with every blow.","Frappe avec {break}. Chaque coup repousse ce qu'il touche, qui ne peut plus être blessé pendant un instant : frappe en rythme. Une épée frappe le plus fort, une hache presque autant ; un outil s'use à chaque coup."
+BOOK_COMBAT_SWORDS,Swords: damage per blow,Épées : dégâts par coup
+BOOK_COMBAT_DAMAGE,%s: %d points,%s : %d points
+BOOK_COMBAT_HAND,Bare hand: %d point,À mains nues : %d point
+BOOK_COMBAT_BOW,"Hold {place} (the left trigger) with a bow in hand to draw it, the gauge over your head filling up; let go to shoot. The more it is drawn, the farther and harder the arrow flies. It falls where you point; in first person, it flies along the crosshair.","Maintiens {place} (la gâchette gauche) avec un arc en main pour le bander, la jauge au-dessus de ta tête se remplit ; relâche pour tirer. Plus il est bandé, plus la flèche va loin et frappe fort. Elle retombe là où tu vises ; à la première personne, elle suit le viseur."
+BOOK_COMBAT_ARROWS,Every shot takes an arrow from your slots (none in creative) and wears the bow. An arrow that misses sticks where it lands: pick it up again.,Chaque tir prend une flèche dans tes emplacements (aucune en créatif) et use l'arc. Une flèche qui rate se plante là où elle tombe : ramasse-la.
+BOOK_COMBAT_ARMOR,Armor,Armure
+BOOK_COMBAT_ARMOR_HOW,"Put armor on in the four slots under your inventory's title, or Shift + click a piece. Each point of protection takes 4% off monsters' blows, up to 80%: the steel gauge over your vitality shows them. Every blow taken wears every piece worn.","Enfile l'armure dans les quatre emplacements sous le titre de ton inventaire, ou Maj + clic sur une pièce. Chaque point de protection retire 4 % des coups des monstres, jusqu'à 80 % : la jauge d'acier au-dessus de ta vitalité les montre. Chaque coup reçu use toutes les pièces portées."
+BOOK_COMBAT_ARMOR_KIND,"%s: %d points, %d to %d blows","%s : %d points, de %d à %d coups"
+BOOK_COMBAT_FALLS,"Armor does not soften falls, lava, drowning or hunger.","L'armure n'adoucit ni les chutes, ni la lave, ni la noyade, ni la faim."

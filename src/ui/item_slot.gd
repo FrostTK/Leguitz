@@ -3,6 +3,7 @@ extends Control
 ## One inventory slot: a small frame, the item's icon and how many there
 ## are, or for a worn tool what is left of it (a bar going from green to
 ## red). Draws itself (see show_stack); clicks are reported by `clicked`.
+## Empty, it may show the shape of what goes in it (`hint`, armor slots).
 
 signal clicked(slot: int, right: bool, shift: bool)
 
@@ -16,10 +17,13 @@ const SELECTED := Color(1.0, 0.92, 0.6)
 const NAME_FILL := Color(0.13, 0.07, 0.03, 0.94)
 const NAME_PADDING := Vector2(4.0, 2.0)
 const NAME_OFFSET := Vector2(9.0, -15.0)
+const HINT := Color(0.0, 0.0, 0.0, 0.35)
 
 var slot := 0
 var selected := false
 var library: ItemLibrary
+## Drawn as a dark shape while the slot is empty (Items.Id.NONE: nothing).
+var hint := Items.Id.NONE
 
 var _item := Items.Id.NONE
 var _count := 0
@@ -71,6 +75,14 @@ func _draw() -> void:
 	draw_rect(rect, FILL)
 	draw_rect(rect, SELECTED if selected else FRAME, false, 2.0 if selected else 1.0)
 	draw_stack(self, library, _item, _count, size * 0.5, _wear)
+	if _item == Items.Id.NONE and hint != Items.Id.NONE and library != null:
+		var shape := library.icon(hint)
+		if shape != null:
+			var corner := size * 0.5 - Vector2.ONE * ICON * 0.5
+			draw_texture_rect(shape, Rect2(corner, Vector2.ONE * ICON), false, HINT)
+		else:
+			# Icons come after the start: try again.
+			queue_redraw.call_deferred()
 
 
 ## Draws an item's name in a dark box beside `at` (the mouse) on any

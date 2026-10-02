@@ -48,6 +48,18 @@ const SHAPED := [
 		"result": [Items.Id.CUT_SANDSTONE, 4],
 	},
 	{"pattern": ["BB", "BB"], "keys": {"B": Items.Id.BRICK}, "result": [Items.Id.BRICKS, 1]},
+	{"ingredients": [Items.Id.WOOL], "result": [Items.Id.STRING, 4]},
+	{
+		"pattern": ["P", "S", "F"],
+		"keys": {"P": STONES, "S": Items.Id.STICK, "F": Items.Id.FEATHER},
+		"result": [Items.Id.ARROW, 4],
+	},
+	{
+		"pattern": [" SR", "S R", " SR"],
+		"keys": {"S": Items.Id.STICK, "R": Items.Id.STRING},
+		"result": [Items.Id.BOW, 1],
+		"workbench": true,
+	},
 	{
 		"pattern": ["SSS", "S S", "SSS"],
 		"keys": {"S": STONES},
@@ -66,6 +78,7 @@ const TOOL_PATTERNS := {
 	Items.Tool.PICKAXE: ["MMM", " S ", " S "],
 	Items.Tool.AXE: ["MM", "MS", " S"],
 	Items.Tool.SHOVEL: ["M", "S", "S"],
+	Items.Tool.SWORD: ["M", "M", "S"],
 }
 const TOOL_MATERIALS := {
 	Items.Tier.WOOD: PLANKS,
@@ -80,7 +93,7 @@ static var _all: Array[Dictionary] = []
 
 
 ## Every recipe: each log gives 4 planks (shapeless: "ingredients"),
-## SHAPED, then the tools.
+## SHAPED, then the tools, then the armor.
 static func all() -> Array[Dictionary]:
 	if _all.is_empty():
 		for log_item: int in Items.PLANKS_OF:
@@ -91,6 +104,10 @@ static func all() -> Array[Dictionary]:
 			var keys := {"M": TOOL_MATERIALS[Items.tier_of(tool)], "S": Items.Id.STICK}
 			var pattern: Array = TOOL_PATTERNS[Items.tool_of(tool)]
 			_all.append({"pattern": pattern, "keys": keys, "result": [tool, 1], "workbench": true})
+		for piece: int in Armor.ITEMS:
+			var keys := {"M": Armor.MADE_OF[Armor.material_of(piece)]}
+			var pattern: Array = Armor.PATTERNS[Armor.piece_of(piece)]
+			_all.append({"pattern": pattern, "keys": keys, "result": [piece, 1], "workbench": true})
 	return _all
 
 

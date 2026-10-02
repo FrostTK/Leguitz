@@ -94,6 +94,8 @@ static func build(item: int) -> VoxelGrid:
 		return _ingot(TOOL_HEADS[INGOTS[item]])
 	if MEATS.has(item):
 		return _meat(item)
+	if Armor.is_armor(item):
+		return ArmorModels.icon(item)
 	match item:
 		Items.Id.STICK:
 			return _stick()
@@ -143,12 +145,22 @@ static func build(item: int) -> VoxelGrid:
 			return _shade_essence()
 		Items.Id.WISP_EMBER:
 			return _wisp_ember()
+		Items.Id.BOW:
+			return _bow()
+		Items.Id.ARROW:
+			return _arrow()
+		Items.Id.STRING:
+			return _string()
 	return null
 
 
-## Thin flat items (tools, sticks): their icon faces the camera.
+## Thin flat items (tools, sticks, armor): their icon faces the camera.
 static func is_flat(item: int) -> bool:
-	return Items.TOOLS.has(item) or item in [Items.Id.STICK, Items.Id.FEATHER]
+	return (
+		Items.TOOLS.has(item)
+		or Armor.is_armor(item)
+		or item in [Items.Id.STICK, Items.Id.FEATHER, Items.Id.BOW, Items.Id.ARROW]
+	)
 
 
 static func _v(hex: String, kind := VoxelGrid.Kind.SOLID) -> int:
@@ -171,7 +183,9 @@ static func _ingot(colors: Array) -> VoxelGrid:
 ## one at its points and edges.
 static func _tool(kind: int, head: Array) -> VoxelGrid:
 	var grid := VoxelGrid.new(TOOL_SIZE)
-	var handle_end: float = {Items.Tool.PICKAXE: 15.0, Items.Tool.AXE: 15.3}.get(kind, 12.0)
+	var handle_end: float = (
+		{Items.Tool.PICKAXE: 15.0, Items.Tool.AXE: 15.3, Items.Tool.SWORD: 5.4}.get(kind, 12.0)
+	)
 	for x in TOOL_SIZE.x:
 		for y in TOOL_SIZE.y:
 			# Along the handle (u) and across it (v, > 0 on the upper left).
@@ -224,6 +238,23 @@ static func _tool_head(kind: int, u: float, v: float) -> Vector2i:
 				return Vector2i(shade, 1 if v < 2.6 else 0)
 			if v < 0.0 and v > -2.0 and u > 11.0 and u < 13.4:
 				return Vector2i(0 if v > -1.0 else 1, 1)
+		Items.Tool.SWORD:
+			# A crossguard over the grip, then a blade tapering to its point,
+			# a ridge down its middle and bright edges.
+			if u >= 5.0 and u < 6.5 and absf(v) <= 2.4:
+				return Vector2i(0, 1)
+			if u < 6.5 or u > 21.2:
+				return Vector2i(-1, 0)
+			var tip := maxf(u - 18.4, 0.0) / 2.8
+			var half := 1.3 * (1.0 - tip)
+			if absf(v) > half + 0.1:
+				return Vector2i(-1, 0)
+			var shade := 1
+			if absf(v) > half - 0.45:
+				shade = 3
+			elif absf(v) < 0.3:
+				shade = 2
+			return Vector2i(shade, 1 if u < 8.0 else 0)
 		Items.Tool.SHOVEL:
 			# A spade rounded at its tip, behind a collar on the handle.
 			if u >= 11.4 and u < 12.8 and absf(v) <= 1.25:
@@ -479,6 +510,66 @@ static func _hide() -> VoxelGrid:
 	for x in range(7, 12):
 		for z in range(0, 12 - x):
 			grid.set_voxel(Vector3i(x, 2, z), _v("#c9a477" if (x + z) % 3 else "#b8935f"))
+	return grid
+
+
+## Along the diagonal of a TOOL_SIZE grid like the tools (`u` along it,
+## `v` across), with `paint(u, v)` giving a voxel or 0.
+static func _diagonal(paint: Callable) -> VoxelGrid:
+	var grid := VoxelGrid.new(Vector3i(TOOL_SIZE.x, TOOL_SIZE.y, 1))
+	for x in TOOL_SIZE.x:
+		for y in TOOL_SIZE.y:
+			var u := (x + y + 1.0) * SQRT_HALF
+			var v := (y - x) * SQRT_HALF
+			var value: int = paint.call(u, v)
+			if value != 0:
+				grid.set_voxel(Vector3i(x, y, 0), value)
+	return grid
+
+
+## A bow on the diagonal: a limb bending towards the upper left, wrapped
+## in leather at its grip, and its string straight across.
+static func _bow() -> VoxelGrid:
+	return _diagonal(
+		func(u: float, v: float) -> int:
+			if u < 1.6 or u > 21.0:
+				return 0
+			var bend := 3.6 * sin(PI * (u - 1.6) / 19.4)
+			if absf(v - bend) < 0.75:
+				if absf(u - 11.3) < 1.6:
+					return _v("#5c3b1f")
+				return _v("#8a5a30" if v > bend else "#b07a44")
+			if absf(v) < 0.4 and u > 2.2 and u < 20.4:
+				return _v("#e8e2d2")
+			return 0
+	)
+
+
+## An arrow on the diagonal: a stone head, a shaft, white fletching.
+static func _arrow() -> VoxelGrid:
+	return _diagonal(
+		func(u: float, v: float) -> int:
+			if u > 17.0 and u < 21.4 and absf(v) < (21.4 - u) * 0.45 + 0.3:
+				return _v("#7c7b87" if v > 0.0 else "#5c5b66")
+			if u > 2.0 and u <= 17.0 and absf(v) < 0.4:
+				return _v("#c49b5f" if v > 0.0 else "#a07a46")
+			if u > 1.6 and u < 6.5 and absf(v) < (6.5 - u) * 0.38 + 0.4:
+				return _v("#f2efe8" if int(u) % 2 else "#d8442e")
+			return 0
+	)
+
+
+## A hank of string: a few loose loops.
+static func _string() -> VoxelGrid:
+	var grid := VoxelGrid.new(Vector3i(10, 3, 10))
+	for loop in 3:
+		var radius := 3.6 - loop * 0.6
+		for i in 40:
+			var angle := TAU * i / 40.0
+			var at := Vector3(
+				4.5 + cos(angle) * radius, loop * 0.8, 4.5 + sin(angle) * radius * 0.8
+			)
+			grid.set_voxel(Vector3i(at.round()), _v("#e8e2d2" if loop % 2 else "#cfc8b4"))
 	return grid
 
 

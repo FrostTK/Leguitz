@@ -33,6 +33,7 @@ const FURNACE_CLICK := "furnace_click"
 const SET_GAME_MODE := "set_game_mode"
 const CATALOG_CLICK := "catalog_click"
 const ATTACK := "attack"
+const SHOOT := "shoot"
 
 ## map_request() row for a map of the surface.
 const MAP_SURFACE := -1
@@ -63,12 +64,30 @@ const ENTITY_HURT := "entity_hurt"
 const ENTITY_REMOVE := "entity_remove"
 const PUSH := "push"
 const LANTERN_OUT := "lantern_out"
+const ARROW_SPAWN := "arrow_spawn"
+const ARROW_REMOVE := "arrow_remove"
 
 
 ## The player hits the creature `id` with the hotbar slot `slot` in hand
 ## (-1: nothing of it, the player's book).
 static func attack(id: int, slot := -1) -> Dictionary:
 	return {"t": ATTACK, "id": id, "slot": slot}
+
+
+## The player shoots an arrow with the bow of hotbar slot `slot` along
+## `direction` (local units), the bow drawn `power` (0..1, see Archery).
+static func shoot(slot: int, direction: Vector3, power: float) -> Dictionary:
+	return {"t": SHOOT, "slot": slot, "direction": direction, "power": power}
+
+
+## An arrow leaves `from` at `velocity` (local units; see Archery.fly).
+static func arrow_spawn(id: int, from: Vector3, velocity: Vector3) -> Dictionary:
+	return {"t": ARROW_SPAWN, "id": id, "from": from, "velocity": velocity}
+
+
+## An arrow stopped (in a creature, or a block).
+static func arrow_remove(id: int) -> Dictionary:
+	return {"t": ARROW_REMOVE, "id": id}
 
 
 ## A creature comes into a player's view: its kind (Species), its feet

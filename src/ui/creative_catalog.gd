@@ -2,7 +2,8 @@ class_name CreativeCatalog
 extends HBoxContainer
 ## The creative catalog (in the inventory screen, over the bag): every
 ## item, the blocks first, then what stands in the world (plants,
-## furniture), the materials, the food and the tools; ROWS rows at a time,
+## furniture), the materials, the food, the tools and weapons, then the
+## bow, arrows and armor; ROWS rows at a time,
 ## scrolled by the wheel or the bar beside them (a click or a drag on it).
 ## A click on an item is reported (GameModes.take_from_catalog says what
 ## it does).
@@ -25,7 +26,8 @@ var _bar := Control.new()
 
 
 ## Every item but the player's book: blocks, then things standing in the
-## world, materials, food, tools (in Items order within each).
+## world, materials, food, tools, the bow, arrows and armor (in Items
+## order within each).
 static func order() -> Array[int]:
 	var result: Array[int] = []
 	for item in range(Items.Id.NONE + 1, Items.Id.size()):
@@ -40,6 +42,8 @@ static func _rank(item: int) -> int:
 	var voxel := Items.placed_voxel(item)
 	if Items.TOOLS.has(item):
 		group = 4
+	elif Armor.is_armor(item) or item in [Items.Id.BOW, Items.Id.ARROW]:
+		group = 5
 	elif voxel != Voxels.AIR:
 		group = 0 if Voxels.is_cube(voxel) else 1
 	elif Items.is_food(item):

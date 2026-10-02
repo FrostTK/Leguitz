@@ -6,7 +6,9 @@ extends Control
 ## furnace: what it cooks, its fire, its fuel, an arrow filling up as it
 ## cooks and what it made), the
 ## bag's 27 slots over the hotbar's 9, and the player's book set apart (it
-## stays there: a click opens it). Clicks pick up, put down, split and swap
+## stays there: a click opens it). Under the title, the armor worn (four
+## slots, each taking its own piece; a shield tells the protection), but
+## not beside a chest or a furnace. Clicks pick up, put down, split and swap
 ## stacks (Inventory.click: the client shows its guess at once, the server
 ## decides), a click on what the grid makes takes it (shift: as many as
 ## possible); the stack held by the cursor follows the mouse, and dropped
@@ -66,6 +68,10 @@ var _book_gap := Control.new()
 ## What the crafting grid makes.
 var _result := ItemSlot.new()
 var _title := Label.new()
+## The armor worn, and the protection it gives.
+var _armor_area := HBoxContainer.new()
+var _armor_slots: Array[ItemSlot] = []
+var _shield := Control.new()
 ## The crafting grid's cells (all GRID x GRID, row by row; those past the
 ## width in use hide).
 var _grid := GridContainer.new()
@@ -115,10 +121,13 @@ func _ready() -> void:
 	panel.add_child(box)
 	var top := HBoxContainer.new()
 	box.add_child(top)
+	var heading := VBoxContainer.new()
+	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	heading.add_theme_constant_override("separation", 3)
+	top.add_child(heading)
 	_title.text = "INVENTORY_TITLE"
-	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_title.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	top.add_child(_title)
+	heading.add_child(_title)
+	heading.add_child(_armor())
 	_crafting_area = _crafting()
 	top.add_child(_crafting_area)
 	_furnace_area = _furnace()
@@ -187,6 +196,7 @@ func open(width := Inventory.OWN_GRID) -> void:
 	var catalog := creative and width == Inventory.OWN_GRID
 	_furnace_area.visible = false
 	_chest_grid.visible = false
+	_armor_area.visible = true
 	_catalog.visible = catalog
 	_bag_label.visible = catalog
 	_crafting_area.visible = not catalog
@@ -208,6 +218,7 @@ func open_chest(view: Inventory) -> void:
 	_furnace_area.visible = false
 	_catalog.visible = false
 	_title.text = "CHEST_TITLE"
+	_armor_area.visible = false
 	_crafting_area.visible = false
 	_chest_grid.visible = true
 	_bag_label.visible = true
@@ -223,6 +234,7 @@ func open_furnace(view: Furnace) -> void:
 	_title.text = "ITEM_FOOD_FURNACE" if food else "ITEM_FACTORY_FURNACE"
 	_furnace_hint.text = "FURNACE_FOOD_HINT" if food else "FURNACE_FACTORY_HINT"
 	_crafting_area.visible = false
+	_armor_area.visible = false
 	_chest_grid.visible = false
 	_catalog.visible = false
 	_furnace_area.visible = true
@@ -238,6 +250,36 @@ func close() -> void:
 		if _spreading:
 			_end_spread(false)
 		close_requested.emit()
+
+
+## The armor worn: a column of its four slots (the shapes of the pieces
+## while empty) and a shield with the protection points.
+func _armor() -> Control:
+	_armor_area.add_theme_constant_override("separation", 3)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 1)
+	_armor_area.add_child(column)
+	for piece in Armor.PIECES:
+		var slot := _new_slot(Inventory.ARMOR + piece)
+		slot.hint = Armor.ITEMS.find_key([piece, Armor.Kind.HIDE])
+		_armor_slots.append(slot)
+		column.add_child(slot)
+	_shield.custom_minimum_size = Vector2(16.0, 0.0)
+	_shield.draw.connect(_draw_shield)
+	_armor_area.add_child(_shield)
+	return _armor_area
+
+
+## The protection worn: a steel shield, the points under it.
+func _draw_shield() -> void:
+	var points := Armor.defense(inventory) if inventory != null else 0
+	var at := Vector2(floorf((_shield.size.x - 7.0) * 0.5), 1.0)
+	VitalsBar.draw_shield(_shield, at, points > 0)
+	var font := _shield.get_theme_default_font()
+	var text := str(points)
+	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 6).x
+	var baseline := Vector2(floorf((_shield.size.x - width) * 0.5), 9.0 + font.get_ascent(6))
+	_shield.draw_string(font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, UiTheme.WOOD)
 
 
 ## The crafting grid, an arrow and what the grid makes.
@@ -377,6 +419,7 @@ func _process(_delta: float) -> void:
 			_furnace_slots[i].show_stack(held.items[i], held.counts[i], false, held.wear[i])
 		_flame.queue_redraw()
 		_cooking.queue_redraw()
+	_shield.queue_redraw()
 	var made := inventory.craft_result(craft_width)
 	_result.show_stack(made.x, made.y)
 	_book.visible = book_shown

@@ -156,8 +156,8 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   BlockInteraction.use_target); the right click never opens them.
 - Items (`src/sim/items/`): `Items` is the registry (ids saved: only append; name key ITEM_<ID>
   in i18n, stack size, the voxel a block item places, what each broken voxel gives: grass gives
-  dirt, a tree a log per level of trunk). `Inventory` (hotbar 9 + bag 27 + the cursor's stack,
-  Minecraft's click rules) is shared: the server keeps it (saved in the player's state), the
+  dirt, a tree a log per level of trunk). `Inventory` (hotbar 9 + bag 27 + the cursor's stack +
+  the crafting grid + the armor worn, Minecraft's click rules) is shared: the server keeps it (saved in the player's state), the
   client predicts clicks on its copy. `DroppedItem`s fall, rest, float on water; the server pulls
   them into players nearby (from a level under the feet) and sends ITEM_SPAWN/MOVE/REMOVE; they
   are saved in world.cfg. Client: ItemLibrary (block items are cubes wearing the block's top
@@ -178,7 +178,7 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   a chest or a furnace and closing, lives in InventoryActions (GameClient.actions). Wheel
   and 1-9 pick the slot (the wheel zooms with its button held down in the top-down view, or with
   Ctrl: InputBindings.wheel_zooms), Q throws (Ctrl: the stack), shoulders on a gamepad.
-- Tools (`Items.TOOLS`: pickaxe, axe and shovel in 6 materials, `Items.Tier`; they do not stack):
+- Tools (`Items.TOOLS`: pickaxe, axe, shovel and sword in 6 materials, `Items.Tier`; they do not stack):
   `Mining.break_seconds(voxel, held)` divides the hand's time (`hand_seconds`, the voxel's
   hardness) by `Items.TIER_SPEED` when the tool is the one `Mining.tool_for(voxel)` names; real
   seconds (a player's action, not paced by the day), `Mining.BREAK_PAUSE` between two breaks.
@@ -355,6 +355,37 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   its box) and the break button hits it. LocalPlayer.push (Msg.PUSH), LightingController.lantern_out. Meat roasts in the food furnace (raw
   chicken makes sick: Vitals.POISONS); the WOOL cube block. `--animals=sheep:3,...` brings
   animals around the player.
+- Combat: blows by `Combat` (damage_of: HAND_DAMAGE, TOOL_DAMAGE by Items.Tool and Tier; swords,
+  Items.Tool.SWORD, hit hardest, made at the workbench like the tools, TOOL_PATTERNS); what is
+  hit is thrown back and immune for a moment (Creature.hurt_by). Bow and arrows
+  (`src/sim/combat/archery.gd`, held by GameServer): Msg.SHOOT (hotbar slot of the bow, direction,
+  power 0..1) after SHOT_PAUSE, an arrow from the slots used up (`arrow_slot`; none in creative,
+  where the bow does not wear and arrows are not kept); arrows fly `Archery.fly` (origin, launch
+  velocity, GRAVITY: the same on every client), sub-stepped by STEP: through a creature's
+  `bounds()` they hurt it (DAMAGE times the speed's share), into a solid block they fall there
+  as an ARROW item; Msg.ARROW_SPAWN / ARROW_REMOVE. Client: `Archer` (src/client/combat: the
+  right button or the left trigger held with a bow in hand draws, FULL_DRAW seconds, MIN_DRAW;
+  the release shoots along the crosshair in first person, ahead with a gamepad, else the low
+  ballistic arc (`Archer.ballistic`) landing on BlockInteraction.aim_point (a creature under the
+  mouse: its middle); a gauge over the head, PlayerModel.aiming raises the arms and brings the
+  bow across the chest (BOW_AT), the first-person bow comes upright; the arrow is taken at once,
+  predicted), `ArrowsView` (world root: flies them, stuck when they meet a block). Recipes:
+  wool -> 4 string, stone point + stick + feather -> 4 arrows, the bow (sticks and string) at
+  the workbench. Armor (`Armor`, shared: helmet, chestplate, leggings, boots of hide, copper,
+  iron, gold, diamond; Armor.ITEMS, DEFENSE points (Minecraft's, copper between), durability
+  BASE_DURABILITY x MATERIAL_DURABILITY, PATTERNS at the workbench): worn in Inventory.ARMOR..SIZE
+  (after the crafting grid: old saves load), each slot taking its own piece (`Armor.click`;
+  shift from the slots puts on, `put_on`; shift on a piece worn takes it off); Survival.hurt
+  takes REDUCTION_PER_POINT per point off the causes in Vitals.ARMORED (monsters' blows, not
+  falls, lava, drowning, hunger; MAX_REDUCTION), keeps the fraction in PlayerSession.hurt_carry
+  and wears every piece once (`wear_out`); passing out drops it too. Client: ArmorModels (worn:
+  shells a voxel off the body parts, `worn(item)` -> [part, grid, offset], PlayerModel.set_armor
+  from GameClient._worn(); icons: flat front outlines, ICON_SHAPES), InventoryScreen's armor
+  column under the title (ItemSlot.hint draws the empty slot's piece, a shield with the points;
+  hidden beside a chest or a furnace), VitalsBar's steel gauge over the vitality
+  (`set_defense`, MAX_DEFENSE 20, `draw_shield`). The book's Combat chapter
+  (GuideBook._combat) and Crafting (armor grouped by piece); the book's tabs run down its right
+  edge (BookScreen._draw_tabs: TAB_HEIGHT, TAB_REACH).
 - Saves (`src/sim/save/world_storage.gd`, server side only): `user://worlds/<folder>/` holds
   world.cfg (settings, clock, weather), players/<name>.cfg and regions/r.<x>.<z>.bin (the chunks
   players changed, 32x32 per file, zstd voxels; the others are generated again). Change voxels

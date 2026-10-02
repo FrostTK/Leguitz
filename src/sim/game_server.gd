@@ -84,6 +84,10 @@ class PlayerSession:
 	## one (seconds of play).
 	var seen_creatures: Dictionary[int, bool] = {}
 	var last_blow := -INF
+	## What armor let through below a whole point (it adds up), and when
+	## they last shot an arrow (seconds of play).
+	var hurt_carry := 0.0
+	var last_shot := -INF
 
 	func alive() -> bool:
 		return health > 0
@@ -113,8 +117,9 @@ var storage: WorldStorage
 var tick_count := 0
 ## Items lying in the world, by id.
 var items: Dictionary[int, DroppedItem] = {}
-## The animals and monsters.
+## The animals and monsters, and the arrows in flight.
 var creatures: Creatures
+var archery := Archery.new()
 ## Debug commands (moving between caves, world map, weather, tools):
 ## creative players use them where the server allows them (operators once
 ## they exist); `cheats_anywhere` (developer options) in every mode.
@@ -261,6 +266,7 @@ func tick() -> void:
 	_update_items(GameConst.TICK_DELTA)
 	creatures.update(self, GameConst.TICK_DELTA)
 	creatures.sync(sessions)
+	archery.update(self, GameConst.TICK_DELTA)
 	Survival.update(self, sessions, GameConst.TICK_DELTA)
 	if tick_count % FURNACE_TICKS == 0:
 		_update_furnaces(GameConst.TICK_DELTA * FURNACE_TICKS)
@@ -294,6 +300,10 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 			creatures.attack(
 				self, session, int(message.get("id", -1)), int(message.get("slot", -1))
 			)
+		Msg.SHOOT:
+			var aim: Vector3 = message.get("direction", Vector3.ZERO)
+			var slot := int(message.get("slot", -1))
+			archery.shoot(self, session, slot, aim, float(message.get("power", 0.0)))
 		Msg.SET_VIEW_DISTANCE:
 			_on_set_view_distance(session, message)
 		Msg.BLOCK_BREAK:

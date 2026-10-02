@@ -54,6 +54,8 @@ const DROWN_SECONDS := 1.0
 const AIR_STEP := 0.25
 ## Foods that make one sick raw: the vitality they cost.
 const POISONS := {Items.Id.MUSHROOM_RED: 2, Items.Id.RAW_CHICKEN: 1}
+## The blows armor protects from (Armor).
+const ARMORED := {Cause.MOTH: true, Cause.LURKER: true, Cause.MIMIC: true, Cause.WISP: true}
 ## Translation keys of the causes.
 const CAUSE_KEYS := {
 	Cause.NONE: "DEATH_CAUSE_NONE",

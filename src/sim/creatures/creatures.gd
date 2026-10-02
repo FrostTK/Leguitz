@@ -186,7 +186,7 @@ func attack(server: GameServer, session: GameServer.PlayerSession, id: int, slot
 				if other.center().distance_to(target.center()) <= reach:
 					(other as Animal).scare(session.position)
 	if target.health <= 0:
-		_die(server, target)
+		die(server, target)
 
 
 ## Sends a message to every player shown creature `id`.
@@ -300,9 +300,9 @@ static func _chunk_of(creature: Creature) -> Vector2i:
 	return Coords.tile_to_chunk(creature.tile())
 
 
-## A creature died: what it gives falls where it was; its players see it
-## go.
-func _die(server: GameServer, creature: Creature) -> void:
+## A creature died (a blow, an arrow): what it gives falls where it was;
+## its players see it go.
+func die(server: GameServer, creature: Creature) -> void:
 	var middle := creature.bounds().get_center()
 	for drop: Array in Species.DROPS[creature.species]:
 		var count := rng.randi_range(drop[1], drop[2])
