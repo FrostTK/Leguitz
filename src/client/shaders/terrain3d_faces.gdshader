@@ -17,7 +17,7 @@ uniform sampler2D face_emission : source_color, filter_nearest;
 uniform float emission_strength = 2.2;
 // Per wall kind: 1 for the walls one sees through (glass): their clear
 // pixels are cut out, their backs seen through them are not rock sections.
-uniform int see_through_walls[32];
+uniform int see_through_walls[256];
 // Face kinds: the cliff materials, then the wall kinds.
 const int WALL_KIND_OFFSET = 4;
 
@@ -40,7 +40,7 @@ void fragment() {
 	}
 	int kind = int(face_data.x + 0.5);
 	bool clear_wall = kind >= WALL_KIND_OFFSET
-			&& see_through_walls[min(kind - WALL_KIND_OFFSET, 31)] == 1;
+			&& see_through_walls[min(kind - WALL_KIND_OFFSET, 255)] == 1;
 	// Seen from behind (through the view cut): the section of the rock.
 	bool section = !IN_SHADOW_PASS && !FRONT_FACING && !clear_wall;
 	if (section && section_on < 0.5) {

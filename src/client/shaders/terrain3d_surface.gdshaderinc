@@ -9,8 +9,8 @@
 uniform sampler2D chunk_data : filter_nearest;
 uniform vec2 chunk_origin_px = vec2(0.0);
 // Per ground id: blend priority, kind (0 land, 1 water, 2 lava, 3 ice).
-uniform int ground_priority[32];
-uniform int ground_kind[32];
+uniform int ground_priority[64];
+uniform int ground_kind[64];
 
 const int WALL_CODE = 64;
 const int KIND_WATER = 1;
@@ -28,8 +28,8 @@ ivec4 bed_of(ivec4 column) {
 	if (column.a <= 0) {
 		return column;
 	}
-	int rest = column.a / 32;
-	return ivec4(rest % 64, column.a % 32, rest / 64 - 256, 0);
+	int rest = column.a / 256;
+	return ivec4(rest % 64, column.a % 256, rest / 64 - 256, 0);
 }
 
 // Height rank of a column: level, plus half a level for a rock wall.

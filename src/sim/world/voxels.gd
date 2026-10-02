@@ -1,19 +1,24 @@
 class_name Voxels
 extends RefCounted
-## Voxel ids stored in chunks (one byte per voxel).
+## Voxel ids stored in chunks (16 bits: ID_COUNT of them; one int per
+## voxel in ChunkData.voxels).
 ##
 ## Grounds keep their own ids (Tiles.Ground, below BLOCK_BASE): a voxel of
 ## grass is a cube whose top shows the grass ground. Blocks follow at
 ## BLOCK_BASE + Tiles.Block: cubes (stone, ores...) and objects drawn as 3D
 ## models (trees, plants, rocks...), which stand in their voxel without
-## filling it. Ids are stored in saves: only append to the enums.
+## filling it, up to UNKNOWN. Ids are stored in saves: only append to the
+## enums.
 
 const AIR := 0
-## Block voxels start here; grounds stay below.
+## Block voxels start here; grounds stay below (the shaders read a ground
+## in 6 bits).
 const BLOCK_BASE := 64
+## Every voxel id is below this: tables by voxel id are this long.
+const ID_COUNT := 65536
 ## Returned for voxels of chunks that are not loaded: solid, so nobody
-## walks into unknown terrain.
-const UNKNOWN := 255
+## walks into unknown terrain. Never stored in a chunk.
+const UNKNOWN := ID_COUNT - 1
 
 const FLAG_CUBE := 1
 const FLAG_SOLID := 2
@@ -64,10 +69,18 @@ static func flag_table() -> PackedByteArray:
 ## 1 for cube voxels, 0 otherwise, by id (see flag_table).
 static func cube_table() -> PackedByteArray:
 	var table := PackedByteArray()
-	table.resize(256)
-	for voxel in 256:
+	table.resize(ID_COUNT)
+	for voxel in used_ids():
 		table[voxel] = 1 if _flags[voxel] & FLAG_CUBE != 0 else 0
+	table[UNKNOWN] = 1
 	return table
+
+
+## How many ids the grounds and blocks there are use (0 to this, less
+## one): tables that never meet UNKNOWN (the voxels of loaded chunks) need
+## no more.
+static func used_ids() -> int:
+	return BLOCK_BASE + Tiles.Block.size()
 
 
 ## Something drawn as a 3D model in its voxel (tree, plant, rock...).
@@ -77,7 +90,7 @@ static func is_object(voxel: int) -> bool:
 
 static func _build_flags() -> PackedByteArray:
 	var flags := PackedByteArray()
-	flags.resize(256)
+	flags.resize(ID_COUNT)
 	for ground: int in Tiles.Ground.values():
 		if ground == Tiles.Ground.NONE:
 			continue

@@ -178,7 +178,7 @@ static func _rows(
 ## Highest row of the rock mass of a column, under its terrain (a lone
 ## outcrop standing on the surface does not count: the rock below it must
 ## be rock too).
-static func _highest_rock(voxels: PackedByteArray, base: int, top: int) -> int:
+static func _highest_rock(voxels: PackedInt32Array, base: int, top: int) -> int:
 	var stone := Voxels.of_block(Tiles.Block.STONE)
 	var deepslate := Voxels.of_block(Tiles.Block.DEEPSLATE)
 	for y in range(top - 1, 0, -1):
@@ -191,7 +191,7 @@ static func _highest_rock(voxels: PackedByteArray, base: int, top: int) -> int:
 
 ## Ore veins: short random walks through the rock, the same for a chunk
 ## whatever the order of generation.
-func _place_ores(coord: Vector2i, voxels: PackedByteArray) -> void:
+func _place_ores(coord: Vector2i, voxels: PackedInt32Array) -> void:
 	var size := GameConst.CHUNK_SIZE
 	var height := GameConst.WORLD_HEIGHT
 	var stone := Voxels.of_block(Tiles.Block.STONE)
@@ -218,7 +218,7 @@ func _place_ores(coord: Vector2i, voxels: PackedByteArray) -> void:
 
 
 ## Cave floors, lakes, lava pools and the odd mushroom or rock.
-func _furnish(coord: Vector2i, voxels: PackedByteArray, ceilings: PackedInt32Array) -> void:
+func _furnish(coord: Vector2i, voxels: PackedInt32Array, ceilings: PackedInt32Array) -> void:
 	var size := GameConst.CHUNK_SIZE
 	var height := GameConst.WORLD_HEIGHT
 	var origin := Coords.chunk_origin_tile(coord)
@@ -262,7 +262,7 @@ func fluid_at(tx: int, y: int, tz: int) -> int:
 
 ## A floor voxel can hold a pool if no side of it opens onto a drop (the
 ## water does not flow yet). Outside the chunk the noises tell.
-func _holds_liquid(voxels: PackedByteArray, origin: Vector2i, lx: int, y: int, lz: int) -> bool:
+func _holds_liquid(voxels: PackedInt32Array, origin: Vector2i, lx: int, y: int, lz: int) -> bool:
 	var size := GameConst.CHUNK_SIZE
 	for side in SIDES:
 		var nx := lx + side.x

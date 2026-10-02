@@ -5,7 +5,8 @@ extends RefCounted
 ## voxel models instead (VoxelModels).
 
 ## Solid terrain blocks drawn by the terrain shader (value = wall atlas row;
-## at most 31 of them: the surface map packs a wall kind + 1 in 5 bits).
+## below MAX_WALL_KINDS: the surface map packs a wall kind in 8 bits, see
+## ChunkMesher.bed_code).
 const WALL_KINDS := {
 	Tiles.Block.STONE: 0,
 	Tiles.Block.DEEPSLATE: 1,
@@ -64,6 +65,8 @@ const GLOWING_WALLS := {
 	Tiles.Block.EMERALD_ORE: true,
 }
 
+const MAX_WALL_KINDS := 256
+
 ## block id -> wall kind + 1 (0 = not a wall), for fast data building.
 static var wall_lookup := _build_wall_lookup()
 
@@ -72,18 +75,19 @@ static func is_wall(block: int) -> bool:
 	return WALL_KINDS.has(block)
 
 
-## Per wall kind (32): 1 for the walls one sees through, for the shaders.
+## Per wall kind (MAX_WALL_KINDS): 1 for the walls one sees through, for
+## the shaders.
 static func clear_wall_flags() -> PackedInt32Array:
 	var flags := PackedInt32Array()
-	flags.resize(32)
+	flags.resize(MAX_WALL_KINDS)
 	for block: int in CLEAR_WALLS:
 		flags[WALL_KINDS[block]] = 1
 	return flags
 
 
-static func _build_wall_lookup() -> PackedByteArray:
-	var lookup := PackedByteArray()
-	lookup.resize(256)
+static func _build_wall_lookup() -> PackedInt32Array:
+	var lookup := PackedInt32Array()
+	lookup.resize(Tiles.Block.size())
 	for block: int in WALL_KINDS:
 		lookup[block] = WALL_KINDS[block] + 1
 	return lookup

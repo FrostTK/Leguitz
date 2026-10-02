@@ -42,11 +42,17 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   and only changes it by sending messages. Keep solo on the same path as future multiplayer.
 - World generation must be deterministic per seed: use `HashUtil` (never Godot's `hash()`/`randi()`)
   and derive sub-seeds with `HashUtil.derive_seed(world_seed, SALT)`.
-- Voxel ids (`src/sim/world/voxels.gd`, one byte per voxel, stored in chunks and saves): grounds
-  keep their `Tiles.Ground` id (< 64), blocks are 64 + `Tiles.Block`. Only append to the enums in
-  `src/sim/world/tiles.gd`, never renumber. `ChunkData` is a 16x16 column of WORLD_HEIGHT (128)
-  voxels stored column by column ((z * 16 + x) * 128 + y), plus per column its biome and terrain
-  top. Row SEA_LEVEL (64) is level 0: heights in levels everywhere (physics, rendering) are rows
+- Voxel ids (`src/sim/world/voxels.gd`, 16 bits: Voxels.ID_COUNT, stored as ints in
+  `ChunkData.voxels`, a PackedInt32Array, and in saves): grounds keep their `Tiles.Ground` id
+  (< 64: the shaders read a ground in 6 bits, their arrays are 64 long, TerrainRenderer.MAX_GROUNDS),
+  blocks are 64 + `Tiles.Block` (thousands more possible), UNKNOWN is ID_COUNT - 1 (never stored).
+  Tables by voxel id are ID_COUNT long (Voxels) or `Voxels.used_ids()` long where UNKNOWN never
+  comes (ChunkMesher's, read from loaded chunks); WorldView3D's variants and TileAtlas.wall_lookup
+  are Tiles.Block.size() long. Saves: ChunkData.FORMAT_VERSION 4 stores the ints (zstd); worlds
+  saved one byte per voxel still load (WorldStorage.load_chunk, ChunkData.ids_from_bytes: the
+  same ids). Only append to the enums in `src/sim/world/tiles.gd`, never renumber. `ChunkData` is
+  a 16x16 column of WORLD_HEIGHT (128) voxels stored column by column ((z * 16 + x) * 128 + y),
+  plus per column its biome and terrain top. Row SEA_LEVEL (64) is level 0: heights in levels everywhere (physics, rendering) are rows
   minus 64. Chunks are keyed by Vector2i; there are no separate underground layers any more.
 - Timed gameplay durations are authored for the default 20-min day and must go through
   `WorldClock.scale_duration()` (pace = clamp((day_minutes/20)^0.25, 0.7, 2.5); synced = 24 h day).
@@ -233,8 +239,9 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   their items). `--grid=ROW/ROW` fills the grid for screenshots; `--place` aimed at a workbench
   opens it.
 - New cube blocks (planks, stone/deepslate bricks, smooth stone, bricks, cut sandstone, glass):
-  append to Tiles.Block and CUBE_BLOCKS, give them a TileAtlas.WALL_KINDS row (at most 31: the
-  surface map packs wall kind + 1 in 5 bits) and a `tools/gen_art.py` WALLS entry (walls from
+  append to Tiles.Block and CUBE_BLOCKS, give them a TileAtlas.WALL_KINDS row (below
+  TileAtlas.MAX_WALL_KINDS, 256: ChunkMesher.bed_code packs a wall kind in 8 bits, the shaders'
+  see_through_walls arrays are that long) and a `tools/gen_art.py` WALLS entry (walls from
   FIRST_OWN_SEED_WALL draw from random generators of their own, `wall_tile`, so the older
   textures stay the same; restore the ground atlases from git when their pixels did not
   change), then Items (PLACES_BLOCK, BLOCK_DROPS) and Mining (time, tool). Block items are cubes

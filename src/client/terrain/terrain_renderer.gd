@@ -85,7 +85,7 @@ const SAND_GROUNDS := {
 	Tiles.Ground.TERRACOTTA_LIGHT: true,
 }
 const SNOW_GROUNDS := {Tiles.Ground.SNOW: true, Tiles.Ground.ICE: true}
-const MAX_GROUNDS := 32
+const MAX_GROUNDS := Voxels.BLOCK_BASE
 
 
 static func cliff_material(ground: int) -> int:

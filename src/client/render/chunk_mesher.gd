@@ -83,7 +83,7 @@ static var _capped := _build_capped()
 class Job:
 	extends RefCounted
 	var coord := Vector2i.ZERO
-	var voxels: Array[PackedByteArray] = []
+	var voxels: Array[PackedInt32Array] = []
 	var tops: Array[PackedByteArray] = []
 	## The chunk's columns where something rises over the terrain (see
 	## ChunkData.raised).
@@ -109,7 +109,7 @@ class Job:
 				var other: ChunkData = (
 					chunk if dx == 0 and dz == 0 else neighbor.call(chunk.coord + Vector2i(dx, dz))
 				)
-				job.voxels.append(other.voxels if other != null else PackedByteArray())
+				job.voxels.append(other.voxels if other != null else PackedInt32Array())
 				job.tops.append(other.tops if other != null else PackedByteArray())
 		return job
 
@@ -193,7 +193,7 @@ static func build(job: Job) -> Result:
 	result.coord = job.coord
 	result.serial = job.serial
 	result.map_only = job.map_only
-	var voxels := pad(job.voxels, HEIGHT)
+	var voxels := pad_voxels(job.voxels)
 	var tops := pad(job.tops, 1)
 	var clear := _clear.duplicate()
 	result.surface_map = surface_map(voxels, tops, job.cut_row, clear, job.cut_columns)
@@ -287,24 +287,48 @@ static func build(job: Job) -> Result:
 ## so no false faces appear (the chunk is rebuilt when they come).
 static func pad(arrays: Array[PackedByteArray], stride: int) -> PackedByteArray:
 	var padded := PackedByteArray()
-	var center := arrays[4]
+	var empty := arrays.map(_is_empty)
 	for pz in SPAN:
 		for px in SPAN:
-			var lx := px - 1
-			var lz := pz - 1
-			var ox := -1 if lx < 0 else (1 if lx >= SIZE else 0)
-			var oz := -1 if lz < 0 else (1 if lz >= SIZE else 0)
-			var source := arrays[(oz + 1) * 3 + ox + 1]
-			if source.is_empty():
-				source = center
-				lx = clampi(lx, 0, SIZE - 1)
-				lz = clampi(lz, 0, SIZE - 1)
-			else:
-				lx = posmod(lx, SIZE)
-				lz = posmod(lz, SIZE)
-			var start := (lz * SIZE + lx) * stride
-			padded.append_array(source.slice(start, start + stride))
+			var from := _border_column(px, pz, empty)
+			var start := from.y * stride
+			padded.append_array(arrays[from.x].slice(start, start + stride))
 	return padded
+
+
+## The chunk's voxels plus a one-column border, as pad does.
+static func pad_voxels(arrays: Array[PackedInt32Array]) -> PackedInt32Array:
+	var padded := PackedInt32Array()
+	var empty := arrays.map(_is_empty)
+	for pz in SPAN:
+		for px in SPAN:
+			var from := _border_column(px, pz, empty)
+			var start := from.y * HEIGHT
+			padded.append_array(arrays[from.x].slice(start, start + HEIGHT))
+	return padded
+
+
+## Where a padded column (px, pz) comes from: x the array (of the 3 x 3,
+## row by row; a missing neighbor gives way to the chunk itself, 4), y the
+## column in it (`empty`: which arrays are missing).
+static func _border_column(px: int, pz: int, empty: Array) -> Vector2i:
+	var lx := px - 1
+	var lz := pz - 1
+	var ox := -1 if lx < 0 else (1 if lx >= SIZE else 0)
+	var oz := -1 if lz < 0 else (1 if lz >= SIZE else 0)
+	var source := (oz + 1) * 3 + ox + 1
+	if empty[source]:
+		source = 4
+		lx = clampi(lx, 0, SIZE - 1)
+		lz = clampi(lz, 0, SIZE - 1)
+	else:
+		lx = posmod(lx, SIZE)
+		lz = posmod(lz, SIZE)
+	return Vector2i(source, lz * SIZE + lx)
+
+
+static func _is_empty(array: Variant) -> bool:
+	return array.is_empty()
 
 
 ## The 18 x 18 data of the top and water shaders (RGBA floats per column,
@@ -315,7 +339,7 @@ static func pad(arrays: Array[PackedByteArray], stride: int) -> PackedByteArray:
 ## drawn plainly. `clear`: see _build_clear; `cut_columns`: the columns
 ## the cut reaches (see Job; empty: all).
 static func surface_map(
-	voxels: PackedByteArray,
+	voxels: PackedInt32Array,
 	tops: PackedByteArray,
 	cut_row: int,
 	clear: PackedByteArray,
@@ -352,7 +376,7 @@ static func surface_map(
 ## in one exact float (see bed_of in terrain3d_surface.gdshaderinc).
 static func bed_code(voxel: int, level: int) -> float:
 	var wall: int = TileAtlas.wall_lookup[Voxels.block_of(voxel)]
-	return float(((level + 256) * 64 + Voxels.ground_of(voxel)) * 32 + wall)
+	return float(((level + 256) * 64 + Voxels.ground_of(voxel)) * 256 + wall)
 
 
 ## How an object's model is turned on a tile (quarter turns).
@@ -384,8 +408,8 @@ static func top_code(voxel: int) -> int:
 
 static func _build_face_kinds() -> PackedInt32Array:
 	var kinds := PackedInt32Array()
-	kinds.resize(256)
-	for voxel in 256:
+	kinds.resize(Voxels.used_ids())
+	for voxel in Voxels.used_ids():
 		var block := Voxels.block_of(voxel)
 		if TileAtlas.is_wall(block):
 			kinds[voxel] = WALL_KIND_OFFSET + TileAtlas.WALL_KINDS[block]
@@ -395,7 +419,7 @@ static func _build_face_kinds() -> PackedInt32Array:
 
 
 static func _build_flags() -> PackedByteArray:
-	var flags := Voxels.flag_table()
+	var flags := Voxels.flag_table().slice(0, Voxels.used_ids())
 	for block: int in TileAtlas.CLEAR_WALLS:
 		var voxel := Voxels.of_block(block)
 		flags[voxel] = (flags[voxel] & ~CUBE) | CLEAR_CUBE
@@ -407,7 +431,7 @@ static func _build_flags() -> PackedByteArray:
 ## Caps the building blocks just under the cut whose column goes on above
 ## it (they have no top of their own there), where the cut reaches.
 static func _record_caps(
-	flats: Dictionary, voxels: PackedByteArray, cut_row: int, cut_columns: PackedByteArray
+	flats: Dictionary, voxels: PackedInt32Array, cut_row: int, cut_columns: PackedByteArray
 ) -> void:
 	var row := cut_row - 1
 	if row < 0 or cut_row >= HEIGHT:
@@ -428,7 +452,7 @@ static func _record_caps(
 
 static func _build_capped() -> PackedByteArray:
 	var table := PackedByteArray()
-	table.resize(256)
+	table.resize(Voxels.used_ids())
 	for block: int in TileAtlas.BUILDING_WALLS:
 		table[Voxels.of_block(block)] = 1
 	return table
@@ -436,7 +460,7 @@ static func _build_capped() -> PackedByteArray:
 
 static func _build_clear() -> PackedByteArray:
 	var table := PackedByteArray()
-	table.resize(256)
+	table.resize(Voxels.used_ids())
 	for ground: int in Tiles.Ground.values():
 		if Tiles.is_water(ground):
 			table[Voxels.of_ground(ground)] = 1
@@ -445,8 +469,8 @@ static func _build_clear() -> PackedByteArray:
 
 static func _build_top_codes() -> PackedInt32Array:
 	var codes := PackedInt32Array()
-	codes.resize(256)
-	for voxel in 256:
+	codes.resize(Voxels.used_ids())
+	for voxel in Voxels.used_ids():
 		var block := Voxels.block_of(voxel)
 		if TileAtlas.is_wall(block):
 			codes[voxel] = WALL_CODE + TileAtlas.WALL_KINDS[block]
@@ -461,7 +485,7 @@ static func _build_top_codes() -> PackedInt32Array:
 static func _add_cube(
 	result: Result,
 	flats: Dictionary,
-	voxels: PackedByteArray,
+	voxels: PackedInt32Array,
 	tops: PackedByteArray,
 	tables: Array,
 	column: int,
@@ -540,7 +564,7 @@ static func _add_cube(
 ## surface (the bank above it). `other` is the neighbor column (padded
 ## index).
 static func _side_deep(
-	voxels: PackedByteArray,
+	voxels: PackedInt32Array,
 	tops: PackedByteArray,
 	flags: PackedByteArray,
 	clear: PackedByteArray,
@@ -571,7 +595,7 @@ static func _side_deep(
 ## ends at the first voxel open to the sky, whose ground may hang over it
 ## as a lip.
 static func _continues_run(
-	voxels: PackedByteArray,
+	voxels: PackedInt32Array,
 	tops: PackedByteArray,
 	tables: Array,
 	index: int,
@@ -603,7 +627,7 @@ static func _open(flags: PackedByteArray, clear: PackedByteArray, voxel: int) ->
 ## roofs and floors, a single natural layer: seen through its windows and
 ## doors); THICK_COVER natural ones in a row (rock) hide it in a cave.
 static func _sky_through(
-	voxels: PackedByteArray, flags: PackedByteArray, clear: PackedByteArray, index: int, rows: int
+	voxels: PackedInt32Array, flags: PackedByteArray, clear: PackedByteArray, index: int, rows: int
 ) -> bool:
 	var run := 0
 	for k in range(1, rows):
@@ -783,7 +807,7 @@ static func _add_prop(
 	result: Result,
 	variants: PackedByteArray,
 	voxel: int,
-	voxels: PackedByteArray,
+	voxels: PackedInt32Array,
 	base: int,
 	lx: int,
 	y: int,
@@ -824,7 +848,7 @@ static func _add_prop(
 
 ## The sides a fence at `index` (padded voxels) joins (ObjectShapes.FENCE_SIDES
 ## bits: north, east, south, west).
-static func _fence_sides(voxels: PackedByteArray, index: int) -> int:
+static func _fence_sides(voxels: PackedInt32Array, index: int) -> int:
 	var sides := 0
 	for bit in ObjectShapes.FENCE_SIDES.size():
 		var side: Vector2i = ObjectShapes.FENCE_SIDES[bit]

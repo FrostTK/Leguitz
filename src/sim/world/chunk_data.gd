@@ -7,14 +7,16 @@ extends RefCounted
 ## biome and the top of its terrain (highest cube or liquid voxel), which
 ## physics, rendering and spawning read without scanning.
 
-const FORMAT_VERSION := 3
+## 4: voxels are ints (16-bit ids); before, bytes (read still: see
+## ids_from_bytes).
+const FORMAT_VERSION := 4
 const SIZE := GameConst.CHUNK_SIZE
 const HEIGHT := GameConst.WORLD_HEIGHT
 ## Water surfaces sit this far (levels) below the top of their voxel.
 const WATER_DROP := 0.15
 
 var coord := Vector2i.ZERO
-var voxels := PackedByteArray()
+var voxels := PackedInt32Array()
 var biome := PackedByteArray()
 ## Per column: 1 + row of the highest cube or liquid voxel (0 = none).
 var tops := PackedByteArray()
@@ -145,8 +147,10 @@ func to_dict() -> Dictionary:
 
 static func from_dict(data: Dictionary) -> ChunkData:
 	var chunk := ChunkData.new(Vector2i(data.get("x", 0), data.get("y", 0)))
-	var voxels: PackedByteArray = data.get("voxels", PackedByteArray())
-	if voxels.size() == chunk.voxels.size():
+	var voxels: Variant = data.get("voxels", PackedInt32Array())
+	if voxels is PackedByteArray:
+		voxels = ids_from_bytes(voxels)
+	if (voxels as PackedInt32Array).size() == chunk.voxels.size():
 		chunk.voxels = voxels
 	var biome: PackedByteArray = data.get("biome", PackedByteArray())
 	if biome.size() == GameConst.CHUNK_AREA:
@@ -160,6 +164,16 @@ static func from_dict(data: Dictionary) -> ChunkData:
 	else:
 		chunk.recompute_tops()
 	return chunk
+
+
+## Voxels saved one byte each (FORMAT_VERSION 3 and before: the ids were
+## the same, below 255) as ids.
+static func ids_from_bytes(bytes: PackedByteArray) -> PackedInt32Array:
+	var ids := PackedInt32Array()
+	ids.resize(bytes.size())
+	for i in bytes.size():
+		ids[i] = bytes[i]
+	return ids
 
 
 ## 1 + the highest cube or liquid row below `below` in a column (0 = none).

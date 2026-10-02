@@ -20,9 +20,9 @@ uniform sampler2D depth_texture : hint_depth_texture, filter_nearest;
 // Per ground id: the water's own color (all of it shows over deep water),
 // the tint of the light coming up through it, and how deep (levels) the
 // eye sees into it.
-uniform vec4 water_colors[32] : source_color;
-uniform vec4 water_tints[32] : source_color;
-uniform float water_clarity[32];
+uniform vec4 water_colors[64] : source_color;
+uniform vec4 water_tints[64] : source_color;
+uniform float water_clarity[64];
 // How fast the depths fade out: at `clarity` levels, exp(-fade) is left.
 uniform float fade = 1.5;
 // The fade goes by steps (pixel-art bands), and the surface's own color

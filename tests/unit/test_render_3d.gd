@@ -233,9 +233,9 @@ func test_water_shows_its_bed_and_drowned_banks() -> void:
 	var code := result.surface_map[((5 + 1) * ChunkMesher.SPAN + (5 + 1)) * 4 + 3]
 	assert_almost(code, ChunkMesher.bed_code(sand, -3), 0.001)
 	var packed := int(code)
-	assert_eq(packed / 32 / 64 - 256, -3, "bed level")
-	assert_eq(packed / 32 % 64, Tiles.Ground.SAND, "bed ground")
-	assert_eq(packed % 32, 0, "not a wall")
+	assert_eq(packed / 256 / 64 - 256, -3, "bed level")
+	assert_eq(packed / 256 % 64, Tiles.Ground.SAND, "bed ground")
+	assert_eq(packed % 256, 0, "not a wall")
 	var land := result.surface_map[((1 + 1) * ChunkMesher.SPAN + (1 + 1)) * 4 + 3]
 	assert_almost(land, 0.0, 0.001, "no bed out of the water")
 
@@ -317,7 +317,7 @@ func test_glass_shows_what_is_behind_it() -> void:
 	var glass_kind: int = TileAtlas.WALL_KINDS[Tiles.Block.GLASS]
 	assert_eq(ChunkMesher.face_kind(glass), ChunkMesher.WALL_KIND_OFFSET + glass_kind)
 	assert_eq(TileAtlas.clear_wall_flags()[glass_kind], 1)
-	assert_true(TileAtlas.WALL_KINDS.size() <= 31, "wall kinds fit the surface map")
+	assert_true(TileAtlas.WALL_KINDS.size() < TileAtlas.MAX_WALL_KINDS, "wall kinds fit the map")
 
 
 func test_building_blocks_cut_by_the_view_show_their_top() -> void:

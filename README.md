@@ -20,6 +20,7 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Fonction | État |
 |---|---|
 | Maison et jardin : support mural de torche et rideaux accrochés au mur, fenêtre, vitre, évier, toilettes, table, chaise, barrières qui se raccordent, portillon et portail (ouverts et fermés avec E), feu de camp qui éclaire et éloigne les monstres ; chapitre du livre | ✅ |
+| Fondations : des dizaines de milliers de sortes de blocs possibles (identifiants sur 16 bits), 255 textures de cubes ; les mondes existants se chargent tels quels | ✅ |
 | Torches et lanternes posées | à venir |
 | Lumière des grottes, coulées d'eau et de lave, profondeurs, ruines, donjons, mines, villages | à venir |
 

@@ -33,7 +33,7 @@ var surface: SurfaceBuilder
 var caves: CaveGenerator
 
 var _rock_column := _build_rock_column()
-var _air_column := PackedByteArray()
+var _air_column := PackedInt32Array()
 var _spacing_seed := 0
 
 
@@ -205,7 +205,7 @@ func _generate_terrain(chunk: ChunkData) -> void:
 				)
 
 	# Pass 3: the voxels of each column, in storage order.
-	var voxels := PackedByteArray()
+	var voxels := PackedInt32Array()
 	for ly in size:
 		for lx in size:
 			var index := ly * size + lx
@@ -250,7 +250,7 @@ static func _is_spaced(block: int) -> bool:
 
 ## Rock up to the filler, the filler (dirt under grass...), the surface
 ## voxel at the column's level and what stands on it (tree, plant, rock).
-func _land_column(column: Column, ground: int, block: int) -> PackedByteArray:
+func _land_column(column: Column, ground: int, block: int) -> PackedInt32Array:
 	var top := GameConst.SEA_LEVEL + column.level - 1
 	var filler_start := top - SurfaceBuilder.FILLER_DEPTH
 	var voxels := _rock_column.slice(0, filler_start)
@@ -265,7 +265,7 @@ func _land_column(column: Column, ground: int, block: int) -> PackedByteArray:
 ## Sea, lakes and rivers: a bed deeper where the terrain goes lower, water
 ## up to just under level 0 (its surface shows at level 0), maybe ice on
 ## top and a lily pad.
-func _water_column(column: Column, ground: int, block: int) -> PackedByteArray:
+func _water_column(column: Column, ground: int, block: int) -> PackedInt32Array:
 	var surface_row := GameConst.SEA_LEVEL - 1
 	var depth := clampi(int(-column.height / WATER_DEPTH_STEP) + 1, 1, MAX_WATER_DEPTH)
 	var bed := surface_row - depth
@@ -282,8 +282,8 @@ func _water_column(column: Column, ground: int, block: int) -> PackedByteArray:
 	return voxels
 
 
-static func _build_rock_column() -> PackedByteArray:
-	var voxels := PackedByteArray()
+static func _build_rock_column() -> PackedInt32Array:
+	var voxels := PackedInt32Array()
 	for row in GameConst.WORLD_HEIGHT:
 		voxels.append(CaveGenerator.rock_at(row))
 	return voxels

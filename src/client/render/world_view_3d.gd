@@ -101,7 +101,7 @@ func _ready() -> void:
 	face_material.set_shader_parameter("see_through_walls", TileAtlas.clear_wall_flags())
 	face_material.set_shader_parameter("ground_atlas", TerrainRenderer.GROUND_ATLAS)
 	face_material.set_shader_parameter("ground_normals", TerrainRenderer.GROUND_NORMALS)
-	_variants.resize(256)
+	_variants.resize(Tiles.Block.size())
 	for block: int in Tiles.Block.values():
 		_variants[block] = props.variant_count(block)
 

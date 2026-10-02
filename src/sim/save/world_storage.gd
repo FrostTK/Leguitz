@@ -120,16 +120,13 @@ func load_chunk(coord: Vector2i) -> ChunkData:
 	if data.is_empty():
 		return null
 	var compressed: PackedByteArray = data["voxels"]
-	var chunk := (
-		ChunkData
-		. from_dict(
-			{
-				"x": coord.x,
-				"y": coord.y,
-				"voxels": compressed.decompress(int(data["size"]), COMPRESSION),
-				"biome": data["biome"],
-			}
-		)
+	var bytes := compressed.decompress(int(data["size"]), COMPRESSION)
+	# Saved before the ids grew (one byte per voxel), or as ints.
+	var ids: Variant = bytes
+	if bytes.size() != GameConst.CHUNK_AREA * GameConst.WORLD_HEIGHT:
+		ids = bytes.to_int32_array()
+	var chunk := ChunkData.from_dict(
+		{"x": coord.x, "y": coord.y, "voxels": ids, "biome": data["biome"]}
 	)
 	chunk.modified = true
 	for cell: Vector3i in data.get("chests", {}):
@@ -151,8 +148,8 @@ func store_chunk(chunk: ChunkData) -> void:
 	for cell: Vector3i in chunk.furnaces:
 		furnaces[cell] = chunk.furnaces[cell].to_dict()
 	_region(key)[chunk.coord] = {
-		"voxels": chunk.voxels.compress(COMPRESSION),
-		"size": chunk.voxels.size(),
+		"voxels": chunk.voxels.to_byte_array().compress(COMPRESSION),
+		"size": chunk.voxels.size() * 4,
 		"biome": chunk.biome,
 		"chests": chests,
 		"furnaces": furnaces,
