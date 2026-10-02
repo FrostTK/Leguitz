@@ -85,6 +85,9 @@ class Job:
 	var coord := Vector2i.ZERO
 	var voxels: Array[PackedByteArray] = []
 	var tops: Array[PackedByteArray] = []
+	## The chunk's columns where something rises over the terrain (see
+	## ChunkData.raised).
+	var raised: Dictionary[int, int] = {}
 	## Model variants per block (0 = not a prop), see PropLibrary.
 	var variants := PackedByteArray()
 	## Row the view cuts the world at (HEIGHT: no cut), for the surface map,
@@ -100,6 +103,7 @@ class Job:
 	static func of_chunk(chunk: ChunkData, neighbor: Callable) -> Job:
 		var job := Job.new()
 		job.coord = chunk.coord
+		job.raised = chunk.raised.duplicate()
 		for dz in range(-1, 2):
 			for dx in range(-1, 2):
 				var other: ChunkData = (
@@ -217,7 +221,7 @@ static func build(job: Job) -> Result:
 		for lx in SIZE:
 			var column := (lz + 1) * SPAN + (lx + 1)
 			var base := column * HEIGHT
-			var last := mini(tops[column] + 1, HEIGHT)
+			var last := mini(maxi(tops[column] + 1, job.raised.get(lz * SIZE + lx, 0)), HEIGHT)
 			for y in last:
 				var index := base + y
 				var voxel := voxels[index]
@@ -771,8 +775,10 @@ static func _add_side(
 
 ## A prop (tree, plant, rock...) standing in its voxel. Each gets a
 ## variant, a quarter turn and a slight tint from its tile, so the same
-## seed always grows the same forest. A workbench is drawn from its left
-## end, turned the way it faces, over both its tiles.
+## seed always grows the same forest. A wide object (a workbench, a big
+## gate) is drawn from its left end, turned the way it faces, over both
+## its tiles; what players place keeps its turn (none, or the way it
+## faces); a fence's version is the sides it joins.
 static func _add_prop(
 	result: Result,
 	variants: PackedByteArray,
@@ -799,15 +805,29 @@ static func _add_prop(
 	var turn := prop_turn(tile)
 	if ObjectShapes.front_of(block) != Vector2i.ZERO:
 		turn = Basis(Vector3.UP, ObjectShapes.turn_of(block))
-	if ObjectShapes.is_bench_left(block):
-		var right := ObjectShapes.bench_right(block)
+	elif Mining.FLOOR_OBJECTS.has(block):
+		turn = Basis()
+	if ObjectShapes.is_wide_left(block):
+		var right := ObjectShapes.wide_right(block)
 		foot += Vector3(right.x, 0.0, right.y) * 0.5
 	var shade := 0.93 + ((h >> 16) & 15) / 15.0 * 0.14
 	var warmth := 0.97 + ((h >> 20) & 7) / 7.0 * 0.06
 	var custom := Color(shade * warmth, shade, shade / warmth, ((h >> 24) & 255) / 255.0)
-	var key := Vector2i(
-		ObjectShapes.model_block(block), ObjectShapes.variant_at(block, tile) % count
-	)
+	var variant := ObjectShapes.variant_at(block, tile)
+	if block == Tiles.Block.FENCE:
+		variant = _fence_sides(voxels, base + y)
+	var key := Vector2i(ObjectShapes.model_block(block), variant % count)
 	if not result.props.has(key):
 		result.props[key] = []
 	result.props[key].append([Transform3D(turn, foot), custom])
+
+
+## The sides a fence at `index` (padded voxels) joins (ObjectShapes.FENCE_SIDES
+## bits: north, east, south, west).
+static func _fence_sides(voxels: PackedByteArray, index: int) -> int:
+	var sides := 0
+	for bit in ObjectShapes.FENCE_SIDES.size():
+		var side: Vector2i = ObjectShapes.FENCE_SIDES[bit]
+		if ObjectShapes.fence_joins(voxels[index + side.x * STRIDE_X + side.y * STRIDE_Z]):
+			sides |= 1 << bit
+	return sides

@@ -135,6 +135,18 @@ enum Id {
 	DIAMOND_CHESTPLATE,
 	DIAMOND_LEGGINGS,
 	DIAMOND_BOOTS,
+	TORCH_BRACKET,
+	CURTAINS,
+	GLASS_PANE,
+	WINDOW,
+	SINK,
+	TOILET,
+	TABLE,
+	CHAIR,
+	FENCE,
+	GATE,
+	BIG_GATE,
+	CAMPFIRE,
 }
 ## What a tool is made for (Mining.tool_for: what it breaks faster).
 enum Tool { NONE, PICKAXE, AXE, SHOVEL, SWORD }
@@ -213,6 +225,18 @@ const PLACES_BLOCK := {
 	Id.CUT_SANDSTONE: Tiles.Block.CUT_SANDSTONE,
 	Id.GLASS: Tiles.Block.GLASS,
 	Id.WOOL: Tiles.Block.WOOL,
+	Id.WINDOW: Tiles.Block.WINDOW,
+	Id.TORCH_BRACKET: Tiles.Block.TORCH_BRACKET,
+	Id.CURTAINS: Tiles.Block.CURTAINS,
+	Id.GLASS_PANE: Tiles.Block.GLASS_PANE,
+	Id.SINK: Tiles.Block.SINK,
+	Id.TOILET: Tiles.Block.TOILET,
+	Id.TABLE: Tiles.Block.TABLE,
+	Id.CHAIR: Tiles.Block.CHAIR,
+	Id.FENCE: Tiles.Block.FENCE,
+	Id.GATE: Tiles.Block.GATE,
+	Id.BIG_GATE: Tiles.Block.BIG_GATE,
+	Id.CAMPFIRE: Tiles.Block.CAMPFIRE,
 }
 
 ## What a ground gives (soil gives dirt); grounds left out give nothing.
@@ -313,6 +337,7 @@ const BLOCK_DROPS := {
 	Tiles.Block.CUT_SANDSTONE: [Id.CUT_SANDSTONE, 1, 1],
 	Tiles.Block.GLASS: [Id.GLASS, 1, 1],
 	Tiles.Block.WOOL: [Id.WOOL, 1, 1],
+	Tiles.Block.WINDOW: [Id.WINDOW, 1, 1],
 }
 ## Food: how much satiety eating one gives (Vitals.MAX_FOOD points; see
 ## also Vitals.POISONS). Cooking pays: dried berries, the stew and cooked
@@ -353,6 +378,9 @@ const TREE_LOGS := {
 	Tiles.Block.JUNGLE_TREE: Id.JUNGLE_LOG,
 	Tiles.Block.ACACIA: Id.ACACIA_LOG,
 }
+
+## Block kind -> the item placing it (see drops).
+static var _placed_by := _build_placed_by()
 
 
 static func is_valid(item: int) -> bool:
@@ -435,4 +463,19 @@ static func drops(voxel: int, tile: Vector2i, rng: RandomNumberGenerator) -> Arr
 	elif BLOCK_DROPS.has(block):
 		var drop: Array = BLOCK_DROPS[block]
 		result.append(Vector2i(drop[0], rng.randi_range(drop[1], drop[2])))
+	elif _placed_by.has(ObjectShapes.base_kind(block)):
+		# What players place gives itself back, any way it faces, open or
+		# shut.
+		result.append(Vector2i(_placed_by[ObjectShapes.base_kind(block)], 1))
 	return result
+
+
+## Block kind -> the item placing it (PLACES_BLOCK; a gate's open kind
+## too).
+static func _build_placed_by() -> Dictionary:
+	var lookup := {}
+	for item: int in PLACES_BLOCK:
+		lookup[PLACES_BLOCK[item]] = item
+	for shut: int in ObjectShapes.OPENS:
+		lookup[ObjectShapes.OPENS[shut]] = lookup[shut]
+	return lookup

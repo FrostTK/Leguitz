@@ -96,6 +96,9 @@ static func build(item: int) -> VoxelGrid:
 		return _meat(item)
 	if Armor.is_armor(item):
 		return ArmorModels.icon(item)
+	var decor := DecorModels.item(item)
+	if decor != null:
+		return decor
 	match item:
 		Items.Id.STICK:
 			return _stick()

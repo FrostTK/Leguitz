@@ -310,6 +310,8 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 			_on_block_break(session, message)
 		Msg.BLOCK_PLACE:
 			_on_block_place(session, message)
+		Msg.SWING_GATE:
+			Fixtures.swing_gate(self, session, message.get("cell", Vector3i.ZERO))
 		Msg.SELECT_SLOT:
 			session.inventory.selected = clampi(
 				int(message.get("slot", 0)), 0, Inventory.HOTBAR - 1
@@ -462,17 +464,18 @@ func _on_block_break(session: PlayerSession, message: Dictionary) -> void:
 	for part in cells:
 		change_voxel(part, Mining.left_after_break(part, world.voxel_at))
 	if drops:
-		_drop_from(cell, voxel)
+		drop_from(cell, voxel)
 	_spill_contents(cell)
 	Survival.spend(self, session, Vitals.BREAK_EFFORT)
 	for part in cells:
+		Fixtures.drop_hung(self, part, drops)
 		var above := part + Vector3i.UP
 		var standing := world.voxel_at(above)
 		if Mining.needs_support(standing):
 			for piece in Mining.object_cells(above, standing, world.voxel_at):
 				change_voxel(piece, Voxels.AIR)
 			if drops:
-				_drop_from(above, standing)
+				drop_from(above, standing)
 
 
 ## A chest or a furnace broken: what it held falls out where it was.
@@ -501,7 +504,7 @@ func _spill(cell: Vector3i, holder: Inventory, slots: int) -> void:
 
 
 ## What a broken voxel gives falls where it was.
-func _drop_from(cell: Vector3i, voxel: int) -> void:
+func drop_from(cell: Vector3i, voxel: int) -> void:
 	var tile := Vector2i(cell.x, cell.z)
 	var middle := Vector3(cell.x + 0.5, cell.y - GameConst.SEA_LEVEL + 0.5, cell.z + 0.5)
 	for drop in Items.drops(voxel, tile, rng):

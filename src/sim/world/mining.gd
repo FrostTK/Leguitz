@@ -91,6 +91,21 @@ const BLOCK_SECONDS := {
 	Tiles.Block.CUT_SANDSTONE: 2.5,
 	Tiles.Block.GLASS: 0.5,
 	Tiles.Block.WOOL: 0.8,
+	Tiles.Block.WINDOW: 0.8,
+	# What players place, by kind (any way it faces, open or shut).
+	Tiles.Block.TORCH_BRACKET: 1.5,
+	Tiles.Block.CURTAINS: 0.6,
+	Tiles.Block.GLASS_PANE: 0.4,
+	Tiles.Block.SINK: 2.5,
+	Tiles.Block.TOILET: 2.5,
+	Tiles.Block.TABLE: 2.0,
+	Tiles.Block.CHAIR: 1.5,
+	Tiles.Block.FENCE: 2.0,
+	Tiles.Block.GATE: 2.0,
+	Tiles.Block.GATE_OPEN: 2.0,
+	Tiles.Block.BIG_GATE: 2.5,
+	Tiles.Block.BIG_GATE_OPEN: 2.5,
+	Tiles.Block.CAMPFIRE: 1.0,
 }
 ## Trees by hand: chopping a trunk takes a while.
 const TREE_SECONDS := 3.5
@@ -128,6 +143,15 @@ const AXE_BLOCKS := {
 	Tiles.Block.CHEST_WEST: true,
 	Tiles.Block.CHEST_NORTH: true,
 	Tiles.Block.CHEST_EAST: true,
+	Tiles.Block.WINDOW: true,
+	Tiles.Block.TABLE: true,
+	Tiles.Block.CHAIR: true,
+	Tiles.Block.FENCE: true,
+	Tiles.Block.GATE: true,
+	Tiles.Block.GATE_OPEN: true,
+	Tiles.Block.BIG_GATE: true,
+	Tiles.Block.BIG_GATE_OPEN: true,
+	Tiles.Block.CAMPFIRE: true,
 }
 const PICKAXE_BLOCKS := {
 	Tiles.Block.ROCK: true,
@@ -152,6 +176,15 @@ const PICKAXE_BLOCKS := {
 	Tiles.Block.BROKEN_FURNACE_WEST: true,
 	Tiles.Block.BROKEN_FURNACE_NORTH: true,
 	Tiles.Block.BROKEN_FURNACE_EAST: true,
+	Tiles.Block.TORCH_BRACKET: true,
+	Tiles.Block.SINK: true,
+	Tiles.Block.TOILET: true,
+}
+## Objects placed as they are (no way to face), standing on a cube.
+const FLOOR_OBJECTS := {
+	Tiles.Block.TABLE: true,
+	Tiles.Block.FENCE: true,
+	Tiles.Block.CAMPFIRE: true,
 }
 
 
@@ -164,44 +197,85 @@ static func can_break(voxel: int, row: int) -> bool:
 	)
 
 
-## Voxels a player can place: cubes (grounds and blocks) and the objects
-## placed facing the player (workbench, chest, furnaces).
+## Voxels a player can place: cubes (grounds and blocks), the objects
+## placed facing the player (workbench, chest, furnaces, furniture...) and
+## the others players make (a table, a fence, a campfire).
 static func can_place(voxel: int) -> bool:
 	if voxel == Voxels.UNKNOWN:
 		return false
-	return Voxels.is_cube(voxel) or ObjectShapes.front_of(Voxels.block_of(voxel)) != Vector2i.ZERO
+	var block := Voxels.block_of(voxel)
+	return (
+		Voxels.is_cube(voxel)
+		or ObjectShapes.front_of(block) != Vector2i.ZERO
+		or FLOOR_OBJECTS.has(block)
+	)
 
 
 ## The cells a placed voxel takes ({cell: voxel}; empty: no room). A cube
-## takes the cell aimed at; a workbench faces `front` and takes the cell
-## aimed at and the one on its right (or else the one on its left), a
-## chest or a furnace faces `front` in the cell aimed at, all free of
-## anything solid or liquid and standing on cubes.
+## takes the cell aimed at; a wide object (workbench, big gate) faces
+## `front` and takes the cell aimed at and the one on its right (or else
+## the one on its left); other furniture faces `front` in the cell aimed
+## at, the objects placed as they are stand there, all free of anything
+## solid or liquid and standing on cubes. What hangs on a wall faces
+## `front` (away from the side of the cube aimed at, behind it).
 static func placement(
 	cell: Vector3i, voxel: int, front: Vector2i, voxel_at: Callable
 ) -> Dictionary:
 	var block := Voxels.block_of(voxel)
 	var kind := ObjectShapes.kind_of(block)
-	if kind != -1 and kind != Tiles.Block.WORKBENCH:
+	if ObjectShapes.WALL_MOUNTED.has(kind):
+		var there: int = voxel_at.call(cell)
+		var behind: int = voxel_at.call(cell - Vector3i(front.x, 0, front.y))
+		if not is_replaceable(there) or Voxels.is_liquid(there) or not Voxels.is_cube(behind):
+			return {}
+		return {cell: Voxels.of_block(ObjectShapes.facing(kind, front))}
+	if ObjectShapes.WIDE_KINDS.has(kind):
+		var left := ObjectShapes.facing(kind, front)
+		var right := ObjectShapes.wide_right(left)
+		var step := Vector3i(right.x, 0, right.y)
+		var end := Voxels.of_block(ObjectShapes.wide_end(kind, right))
+		for start: Vector3i in [cell, cell - step]:
+			if _bench_room(start, voxel_at) and _bench_room(start + step, voxel_at):
+				return {start: Voxels.of_block(left), start + step: end}
+		return {}
+	if kind != -1:
 		if not _bench_room(cell, voxel_at):
 			return {}
 		return {cell: Voxels.of_block(ObjectShapes.facing(kind, front))}
-	if not ObjectShapes.is_bench_left(block):
-		return {cell: voxel} if is_replaceable(voxel_at.call(cell)) else {}
-	var left := ObjectShapes.facing(Tiles.Block.WORKBENCH, front)
-	var right := ObjectShapes.bench_right(left)
-	var step := Vector3i(right.x, 0, right.y)
-	var end := Voxels.of_block(ObjectShapes.bench_end(right))
-	for start: Vector3i in [cell, cell - step]:
-		if _bench_room(start, voxel_at) and _bench_room(start + step, voxel_at):
-			return {start: Voxels.of_block(left), start + step: end}
-	return {}
+	if FLOOR_OBJECTS.has(block):
+		return {cell: voxel} if _bench_room(cell, voxel_at) else {}
+	return {cell: voxel} if is_replaceable(voxel_at.call(cell)) else {}
 
 
 ## Whether breaking a voxel wears the tool in hand (not what breaks at
 ## once: small plants).
 static func wears(voxel: int) -> bool:
 	return hand_seconds(voxel) > INSTANT_SECONDS
+
+
+## Whether a voxel swings when used: a gate (see swung_cells).
+static func swings(voxel: int) -> bool:
+	return voxel != Voxels.UNKNOWN and ObjectShapes.is_gate(Voxels.block_of(voxel))
+
+
+## A gate in `cell` swung open or shut: its cells and their new voxels.
+static func swung_cells(cell: Vector3i, voxel: int, voxel_at: Callable) -> Dictionary:
+	var cells := {}
+	for part in object_cells(cell, voxel, voxel_at):
+		var block := Voxels.block_of(voxel_at.call(part))
+		cells[part] = Voxels.of_block(ObjectShapes.swung(block))
+	return cells
+
+
+## What hangs on the sides of the cube in `cell` (it falls with it).
+static func hung_on(cell: Vector3i, voxel_at: Callable) -> Array[Vector3i]:
+	var hung: Array[Vector3i] = []
+	for side: Vector2i in ObjectShapes.WAYS:
+		var at := cell + Vector3i(side.x, 0, side.y)
+		var block := Voxels.block_of(voxel_at.call(at))
+		if ObjectShapes.is_wall_mounted(block) and ObjectShapes.front_of(block) == side:
+			hung.append(at)
+	return hung
 
 
 ## Whether a voxel opens something when used (right click): a workbench,
@@ -225,23 +299,27 @@ static func front_towards(cell: Vector3i, feet: Vector2) -> Vector2i:
 
 
 ## The cells of the object standing in `cell` (its left end first): both
-## ends of a workbench, else the cell alone.
+## ends of a wide object (a workbench, a big gate), else the cell alone.
 static func object_cells(cell: Vector3i, voxel: int, voxel_at: Callable) -> Array[Vector3i]:
 	var block := Voxels.block_of(voxel)
-	if ObjectShapes.is_bench_left(block):
-		var right := ObjectShapes.bench_right(block)
+	var kind := ObjectShapes.wide_kind(block)
+	if kind == -1:
+		return [cell]
+	if ObjectShapes.is_wide_left(block):
+		var right := ObjectShapes.wide_right(block)
 		var other := cell + Vector3i(right.x, 0, right.y)
-		if ObjectShapes.BENCH_ENDS.has(Voxels.block_of(voxel_at.call(other))):
+		var other_block := Voxels.block_of(voxel_at.call(other))
+		if ObjectShapes.is_wide_end(other_block) and ObjectShapes.wide_kind(other_block) == kind:
 			return [cell, other]
-	elif ObjectShapes.BENCH_ENDS.has(block):
-		var along: Vector2i = ObjectShapes.BENCH_ENDS[block]
-		for side: int in [-1, 1]:
-			var left := cell + Vector3i(along.x, 0, along.y) * side
-			var left_block := Voxels.block_of(voxel_at.call(left))
-			if ObjectShapes.is_bench_left(left_block):
-				var right := ObjectShapes.bench_right(left_block)
-				if left + Vector3i(right.x, 0, right.y) == cell:
-					return [left, cell]
+		return [cell]
+	var along := ObjectShapes.end_axis(block)
+	for side: int in [-1, 1]:
+		var left := cell + Vector3i(along.x, 0, along.y) * side
+		var left_block := Voxels.block_of(voxel_at.call(left))
+		if ObjectShapes.is_wide_left(left_block) and ObjectShapes.wide_kind(left_block) == kind:
+			var right := ObjectShapes.wide_right(left_block)
+			if left + Vector3i(right.x, 0, right.y) == cell:
+				return [left, cell]
 	return [cell]
 
 
@@ -273,9 +351,10 @@ static func left_after_break(cell: Vector3i, voxel_at: Callable) -> int:
 	return Voxels.AIR
 
 
-## Objects stand on the voxel under them: breaking it breaks them too.
+## Objects stand on the voxel under them: breaking it breaks them too
+## (not what hangs on a wall: see hung_on).
 static func needs_support(voxel: int) -> bool:
-	return Voxels.is_object(voxel)
+	return Voxels.is_object(voxel) and not ObjectShapes.is_wall_mounted(Voxels.block_of(voxel))
 
 
 ## Seconds to break a voxel with an item in hand: the tool made for it
@@ -297,9 +376,10 @@ static func tool_for(voxel: int) -> int:
 		if ground == Tiles.Ground.NONE or Voxels.is_liquid(voxel):
 			return Items.Tool.NONE
 		return Items.Tool.PICKAXE if PICKAXE_GROUNDS.has(ground) else Items.Tool.SHOVEL
-	if ObjectShapes.is_tree(block) or AXE_BLOCKS.has(block):
+	var kind := ObjectShapes.base_kind(block)
+	if ObjectShapes.is_tree(block) or AXE_BLOCKS.has(block) or AXE_BLOCKS.has(kind):
 		return Items.Tool.AXE
-	if Tiles.is_cube(block) or PICKAXE_BLOCKS.has(block):
+	if Tiles.is_cube(block) or PICKAXE_BLOCKS.has(block) or PICKAXE_BLOCKS.has(kind):
 		return Items.Tool.PICKAXE
 	return Items.Tool.NONE
 
@@ -313,6 +393,9 @@ static func hand_seconds(voxel: int) -> float:
 		return TREE_SECONDS
 	if BLOCK_SECONDS.has(block):
 		return BLOCK_SECONDS[block]
+	var kind := ObjectShapes.base_kind(block)
+	if BLOCK_SECONDS.has(kind):
+		return BLOCK_SECONDS[kind]
 	return OTHER_SECONDS if Tiles.is_block_solid(block) else PLANT_SECONDS
 
 

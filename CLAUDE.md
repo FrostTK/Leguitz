@@ -261,6 +261,29 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   whose model the others share) its four blocks in WAYS order (S, W, N, E); `kind_of`, `front_of`,
   `facing(kind, front)`, `turn_of`, `model_block`. One-tile ones (chests, furnaces) are BOX_SIZE
   voxels square and a level high; `Mining.placement` puts them in the cell aimed at.
+- Houses and gardens (phase 6, step 0; DecorModels, all in one file: front +z, what hangs on a
+  wall 16 deep with its back at z = 0): items TORCH_BRACKET, CURTAINS, GLASS_PANE, WINDOW (a clear
+  cube block: wall kind 25, CLEAR_WALLS, a framed `window` in gen_art), SINK, TOILET, TABLE,
+  CHAIR, FENCE, GATE (wicket), BIG_GATE (two tiles), CAMPFIRE; recipes in Recipes.SHAPED (sink,
+  toilet, big gate at the workbench; Recipes.LOGS). ObjectShapes: facing kinds (FACING_KINDS),
+  wide objects two tiles long generalized from the workbench (WIDE_KINDS: kind -> right end per
+  axis, WIDE_DEPTH, `wide_kind`/`is_wide_left`/`is_wide_end`/`end_axis`/`wide_right`/`wide_end`,
+  `base_kind` = a block's kind whatever way it faces or end it is), TOPS (furniture stood on),
+  FOOTPRINTS, BARRIERS (fences and shut gates block two levels: nobody jumps over, animals stay
+  in), OPENS (gate -> open kind, `is_gate`, `is_open`, `swung`; open ones are NON_SOLID),
+  WALL_MOUNTED (bracket, curtains: hung on the side of a cube aimed at, facing away from it:
+  BlockInteraction.place takes `front` from the face's normal; Mining.placement wants a cube
+  behind; Mining.hung_on / Fixtures.drop_hung: they fall with that cube, not with the floor,
+  Mining.needs_support), fences joining fences, gates and cubes (`fence_joins`; their model
+  version is the sides joined, FENCE_SIDES bits, 16 versions, ChunkMesher._fence_sides; no
+  random turn for Mining.FLOOR_OBJECTS), the campfire `is_lit` (light, glowing flames,
+  Light.near_fire). Gates swing with E (Mining.swings / swung_cells; BlockInteraction predicts,
+  Msg.SWING_GATE, Fixtures.swing_gate refuses shutting on a body). Items.drops: what players
+  place gives its item back (Items._placed_by, open gates too); Mining seconds and tools by
+  base kind. ChunkData.raised (column -> 1 + the highest object rising more than a row over its
+  terrain: hung high on a wall), kept by set_voxel, found by recompute_tops, sent in to_dict:
+  ChunkMesher walks a column up to it (columns stop at `tops` otherwise). The book's "Home and
+  garden" chapter (GuideBook._home; chapters' titles are named, not indexed).
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made

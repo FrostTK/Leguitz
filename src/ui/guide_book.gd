@@ -2,7 +2,8 @@ class_name GuideBook
 extends RefCounted
 ## What the player's book says (the 10th slot, shown by BookScreen): the
 ## controls as they are bound (in the player's keyboard layout), the
-## gamepad, tips, tools, the recipes, the furnaces, survival, the animals,
+## gamepad, tips, tools, the recipes, the furnaces, home and garden,
+## survival, the animals,
 ## the monsters, combat (swords, the bow, armor) and the game modes
 ## (creative's flight and debug keys). A chapter is a list of entries:
 ## Dictionaries with a "kind" (Kind) and their text already translated,
@@ -18,6 +19,7 @@ const CHAPTERS: Array[String] = [
 	"BOOK_CHAPTER_TOOLS",
 	"BOOK_CHAPTER_CRAFT",
 	"BOOK_CHAPTER_FURNACES",
+	"BOOK_CHAPTER_HOME",
 	"BOOK_CHAPTER_SURVIVAL",
 	"BOOK_CHAPTER_ANIMALS",
 	"BOOK_CHAPTER_MONSTERS",
@@ -50,6 +52,7 @@ static func chapters() -> Array[Array]:
 		_tools(),
 		_craft(),
 		_furnaces(),
+		_home(),
 		_survival(),
 		_animals(),
 		_monsters(),
@@ -60,7 +63,7 @@ static func chapters() -> Array[Array]:
 
 static func _controls() -> Array:
 	return [
-		_title(CHAPTERS[0]),
+		_title("BOOK_CHAPTER_CONTROLS"),
 		_keys("BOOK_MOVE", [InputNames.movement_keys(), _t("KEY_ARROWS")]),
 		_keys("BOOK_SPRINT", InputNames.keys(InputBindings.SPRINT)),
 		_keys("BOOK_JUMP", InputNames.keys(InputBindings.JUMP)),
@@ -81,7 +84,7 @@ static func _controls() -> Array:
 
 static func _gamepad() -> Array:
 	return [
-		_title(CHAPTERS[1]),
+		_title("BOOK_CHAPTER_GAMEPAD"),
 		_keys("BOOK_MOVE", InputNames.pad(InputBindings.MOVE_UP)),
 		_keys("BOOK_SPRINT", InputNames.pad(InputBindings.SPRINT)),
 		_keys("BOOK_JUMP", InputNames.pad(InputBindings.JUMP)),
@@ -105,14 +108,14 @@ static func _gamepad() -> Array:
 
 
 static func _tips() -> Array:
-	var entries := [_title(CHAPTERS[2])]
+	var entries := [_title("BOOK_CHAPTER_TIPS")]
 	for i in TIP_COUNT:
 		entries.append({"kind": Kind.TIP, "text": _t("BOOK_TIP_%d" % (i + 1))})
 	return entries
 
 
 static func _tools() -> Array:
-	var entries := [_title(CHAPTERS[3]), _text("BOOK_TOOLS_INTRO")]
+	var entries := [_title("BOOK_CHAPTER_TOOLS"), _text("BOOK_TOOLS_INTRO")]
 	for row: Array in TOOL_ROWS:
 		entries.append(_icon(row[0], _t(row[1])))
 	entries.append(_heading("BOOK_TOOLS_SPEED"))
@@ -138,7 +141,7 @@ static func _tools() -> Array:
 ## and each piece of armor in one entry going through the materials, the
 ## factory furnace).
 static func _craft() -> Array:
-	var entries := [_title(CHAPTERS[4]), _text("BOOK_CRAFT_HOW")]
+	var entries := [_title("BOOK_CHAPTER_CRAFT"), _text("BOOK_CRAFT_HOW")]
 	var planks := []
 	var tools := {}
 	var armor := {}
@@ -177,7 +180,7 @@ static func _craft() -> Array:
 ## How furnaces work, what each makes (drawn like recipes: one item in,
 ## what comes out), what breaks or chars, and the fuels.
 static func _furnaces() -> Array:
-	var entries := [_title(CHAPTERS[5]), _text("BOOK_FURNACE_HOW")]
+	var entries := [_title("BOOK_CHAPTER_FURNACES"), _text("BOOK_FURNACE_HOW")]
 	for kind: int in [Tiles.Block.FOOD_FURNACE, Tiles.Block.FACTORY_FURNACE]:
 		var food := kind == Tiles.Block.FOOD_FURNACE
 		entries.append(_heading("ITEM_FOOD_FURNACE" if food else "ITEM_FACTORY_FURNACE"))
@@ -201,10 +204,30 @@ static func _furnaces() -> Array:
 	return entries
 
 
+## What furnishes a house and a garden: what hangs on a wall, the
+## furniture, fences and gates, the campfire.
+static func _home() -> Array:
+	return [
+		_title("BOOK_CHAPTER_HOME"),
+		_text("BOOK_HOME_INTRO"),
+		_text("BOOK_HOME_WALL"),
+		_icon(Items.Id.TORCH_BRACKET, _t("BOOK_HOME_BRACKET")),
+		_icon(Items.Id.CURTAINS, _t("BOOK_HOME_CURTAINS")),
+		_icon(Items.Id.WINDOW, _t("BOOK_HOME_WINDOW")),
+		_icon(Items.Id.GLASS_PANE, _t("BOOK_HOME_PANE")),
+		_icon(Items.Id.TABLE, _t("BOOK_HOME_FURNITURE")),
+		_heading("BOOK_HOME_GARDEN"),
+		_icon(Items.Id.FENCE, _t("BOOK_HOME_FENCE")),
+		_icon(Items.Id.GATE, _t("BOOK_HOME_GATE")),
+		_icon(Items.Id.BIG_GATE, _t("BOOK_HOME_BIG_GATE")),
+		_icon(Items.Id.CAMPFIRE, _t("BOOK_HOME_CAMPFIRE")),
+	]
+
+
 ## Vitality and satiety: what wears them down, how to eat, what feeds.
 static func _survival() -> Array:
 	var entries := [
-		_title(CHAPTERS[6]),
+		_title("BOOK_CHAPTER_SURVIVAL"),
 		_text("BOOK_SURVIVAL_VITALITY"),
 		_text("BOOK_SURVIVAL_FOOD"),
 		_text("BOOK_SURVIVAL_WATER"),
@@ -224,7 +247,7 @@ static func _survival() -> Array:
 ## Where each animal lives and what it gives (its first gift's icon), how
 ## to hunt and to cook.
 static func _animals() -> Array:
-	var entries := [_title(CHAPTERS[7]), _text("BOOK_ANIMALS_INTRO")]
+	var entries := [_title("BOOK_CHAPTER_ANIMALS"), _text("BOOK_ANIMALS_INTRO")]
 	for kind: int in Species.BIOMES:
 		var gifts := PackedStringArray()
 		for drop: Array in Species.DROPS[kind]:
@@ -241,7 +264,7 @@ static func _animals() -> Array:
 ## Each monster: where and when it comes out, how it hunts (the icon of
 ## what it leaves).
 static func _monsters() -> Array:
-	var entries := [_title(CHAPTERS[8]), _text("BOOK_MONSTERS_INTRO")]
+	var entries := [_title("BOOK_CHAPTER_MONSTERS"), _text("BOOK_MONSTERS_INTRO")]
 	for kind: int in Species.MONSTERS:
 		var text := (
 			_t("BOOK_ANIMALS_ENTRY")
@@ -254,7 +277,7 @@ static func _monsters() -> Array:
 ## Blows (what each sword takes off), the bow and arrows, armor (each
 ## material's protection and how long it lasts).
 static func _combat() -> Array:
-	var entries := [_title(CHAPTERS[9]), _text("BOOK_COMBAT_MELEE")]
+	var entries := [_title("BOOK_CHAPTER_COMBAT"), _text("BOOK_COMBAT_MELEE")]
 	entries.append(_heading("BOOK_COMBAT_SWORDS"))
 	for tier in Items.Tier.size():
 		var sword := Items.Id.NONE
@@ -289,7 +312,7 @@ static func _combat() -> Array:
 ## Creative (flight, the catalog, its debug keys), survival, hardcore.
 static func _modes() -> Array:
 	return [
-		_title(CHAPTERS[10]),
+		_title("BOOK_CHAPTER_MODES"),
 		_heading("GAME_MODE_CREATIVE"),
 		_text("BOOK_MODES_CREATIVE"),
 		_combo("BOOK_FLY", "BOOK_FLY_HOW"),

@@ -79,6 +79,9 @@ func _process(delta: float) -> void:
 ## Uses what is aimed at (InputBindings.USE): opens a workbench, a chest
 ## or a furnace. Returns whether there was something to use.
 func use_target() -> bool:
+	if target != null and Mining.swings(target.voxel):
+		_swing_gate(target.cell, target.voxel)
+		return true
 	if target == null or not Mining.opens(target.voxel):
 		return false
 	var block := Voxels.block_of(target.voxel)
@@ -113,6 +116,11 @@ func place() -> void:
 	):
 		return
 	var front := Mining.front_towards(cell, player.position)
+	if ObjectShapes.is_wall_mounted(Voxels.block_of(voxel)):
+		# Hung on the side aimed at, facing away from it.
+		front = Vector2i(target.normal.x, target.normal.z)
+		if replaced or front == Vector2i.ZERO or target.normal.y != 0:
+			return
 	var cells := Mining.placement(cell, voxel, front, client.world.voxel_at)
 	if cells.is_empty():
 		return
@@ -124,6 +132,22 @@ func place() -> void:
 	if not client.modes.creative():
 		client.inventory.take(slot, 1)
 	client.transport.send(Msg.block_place(cell, slot, front))
+	client.player_model.swing()
+
+
+## A gate aimed at swings open or shut (shown at once; the server
+## decides, Msg.SWING_GATE).
+func _swing_gate(cell: Vector3i, voxel: int) -> void:
+	var player := client.local_player
+	if Mining.reach_to(player.position, player.height, cell) > Mining.REACH:
+		return
+	var cells := Mining.swung_cells(cell, voxel, client.world.voxel_at)
+	for at: Vector3i in cells:
+		if Voxels.is_solid(cells[at]) and Mining.overlaps_body(at, player.position, player.height):
+			return
+	for at: Vector3i in cells:
+		_predict(at, cells[at])
+	client.transport.send(Msg.swing_gate(cell))
 	client.player_model.swing()
 
 
@@ -250,12 +274,13 @@ func _wear_tool(slot: int, voxel: int) -> void:
 	client.tool_broke(tool)
 
 
-## The frame around what is aimed at: a whole workbench, both its ends.
+## The frame around what is aimed at: a whole wide object (a workbench, a
+## big gate), both its ends.
 func _whole_box(hit: VoxelRay.Hit) -> AABB:
 	if hit == null:
 		return AABB()
 	var box := hit.box
-	if ObjectShapes.is_bench(Voxels.block_of(hit.voxel)):
+	if ObjectShapes.wide_kind(Voxels.block_of(hit.voxel)) != -1:
 		for part in Mining.object_cells(hit.cell, hit.voxel, client.world.voxel_at):
 			var block := Voxels.block_of(client.world.voxel_at(part))
 			box = box.merge(VoxelRay.object_box(block, part))

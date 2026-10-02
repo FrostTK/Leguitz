@@ -427,3 +427,28 @@ BOOK_COMBAT_ARMOR,Armor,Armure
 BOOK_COMBAT_ARMOR_HOW,"Put armor on in the four slots under your inventory's title, or Shift + click a piece. Each point of protection takes 4% off monsters' blows, up to 80%: the steel gauge over your vitality shows them. Every blow taken wears every piece worn.","Enfile l'armure dans les quatre emplacements sous le titre de ton inventaire, ou Maj + clic sur une pièce. Chaque point de protection retire 4 % des coups des monstres, jusqu'à 80 % : la jauge d'acier au-dessus de ta vitalité les montre. Chaque coup reçu use toutes les pièces portées."
 BOOK_COMBAT_ARMOR_KIND,"%s: %d points, %d to %d blows","%s : %d points, de %d à %d coups"
 BOOK_COMBAT_FALLS,"Armor does not soften falls, lava, drowning or hunger.","L'armure n'adoucit ni les chutes, ni la lave, ni la noyade, ni la faim."
+ITEM_TORCH_BRACKET,Torch bracket,Support mural de torche
+ITEM_CURTAINS,Curtains,Rideaux
+ITEM_GLASS_PANE,Glass pane,Vitre
+ITEM_WINDOW,Window,Fenêtre
+ITEM_SINK,Sink,Évier
+ITEM_TOILET,Toilet,Toilettes
+ITEM_TABLE,Table,Table
+ITEM_CHAIR,Chair,Chaise
+ITEM_FENCE,Fence,Barrière
+ITEM_GATE,Wicket gate,Portillon
+ITEM_BIG_GATE,Gate,Portail
+ITEM_CAMPFIRE,Campfire,Feu de camp
+BOOK_CHAPTER_HOME,Home and garden,Maison et jardin
+BOOK_HOME_INTRO,"Furnish your house and your garden (their recipes are in the Crafting chapter). Furniture stands on the ground, facing you; you can climb on it.","Aménage ta maison et ton jardin (leurs recettes sont au chapitre Fabrication). Les meubles se posent au sol, tournés vers toi ; on peut monter dessus."
+BOOK_HOME_WALL,Hung on a wall: aim at the side of a block. It falls with it.,Accroché au mur : vise le côté d'un bloc. Il tombe avec lui.
+BOOK_HOME_BRACKET,"Torch bracket: on a wall, it will hold a torch.","Support mural : au mur, il tiendra une torche."
+BOOK_HOME_CURTAINS,"Curtains: on a wall, in front of a window.","Rideaux : au mur, devant une fenêtre."
+BOOK_HOME_WINDOW,Window: a block of glass in a wooden frame.,Fenêtre : un bloc de verre dans un cadre en bois.
+BOOK_HOME_PANE,Glass pane: a thin pane across its tile.,Vitre : une plaque fine au milieu de sa case.
+BOOK_HOME_FURNITURE,"Sink, toilet, table and chair: to furnish the rooms.","Évier, toilettes, table et chaise : pour meubler les pièces."
+BOOK_HOME_GARDEN,Garden,Jardin
+BOOK_HOME_FENCE,"Fence: it joins the fences, gates and blocks beside it. Nobody jumps over it: animals stay in their pen.","Barrière : elle se raccorde aux barrières, portails et blocs voisins. Personne ne saute par-dessus : les animaux restent dans leur enclos."
+BOOK_HOME_GATE,Wicket gate: {use} opens and shuts it.,Portillon : {use} l'ouvre et le ferme.
+BOOK_HOME_BIG_GATE,"Gate: two tiles wide, {use} opens and shuts it.","Portail : large de deux cases, {use} l'ouvre et le ferme."
+BOOK_HOME_CAMPFIRE,"Campfire: it burns day and night, lights up around it and keeps monsters away.","Feu de camp : il brûle jour et nuit, éclaire autour de lui et tient les monstres à distance."

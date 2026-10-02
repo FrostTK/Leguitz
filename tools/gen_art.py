@@ -40,7 +40,7 @@ WALLS = [
     "RUBY_ORE", "DIAMOND_ORE", "EMERALD_ORE", "SANDSTONE", "PACKED_ICE",
     "OAK_PLANKS", "BIRCH_PLANKS", "SPRUCE_PLANKS", "DARK_OAK_PLANKS", "JUNGLE_PLANKS",
     "ACACIA_PLANKS", "STONE_BRICKS", "SMOOTH_STONE", "BRICKS", "DEEPSLATE_BRICKS",
-    "CUT_SANDSTONE", "GLASS", "WOOL",
+    "CUT_SANDSTONE", "GLASS", "WOOL", "WINDOW",
 ]
 # Walls from this row on draw from random generators of their own, so the
 # textures made before them (and the cliffs after) stay the same.
@@ -565,6 +565,38 @@ def wool(rng, face):
     return c, height
 
 
+def window(rng, variant):
+    """A window: a wooden frame and crossbars around four panes, clear
+    (transparent, like glass) but for a few glints."""
+    wood, dark, light = "#9a6a3c", "#6e4a2a", "#c08a52"
+    glint = "#f6fcfd"
+    c = Canvas(TILE, TILE)
+    c.fill(0, 0, TILE, 2, wood)
+    c.fill(0, 0, 2, TILE, wood)
+    c.fill(0, TILE - 2, TILE, 2, wood)
+    c.fill(TILE - 2, 0, 2, TILE, wood)
+    c.fill(0, 0, TILE, 1, light)
+    c.fill(0, 0, 1, TILE, light)
+    c.fill(0, TILE - 1, TILE, 1, dark)
+    c.fill(TILE - 1, 0, 1, TILE, dark)
+    c.fill(2, 7, TILE - 4, 2, wood)
+    c.fill(7, 2, 2, TILE - 4, wood)
+    c.fill(2, 8, TILE - 4, 1, dark)
+    c.fill(8, 2, 1, TILE - 4, dark)
+    c.fill(1, 1, 1, 1, light)
+    # Glints across the panes.
+    starts = [(3, 5), (10, 12)] if variant == 0 else [(4, 4), (10, 13)]
+    for x, y in starts:
+        for i in range(2):
+            c.put(x + i, y - i, glint)
+    c.put(11, 4, glint)
+    height = np.full((TILE, TILE), 0.8, dtype=np.float32)
+    height[2:TILE - 2, 2:TILE - 2] = 0.5
+    height[7:9, :] = 0.8
+    height[:, 7:9] = 0.8
+    return c, height
+
+
 def wall_tile(rng, name, is_top, variant):
     """The tile of a wall added after the first ones (own generator)."""
     if name in PLANKS:
@@ -577,6 +609,8 @@ def wall_tile(rng, name, is_top, variant):
         return cut_sandstone(rng, not is_top)
     if name == "WOOL":
         return wool(rng, not is_top)
+    if name == "WINDOW":
+        return window(rng, variant)
     return glass(rng, variant)
 
 

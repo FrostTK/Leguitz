@@ -23,6 +23,15 @@ const PLANKS: Array[int] = [
 const STONES: Array[int] = [Items.Id.STONE, Items.Id.DEEPSLATE]
 ## Coal or charcoal.
 const COALS: Array[int] = [Items.Id.COAL, Items.Id.CHARCOAL]
+## Any log.
+const LOGS: Array[int] = [
+	Items.Id.OAK_LOG,
+	Items.Id.BIRCH_LOG,
+	Items.Id.SPRUCE_LOG,
+	Items.Id.DARK_OAK_LOG,
+	Items.Id.JUNGLE_LOG,
+	Items.Id.ACACIA_LOG,
+]
 ## The recipes besides the logs sawn into planks and the tools (see
 ## all()): a "pattern" (rows of letters, spaces left empty) and its "keys"
 ## (letter -> ingredient), and the "result" [item, count].
@@ -69,6 +78,66 @@ const SHAPED := [
 		"pattern": ["SSS", "SCS", "SSS"],
 		"keys": {"S": STONES, "C": COALS},
 		"result": [Items.Id.FACTORY_FURNACE, 1],
+		"workbench": true,
+	},
+	# What houses and gardens are made of.
+	{
+		"pattern": ["I", "S"],
+		"keys": {"I": Items.Id.IRON_INGOT, "S": Items.Id.STICK},
+		"result": [Items.Id.TORCH_BRACKET, 2],
+	},
+	{
+		"pattern": ["SSS", "W W", "W W"],
+		"keys": {"S": Items.Id.STICK, "W": Items.Id.WOOL},
+		"result": [Items.Id.CURTAINS, 1],
+	},
+	{"pattern": ["GGG", "GGG"], "keys": {"G": Items.Id.GLASS}, "result": [Items.Id.GLASS_PANE, 16]},
+	{
+		"pattern": ["PPP", "PGP", "PPP"],
+		"keys": {"P": PLANKS, "G": Items.Id.GLASS},
+		"result": [Items.Id.WINDOW, 4],
+	},
+	{
+		"pattern": ["PPP", "S S", "S S"],
+		"keys": {"P": PLANKS, "S": Items.Id.STICK},
+		"result": [Items.Id.TABLE, 1],
+	},
+	{
+		"pattern": ["P  ", "PPP", "S S"],
+		"keys": {"P": PLANKS, "S": Items.Id.STICK},
+		"result": [Items.Id.CHAIR, 1],
+	},
+	{
+		"pattern": ["PSP", "PSP"],
+		"keys": {"P": PLANKS, "S": Items.Id.STICK},
+		"result": [Items.Id.FENCE, 3],
+	},
+	{
+		"pattern": ["SPS", "SPS"],
+		"keys": {"P": PLANKS, "S": Items.Id.STICK},
+		"result": [Items.Id.GATE, 1],
+	},
+	{
+		"pattern": [" S ", "SCS", "LLL"],
+		"keys": {"S": Items.Id.STICK, "C": COALS, "L": LOGS},
+		"result": [Items.Id.CAMPFIRE, 1],
+	},
+	{
+		"pattern": ["  I", "SSS", "PPP"],
+		"keys": {"I": Items.Id.IRON_INGOT, "S": STONES, "P": PLANKS},
+		"result": [Items.Id.SINK, 1],
+		"workbench": true,
+	},
+	{
+		"pattern": ["M  ", "MMM", " M "],
+		"keys": {"M": Items.Id.SMOOTH_STONE},
+		"result": [Items.Id.TOILET, 1],
+		"workbench": true,
+	},
+	{
+		"pattern": ["SPPPS", "SPPPS"],
+		"keys": {"P": PLANKS, "S": Items.Id.STICK},
+		"result": [Items.Id.BIG_GATE, 1],
 		"workbench": true,
 	},
 ]

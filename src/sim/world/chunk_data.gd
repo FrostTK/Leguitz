@@ -18,6 +18,9 @@ var voxels := PackedByteArray()
 var biome := PackedByteArray()
 ## Per column: 1 + row of the highest cube or liquid voxel (0 = none).
 var tops := PackedByteArray()
+## The columns (z * 16 + x) where something rises higher than a row over
+## their terrain (hung on a wall up there): 1 + its row. Few have any.
+var raised: Dictionary[int, int] = {}
 ## Set when a player changed the chunk (it must be saved, not regenerated).
 var modified := false
 ## Server side: the chests standing in the chunk, by cell (their own
@@ -51,6 +54,16 @@ func set_voxel(local: Vector3i, voxel: int) -> void:
 		tops[column] = maxi(tops[column], local.y + 1)
 	elif local.y + 1 == tops[column]:
 		tops[column] = _scan_top(local.x, local.z, local.y)
+	if voxel != Voxels.AIR and not Voxels.is_cube(voxel) and local.y > tops[column]:
+		raised[column] = maxi(raised.get(column, 0), local.y + 1)
+	elif raised.get(column, 0) == local.y + 1:
+		# The highest went: the next one under it, if any.
+		raised.erase(column)
+		var base := column * HEIGHT
+		for y in range(local.y - 1, tops[column], -1):
+			if voxels[base + y] != Voxels.AIR:
+				raised[column] = y + 1
+				break
 
 
 ## Row just above the terrain of a column (0 if the column is empty).
@@ -84,18 +97,28 @@ func get_biome(local: Vector2i) -> int:
 	return biome[local.y * SIZE + local.x]
 
 
-## Recomputes every column top (after filling the voxels directly).
+## Recomputes every column top (after filling the voxels directly), and
+## what rises over them (raised).
 func recompute_tops() -> void:
 	var flags := Voxels.flag_table()
 	var terrain := Voxels.FLAG_CUBE | Voxels.FLAG_LIQUID
+	raised.clear()
 	for column in GameConst.CHUNK_AREA:
 		var base := column * HEIGHT
 		var top := 0
+		var highest := 0
 		for y in range(HEIGHT - 1, -1, -1):
-			if flags[voxels[base + y]] & terrain != 0:
+			var voxel := voxels[base + y]
+			if voxel == Voxels.AIR:
+				continue
+			if flags[voxel] & terrain != 0:
 				top = y + 1
 				break
+			if highest == 0:
+				highest = y + 1
 		tops[column] = top
+		if highest > top + 1:
+			raised[column] = highest
 
 
 func duplicate_chunk() -> ChunkData:
@@ -103,6 +126,7 @@ func duplicate_chunk() -> ChunkData:
 	copy.voxels = voxels.duplicate()
 	copy.biome = biome.duplicate()
 	copy.tops = tops.duplicate()
+	copy.raised = raised.duplicate()
 	copy.modified = modified
 	return copy
 
@@ -115,6 +139,7 @@ func to_dict() -> Dictionary:
 		"voxels": voxels,
 		"biome": biome,
 		"tops": tops,
+		"raised": raised,
 	}
 
 
@@ -129,6 +154,9 @@ static func from_dict(data: Dictionary) -> ChunkData:
 	var tops: PackedByteArray = data.get("tops", PackedByteArray())
 	if tops.size() == GameConst.CHUNK_AREA:
 		chunk.tops = tops
+		var raised: Dictionary = data.get("raised", {})
+		for column: int in raised:
+			chunk.raised[int(column)] = int(raised[column])
 	else:
 		chunk.recompute_tops()
 	return chunk

@@ -66,6 +66,7 @@ const PUSH := "push"
 const LANTERN_OUT := "lantern_out"
 const ARROW_SPAWN := "arrow_spawn"
 const ARROW_REMOVE := "arrow_remove"
+const SWING_GATE := "swing_gate"
 
 
 ## The player hits the creature `id` with the hotbar slot `slot` in hand
@@ -159,6 +160,11 @@ static func block_break(cell: Vector3i, slot := -1) -> Dictionary:
 ## workbench facing `front`, see Mining.placement).
 static func block_place(cell: Vector3i, slot: int, front := Vector2i(0, 1)) -> Dictionary:
 	return {"t": BLOCK_PLACE, "cell": cell, "slot": slot, "front": front}
+
+
+## The player swings the gate in `cell` open or shut.
+static func swing_gate(cell: Vector3i) -> Dictionary:
+	return {"t": SWING_GATE, "cell": cell}
 
 
 ## The player took hotbar slot `slot` in hand.

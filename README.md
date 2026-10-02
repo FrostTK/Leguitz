@@ -13,7 +13,17 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 
 ![Leguitz : vue par défaut, fin d'après-midi caméra tournée, neige, nuit à la lanterne](docs/screenshots/phase2-3d-jour-nuit.png)
 
-## État actuel : phase 5 (survie et combat) terminée
+## État actuel : phase 6 (souterrain et structures) en cours
+
+### Phase 6 : souterrain et structures (en cours)
+
+| Fonction | État |
+|---|---|
+| Maison et jardin : support mural de torche et rideaux accrochés au mur, fenêtre, vitre, évier, toilettes, table, chaise, barrières qui se raccordent, portillon et portail (ouverts et fermés avec E), feu de camp qui éclaire et éloigne les monstres ; chapitre du livre | ✅ |
+| Torches et lanternes posées | à venir |
+| Lumière des grottes, coulées d'eau et de lave, profondeurs, ruines, donjons, mines, villages | à venir |
+
+![Leguitz : une pièce meublée vue de dessus (évier, toilettes, table et chaises, fenêtres), un enclos fermé puis ouvert (portillon et portail), l'intérieur en 1re personne (rideaux, supports muraux), le feu de camp au crépuscule, les nouveaux objets](docs/screenshots/phase6-maison-jardin.png)
 
 ### Phase 5 : survie et combat (terminée)
 
@@ -242,7 +252,7 @@ Pour le multijoueur, il suffira de brancher un transport réseau.
 3. ✅ Joueur et interactions (minage, construction, objets, inventaire, outils, livre du joueur)
 4. ✅ Craft (recettes, établi, usure, coffres, fours, blocs de construction)
 5. ✅ Survie et combat (vie, faim, nage, modes de jeu, animaux, monstres, combat et armures)
-6. Souterrain et structures
+6. Souterrain et structures (en cours : maison et jardin)
 7. Agriculture et élevage
 8. Mode Arcade : scénario n°1 « Restauration » (restaurer une terre désolée avec éoliennes,
    irrigateurs et purificateurs, faire revenir forêts, rivières et animaux, puis recycler les

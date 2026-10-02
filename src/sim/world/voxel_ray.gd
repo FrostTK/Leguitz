@@ -8,6 +8,8 @@ extends RefCounted
 
 ## Height (levels) of the small plants' body.
 const PLANT_HEIGHT := 0.7
+## How deep (local units) what hangs on a wall is met, against it.
+const WALL_SLICE := 0.3
 
 
 class Hit:
@@ -89,10 +91,24 @@ static func cast(
 	return null
 
 
-## The body (local units) of an object standing in voxel `cell`.
+## The body (local units) of an object standing in voxel `cell`: what
+## hangs on a wall a slice of its tile against it, an open gate its tile.
 static func object_box(block: int, cell: Vector3i) -> AABB:
 	var tile := Vector2i(cell.x, cell.z)
 	var level := float(cell.y - GameConst.SEA_LEVEL)
+	if ObjectShapes.is_wall_mounted(block):
+		var back := -ObjectShapes.front_of(block)
+		var low := Vector3(tile.x, level, tile.y)
+		var size := Vector3(1.0, 1.0, 1.0)
+		if back.x != 0:
+			size.x = WALL_SLICE
+			low.x += 1.0 - WALL_SLICE if back.x > 0 else 0.0
+		else:
+			size.z = WALL_SLICE
+			low.z += 1.0 - WALL_SLICE if back.y > 0 else 0.0
+		return AABB(low, size)
+	if ObjectShapes.is_gate(block) and ObjectShapes.is_open(block):
+		return AABB(Vector3(tile.x, level, tile.y), Vector3(1.0, 1.25, 1.0))
 	var rect := ObjectShapes.footprint_rect(block, tile)
 	if not rect.has_area():
 		return AABB(Vector3(tile.x, level, tile.y), Vector3(1.0, PLANT_HEIGHT, 1.0))

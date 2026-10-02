@@ -4,7 +4,10 @@ extends RefCounted
 ## by physics and by the voxel models: the trunk drawn is the trunk that
 ## blocks. Each object block has a few versions (trees: TREE_VARIANTS); the
 ## version of a tile, and where small things stand in it, come from its
-## position, so the server and every client agree.
+## position, so the server and every client agree. Also what players build
+## and place: furniture facing them, objects two tiles long (a workbench, a
+## big gate), objects hung on a wall, fences joining their neighbors and
+## gates that open.
 
 const VARIANTS := 3
 const TREE_VARIANTS := 8
@@ -36,8 +39,10 @@ const SOLIDS := {
 const WAYS: Array[Vector2i] = [Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1), Vector2i(1, 0)]
 ## Objects placed facing the player: each kind (its first block, whose
 ## model the others share) and its block for each of the WAYS. The
-## workbench's are its left end seen from its front; furnaces come unlit
-## and lit, and a food furnace that melted ore is broken.
+## workbench's and the big gate's are their left end seen from their
+## front; furnaces come unlit and lit, and a food furnace that melted ore
+## is broken; gates come closed and open; what hangs on a wall faces away
+## from it.
 const FACING_KINDS := {
 	Tiles.Block.WORKBENCH:
 	[
@@ -88,20 +93,92 @@ const FACING_KINDS := {
 		Tiles.Block.BROKEN_FURNACE_NORTH,
 		Tiles.Block.BROKEN_FURNACE_EAST,
 	],
+	Tiles.Block.TORCH_BRACKET:
+	[
+		Tiles.Block.TORCH_BRACKET,
+		Tiles.Block.TORCH_BRACKET_WEST,
+		Tiles.Block.TORCH_BRACKET_NORTH,
+		Tiles.Block.TORCH_BRACKET_EAST,
+	],
+	Tiles.Block.CURTAINS:
+	[
+		Tiles.Block.CURTAINS,
+		Tiles.Block.CURTAINS_WEST,
+		Tiles.Block.CURTAINS_NORTH,
+		Tiles.Block.CURTAINS_EAST,
+	],
+	Tiles.Block.GLASS_PANE:
+	[
+		Tiles.Block.GLASS_PANE,
+		Tiles.Block.GLASS_PANE_WEST,
+		Tiles.Block.GLASS_PANE_NORTH,
+		Tiles.Block.GLASS_PANE_EAST,
+	],
+	Tiles.Block.SINK:
+	[
+		Tiles.Block.SINK,
+		Tiles.Block.SINK_WEST,
+		Tiles.Block.SINK_NORTH,
+		Tiles.Block.SINK_EAST,
+	],
+	Tiles.Block.TOILET:
+	[
+		Tiles.Block.TOILET,
+		Tiles.Block.TOILET_WEST,
+		Tiles.Block.TOILET_NORTH,
+		Tiles.Block.TOILET_EAST,
+	],
+	Tiles.Block.CHAIR:
+	[
+		Tiles.Block.CHAIR,
+		Tiles.Block.CHAIR_WEST,
+		Tiles.Block.CHAIR_NORTH,
+		Tiles.Block.CHAIR_EAST,
+	],
+	Tiles.Block.GATE:
+	[
+		Tiles.Block.GATE,
+		Tiles.Block.GATE_WEST,
+		Tiles.Block.GATE_NORTH,
+		Tiles.Block.GATE_EAST,
+	],
+	Tiles.Block.GATE_OPEN:
+	[
+		Tiles.Block.GATE_OPEN,
+		Tiles.Block.GATE_OPEN_WEST,
+		Tiles.Block.GATE_OPEN_NORTH,
+		Tiles.Block.GATE_OPEN_EAST,
+	],
+	Tiles.Block.BIG_GATE:
+	[
+		Tiles.Block.BIG_GATE,
+		Tiles.Block.BIG_GATE_WEST,
+		Tiles.Block.BIG_GATE_NORTH,
+		Tiles.Block.BIG_GATE_EAST,
+	],
+	Tiles.Block.BIG_GATE_OPEN:
+	[
+		Tiles.Block.BIG_GATE_OPEN,
+		Tiles.Block.BIG_GATE_OPEN_WEST,
+		Tiles.Block.BIG_GATE_OPEN_NORTH,
+		Tiles.Block.BIG_GATE_OPEN_EAST,
+	],
 }
-## The workbench stands on two tiles: its left end (FACING_KINDS) holds
-## the model, its right end lies beside it (one block per axis it lies
-## along). It is BENCH_DEPTH voxels deep.
-const BENCH_ENDS := {
-	Tiles.Block.WORKBENCH_END_X: Vector2i(1, 0),
-	Tiles.Block.WORKBENCH_END_Z: Vector2i(0, 1),
+## Objects two tiles long: their kind (in FACING_KINDS: their left end,
+## which holds the model) and the block of their right end, lying beside
+## it, per axis it lies along (x, z). How deep (voxels) their body is across.
+const WIDE_KINDS := {
+	Tiles.Block.WORKBENCH: [Tiles.Block.WORKBENCH_END_X, Tiles.Block.WORKBENCH_END_Z],
+	Tiles.Block.BIG_GATE: [Tiles.Block.BIG_GATE_END_X, Tiles.Block.BIG_GATE_END_Z],
+	Tiles.Block.BIG_GATE_OPEN: [Tiles.Block.BIG_GATE_OPEN_END_X, Tiles.Block.BIG_GATE_OPEN_END_Z],
 }
+const WIDE_DEPTH := {Tiles.Block.WORKBENCH: 14, Tiles.Block.BIG_GATE: 6}
 const BENCH_DEPTH := 14
 ## Chests and furnaces: so many voxels square, a level high.
 const BOX_SIZE := 14
 ## Furniture bodies stand on (jumping onto it), by kind: how high its top
 ## is (voxels: their models' tops, WorkbenchModel, ChestModel,
-## FurnaceModels). It blocks bodies up to there.
+## FurnaceModels, DecorModels). It blocks bodies up to there.
 const TOPS := {
 	Tiles.Block.WORKBENCH: 15,
 	Tiles.Block.CHEST: 13,
@@ -110,12 +187,47 @@ const TOPS := {
 	Tiles.Block.FACTORY_FURNACE: 14,
 	Tiles.Block.FACTORY_FURNACE_LIT: 14,
 	Tiles.Block.BROKEN_FURNACE: 14,
+	Tiles.Block.SINK: 12,
+	Tiles.Block.TOILET: 8,
+	Tiles.Block.TABLE: 14,
+	Tiles.Block.CHAIR: 10,
 }
+## Other solid things players place, by kind: the square they block
+## (voxels; the others facing them: BOX_SIZE).
+const FOOTPRINTS := {
+	Tiles.Block.GLASS_PANE: 16,
+	Tiles.Block.TOILET: 10,
+	Tiles.Block.TABLE: 14,
+	Tiles.Block.CHAIR: 12,
+	Tiles.Block.FENCE: 16,
+	Tiles.Block.GATE: 16,
+	Tiles.Block.CAMPFIRE: 12,
+}
+## What keeps bodies out (fences, closed gates): two levels high, nobody
+## jumps over.
+const BARRIERS := {Tiles.Block.FENCE: true, Tiles.Block.GATE: true, Tiles.Block.BIG_GATE: true}
 ## The furnaces (their unlit kind) and their lit kind.
 const LIT := {
 	Tiles.Block.FOOD_FURNACE: Tiles.Block.FOOD_FURNACE_LIT,
 	Tiles.Block.FACTORY_FURNACE: Tiles.Block.FACTORY_FURNACE_LIT,
 }
+## Gates (their closed kind) and their open kind: they swing open and shut
+## when used (open, bodies go through).
+const OPENS := {
+	Tiles.Block.GATE: Tiles.Block.GATE_OPEN,
+	Tiles.Block.BIG_GATE: Tiles.Block.BIG_GATE_OPEN,
+}
+## What hangs on the side of a cube (by kind), facing away from it: it
+## falls with it.
+const WALL_MOUNTED := {Tiles.Block.TORCH_BRACKET: true, Tiles.Block.CURTAINS: true}
+## Fences join their neighbors (fences, gates and cubes): their version is
+## the sides they join (FENCE_SIDES bits, 16 versions), not their tile's.
+const FENCE_SIDES: Array[Vector2i] = [
+	Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)
+]
+const FENCE_VARIANTS := 16
+## Objects with a single version (no random ones).
+const SINGLE := {Tiles.Block.TABLE: true, Tiles.Block.CAMPFIRE: true}
 ## Small things stand anywhere in their tile (whole voxels), not centered.
 const WANDERING := {
 	Tiles.Block.TALL_GRASS: true,
@@ -133,8 +245,10 @@ const WANDERING := {
 	Tiles.Block.MOSSY_ROCK: true,
 }
 
-## block -> (kind, way index), for the facing objects.
+## block -> (kind, way index), for the facing objects; a wide object's
+## right end -> [axis it lies along, kind].
 static var _facing := _build_facing()
+static var _wide_ends := _build_wide_ends()
 
 
 static func is_tree(block: int) -> bool:
@@ -142,8 +256,10 @@ static func is_tree(block: int) -> bool:
 
 
 static func variant_count(block: int) -> int:
-	if _facing.has(block) or BENCH_ENDS.has(block):
+	if _facing.has(block) or _wide_ends.has(block) or SINGLE.has(block):
 		return 1
+	if block == Tiles.Block.FENCE:
+		return FENCE_VARIANTS
 	return TREE_VARIANTS if TREES.has(block) else VARIANTS
 
 
@@ -152,9 +268,39 @@ static func kind_of(block: int) -> int:
 	return _facing[block].x if _facing.has(block) else -1
 
 
+## The kind of anything placed: a facing object's, a wide object's (either
+## end), else the block itself.
+static func base_kind(block: int) -> int:
+	if _facing.has(block):
+		return _facing[block].x
+	if _wide_ends.has(block):
+		return _wide_ends[block][1]
+	return block
+
+
+## The kind of a wide object, either end (-1: not one).
+static func wide_kind(block: int) -> int:
+	var kind := base_kind(block)
+	return kind if WIDE_KINDS.has(kind) else -1
+
+
+## A wide object's left end (the block holding its model).
+static func is_wide_left(block: int) -> bool:
+	return WIDE_KINDS.has(kind_of(block))
+
+
+static func is_wide_end(block: int) -> bool:
+	return _wide_ends.has(block)
+
+
+## The axis a wide object's right end lies along from its left end.
+static func end_axis(block: int) -> Vector2i:
+	return _wide_ends[block][0] if _wide_ends.has(block) else Vector2i.ZERO
+
+
 ## A part of a workbench (either end).
 static func is_bench(block: int) -> bool:
-	return kind_of(block) == Tiles.Block.WORKBENCH or BENCH_ENDS.has(block)
+	return wide_kind(block) == Tiles.Block.WORKBENCH
 
 
 ## A workbench's left end (the block holding its model).
@@ -176,15 +322,50 @@ static func furnace_kind(block: int) -> int:
 	return -1
 
 
-## A furnace burning (its lit kind).
+## Something burning: a lit furnace, a campfire.
 static func is_lit(block: int) -> bool:
+	if block == Tiles.Block.CAMPFIRE:
+		return true
 	return _facing.has(block) and kind_of(block) in LIT.values()
 
 
+## A gate, open or shut, any part of it.
+static func is_gate(block: int) -> bool:
+	var kind := base_kind(block)
+	return OPENS.has(kind) or OPENS.values().has(kind)
+
+
+static func is_open(block: int) -> bool:
+	return OPENS.values().has(base_kind(block))
+
+
+## The gate's block once it swung (open <-> shut), the same way facing
+## (or the same end).
+static func swung(block: int) -> int:
+	var kind := base_kind(block)
+	var other: int = OPENS.get(kind, OPENS.find_key(kind))
+	if _wide_ends.has(block):
+		return wide_end(other, end_axis(block))
+	return facing(other, front_of(block))
+
+
+## Hung on the side of a cube (see WALL_MOUNTED).
+static func is_wall_mounted(block: int) -> bool:
+	return WALL_MOUNTED.has(kind_of(block))
+
+
+## Whether a fence joins a neighbor voxel: a fence, a gate or a cube.
+static func fence_joins(voxel: int) -> bool:
+	if Voxels.is_cube(voxel):
+		return true
+	var block := Voxels.block_of(voxel)
+	return block == Tiles.Block.FENCE or is_gate(block)
+
+
 ## The block whose model a block shows: the ways a facing object faces
-## share one; -1 for the blocks showing none (a workbench's right end).
+## share one; -1 for the blocks showing none (a wide object's right end).
 static func model_block(block: int) -> int:
-	if BENCH_ENDS.has(block):
+	if _wide_ends.has(block):
 		return -1
 	return kind_of(block) if _facing.has(block) else block
 
@@ -210,8 +391,7 @@ static func turn_of(block: int) -> float:
 ## How high (levels) the top of a piece of furniture is, to stand on it
 ## (0: not something to stand on).
 static func stand_height(block: int) -> float:
-	var kind := Tiles.Block.WORKBENCH if BENCH_ENDS.has(block) else kind_of(block)
-	return TOPS.get(kind, 0) / float(GameConst.TILE_SIZE)
+	return TOPS.get(base_kind(block), 0) / float(GameConst.TILE_SIZE)
 
 
 ## How high (levels) an object blocks bodies from its voxel up: furniture
@@ -221,16 +401,17 @@ static func blocking_height(block: int, variant: int) -> float:
 	return top if top > 0.0 else float(blocking_levels(block, variant))
 
 
-## Where a workbench's right end lies from its left end (on its right,
+## Where a wide object's right end lies from its left end (on its right,
 ## seen from its front).
-static func bench_right(block: int) -> Vector2i:
+static func wide_right(block: int) -> Vector2i:
 	var front := front_of(block)
 	return Vector2i(front.y, -front.x)
 
 
-## The block of a workbench's right end lying `right` of its left end.
-static func bench_end(right: Vector2i) -> int:
-	return Tiles.Block.WORKBENCH_END_X if right.x != 0 else Tiles.Block.WORKBENCH_END_Z
+## The block of a wide object's right end (`kind`: its left end's) lying
+## `right` of its left end.
+static func wide_end(kind: int, right: Vector2i) -> int:
+	return WIDE_KINDS[kind][0 if right.x != 0 else 1]
 
 
 ## Version of an object standing on a tile.
@@ -262,7 +443,12 @@ static func trunk(block: int, variant: int) -> Vector2i:
 ## Size of the square an object blocks at its foot (voxels; 0: bodies walk
 ## through it).
 static func footprint(block: int, variant: int) -> int:
-	if _facing.has(block) and not is_bench_left(block):
+	if not Tiles.is_block_solid(block):
+		return 0
+	var kind := base_kind(block)
+	if FOOTPRINTS.has(kind):
+		return FOOTPRINTS[kind]
+	if _facing.has(block) and not is_wide_left(block):
 		return BOX_SIZE
 	if TREES.has(block):
 		return trunk(block, variant).x
@@ -273,7 +459,10 @@ static func footprint(block: int, variant: int) -> int:
 
 ## Levels an object blocks, from its voxel up.
 static func blocking_levels(block: int, variant: int) -> int:
-	if _facing.has(block) or BENCH_ENDS.has(block):
+	var kind := base_kind(block)
+	if BARRIERS.has(kind):
+		return 2
+	if _facing.has(block) or _wide_ends.has(block) or FOOTPRINTS.has(kind):
 		return 1
 	if TREES.has(block):
 		return ceili(trunk(block, variant).y / float(GameConst.TILE_SIZE))
@@ -285,15 +474,15 @@ static func blocking_levels(block: int, variant: int) -> int:
 ## The box (world pixels) an object standing on a tile blocks (empty if it
 ## blocks nothing).
 static func footprint_rect(block: int, tile: Vector2i) -> Rect2:
-	if is_bench(block):
-		# Its whole tile along the bench, BENCH_DEPTH across.
-		var along: Vector2i = BENCH_ENDS.get(block, Vector2i.ZERO)
-		if is_bench_left(block):
-			along = bench_right(block).abs()
-		var bench := (
-			Vector2(along) * GameConst.TILE_SIZE + Vector2(Vector2i.ONE - along) * BENCH_DEPTH
-		)
-		return Rect2(Coords.tile_to_world_center(tile) - bench * 0.5, bench)
+	if not Tiles.is_block_solid(block):
+		return Rect2()
+	var kind := wide_kind(block)
+	if kind != -1:
+		# Its whole tile along it, its depth across.
+		var along := end_axis(block) if is_wide_end(block) else wide_right(block).abs()
+		var depth: int = WIDE_DEPTH.get(kind, BENCH_DEPTH)
+		var box := Vector2(along) * GameConst.TILE_SIZE + Vector2(Vector2i.ONE - along) * depth
+		return Rect2(Coords.tile_to_world_center(tile) - box * 0.5, box)
 	var size := footprint(block, variant_at(block, tile))
 	if size == 0:
 		return Rect2()
@@ -307,4 +496,13 @@ static func _build_facing() -> Dictionary:
 		var blocks: Array = FACING_KINDS[kind]
 		for way in blocks.size():
 			lookup[blocks[way]] = Vector2i(kind, way)
+	return lookup
+
+
+static func _build_wide_ends() -> Dictionary:
+	var lookup := {}
+	for kind: int in WIDE_KINDS:
+		var ends: Array = WIDE_KINDS[kind]
+		lookup[ends[0]] = [Vector2i(1, 0), kind]
+		lookup[ends[1]] = [Vector2i(0, 1), kind]
 	return lookup
