@@ -22,14 +22,18 @@ uniform int see_through_walls[32];
 const int WALL_KIND_OFFSET = 4;
 
 varying flat vec4 face_data;
+// 1 for undersides (they face down).
+varying flat float underside;
 
 void vertex() {
 	face_data = vec4(UV2, COLOR.r, COLOR.g * 3.0);
+	underside = NORMAL.y < -0.5 ? 1.0 : 0.0;
 }
 
 void fragment() {
 	if (!IN_SHADOW_PASS) {
 		if (above_cut(VERTEX, INV_VIEW_MATRIX)
+				|| (underside > 0.5 && underside_cut(VERTEX, INV_VIEW_MATRIX))
 				|| hides_player(VERTEX, VIEW_MATRIX, INV_VIEW_MATRIX, see_through_size, 0.0, FRAGCOORD.xy)) {
 			discard;
 		}

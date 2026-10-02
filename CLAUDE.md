@@ -69,8 +69,9 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   front-on, the camera always looks down). Faces open to the sky (also through water) and cave
   faces go to separate meshes; caves show only when the player is under cover
   (ClientWorld.is_covered; water and lava over the head are no roof): the view then cuts everything above their head (global
-  `cut_height`), the surface maps are rebuilt for the cut, and the back of the faces closing the
-  rock draws its section in dark (`see_through.gdshaderinc`); building blocks cut through
+  `cut_height`; undersides in the cut's plane go too, `underside_cut`: a beam or a ceiling right
+  over the cut would cover what lies under it), the surface maps are rebuilt for the cut, and the
+  back of the faces closing the rock draws its section in dark (`see_through.gdshaderinc`); building blocks cut through
   (TileAtlas.BUILDING_WALLS: planks, bricks, glass...) get a cap instead, their top at the cut
   (ChunkMesher Part.CAPS, also in surface-map-only builds; ChunkView3D.caps with the top shader's
   `cap`: a little darker, outlined where it drops), shown only while the view cuts.

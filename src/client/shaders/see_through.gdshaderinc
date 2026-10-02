@@ -66,3 +66,13 @@ bool hides_player(
 bool above_cut(vec3 vertex, mat4 inv_view) {
 	return (inv_view * vec4(vertex, 1.0)).y > cut_height;
 }
+
+// Undersides lying in the cut's plane (world units around it): the bottom
+// of what the cut takes away (a beam over openings, a lintel, a cave's
+// ceiling right over the cut) goes with it; seen from above it would hide
+// what lies under it as a section (in bands where rounding kept it).
+const float CUT_PLANE = 0.01;
+
+bool underside_cut(vec3 vertex, mat4 inv_view) {
+	return (inv_view * vec4(vertex, 1.0)).y > cut_height - CUT_PLANE;
+}
