@@ -49,6 +49,9 @@ func _ready() -> void:
 		server.use_storage(storage, saved)
 	if dev.weather >= 0:
 		server.weather.set_kind(dev.weather as Weather.Kind, clock)
+	# Developer options moving between caves or showing the map work in
+	# every game mode.
+	server.cheats_anywhere = dev.descend != 0 or dev.open_map
 
 	var transports := LocalTransport.create_pair()
 	server.connect_client(transports[1])

@@ -53,7 +53,7 @@ func _lines() -> PackedStringArray:
 	var chunk := Coords.tile_to_chunk(tile)
 	var clock := client.clock
 	var version: String = ProjectSettings.get_setting("application/config/version", "?")
-	var mode_key: String = WorldSettings.GAME_MODE_KEYS.get(int(info.get("game_mode", 1)), "")
+	var mode_key: String = WorldSettings.GAME_MODE_KEYS.get(client.modes.mode, "")
 	var gpu := RenderingServer.get_video_adapter_name()
 	var renderer := RenderingServer.get_current_rendering_method()
 	var ground: String = Tiles.Ground.find_key(client.world.ground_under(tile, player.height))

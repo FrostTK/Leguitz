@@ -10,6 +10,9 @@ extends Node
 ## the held block against the side aimed at. Changes show at once
 ## (predicted) and go to the server, whose answer (Msg.BLOCK_CHANGED) has
 ## the last word. The block placed is the one in hand (GameClient.inventory).
+## In creative, everything breaks at once (a short pause between two),
+## blocks placed are not used up and tools do not wear; a spectator aims
+## at nothing.
 
 ## Seconds between two chips flying off what is being broken.
 const CHIP_INTERVAL := 0.16
@@ -50,7 +53,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if not client.joined or client.transport == null:
 		return
-	target = _aim()
+	target = _aim() if not client.modes.watching else null
 	var box := _whole_box(target)
 	_highlight.outline(box, _frame_thickness(box))
 	_update_breaking(delta)
@@ -105,7 +108,8 @@ func place() -> void:
 			return
 	for at: Vector3i in cells:
 		_predict(at, cells[at])
-	client.inventory.take(slot, 1)
+	if not client.modes.creative():
+		client.inventory.take(slot, 1)
 	client.transport.send(Msg.block_place(cell, slot, front))
 	client.player_model.swing()
 
@@ -156,8 +160,9 @@ func _update_breaking(delta: float) -> void:
 	_face(target.box.get_center())
 	if _pause > 0.0:
 		return
+	var creative := client.modes.creative()
 	var seconds := Mining.break_seconds(target.voxel, client.held_item())
-	_progress += delta / seconds
+	_progress = 1.0 if creative else _progress + delta / seconds
 	if Voxels.is_cube(target.voxel):
 		_cracks.show_on(target.box, _progress)
 	_chip_timer -= delta
@@ -167,7 +172,7 @@ func _update_breaking(delta: float) -> void:
 	if _progress >= 1.0:
 		_break(target)
 		_reset_breaking()
-		if seconds > Mining.INSTANT_SECONDS:
+		if creative or seconds > Mining.INSTANT_SECONDS:
 			_pause = Mining.BREAK_PAUSE
 
 
@@ -201,7 +206,7 @@ func _break(hit: VoxelRay.Hit) -> void:
 ## The tool in hand wears when it breaks something (as the server will
 ## say); worn out, it breaks in a burst of bits.
 func _wear_tool(slot: int, voxel: int) -> void:
-	if slot < 0 or not Mining.wears(voxel):
+	if slot < 0 or not Mining.wears(voxel) or client.modes.creative():
 		return
 	var tool := client.inventory.items[slot]
 	if Items.durability(tool) == 0 or not client.inventory.wear_out(slot):

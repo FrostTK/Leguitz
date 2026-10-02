@@ -64,7 +64,7 @@ Les questions de goût ou les choix lourds de conséquences sont posés avant de
 
 ## 3. État actuel : ce qui est fait
 
-Godot **4.7.2** (GDScript), rendu Forward+. 167 tests unitaires, lint propre.
+Godot **4.7.2** (GDScript), rendu Forward+. 173 tests unitaires, lint propre.
 
 | Phase | Contenu | Commits |
 |---|---|---|
@@ -104,7 +104,8 @@ Godot **4.7.2** (GDScript), rendu Forward+. 167 tests unitaires, lint propre.
 | 5.2 Faim et nourriture | **Jauge de satiété** à nous (ambrée, une petite miche, sur la moitié droite au-dessus de la barre ; elle bat quand on a faim) : 20 points qui baissent avec le temps (un point toutes les 50 s au rythme du monde), la marche et le minage ; **manger en maintenant le clic droit** (gâchette gauche à la manette) avec de la nourriture en main : le bras porte l'aliment à la bouche, des miettes volent, un aliment toutes les 1,4 s (« Tu n'as pas faim. » si l'on est rassasié) ; ragoût +8, baies déshydratées +4, baies +2, champignons +1, nourriture carbonisée +1, **le champignon rouge cru rend malade** (-2 de vitalité) : cuisiner paie ; la vitalité ne revient que **bien nourri** (14 points et plus) et coûte un peu de satiété ; **affamé** (0), on perd un point de vitalité toutes les 6 s ; trop faible (moins de 4), on ne peut plus courir ; rien en créatif ; chapitre « Survie » du livre (jauges, comment manger, ce qui nourrit) | `97286ac` |
 | 5.3 Nage et noyade | On ne marche plus sur l'eau : on **nage** (eau et lave) ; on coule doucement, **Saut maintenu** fait remonter et flotter la tête hors de l'eau, **contre une berge, Saut fait bondir dehors** ; plus lent dans l'eau (encore plus dans la lave) ; une chute dans l'eau ne blesse jamais ; **souffle** : 12 s la tête sous l'eau (petite jauge bleue avec une bulle au-dessus de la satiété, elle clignote presque vide), il revient vite à l'air libre ; ensuite on se **noie** (2 points par seconde, « Tu as manqué d'air. ») ; on voit le joueur sous l'eau vue de dessus (l'eau n'est pas un toit : pas de coupe ni de passage en 1re personne), voile bleuté en 1re personne sous l'eau, nage animée (bras et jambes), éclaboussure en entrant dans l'eau ; texte dans le chapitre « Survie » | `de4e9a0` |
 | 5.3b Double-clic | Comme dans Minecraft : un **double-clic** sur une pile rassemble sur le curseur toutes les mêmes ressources éparpillées (grille de fabrication, coffre ou four ouvert, sac, barre ; les piles entamées d'abord, jusqu'à une pile pleine), vérifié par le serveur (`Inventory.collect`, `Msg.SLOT_COLLECT`) ; la gestion de l'écran d'inventaire passe dans `InventoryActions` | `5e7dde2` |
-| 5.3c Murs coupés | Sous un toit, la vue de dessus coupe ce qui dépasse la tête : les **blocs de construction** coupés (planches, briques, pierre lisse, grès taillé, verre) montrent maintenant leur dessus à la coupe (un peu plus sombre, avec un liseré là où le mur tombe) au lieu d'un aplat gris-bleu ; la roche naturelle garde sa section sombre (grottes) | « Cut walls show their top » |
+| 5.3c Murs coupés | Sous un toit, la vue de dessus coupe ce qui dépasse la tête : les **blocs de construction** coupés (planches, briques, pierre lisse, grès taillé, verre) montrent maintenant leur dessus à la coupe (un peu plus sombre, avec un liseré là où le mur tombe) au lieu d'un aplat gris-bleu ; la roche naturelle garde sa section sombre (grottes) | `a170ae5` |
+| 5.4 Modes de jeu | **Créatif** : on **vole** (Saut deux fois vite ; Saut monte, Maj descend, toucher le sol fait atterrir ; 2,5 fois plus vite que la marche), les blocs posés ne s'épuisent pas, **tout se casse d'un coup** sans rien donner (une courte pause entre deux), les outils ne s'usent pas, ni dégâts ni faim (pas de jauges), un **catalogue** de tous les objets dans l'inventaire (Tab ; à la place de la grille 3×3 : blocs, puis objets posés, matériaux, nourriture, outils ; clic : une pile, clic droit : un objet, Maj + clic : une pile dans le sac, cliquer avec autre chose en main le jette ; molette ou barre pour défiler), et les **outils de debug** (carte, Page ↑/↓, F4, F6, F7) réservés à ce mode (refusés par le serveur ailleurs) ; **Survie** inchangée ; **Hardcore** : une seule vie, perdre connaissance met fin à l'aventure (« Ton aventure s'achève… », bouton « Regarder le monde ») et l'on ne fait plus que **regarder le monde en spectateur** (fantôme invisible qui vole à travers tout, sans barre ni jauges, une ligne en bas de l'écran ; sauvegardé : on revient spectateur) ; choix du mode à la création (`--game-mode`) et dans le **menu pause** (« Mode de jeu » : Survie ⇄ Créatif, un monde Hardcore le reste) ; chapitre « Modes de jeu » du livre (les touches de debug y passent), onglets du livre ajustés à leur nom | « Game modes » |
 
 **Pas encore fait** (prévu) : survie/combat, créatures, structures, agriculture, menus de départ, sons,
 mode Arcade, mobile.
@@ -118,13 +119,13 @@ mode Arcade, mobile.
 | Domaine | Fichiers |
 |---|---|
 | Point d'entrée | `src/main.gd` (crée le serveur, le client, options de développement, captures) |
-| Serveur | `src/sim/game_server.gd` (sessions, envoi des chunks, messages, météo, temps, sauvegarde), `src/sim/save/world_storage.gd` (fichiers du monde sauvegardé) |
+| Serveur | `src/sim/game_server.gd` (sessions, envoi des chunks, messages, météo, temps, sauvegarde), `src/sim/game_modes.gd` (règles des modes, catalogue, commandes de debug), `src/sim/survival/` (vitalité, faim, souffle), `src/sim/save/world_storage.gd` (fichiers du monde sauvegardé) |
 | Monde | `src/sim/world/` (`voxels.gd` : ids et propriétés des voxels ; `chunk_data.gd` : 16×16×128 voxels, biome et sommet du terrain par colonne ; `world_state.gd` : chunks du serveur, recherche d'un sol pour les déplacements de debug), `generation/` (climat, relief, biomes, surface → colonnes, `cave_generator.gd` : grottes 3D et minerais) |
 | Minage | `src/sim/world/mining.gd` (règles, durée selon le bloc et l'outil : `break_seconds`, `tool_for`), `src/sim/world/voxel_ray.gd` (visée), `src/client/interaction/` (visée et rendu côté client : cadre, fissures, éclats, arbres qui tombent) |
 | Objets | `src/sim/items/` (`items.gd` registre, ce que donne chaque bloc, outils et leurs vitesses, `recipes.gd` recettes, `inventory.gd`, `dropped_item.gd`), `src/client/items/` (modèles, icônes rendues hors écran, objets au sol), `src/ui/hotbar.gd`, `inventory_screen.gd`, `item_slot.gd` |
 | Physique | `src/sim/physics/player_body.gd` (marche, saut, chute, plafonds, parmi les voxels), `tile_collider.gd` (déplacement parmi des boîtes d'obstacles : case entière, tronc, rocher) ; `src/sim/world/object_shapes.gd` (versions des objets, troncs, emprise au sol : partagé avec les modèles) |
 | Messages | `src/net/msg.gd` (tous les échanges client ⇄ serveur) |
-| Client | `src/client/game_client.gd` (assemble la scène 3D, entrées, caméra), `local_player.gd` |
+| Client | `src/client/game_client.gd` (assemble la scène 3D, entrées, caméra), `local_player.gd` (marche, vol), `modes/game_mode_view.gd` (mode de jeu, spectateur, touches de debug), `survival/vitals_view.gd` |
 | Rendu 3D | `src/client/render/` : `world_viewport.gd` (SubViewport pixel parfait, caméra orbitale), `render_3d.gd` (repères, étirement de la racine du monde), `chunk_mesher.gd` (maillage des voxels sur les fils de travail, carte de surface du shader), `chunk_view_3d.gd` (terrain, grottes, objets 3D, lave d'un chunk) / `world_view_3d.gd` (tâches de maillage, coupe sous terre, niveaux de détail), `player_model.gd`, `prop_library.gd` |
 | Modèles voxel | `src/client/models/` : `voxel_grid.gd`, `voxel_mesher.gd` (faces fusionnées + occlusion), `voxel_models.gd` (tous les modèles procéduraux), `tree_models.gd` (les arbres détaillés) |
 | Shaders | `src/client/shaders/` : `terrain3d_top`, `terrain3d_faces`, `water` (eau transparente), `voxel`, `cloud_shadows`, `terrain3d_surface.gdshaderinc` (carte de surface, transitions entre sols), `see_through.gdshaderinc` (trou transparent, coupe sous terre, roche en coupe) |
@@ -255,10 +256,11 @@ Il ne faut pas s'inspirer du style de Minecraft
 3. ✅ **Nage et noyade** (voir section 3), comme prévu, avec la sortie d'eau en bondissant
    contre une berge. Le plan suivi : on nage dans l'eau au lieu de marcher dessus (monter, descendre, plus
    lent), réserve d'air sous l'eau, noyade.
-4. **Modes de jeu** (prochaine étape) : Créatif (vol, blocs illimités, ni dégâts ni faim, F7 et les outils de debug),
-   Survie, Hardcore (une seule vie) ; choix à la création du monde (en attendant les menus de
-   départ : réglage du monde et option de lancement).
-5. **Premiers animaux** en voxel animé (par exemple moutons, cochons, poules selon les biomes) :
+4. ✅ **Modes de jeu** (voir section 3), comme prévu, avec un catalogue de tous les objets en
+   créatif et le spectateur du hardcore. Le plan suivi : Créatif (vol, blocs illimités, ni dégâts
+   ni faim, F7 et les outils de debug), Survie, Hardcore (une seule vie) ; choix à la création du
+   monde (en attendant les menus de départ : réglage du monde et option de lancement).
+5. **Premiers animaux** (prochaine étape) en voxel animé (par exemple moutons, cochons, poules selon les biomes) :
    entités gérées par le serveur et synchronisées (messages d'entités), errance, fuite quand on
    les frappe, recherche de chemin sur les hauteurs (sauts d'un niveau), ce qu'ils donnent.
 6. **Monstres** : apparition la nuit et dans le noir (selon la lumière), poursuite, attaque,

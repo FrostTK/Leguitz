@@ -78,6 +78,8 @@ class PlayerSession:
 	var air := Vitals.MAX_AIR
 	var air_told := Vitals.MAX_AIR
 	var drowning := 0.0
+	## Hardcore: they passed out, their one life is over; they only watch.
+	var spectator := false
 
 	func alive() -> bool:
 		return health > 0
@@ -107,13 +109,15 @@ var storage: WorldStorage
 var tick_count := 0
 ## Items lying in the world, by id.
 var items: Dictionary[int, DroppedItem] = {}
-## Debug commands (moving between caves, world map). Restricted to
-## creative mode and server operators once those exist.
+## Debug commands (moving between caves, world map, weather, tools):
+## creative players use them where the server allows them (operators once
+## they exist); `cheats_anywhere` (developer options) in every mode.
 var allow_debug_commands := true
+var cheats_anywhere := false
 ## Draws what breaks drop and where things fly.
 var rng := RandomNumberGenerator.new()
 
-var _sessions: Array[PlayerSession] = []
+var sessions: Array[PlayerSession] = []
 var _last_save_msec := -SAVE_REQUEST_MSEC
 var _next_item_id := 1
 var _next_player_id := 1
@@ -161,12 +165,12 @@ func save() -> bool:
 	for dropped: DroppedItem in items.values():
 		lying.append(dropped.to_dict())
 	var ok := storage.save_world(settings, clock, weather, lying)
-	for session in _sessions:
+	for session in sessions:
 		if session.joined:
 			ok = storage.save_player(session.player_name, player_state(session)) and ok
 	ok = storage.flush() and ok
 	if ok:
-		_broadcast(Msg.world_saved())
+		broadcast(Msg.world_saved())
 	else:
 		push_warning("The world could not be saved in %s" % storage.folder)
 	return ok
@@ -181,6 +185,7 @@ static func player_state(session: PlayerSession) -> Dictionary:
 		"inventory": session.inventory.to_dict(),
 		"health": session.health,
 		"food": session.food,
+		"spectator": session.spectator,
 	}
 
 
@@ -193,7 +198,7 @@ func spawn_item(
 	_next_item_id += 1
 	dropped.pickup_delay = delay
 	items[dropped.id] = dropped
-	_broadcast(Msg.item_spawn(dropped))
+	broadcast(Msg.item_spawn(dropped))
 	return dropped
 
 
@@ -210,21 +215,21 @@ func shutdown() -> void:
 func connect_client(transport: Transport) -> void:
 	var session := PlayerSession.new()
 	session.transport = transport
-	_sessions.append(session)
+	sessions.append(session)
 
 
 func player_count() -> int:
-	return _sessions.size()
+	return sessions.size()
 
 
 func first_session() -> PlayerSession:
-	return _sessions[0] if not _sessions.is_empty() else null
+	return sessions[0] if not sessions.is_empty() else null
 
 
 ## Handles every pending client message. Runs even while the simulation is
 ## paused so that menus (e.g. time settings) keep working.
 func process_messages() -> void:
-	for session in _sessions:
+	for session in sessions:
 		for message in session.transport.poll():
 			_handle_message(session, message)
 	_send_finished_maps()
@@ -236,16 +241,16 @@ func tick() -> void:
 	clock.advance(GameConst.TICK_DELTA)
 	clock.sync_to_device()
 	if weather.tick(GameConst.TICK_DELTA, clock):
-		_broadcast(Msg.weather_state(weather))
+		broadcast(Msg.weather_state(weather))
 	_collect_generated()
-	for session in _sessions:
+	for session in sessions:
 		if session.joined:
 			_stream_chunks(session, CHUNKS_SENT_PER_TICK)
 	if tick_count % TIME_BROADCAST_TICKS == 0:
-		_broadcast(Msg.time_state(clock))
-		_broadcast(Msg.weather_state(weather))
+		broadcast(Msg.time_state(clock))
+		broadcast(Msg.weather_state(weather))
 	_update_items(GameConst.TICK_DELTA)
-	Survival.update(self, _sessions, GameConst.TICK_DELTA)
+	Survival.update(self, sessions, GameConst.TICK_DELTA)
 	if tick_count % FURNACE_TICKS == 0:
 		_update_furnaces(GameConst.TICK_DELTA * FURNACE_TICKS)
 	if tick_count % UNLOAD_CHECK_TICKS == 0:
@@ -263,13 +268,17 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 		Msg.SET_TIME:
 			_on_set_time(message)
 		Msg.DEBUG_MOVE_DEPTH:
-			_on_debug_move_depth(session, message)
+			GameModes.move_depth(self, session, int(message.get("direction", 0)))
 		Msg.MAP_REQUEST:
 			_on_map_request(session, message)
 		Msg.DEBUG_SET_WEATHER:
-			_on_debug_set_weather(session, message)
+			GameModes.set_weather(self, session, int(message.get("kind", 0)))
 		Msg.DEBUG_GIVE_TOOLS:
-			_on_debug_give_tools(session, message)
+			GameModes.give_tools(self, session, int(message.get("tier", 0)))
+		Msg.SET_GAME_MODE:
+			GameModes.set_mode(self, session, int(message.get("mode", -1)))
+		Msg.CATALOG_CLICK:
+			GameModes.catalog_click(self, session, message)
 		Msg.SET_VIEW_DISTANCE:
 			_on_set_view_distance(session, message)
 		Msg.BLOCK_BREAK:
@@ -362,6 +371,7 @@ func _on_hello(session: PlayerSession, message: Dictionary) -> void:
 	session.transport.send(Msg.weather_state(weather))
 	session.transport.send(Msg.inventory(session.inventory))
 	session.transport.send(Msg.vitals(session.health, session.food))
+	session.transport.send(Msg.game_mode(settings.game_mode, session.spectator))
 	for dropped: DroppedItem in items.values():
 		session.transport.send(Msg.item_spawn(dropped))
 	# Start generating the whole initial view right away.
@@ -376,7 +386,10 @@ func _place_player(session: PlayerSession) -> void:
 	session.inventory.load_dict(saved.get("inventory", {}))
 	session.health = clampi(int(saved.get("health", Vitals.MAX_HEALTH)), 0, Vitals.MAX_HEALTH)
 	session.food = clampi(int(saved.get("food", Vitals.MAX_FOOD)), 0, Vitals.MAX_FOOD)
-	if session.health == 0:
+	session.spectator = saved.get("spectator", false) and GameModes.hardcore(self)
+	if session.spectator:
+		session.health = 0
+	elif session.health == 0:
 		# They left while passed out: they get up at the spawn.
 		session.health = Vitals.MAX_HEALTH
 		session.food = Vitals.MAX_FOOD
@@ -410,9 +423,11 @@ func _on_block_break(session: PlayerSession, message: Dictionary) -> void:
 	if not Mining.can_break(voxel, cell.y) or near > Mining.REACH + REACH_LEEWAY:
 		session.transport.send(Msg.block_changed(cell, voxel))
 		return
-	# The tool in hand wears (and may break).
+	# The tool in hand wears (and may break); in creative nothing wears nor
+	# drops.
+	var drops := not GameModes.creative(self)
 	var slot := int(message.get("slot", -1))
-	if slot >= 0 and slot < Inventory.HOTBAR and Mining.wears(voxel):
+	if drops and slot >= 0 and slot < Inventory.HOTBAR and Mining.wears(voxel):
 		var bag := session.inventory
 		if Items.durability(bag.items[slot]) > 0:
 			bag.wear_out(slot)
@@ -421,7 +436,8 @@ func _on_block_break(session: PlayerSession, message: Dictionary) -> void:
 	var cells := Mining.object_cells(cell, voxel, world.voxel_at)
 	for part in cells:
 		change_voxel(part, Mining.left_after_break(part, world.voxel_at))
-	_drop_from(cell, voxel)
+	if drops:
+		_drop_from(cell, voxel)
 	_spill_contents(cell)
 	Survival.spend(self, session, Vitals.BREAK_EFFORT)
 	for part in cells:
@@ -430,7 +446,8 @@ func _on_block_break(session: PlayerSession, message: Dictionary) -> void:
 		if Mining.needs_support(standing):
 			for piece in Mining.object_cells(above, standing, world.voxel_at):
 				change_voxel(piece, Voxels.AIR)
-			_drop_from(above, standing)
+			if drops:
+				_drop_from(above, standing)
 
 
 ## A chest or a furnace broken: what it held falls out where it was.
@@ -442,7 +459,7 @@ func _spill_contents(cell: Vector3i) -> void:
 	if furnace != null:
 		_spill(cell, furnace.slots, Furnace.SLOTS)
 	world.contents_changed(cell)
-	for other in _sessions:
+	for other in sessions:
 		if other.chest == cell:
 			other.chest = NO_CELL
 		if other.furnace == cell:
@@ -469,8 +486,8 @@ func _drop_from(cell: Vector3i, voxel: int) -> void:
 
 ## A player placed the block of a hotbar slot: kept if it is a block,
 ## within reach, against the terrain, into air, water or a small plant, and
-## in nobody's way; it leaves the slot. Refused, the player is told what is
-## there (and what they hold).
+## in nobody's way; it leaves the slot (never in creative). Refused, the
+## player is told what is there (and what they hold).
 func _on_block_place(session: PlayerSession, message: Dictionary) -> void:
 	if not session.joined or not session.alive():
 		return
@@ -490,7 +507,7 @@ func _on_block_place(session: PlayerSession, message: Dictionary) -> void:
 		and near <= Mining.REACH + REACH_LEEWAY
 		and (cells.size() > 1 or _against_terrain(cell))
 	)
-	for other in _sessions:
+	for other in sessions:
 		for at: Vector3i in cells:
 			if ok and other.joined and Mining.overlaps_body(at, other.position, other.height):
 				ok = false
@@ -502,7 +519,8 @@ func _on_block_place(session: PlayerSession, message: Dictionary) -> void:
 		return
 	for at: Vector3i in cells:
 		change_voxel(at, cells[at])
-	session.inventory.take(slot, 1)
+	if not GameModes.creative(self):
+		session.inventory.take(slot, 1)
 	session.transport.send(Msg.inventory(session.inventory))
 
 
@@ -578,7 +596,7 @@ func _open_chest(session: PlayerSession) -> Inventory:
 ## who has it open.
 func _chest_changed(cell: Vector3i) -> void:
 	world.contents_changed(cell)
-	for other in _sessions:
+	for other in sessions:
 		if other.joined and other.chest == cell:
 			other.transport.send(Msg.chest(cell, world.chest_at(cell)))
 
@@ -615,7 +633,7 @@ func _furnace_changed(cell: Vector3i) -> void:
 
 
 func _send_furnace(cell: Vector3i) -> void:
-	for other in _sessions:
+	for other in sessions:
 		if other.joined and other.furnace == cell:
 			other.transport.send(Msg.furnace(cell, world.furnace_at(cell)))
 
@@ -716,9 +734,9 @@ func _update_items(delta: float) -> void:
 			moved = dropped.step(delta, world.voxel_at)
 		if dropped.is_expired():
 			items.erase(id)
-			_broadcast(Msg.item_remove(id, 0))
+			broadcast(Msg.item_remove(id, 0))
 		elif moved and sync:
-			_broadcast(Msg.item_move(dropped))
+			broadcast(Msg.item_move(dropped))
 
 
 ## The player pulling an item in: the nearest one within reach with room
@@ -728,7 +746,7 @@ func _picker_for(dropped: DroppedItem) -> PlayerSession:
 		return null
 	var best: PlayerSession = null
 	var best_distance := PICKUP_RANGE
-	for session in _sessions:
+	for session in sessions:
 		if (
 			not session.joined
 			or not session.alive()
@@ -753,10 +771,10 @@ func _collect(session: PlayerSession, dropped: DroppedItem) -> void:
 	if left > 0:
 		dropped.count = left
 		dropped.pickup_delay = DroppedItem.THROWN_DELAY
-		_broadcast(Msg.item_spawn(dropped))
+		broadcast(Msg.item_spawn(dropped))
 	else:
 		items.erase(dropped.id)
-		_broadcast(Msg.item_remove(dropped.id, session.id))
+		broadcast(Msg.item_remove(dropped.id, session.id))
 	session.transport.send(Msg.inventory(session.inventory))
 
 
@@ -764,7 +782,7 @@ func _collect(session: PlayerSession, dropped: DroppedItem) -> void:
 func change_voxel(cell: Vector3i, voxel: int) -> void:
 	world.set_voxel(cell, voxel)
 	var coord := Coords.tile_to_chunk(Vector2i(cell.x, cell.z))
-	for session in _sessions:
+	for session in sessions:
 		if session.joined and session.sent_chunks.has(coord):
 			session.transport.send(Msg.block_changed(cell, voxel))
 
@@ -793,7 +811,7 @@ static func _clamp_view_distance(value: Variant) -> int:
 
 
 func _on_player_move(session: PlayerSession, message: Dictionary) -> void:
-	if not session.joined or not session.alive():
+	if not session.joined or not (session.alive() or session.spectator):
 		return
 	var new_pos: Vector2 = message.get("pos", session.position)
 	if new_pos.distance_to(session.position) > MAX_MOVE_PER_UPDATE:
@@ -823,49 +841,11 @@ func _on_set_time(message: Dictionary) -> void:
 			clock.set_synced()
 		WorldClock.Mode.FROZEN:
 			clock.set_frozen(value)
-	_broadcast(Msg.time_state(clock))
-
-
-## Debug: jump down to the next cave (or back up towards the surface),
-## in the player's column or the closest one that has such a place.
-func _on_debug_move_depth(session: PlayerSession, message: Dictionary) -> void:
-	if not allow_debug_commands or not session.joined:
-		return
-	var direction := signi(int(message.get("direction", 0)))
-	if direction == 0:
-		return
-	var tile := Coords.world_to_tile(session.position)
-	var found := world.find_floor(tile, session.height, direction)
-	if found.is_empty():
-		return
-	session.position = Coords.tile_to_world_center(found[0]) + Vector2(0, 4)
-	session.height = found[1]
-	session.transport.send(Msg.player_teleport(session.position, session.height))
-	_stream_chunks(session, CHUNKS_SENT_PER_TICK)
-
-
-## Debug: a player gets the tools of a tier (what does not fit is thrown
-## at their feet).
-func _on_debug_give_tools(session: PlayerSession, message: Dictionary) -> void:
-	if not allow_debug_commands or not session.joined:
-		return
-	var tier := clampi(int(message.get("tier", 0)), 0, Items.Tier.size() - 1)
-	for item in Items.tools_of_tier(tier):
-		if session.inventory.add(item, 1) > 0:
-			throw_item(session, item, 1)
-	session.transport.send(Msg.inventory(session.inventory))
-
-
-func _on_debug_set_weather(session: PlayerSession, message: Dictionary) -> void:
-	if not allow_debug_commands or not session.joined:
-		return
-	var kind := clampi(int(message.get("kind", 0)), 0, Weather.Kind.size() - 1)
-	weather.set_kind(kind as Weather.Kind, clock)
-	_broadcast(Msg.weather_state(weather))
+	broadcast(Msg.time_state(clock))
 
 
 func _on_map_request(session: PlayerSession, message: Dictionary) -> void:
-	if not allow_debug_commands or not session.joined:
+	if not GameModes.cheats(self, session):
 		return
 	var job := MapJob.new()
 	job.session = session
@@ -937,7 +917,7 @@ func _stream_chunks(session: PlayerSession, budget: int) -> void:
 func _unload_unused_chunks() -> void:
 	# Keep every chunk in (or just around) a player's view, sent or not yet.
 	var needed := {}
-	for session in _sessions:
+	for session in sessions:
 		var center := Coords.world_to_chunk(session.position)
 		var radius := session.view_distance + 1
 		for dy in range(-radius, radius + 1):
@@ -946,7 +926,7 @@ func _unload_unused_chunks() -> void:
 	world.unload_unused(needed)
 
 
-func _broadcast(message: Dictionary) -> void:
-	for session in _sessions:
+func broadcast(message: Dictionary) -> void:
+	for session in sessions:
 		if session.joined:
 			session.transport.send(message)

@@ -10,8 +10,8 @@ func _messages_of_type(messages: Array[Dictionary], type: String) -> Array[Dicti
 
 
 ## Returns [server, client_transport] with a joined player (view distance 2).
-func _joined_server() -> Array:
-	var settings := WorldSettings.create("Test", "42", WorldSettings.GameMode.SURVIVAL)
+func _joined_server(mode := WorldSettings.GameMode.SURVIVAL) -> Array:
+	var settings := WorldSettings.create("Test", "42", mode)
 	var server := GameServer.new(settings, null, false)
 	var transports := LocalTransport.create_pair()
 	server.connect_client(transports[1])
@@ -106,7 +106,7 @@ func test_time_settings_are_applied_and_broadcast() -> void:
 
 
 func test_debug_depth_moves_go_down_to_a_cave_and_back() -> void:
-	var setup := _joined_server()
+	var setup := _joined_server(WorldSettings.GameMode.CREATIVE)
 	var server: GameServer = setup[0]
 	var client: LocalTransport = setup[1]
 	var surface: float = client.poll()[0]["h"]
@@ -128,7 +128,7 @@ func test_debug_depth_moves_go_down_to_a_cave_and_back() -> void:
 
 
 func test_map_request_returns_an_image() -> void:
-	var setup := _joined_server()
+	var setup := _joined_server(WorldSettings.GameMode.CREATIVE)
 	var server: GameServer = setup[0]
 	var client: LocalTransport = setup[1]
 	client.poll()
@@ -141,8 +141,8 @@ func test_map_request_returns_an_image() -> void:
 	assert_eq(image.get_size(), Vector2i(64, 64))
 
 
-func test_debug_commands_can_be_disabled() -> void:
-	var setup := _joined_server()
+func test_debug_commands_are_for_creative_and_can_be_disabled() -> void:
+	var setup := _joined_server(WorldSettings.GameMode.CREATIVE)
 	var server: GameServer = setup[0]
 	var client: LocalTransport = setup[1]
 	client.poll()
@@ -153,6 +153,17 @@ func test_debug_commands_can_be_disabled() -> void:
 	server.process_messages()
 	assert_eq(client.poll().size(), 0)
 	assert_eq(server.first_session().height, height)
+	var survival := _joined_server()
+	var surviving: LocalTransport = survival[1]
+	surviving.poll()
+	surviving.send(Msg.debug_move_depth(-1))
+	surviving.send(Msg.map_request(Vector2i.ZERO, Msg.MAP_SURFACE, 64, 4))
+	survival[0].process_messages()
+	assert_eq(surviving.poll().size(), 0, "not in survival")
+	survival[0].cheats_anywhere = true
+	surviving.send(Msg.debug_move_depth(-1))
+	survival[0].process_messages()
+	assert_eq(surviving.poll().size(), 1, "developer options: everywhere")
 
 
 func test_view_distance_follows_the_client() -> void:

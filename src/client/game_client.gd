@@ -101,6 +101,8 @@ var interaction := BlockInteraction.new()
 var hotbar := Hotbar.new()
 ## The player's vitality: the gauge, hurts, passing out (VitalsView).
 var vitals := VitalsView.new()
+## The game mode: creative's flight and debug keys, the spectator.
+var modes := GameModeView.new()
 var inventory_screen := InventoryScreen.new()
 ## The player's book, open.
 var book_screen := BookScreen.new()
@@ -142,8 +144,6 @@ var _shown_held := -1
 ## right click places a block.
 var _drag_button := MOUSE_BUTTON_NONE
 var _drag_moved := 0.0
-## The material whose tools the debug key gives next (Items.Tier).
-var _tools_tier := 0
 ## First-person look angles (radians; pitch > 0 looks up).
 var _look_yaw := 0.0
 var _look_pitch := ENTRY_LOOK_PITCH
@@ -161,6 +161,8 @@ func _ready() -> void:
 	add_child(interaction)
 	vitals.client = self
 	add_child(vitals)
+	modes.client = self
+	add_child(modes)
 	item_icons.library = items
 	add_child(item_icons)
 	hotbar.inventory = inventory
@@ -191,6 +193,7 @@ func _ready() -> void:
 	save_notice.anchor = hud_clock
 	_ui_root.add_child(save_notice)
 	_ui_root.add_child(vitals.veil)
+	_ui_root.add_child(modes.banner)
 	_ui_root.add_child(hotbar)
 	_ui_root.add_child(vitals.screen)
 	_ui_root.add_child(debug_overlay)
@@ -202,6 +205,9 @@ func _ready() -> void:
 	pause_menu.resume_requested.connect(resume)
 	pause_menu.quit_requested.connect(quit_requested.emit)
 	pause_menu.time_settings_requested.connect(_on_time_settings_requested)
+	pause_menu.game_mode_requested.connect(
+		func(mode: int) -> void: transport.send(Msg.set_game_mode(mode))
+	)
 	debug_map.map_requested.connect(_on_map_requested)
 	view_mode.automatic = Settings.cave_first_person
 
@@ -503,7 +509,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		view_mode.toggle()
 		get_viewport().set_input_as_handled()
 		return
-	if _handle_block_input(event) or _handle_item_input(event):
+	if (not modes.watching and _handle_block_input(event)) or _handle_item_input(event):
 		get_viewport().set_input_as_handled()
 		return
 	var used := _handle_look_input(event) if view_mode.first_person else _handle_camera_input(event)
@@ -515,22 +521,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			debug_map.close()
 		else:
 			pause()
-	elif event.is_action_pressed(InputBindings.TOGGLE_MAP):
-		debug_map.cycle(local_player.current_tile(), map_row())
-	elif event.is_action_pressed(InputBindings.DEPTH_UP):
-		transport.send(Msg.debug_move_depth(1))
-	elif event.is_action_pressed(InputBindings.DEPTH_DOWN):
-		transport.send(Msg.debug_move_depth(-1))
-	elif event.is_action_pressed(InputBindings.CYCLE_WEATHER):
-		var next := (weather_effects.weather.kind + 1) % Weather.Kind.size()
-		transport.send(Msg.debug_set_weather(next))
-	elif event.is_action_pressed(InputBindings.TOGGLE_NOCLIP):
-		local_player.noclip = not local_player.noclip
-	elif event.is_action_pressed(InputBindings.GIVE_TOOLS):
-		transport.send(Msg.debug_give_tools(_tools_tier))
-		hotbar.announce("HUD_TOOLS_" + String(Items.Tier.find_key(_tools_tier)))
-		_tools_tier = (_tools_tier + 1) % Items.Tier.size()
-	else:
+	elif not modes.debug_key(event):
 		return
 	get_viewport().set_input_as_handled()
 
@@ -586,9 +577,11 @@ func _handle_item_input(event: InputEvent) -> bool:
 				_drag_button = MOUSE_BUTTON_NONE
 			var zoom := world_viewport.world_zoom + (1 if up else -1)
 			Settings.set_world_zoom(clampi(zoom, 1, Settings.MAX_WORLD_ZOOM))
-		else:
+		elif not modes.watching:
 			_cycle_hand(-1 if up else 1)
 		return true
+	if modes.watching:
+		return false
 	if event.is_action_pressed(InputBindings.HOTBAR_NEXT):
 		_cycle_hand(1)
 		return true
@@ -830,6 +823,8 @@ func _handle_message(message: Dictionary) -> void:
 			vitals.on_vitals(message["health"], message["food"], message["hurt"], message["air"])
 		Msg.DIED:
 			vitals.on_passed_out(message["cause"])
+		Msg.GAME_MODE:
+			modes.on_game_mode(message["mode"], message["spectator"])
 		Msg.INVENTORY:
 			var selected := inventory.selected
 			inventory.load_dict(message["inventory"])

@@ -193,7 +193,6 @@ BOOK_DROP,Throw what is in hand (with Ctrl: the stack),Lancer l'objet en main (a
 BOOK_VIEW,First person / top-down view,1re personne / vue de dessus
 BOOK_CAMERA_RESET,Back to the default view,Revenir à la vue par défaut
 BOOK_PAUSE,"Pause, settings","Pause, réglages"
-BOOK_DEBUG,Debug,Debug
 BOOK_DEBUG_SCREEN,Debug screen,Écran de debug
 BOOK_MAP,Map,Carte
 BOOK_DEPTH,Next cave / back up,Grotte suivante / remonter
@@ -319,3 +318,17 @@ BOOK_SURVIVAL_SICK,(makes you sick raw),(rend malade cru)
 BOOK_SURVIVAL_COOK,Cook in the food furnace: dried berries and stew feed far better than raw food.,Cuisine au four alimentaire : les baies déshydratées et le ragoût nourrissent bien mieux que la nourriture crue.
 DEATH_CAUSE_DROWNING,You ran out of air.,Tu as manqué d'air.
 BOOK_SURVIVAL_WATER,"In water you sink slowly: hold {jump} to swim up and float. Against a bank, {jump} leaps out. Under water, the blue gauge is your breath: when it runs out, you drown. Water breaks any fall.","Dans l'eau, tu coules doucement : maintiens {jump} pour remonter et flotter. Contre une berge, {jump} te fait bondir dehors. Sous l'eau, la jauge bleue est ton souffle : quand elle est vide, tu te noies. L'eau amortit toutes les chutes."
+SETTING_GAME_MODE,Game mode,Mode de jeu
+CATALOG_TITLE,Catalog,Catalogue
+SPECTATOR_BANNER,Your hardcore adventure is over: you watch the world.,Ton aventure hardcore est finie : tu regardes le monde.
+DEATH_TITLE_HARDCORE,Your adventure is over…,Ton aventure s'achève…
+DEATH_THINGS_HARDCORE,A hardcore world gives one life only. What you carried lies where you fell; you can still watch the world.,Un monde hardcore ne donne qu'une vie. Ce que tu portais est resté sur place ; tu peux encore regarder le monde.
+DEATH_WATCH,Watch the world,Regarder le monde
+BOOK_CHAPTER_MODES,Game modes,Modes de jeu
+BOOK_MODES_CREATIVE,"Build freely: every item waits in the catalog of your inventory ({inventory}), blocks never run out, everything breaks at once and gives nothing, tools never wear. Nothing hurts you and you are never hungry.","Construis librement : tous les objets t'attendent dans le catalogue de ton inventaire ({inventory}), les blocs ne s'épuisent jamais, tout se casse d'un coup sans rien donner, les outils ne s'usent pas. Rien ne te blesse et tu n'as jamais faim."
+BOOK_FLY,Fly,Voler
+BOOK_FLY_HOW,"{jump} twice quickly; {jump} rises, {sprint} goes down; touching the ground lands","{jump} deux fois vite ; {jump} monte, {sprint} descend ; toucher le sol fait atterrir"
+BOOK_MODES_CATALOG,"In the catalog, a click takes a stack, a right click one item, Shift + click puts a stack in your bag; a click with something else in hand throws it away. The wheel scrolls it.","Dans le catalogue, un clic prend une pile, un clic droit un seul objet, Maj + clic met une pile dans ton sac ; un clic avec autre chose en main le jette. La molette le fait défiler."
+BOOK_MODES_TOOLS,Creative tools,Outils du créatif
+BOOK_MODES_SURVIVAL,"The game itself: gather, craft, eat and stay alive (see the Survival chapter). The pause menu switches the world between survival and creative.","Le jeu lui-même : récolte, fabrique, mange et reste en vie (voir le chapitre Survie). Le menu pause fait passer le monde de la survie au créatif et inversement."
+BOOK_MODES_HARDCORE,"Survival with one life: passing out ends your adventure, and you can only watch the world, flying through everything. Chosen when the world is created, for good.","La survie avec une seule vie : perdre connaissance met fin à ton aventure, et tu ne peux plus que regarder le monde en volant à travers tout. Choisi à la création du monde, pour de bon."

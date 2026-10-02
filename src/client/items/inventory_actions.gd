@@ -35,6 +35,7 @@ func connect_screen(screen: InventoryScreen) -> void:
 	screen.spread_previewed.connect(_on_spread_previewed)
 	screen.spread_finished.connect(_on_spread_finished)
 	screen.collect_requested.connect(_on_collect_requested)
+	screen.catalog_clicked.connect(_on_catalog_clicked)
 
 
 func open_inventory() -> void:
@@ -54,6 +55,12 @@ func open_chest(cell: Vector3i) -> void:
 	chest_cell = cell
 	client.transport.send(Msg.open_chest(cell))
 	client.inventory_screen.open_chest(chest)
+
+
+## A click on the creative catalog.
+func _on_catalog_clicked(item: int, right: bool, shift: bool) -> void:
+	GameModes.take_from_catalog(client.inventory, item, right, shift)
+	client.transport.send(Msg.catalog_click(item, right, shift))
 
 
 func _on_chest_clicked(slot: int, right: bool, shift: bool) -> void:

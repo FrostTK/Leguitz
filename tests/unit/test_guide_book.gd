@@ -13,7 +13,7 @@ func test_every_chapter_is_written_and_every_control_has_its_keys() -> void:
 		for entry: Dictionary in entries:
 			var text: String = entry["text"]
 			assert_false(text.is_empty())
-			assert_true(untranslated.search(text) == null or text == "Debug", "translated: " + text)
+			assert_true(untranslated.search(text) == null, "translated: " + text)
 			assert_false("{" in text, "keys named: " + text)
 			if entry["kind"] == GuideBook.Kind.KEYS:
 				assert_false(entry["keys"].is_empty(), "keys for " + text)

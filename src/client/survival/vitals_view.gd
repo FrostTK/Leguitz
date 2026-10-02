@@ -51,7 +51,7 @@ func _ready() -> void:
 	veil.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	veil.visible = false
-	screen.respawn_requested.connect(func() -> void: client.transport.send(Msg.respawn()))
+	screen.respawn_requested.connect(_on_get_up)
 
 
 ## The vitality and satiety the server tells; a hurt flashes the body and
@@ -82,7 +82,20 @@ func on_passed_out(cause: int) -> void:
 	client.book_screen.close()
 	client.local_player.controls_enabled = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	screen.open(cause)
+	screen.open(cause, client.modes.mode == WorldSettings.GameMode.HARDCORE)
+
+
+## The death screen's button: up again at the spawn (the server says so,
+## Msg.VITALS), or in hardcore, watching the world (GameModeView).
+func _on_get_up() -> void:
+	if not client.modes.spectator:
+		client.transport.send(Msg.respawn())
+		return
+	passed_out = false
+	screen.close()
+	client.modes.watch()
+	if client.view_mode.first_person:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
 func _process(delta: float) -> void:

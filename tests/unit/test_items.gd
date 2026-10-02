@@ -206,11 +206,15 @@ func test_broken_blocks_drop_items_players_pick_up() -> void:
 	assert_true(said.any(func(m: Dictionary) -> bool: return m["t"] == Msg.INVENTORY))
 
 
-func test_the_debug_key_gives_tools() -> void:
+func test_the_debug_key_gives_tools_in_creative() -> void:
 	var setup := _joined()
 	var server: GameServer = setup[0]
 	var client: LocalTransport = setup[1]
 	var session: GameServer.PlayerSession = setup[2]
+	client.send(Msg.debug_give_tools(Items.Tier.IRON))
+	server.process_messages()
+	assert_eq(session.inventory.items[0], Items.Id.NONE, "not in survival")
+	server.settings.game_mode = WorldSettings.GameMode.CREATIVE
 	client.send(Msg.debug_give_tools(Items.Tier.IRON))
 	server.process_messages()
 	assert_eq(session.inventory.items[0], Items.Id.IRON_PICKAXE)

@@ -17,7 +17,9 @@ extends Control
 ## as it goes, done when it is let go; let go on the slot it began on, a
 ## plain click). A double click gathers on the cursor the same items as
 ## its stack lying elsewhere (Inventory.collect). With empty hands, the name of the
-## item under the mouse shows beside it.
+## item under the mouse shows beside it. In creative, the inventory shows
+## the catalog of every item over the bag instead of the crafting grid
+## (CreativeCatalog; the wheel scrolls it).
 
 signal slot_clicked(slot: int, right: bool, shift: bool)
 signal cursor_dropped(whole: bool)
@@ -35,6 +37,8 @@ signal spread_previewed(targets: Array)
 signal spread_finished(targets: Array)
 ## A double click: the cursor's stack gathers its kind (Inventory.collect).
 signal collect_requested
+## An item of the creative catalog was clicked (GameModes.take_from_catalog).
+signal catalog_clicked(item: int, right: bool, shift: bool)
 
 ## The flame shown under what a furnace cooks: its rows' widths, from the
 ## bottom; and its colors (embers to tip).
@@ -53,6 +57,8 @@ var furnace: Furnace
 ## The book's slot shows, and the book is in hand (set by GameClient).
 var book_shown := false
 var book_selected := false
+## Creative: the inventory shows the catalog (set by GameModeView).
+var creative := false
 
 var _slots: Array[ItemSlot] = []
 var _book := ItemSlot.new()
@@ -67,6 +73,7 @@ var _cells: Array[ItemSlot] = []
 var _crafting_area: Control
 var _chest_grid := GridContainer.new()
 var _chest_slots: Array[ItemSlot] = []
+var _catalog := CreativeCatalog.new()
 var _furnace_area: Control
 var _furnace_slots: Array[ItemSlot] = []
 var _furnace_hint := Label.new()
@@ -129,6 +136,11 @@ func _ready() -> void:
 		)
 		_chest_grid.add_child(chest_slot)
 		_chest_slots.append(chest_slot)
+	_catalog.library = library
+	_catalog.item_clicked.connect(
+		func(item: int, right: bool, shift: bool) -> void: catalog_clicked.emit(item, right, shift)
+	)
+	box.add_child(_catalog)
 	_bag_label.text = "INVENTORY_TITLE"
 	box.add_child(_bag_label)
 	var bag := GridContainer.new()
@@ -167,16 +179,21 @@ func _ready() -> void:
 
 
 ## Opens with a crafting grid `width` cells across: the inventory's own,
-## or a workbench's (Inventory.GRID).
+## or a workbench's (Inventory.GRID). In creative the inventory shows the
+## catalog instead.
 func open(width := Inventory.OWN_GRID) -> void:
 	chest = null
 	furnace = null
+	var catalog := creative and width == Inventory.OWN_GRID
 	_furnace_area.visible = false
 	_chest_grid.visible = false
-	_bag_label.visible = false
-	_crafting_area.visible = true
+	_catalog.visible = catalog
+	_bag_label.visible = catalog
+	_crafting_area.visible = not catalog
 	craft_width = width
 	_title.text = "WORKBENCH_TITLE" if width > Inventory.OWN_GRID else "INVENTORY_TITLE"
+	if catalog:
+		_title.text = "CATALOG_TITLE"
 	_grid.columns = width
 	for cell in _cells.size():
 		_cells[cell].visible = cell % Inventory.GRID < width and cell / Inventory.GRID < width
@@ -189,6 +206,7 @@ func open_chest(view: Inventory) -> void:
 	chest = view
 	furnace = null
 	_furnace_area.visible = false
+	_catalog.visible = false
 	_title.text = "CHEST_TITLE"
 	_crafting_area.visible = false
 	_chest_grid.visible = true
@@ -206,6 +224,7 @@ func open_furnace(view: Furnace) -> void:
 	_furnace_hint.text = "FURNACE_FOOD_HINT" if food else "FURNACE_FACTORY_HINT"
 	_crafting_area.visible = false
 	_chest_grid.visible = false
+	_catalog.visible = false
 	_furnace_area.visible = true
 	_bag_label.visible = true
 	visible = true
@@ -391,7 +410,16 @@ func _input(event: InputEvent) -> void:
 	var from := _pointer
 	_pointer = (_cursor.make_input_local(mouse) as InputEventMouse).position
 	var button := event as InputEventMouseButton
-	if button != null and button.button_index == MOUSE_BUTTON_RIGHT and not _spreading:
+	if (
+		button != null
+		and button.pressed
+		and button.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]
+		and _catalog.is_visible_in_tree()
+		and _catalog.get_global_rect().has_point(_pointer)
+	):
+		_catalog.scroll(-1 if button.button_index == MOUSE_BUTTON_WHEEL_UP else 1)
+		get_viewport().set_input_as_handled()
+	elif button != null and button.button_index == MOUSE_BUTTON_RIGHT and not _spreading:
 		_dragged.clear()
 		var start: ItemSlot = _drop_slot_at(_pointer) if button.pressed else null
 		_dragging = start != null and not button.shift_pressed and _holding()

@@ -7,7 +7,8 @@ extends RefCounted
 ## and on the furniture under it (a workbench, a chest, a furnace:
 ## ObjectShapes.stand_height). In water or lava it swims: it sinks slowly,
 ## rises while jump is held up to float with its head out, leaps out
-## against a bank; falls end there (they never hurt).
+## against a bank; falls end there (they never hurt). In creative it flies
+## (fly; a spectator's ghost flies through everything).
 ## Shared by the client (prediction) and the server (validation).
 ##
 ## `voxel_at` is a Callable(cell: Vector3i) -> int giving the voxel at
@@ -37,6 +38,11 @@ const FLOAT_DEPTH := 0.45
 const LEAP_HEIGHT := 1.45
 ## The eye, over the feet (levels): under the surface, the body has no air.
 const EYE_HEIGHT := 1.35
+## Flying (levels per second up or down, see fly), how fast the speed eases
+## towards that (per second), and how far out of the world a ghost goes.
+const FLY_SPEED := 7.0
+const FLY_DRAG := 10.0
+const GHOST_ABOVE := 24.0
 
 var feet := Vector2.ZERO
 var height := 0.0
@@ -48,6 +54,8 @@ var needs_landing := true
 ## The feet are in water or lava (`liquid`: which voxel; under its surface).
 var in_liquid := false
 var liquid := Voxels.AIR
+## Flying (creative, see fly): no gravity until it lands.
+var flying := false
 
 ## The highest point since the body left the ground, and how far it fell
 ## from there when it last landed (see take_fall).
@@ -164,6 +172,7 @@ func place(at: Vector2, at_height: float) -> void:
 	height = at_height
 	vertical_speed = 0.0
 	needs_landing = true
+	flying = false
 	_fall_peak = at_height
 	_fallen = 0.0
 
@@ -265,6 +274,48 @@ func _swim(jump: bool, blocked: bool, below: float, delta: float, voxel_at: Call
 		height = below
 		vertical_speed = 0.0
 		on_ground = true
+
+
+## One frame of flight: `motion` on the map, rising while `up` is held,
+## sinking while `down` is (FLY_SPEED, eased), no gravity. It bumps into
+## walls and ceilings and lands on the ground, which ends the flight; a
+## fall only counts from where the flight ended (take_fall). A `ghost` (a
+## spectator) flies through everything and never lands.
+func fly(
+	motion: Vector2, up: bool, down: bool, delta: float, voxel_at: Callable, ghost := false
+) -> void:
+	var target := (FLY_SPEED if up else 0.0) - (FLY_SPEED if down else 0.0)
+	vertical_speed += (target - vertical_speed) * (1.0 - exp(-FLY_DRAG * delta))
+	on_ground = false
+	needs_landing = false
+	_fall_peak = height
+	if ghost:
+		feet += motion
+		var top := GameConst.WORLD_HEIGHT - GameConst.SEA_LEVEL + GHOST_ABOVE
+		height = clampf(height + vertical_speed * delta, -GameConst.SEA_LEVEL, top)
+		in_liquid = false
+		liquid = Voxels.AIR
+		return
+	if motion != Vector2.ZERO:
+		var current := height
+		var obstacle_at := func(tile: Vector2i) -> Rect2: return obstacle(tile, current, voxel_at)
+		feet = TileCollider.move(feet, motion, BOX, obstacle_at)
+	var below := support(feet, height + STEP_UP, voxel_at)
+	var next_height := height + vertical_speed * delta
+	if vertical_speed > 0.0:
+		var ceiling := _ceiling_above(next_height, voxel_at)
+		if next_height > ceiling:
+			next_height = ceiling
+			vertical_speed = 0.0
+	if below != -INF and next_height <= below:
+		next_height = below
+		vertical_speed = 0.0
+		on_ground = true
+		flying = false
+	height = next_height
+	_fall_peak = height
+	liquid = liquid_at(feet, height, voxel_at)
+	in_liquid = liquid != Voxels.AIR
 
 
 ## Ghost movement (debug): through everything, onto the highest ground.

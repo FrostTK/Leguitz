@@ -1,6 +1,7 @@
 class_name PauseMenu
 extends Control
-## Pause menu: resume, world time settings, language, zoom, graphics, quit.
+## Pause menu: resume, the world's game mode and time settings, language,
+## zoom, graphics, quit.
 ## World settings are sent to the server (they belong to the world);
 ## user preferences go to the Settings autoload.
 
@@ -8,6 +9,9 @@ signal resume_requested
 signal quit_requested
 ## `mode` is a WorldClock.Mode, `value` depends on the mode (see Msg.set_time).
 signal time_settings_requested(mode: int, value: float)
+## Another game mode for the world (survival and creative swap; a hardcore
+## world stays hardcore).
+signal game_mode_requested(mode: int)
 
 const FROZEN_CHOICES := [
 	["FROZEN_SUNRISE", WorldClock.FROZEN_SUNRISE],
@@ -28,8 +32,11 @@ const SCREEN_MARGIN := 8.0
 const QUALITY_KEYS := ["QUALITY_LOW", "QUALITY_MEDIUM", "QUALITY_HIGH", "QUALITY_ULTRA"]
 
 var clock: WorldClock
+## The world's game mode (WorldSettings.GameMode, set by GameModeView).
+var game_mode := WorldSettings.GameMode.SURVIVAL
 
 var _resume_button := Button.new()
+var _game_mode := OptionButton.new()
 var _time_mode := OptionButton.new()
 var _day_length := OptionButton.new()
 var _frozen_at := OptionButton.new()
@@ -81,6 +88,11 @@ func _ready() -> void:
 	box.add_child(_resume_button)
 
 	box.add_child(_section("MENU_WORLD_SETTINGS"))
+	for mode in WorldSettings.GameMode.size():
+		_game_mode.add_item(WorldSettings.GAME_MODE_KEYS[mode])
+	_game_mode.item_selected.connect(_on_game_mode_selected)
+	box.add_child(_row("SETTING_GAME_MODE", _game_mode))
+
 	for key in ["TIME_MODE_NORMAL", "TIME_MODE_SYNCED", "TIME_MODE_FROZEN"]:
 		_time_mode.add_item(key)
 	_time_mode.item_selected.connect(_on_time_changed.unbind(1))
@@ -163,6 +175,10 @@ func refresh_from_state() -> void:
 	if clock == null:
 		return
 	_updating = true
+	_game_mode.select(game_mode)
+	var hardcore := game_mode == WorldSettings.GameMode.HARDCORE
+	_game_mode.disabled = hardcore
+	_game_mode.set_item_disabled(WorldSettings.GameMode.HARDCORE, not hardcore)
 	_time_mode.select(clock.mode)
 	_day_length.select(_closest_preset(clock.day_minutes))
 	_frozen_at.select(_closest_frozen_choice(clock.time_of_day()))
@@ -203,6 +219,11 @@ func _on_time_changed() -> void:
 			value = FROZEN_CHOICES[_frozen_at.selected][1]
 	time_settings_requested.emit(mode, value)
 	_refresh_dynamic_texts()
+
+
+func _on_game_mode_selected(index: int) -> void:
+	if not _updating:
+		game_mode_requested.emit(index)
 
 
 func _on_language_selected(index: int) -> void:

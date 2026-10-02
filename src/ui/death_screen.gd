@@ -2,7 +2,8 @@ class_name DeathScreen
 extends Control
 ## What shows when the player passes out (their vitality ran out): the
 ## world darkens, a parchment says what happened and that their things
-## lie where they fell, and a button gets them up again (at the spawn).
+## lie where they fell, and a button gets them up again (at the spawn). In
+## hardcore their adventure is over: the button lets them watch the world.
 ## Also draws the red pulse at the screen's edges when they are hurt
 ## (flash), alive or not.
 
@@ -18,7 +19,10 @@ const PULSE_SECONDS := 0.45
 const PULSE_COLOR := Color(0.78, 0.06, 0.05)
 
 var _panel := PanelContainer.new()
+var _title := Label.new()
 var _cause := Label.new()
+var _things := Label.new()
+var _button := Button.new()
 var _fade := 0.0
 var _dead := false
 var _pulse := 0.0
@@ -34,36 +38,34 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	box.alignment = BoxContainer.ALIGNMENT_CENTER
 	_panel.add_child(box)
-	var title := Label.new()
-	title.text = "DEATH_TITLE"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 12)
-	title.add_theme_color_override("font_color", UiTheme.WOOD_DARK)
-	box.add_child(title)
+	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_title.add_theme_font_size_override("font_size", 12)
+	_title.add_theme_color_override("font_color", UiTheme.WOOD_DARK)
+	box.add_child(_title)
 	_cause.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_cause.add_theme_color_override("font_color", UiTheme.INK)
 	box.add_child(_cause)
-	var things := Label.new()
-	things.text = "DEATH_THINGS"
-	things.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	things.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	things.custom_minimum_size.x = 150.0
-	things.add_theme_font_size_override("font_size", 7)
-	things.add_theme_color_override("font_color", UiTheme.WOOD)
-	box.add_child(things)
-	var button := Button.new()
-	button.text = "DEATH_GET_UP"
-	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	button.pressed.connect(func() -> void: respawn_requested.emit())
-	box.add_child(button)
+	_things.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_things.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_things.custom_minimum_size.x = 150.0
+	_things.add_theme_font_size_override("font_size", 7)
+	_things.add_theme_color_override("font_color", UiTheme.WOOD)
+	box.add_child(_things)
+	_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_button.pressed.connect(func() -> void: respawn_requested.emit())
+	box.add_child(_button)
 	_panel.visible = false
 
 
-## The player passed out from `cause` (Vitals.Cause).
-func open(cause: int) -> void:
+## The player passed out from `cause` (Vitals.Cause); in a hardcore world
+## (`last`), for good.
+func open(cause: int, last := false) -> void:
 	_dead = true
 	_fade = 0.0
+	_title.text = "DEATH_TITLE_HARDCORE" if last else "DEATH_TITLE"
 	_cause.text = Vitals.CAUSE_KEYS.get(cause, "DEATH_CAUSE_NONE")
+	_things.text = "DEATH_THINGS_HARDCORE" if last else "DEATH_THINGS"
+	_button.text = "DEATH_WATCH" if last else "DEATH_GET_UP"
 	_panel.visible = false
 	mouse_filter = Control.MOUSE_FILTER_STOP
 

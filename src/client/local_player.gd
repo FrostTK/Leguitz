@@ -10,15 +10,24 @@ const WALK_SPEED := 5.0 * GameConst.TILE_SIZE
 const WATER_SPEED := 0.6
 const LAVA_SPEED := 0.4
 const SPRINT_MULTIPLIER := 1.45
-## Debug "ghost" mode: flies through everything (creative flight later).
-const NOCLIP_MULTIPLIER := 2.5
+## Flying (creative flight, a spectator's ghost, the debug ghost mode)
+## goes this many times faster than walking.
+const FLY_MULTIPLIER := 2.5
+## Two presses of jump this close (seconds) start or stop flying.
+const DOUBLE_JUMP_SECONDS := 0.3
 const SEND_INTERVAL := GameConst.TICK_DELTA
 
 var client_world: ClientWorld
 var transport: Transport
 var body := PlayerBody.new()
 var active := false
+## Debug ghost mode (creative): glides through everything, onto the ground.
 var noclip := false
+## Creative: two presses of jump start or stop flying (jump rises, sprint
+## sinks; landing ends it).
+var can_fly := false
+## A spectator: flies through everything.
+var ghost := false
 ## False while a screen takes the keys (the inventory): the player stands.
 var controls_enabled := true
 ## Too hungry to run (Vitals.WEAK, told by VitalsView).
@@ -45,6 +54,8 @@ var height: float:
 		return body.height
 
 var _send_timer := 0.0
+## When jump was last pressed (seconds; see DOUBLE_JUMP_SECONDS).
+var _jumped_at := -INF
 ## How far the body fell, for the next report to the server.
 var _fell := 0.0
 var _last_sent_position := Vector2.INF
@@ -76,6 +87,8 @@ func step(delta: float) -> void:
 	)
 	if not controls_enabled:
 		input = Vector2.ZERO
+	_toggle_flight()
+	var flying := ghost or noclip or body.flying
 	var motion := Vector2.ZERO
 	if input != Vector2.ZERO:
 		input = Render3D.screen_to_ground(input, camera_yaw)
@@ -83,27 +96,53 @@ func step(delta: float) -> void:
 		_update_facing(input)
 		var ground := client_world.ground_under(current_tile(), body.height)
 		var speed := WALK_SPEED * Tiles.ground_speed(ground)
-		if can_sprint and Input.is_action_pressed(InputBindings.SPRINT):
+		if flying:
+			speed = WALK_SPEED * FLY_MULTIPLIER
+		elif can_sprint and Input.is_action_pressed(InputBindings.SPRINT):
 			speed *= SPRINT_MULTIPLIER
-		if body.in_liquid:
+		if body.in_liquid and not flying:
 			var lava := Voxels.ground_of(body.liquid) == Tiles.Ground.LAVA
 			speed *= LAVA_SPEED if lava else WATER_SPEED
 		# Cap the step so a frame hitch never tunnels through a tile.
 		motion = input * speed * minf(delta, 0.1)
 	var before := body.feet
-	if noclip:
-		body.glide(motion * NOCLIP_MULTIPLIER, client_world.voxel_at)
+	var up := controls_enabled and Input.is_action_pressed(InputBindings.JUMP)
+	var down := controls_enabled and Input.is_action_pressed(InputBindings.SPRINT)
+	var voxel_at := client_world.voxel_at
+	if ghost:
+		body.fly(motion, up, down, minf(delta, 0.1), voxel_at, true)
+	elif noclip:
+		body.glide(motion, voxel_at)
+	elif body.flying:
+		body.fly(motion, up, down, minf(delta, 0.1), voxel_at)
 	else:
-		var jump := controls_enabled and Input.is_action_pressed(InputBindings.JUMP)
-		body.step(motion, jump, minf(delta, 0.1), client_world.voxel_at)
+		body.step(motion, up, minf(delta, 0.1), voxel_at)
 	speed = before.distance_to(body.feet) / maxf(delta, 0.001) / GameConst.TILE_SIZE
-	if body.on_ground or body.in_liquid or body.height < view_height:
+	if flying or body.on_ground or body.in_liquid or body.height < view_height:
 		view_height = body.height
 	_fell = maxf(_fell, body.take_fall())
 	_send_timer += delta
 	if _send_timer >= SEND_INTERVAL:
 		_send_timer = 0.0
 		_send_state()
+
+
+## Creative: two presses of jump close together start or stop flying
+## (out of creative, the body stops flying).
+func _toggle_flight() -> void:
+	if not can_fly:
+		body.flying = false
+		return
+	if not controls_enabled or not Input.is_action_just_pressed(InputBindings.JUMP):
+		return
+	var now := Time.get_ticks_msec() * 0.001
+	if now - _jumped_at > DOUBLE_JUMP_SECONDS:
+		_jumped_at = now
+		return
+	_jumped_at = -INF
+	body.flying = not body.flying
+	if not body.flying:
+		body.vertical_speed = 0.0
 
 
 ## True until the ground under a new position is known.

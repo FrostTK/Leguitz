@@ -14,6 +14,8 @@ const PAGE_SIZE := Vector2(150, 188)
 const COVER := 6.0
 const SPINE := 4.0
 const TAB_SIZE := Vector2(56, 13)
+## Room around a tab's name.
+const TAB_PADDING := 8.0
 ## Inside a page: the margins around the text, and the room at the bottom
 ## for the page number.
 const MARGIN := Vector2(10, 10)
@@ -287,12 +289,23 @@ func _draw() -> void:
 			break
 
 
+## The chapters' tabs over the book, each as wide as its name (all
+## narrower when they would not fit, TAB_SIZE at most).
 func _draw_tabs(font: Font, book: Rect2) -> void:
 	var shown := _chapter_shown()
 	var count := GuideBook.CHAPTERS.size()
-	var tab := Vector2(minf(TAB_SIZE.x, (book.size.x - 24.0) / count - 2.0), TAB_SIZE.y)
+	var widths: Array[float] = []
+	var total := 0.0
+	for key in GuideBook.CHAPTERS:
+		var text := font.get_string_size(tr(key), HORIZONTAL_ALIGNMENT_LEFT, -1, SMALL_SIZE)
+		widths.append(minf(text.x + TAB_PADDING, TAB_SIZE.x))
+		total += widths[-1] + 2.0
+	var fit := minf((book.size.x - 24.0) / total, 1.0)
+	var x := book.position.x + 12.0
 	for i in count:
-		var at := book.position + Vector2(12.0 + i * (tab.x + 2.0), 1.0 - tab.y)
+		var tab := Vector2(floorf(widths[i] * fit), TAB_SIZE.y)
+		var at := Vector2(x, book.position.y + 1.0 - tab.y)
+		x += tab.x + 2.0
 		var rect := Rect2(at, tab + Vector2(0.0, 4.0))
 		var hovered := _hit(rect, "chapter", i)
 		var fill := PAPER_SHADE.darkened(0.12)

@@ -188,7 +188,7 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   the front, a side and the back, the wrist following `PlayerModel.strike_phase`; first person:
   bottom right of the view, turned to show its depth, the body's copy only casts its shadow).
   What is in hand is on PlayerModel.PLAYER_LAYER like the body: the lantern (left hand in first
-  person, LANTERN_IN_HAND) throws no shadow of it, the sun and the moon do. F7 (debug) asks the server
+  person, LANTERN_IN_HAND) throws no shadow of it, the sun and the moon do. F7 (creative) asks the server
   for the next material's tools (Msg.DEBUG_GIVE_TOOLS, announced over the hotbar); the F3 screen
   shows what is aimed at, its breaking time with what is in hand and the tool made for it.
 - The player's book (`Settings.guide_book`, on by default, in the pause menu): a 10th slot set
@@ -302,6 +302,20 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   lies down, PlayerModel.set_down; eating: GameClient.wants_to_eat, food in hand and the right
   button or the left trigger held, one eaten every EAT_SECONDS, predicted, the arm at the mouth,
   crumbs, the first-person hand at the mouth). The book's Survival chapter lists what feeds.
+- Game modes (`WorldSettings.GameMode`, the world's; rules in `GameModes`, static, given the
+  server): creative players fly (`PlayerBody.fly`, `flying`: two presses of jump within
+  LocalPlayer.DOUBLE_JUMP_SECONDS, jump rises, sprint sinks, landing ends it, falls only count from
+  where a flight ended), place without using up (server and prediction), break at once
+  (BlockInteraction: Mining.BREAK_PAUSE between two) with no drops nor wear, are never hurt nor
+  hungry (Survival), see no gauges and take any item from the catalog shown instead of the
+  inventory's crafting grid (CreativeCatalog; `GameModes.take_from_catalog`, shared, Msg.CATALOG_CLICK).
+  Debug commands (map, Page Up/Down, F4, F6, F7: GameModeView.debug_key) are refused out of
+  creative (`GameModes.cheats`; `GameServer.cheats_anywhere` for dev options). Msg.SET_GAME_MODE
+  (pause menu) swaps survival and creative (creative makes players well again); a hardcore world
+  stays hardcore. Hardcore: passing out makes the player a spectator (`PlayerSession.spectator`,
+  saved; RESPAWN refused, moves still accepted); Msg.GAME_MODE tells the mode and that; the death
+  screen's button then watches (GameModeView.watch: LocalPlayer.ghost flies through everything,
+  PlayerModel.set_ghost, no hotbar, a banner).
 - Saves (`src/sim/save/world_storage.gd`, server side only): `user://worlds/<folder>/` holds
   world.cfg (settings, clock, weather), players/<name>.cfg and regions/r.<x>.<z>.bin (the chunks
   players changed, 32x32 per file, zstd voxels; the others are generated again). Change voxels

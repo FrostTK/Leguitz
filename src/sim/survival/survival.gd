@@ -5,8 +5,9 @@ extends RefCounted
 ## breaks them), lava, air and drowning, satiety spent with effort,
 ## eating, starving, slow
 ## healing when well fed, passing out (what they carry falls where they
-## are) and getting up at the spawn. Creative players are never hurt nor
-## hungry. Stateless: each call is given the server.
+## are) and getting up at the spawn (in hardcore, never: they only watch
+## the world, GameModes). Creative players are never hurt nor hungry.
+## Stateless: each call is given the server.
 
 
 ## A player landed after falling `fell` levels: over FALL_SAFE it hurts,
@@ -56,11 +57,14 @@ static func _pass_out(server: GameServer, session: GameServer.PlayerSession, cau
 			bag.take(slot, bag.counts[slot])
 	session.transport.send(Msg.inventory(bag))
 	session.transport.send(Msg.died(cause))
+	if GameModes.hardcore(server):
+		session.spectator = true
+		session.transport.send(Msg.game_mode(server.settings.game_mode, true))
 
 
 ## A player who passed out gets up at the spawn, fully well.
 static func get_up(server: GameServer, session: GameServer.PlayerSession) -> void:
-	if not session.joined or session.alive():
+	if not session.joined or session.alive() or session.spectator:
 		return
 	session.health = Vitals.MAX_HEALTH
 	session.food = Vitals.MAX_FOOD

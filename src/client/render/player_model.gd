@@ -177,6 +177,11 @@ func set_hurt(amount: float) -> void:
 	_material.set_shader_parameter("hurt", amount)
 
 
+## Hides the body (a spectator is unseen; their lantern still lights).
+func set_ghost(ghost: bool) -> void:
+	_body.visible = not ghost
+
+
 ## Lays the body down on its back (1: passed out, 0: standing).
 func set_down(amount: float) -> void:
 	_body.rotation.x = -PI * 0.5 * amount

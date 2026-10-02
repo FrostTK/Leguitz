@@ -30,6 +30,8 @@ const OPEN_CHEST := "open_chest"
 const CHEST_CLICK := "chest_click"
 const OPEN_FURNACE := "open_furnace"
 const FURNACE_CLICK := "furnace_click"
+const SET_GAME_MODE := "set_game_mode"
+const CATALOG_CLICK := "catalog_click"
 
 ## map_request() row for a map of the surface.
 const MAP_SURFACE := -1
@@ -53,6 +55,23 @@ const CHEST := "chest"
 const VITALS := "vitals"
 const DIED := "died"
 const FURNACE := "furnace"
+const GAME_MODE := "game_mode"
+
+
+## The player asks for another game mode for the world (GameModes.set_mode).
+static func set_game_mode(mode: int) -> Dictionary:
+	return {"t": SET_GAME_MODE, "mode": mode}
+
+
+## A click on an item of the creative catalog (GameModes.take_from_catalog).
+static func catalog_click(item: int, right: bool, shift: bool) -> Dictionary:
+	return {"t": CATALOG_CLICK, "item": item, "right": right, "shift": shift}
+
+
+## The world's game mode (WorldSettings.GameMode), and whether this player
+## only watches it (hardcore: their one life is over).
+static func game_mode(mode: int, spectator: bool) -> Dictionary:
+	return {"t": GAME_MODE, "mode": mode, "spectator": spectator}
 
 
 ## The player broke the voxel at `cell` (tile x, row, tile y) with the

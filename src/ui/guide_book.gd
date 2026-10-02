@@ -2,7 +2,8 @@ class_name GuideBook
 extends RefCounted
 ## What the player's book says (the 10th slot, shown by BookScreen): the
 ## controls as they are bound (in the player's keyboard layout), the
-## gamepad, tips, tools, the recipes, the furnaces and survival. A chapter is a list of entries:
+## gamepad, tips, tools, the recipes, the furnaces, survival and the game
+## modes (creative's flight and debug keys). A chapter is a list of entries:
 ## Dictionaries with a "kind" (Kind) and their text already translated,
 ## built again when the language changes.
 
@@ -17,6 +18,7 @@ const CHAPTERS: Array[String] = [
 	"BOOK_CHAPTER_CRAFT",
 	"BOOK_CHAPTER_FURNACES",
 	"BOOK_CHAPTER_SURVIVAL",
+	"BOOK_CHAPTER_MODES",
 ]
 const TIP_COUNT := 15
 ## The tools chapter: what each kind of tool is for, shown with this tool.
@@ -36,7 +38,9 @@ const TOOL_ROWS := [
 
 ## The entries of every chapter, in CHAPTERS order.
 static func chapters() -> Array[Array]:
-	return [_controls(), _gamepad(), _tips(), _tools(), _craft(), _furnaces(), _survival()]
+	return [
+		_controls(), _gamepad(), _tips(), _tools(), _craft(), _furnaces(), _survival(), _modes()
+	]
 
 
 static func _controls() -> Array:
@@ -56,16 +60,7 @@ static func _controls() -> Array:
 		_keys("BOOK_VIEW", InputNames.keys(InputBindings.TOGGLE_VIEW)),
 		_keys("BOOK_CAMERA_RESET", InputNames.keys(InputBindings.CAMERA_RESET)),
 		_keys("BOOK_PAUSE", InputNames.keys(InputBindings.PAUSE)),
-		_heading("BOOK_DEBUG"),
 		_keys("BOOK_DEBUG_SCREEN", InputNames.keys(InputBindings.TOGGLE_DEBUG)),
-		_keys("BOOK_MAP", InputNames.keys(InputBindings.TOGGLE_MAP)),
-		_keys(
-			"BOOK_DEPTH",
-			InputNames.keys(InputBindings.DEPTH_DOWN) + InputNames.keys(InputBindings.DEPTH_UP)
-		),
-		_keys("BOOK_NOCLIP", InputNames.keys(InputBindings.TOGGLE_NOCLIP)),
-		_keys("BOOK_WEATHER", InputNames.keys(InputBindings.CYCLE_WEATHER)),
-		_keys("BOOK_GIVE_TOOLS", InputNames.keys(InputBindings.GIVE_TOOLS)),
 	]
 
 
@@ -88,7 +83,6 @@ static func _gamepad() -> Array:
 		_keys("BOOK_CAMERA", InputNames.pad(InputBindings.CAMERA_LEFT)),
 		_keys("BOOK_CAMERA_RESET", InputNames.pad(InputBindings.CAMERA_RESET)),
 		_keys("BOOK_VIEW", InputNames.pad(InputBindings.TOGGLE_VIEW)),
-		_keys("BOOK_MAP", InputNames.pad(InputBindings.TOGGLE_MAP)),
 		_keys("BOOK_PAUSE", InputNames.pad(InputBindings.PAUSE)),
 		_keys("BOOK_DEBUG_SCREEN", InputNames.pad(InputBindings.TOGGLE_DEBUG)),
 		_text("BOOK_GAMEPAD_AIM"),
@@ -204,6 +198,33 @@ static func _survival() -> Array:
 	return entries
 
 
+## Creative (flight, the catalog, its debug keys), survival, hardcore.
+static func _modes() -> Array:
+	return [
+		_title(CHAPTERS[7]),
+		_heading("GAME_MODE_CREATIVE"),
+		_text("BOOK_MODES_CREATIVE"),
+		_combo("BOOK_FLY", "BOOK_FLY_HOW"),
+		_text("BOOK_MODES_CATALOG"),
+		_heading("BOOK_MODES_TOOLS"),
+		_keys(
+			"BOOK_MAP",
+			InputNames.keys(InputBindings.TOGGLE_MAP) + InputNames.pad(InputBindings.TOGGLE_MAP)
+		),
+		_keys(
+			"BOOK_DEPTH",
+			InputNames.keys(InputBindings.DEPTH_DOWN) + InputNames.keys(InputBindings.DEPTH_UP)
+		),
+		_keys("BOOK_NOCLIP", InputNames.keys(InputBindings.TOGGLE_NOCLIP)),
+		_keys("BOOK_WEATHER", InputNames.keys(InputBindings.CYCLE_WEATHER)),
+		_keys("BOOK_GIVE_TOOLS", InputNames.keys(InputBindings.GIVE_TOOLS)),
+		_heading("GAME_MODE_SURVIVAL"),
+		_text("BOOK_MODES_SURVIVAL"),
+		_heading("GAME_MODE_HARDCORE"),
+		_text("BOOK_MODES_HARDCORE"),
+	]
+
+
 static func _title(key: String) -> Dictionary:
 	return {"kind": Kind.TITLE, "text": _t(key)}
 
@@ -230,8 +251,8 @@ static func _icon(item: int, text: String) -> Dictionary:
 	return {"kind": Kind.ICON, "item": item, "text": text}
 
 
-## A translated text; {use} and {inventory} in it name the keys of those
-## controls as they are bound.
+## A translated text; {use}, {inventory}, {jump} and {sprint} in it name
+## the keys of those controls as they are bound ({place}: the button).
 static func _t(key: String) -> String:
 	var text := String(TranslationServer.translate(key))
 	if not "{" in text:
@@ -241,5 +262,6 @@ static func _t(key: String) -> String:
 		"inventory": " / ".join(InputNames.keys(InputBindings.INVENTORY)),
 		"place": String(TranslationServer.translate("MOUSE_RIGHT")).to_lower(),
 		"jump": " / ".join(InputNames.keys(InputBindings.JUMP)),
+		"sprint": " / ".join(InputNames.keys(InputBindings.SPRINT)),
 	}
 	return text.format(keys)
