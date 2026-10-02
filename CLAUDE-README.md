@@ -296,6 +296,30 @@ captures, commit et retour :
 
 Plus tard (après la phase 7) : le **cheval** que l'on monte.
 
+### Demande en attente : chat et console de commandes (à placer avec le propriétaire)
+
+Demandée par le propriétaire, pas encore planifiée : lui demander quand la faire (entre deux
+étapes de la phase 7, ou après).
+
+- **Un chat qui s'ouvre avec T** (touche libre aujourd'hui ; une ligne de saisie en bas de
+  l'écran, l'historique des messages qui s'efface au bout de quelques secondes, Échap ferme,
+  Entrée envoie ; dans notre style, pas celui de Minecraft ; textes FR/EN).
+- **Prêt pour le multijoueur** : les messages passent par le serveur comme le reste (`Msg`, le
+  serveur les relaie à tous les joueurs avec le nom de l'auteur), même en solo.
+- **Une console de commandes** : ce qui commence par « / » est une commande, analysée et
+  exécutée **par le serveur** (jamais par le client), avec une réponse dans le chat (succès,
+  erreur, commande inconnue, aide). Un registre de commandes extensible pour les futures.
+- **Première commande : `/tp random`** : téléporte le joueur à un endroit aléatoire sûr (sur la
+  terre ferme, pas dans l'eau ni la lave, assez loin) ; d'autres viendront (`/tp x z`, `/time`,
+  `/weather`, `/give`, `/gamemode`…).
+- **Joueurs admin** : une liste d'admins par monde (sauvegardée avec le monde ; en solo, le
+  créateur du monde est admin) ; chaque commande dit si elle est réservée aux admins ; le serveur
+  refuse les autres avec un message. Des commandes pour gérer les admins (`/op`, `/deop`, à
+  renommer dans notre style).
+- À relier à l'existant : les commandes de débogage actuelles (F4, F6, F7, Page préc./suiv.,
+  `GameModes.cheats`) pourraient devenir des commandes ; tests du registre, des droits et de
+  `/tp random`.
+
 ### Phase 6 — en pause après l'étape 3
 
 La phase 5 (survie et combat) est terminée : voir les lignes 5.1 à 5.7 de la section 3
