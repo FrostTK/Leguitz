@@ -70,6 +70,8 @@ func to_dict() -> Dictionary:
 func load_dict(data: Dictionary) -> void:
 	health = clampi(int(data.get("health", health)), 1, Species.HEALTH[species])
 	heading = data.get("heading", Vector2.DOWN)
+	if not heading.is_finite():
+		heading = Vector2.DOWN
 
 
 ## The middle of its box on the ground (world pixels).
@@ -115,7 +117,9 @@ func move(delta: float, voxel_at: Callable) -> void:
 		var point := _way[0]
 		var to := Vector2(point.x, point.z) * GameConst.TILE_SIZE - center()
 		var distance := to.length()
-		if distance < REACHED * GameConst.TILE_SIZE and absf(point.y - body.height) < 0.6:
+		var reached := distance < REACHED * GameConst.TILE_SIZE
+		# Right over or under it: nothing to walk (no dividing by zero).
+		if reached and (absf(point.y - body.height) < 0.6 or distance < 0.01):
 			_way.pop_front()
 			_stuck = 0.0
 			dirty = true
@@ -127,6 +131,11 @@ func move(delta: float, voxel_at: Callable) -> void:
 				jump = true
 	_pop_out(voxel_at)
 	body.step(motion, jump, delta, voxel_at)
+	if not body.feet.is_finite() or not is_finite(body.height):
+		# Never lose it to a broken step: back where it was, at rest.
+		body.place(before, before_height)
+		_way.clear()
+		_knock = Vector2.ZERO
 	var moved := body.feet.distance_to(before)
 	speed = moved / maxf(delta, 0.001) / GameConst.TILE_SIZE
 	if expected > 0.0 and moved < expected * 0.2:

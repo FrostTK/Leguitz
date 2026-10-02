@@ -478,7 +478,10 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   WALK/FLEE_SPEED, DROPS; animals BIOMES, HERD; monsters MONSTERS, FLIERS, CHASE_SPEED, DAMAGE,
   CAUSE, HOW_KEYS), `Creature` (server; the base: its body a PlayerBody with its own `box`/`tall`,
   `flying` for fliers; Creature.State IDLE/GRAZE/WANDER/FLEE/CHASE/STRIKE/DORMANT/FROZEN, seen by
-  clients; `move` walks its way, jumps up a level, swims; `hurt_by` throws it back, then
+  clients; `move` walks its way, jumps up a level, swims (a way point right over or under it is
+  reached: never a division by a zero distance; a step leaving non-finite feet puts it back, and
+  Creatures.from_dict drops creatures saved lost: a NaN body overlaps every cell, so
+  Fixtures.someone_in refused placing blocks at its height anywhere); `hurt_by` throws it back, then
   `_on_hurt`; resting ones only move every REST_CHECK; `Creatures.make`/`from_dict`), `Animal`
   (grazes, wanders, flees with its herd), `Monster` (given its prey by `Monsters.sense`, `lit`
   for the lurker; the moth circles and dives, the wisp keeps WISP_NEAR..FAR away and darts,

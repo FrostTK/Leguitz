@@ -53,10 +53,14 @@ static func make(kind: int, feet: Vector2, height: float) -> Creature:
 	return Animal.create(kind, feet, height)
 
 
-## A creature saved by Creature.to_dict (null if its kind is unknown).
+## A creature saved by Creature.to_dict (null if its kind is unknown, or
+## it was saved lost: nowhere, a step once divided by zero).
 static func from_dict(data: Dictionary) -> Creature:
 	var kind := int(data.get("species", -1))
-	if not Species.is_valid(kind):
+	var feet: Vector2 = data.get("feet", Vector2.ZERO)
+	if not Species.is_valid(kind) or not feet.is_finite():
+		return null
+	if not is_finite(float(data.get("height", 0.0))):
 		return null
 	var creature := make(kind, data.get("feet", Vector2.ZERO), float(data.get("height", 0.0)))
 	creature.load_dict(data)

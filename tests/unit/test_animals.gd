@@ -268,3 +268,20 @@ func test_meat_roasts_and_wool_builds() -> void:
 	assert_true(Mining.BLOCK_SECONDS.has(Tiles.Block.WOOL))
 	assert_eq(Combat.damage_of(Items.Id.NONE), Combat.HAND_DAMAGE)
 	assert_true(Combat.damage_of(Items.Id.DIAMOND_AXE) > Combat.damage_of(Items.Id.WOODEN_AXE))
+
+
+func test_a_way_point_right_over_it_never_loses_it() -> void:
+	_flat()
+	var boar := Creatures.make(Species.Id.BOAR, Vector2(8.0, 14.0) * TS, 0.0)
+	var middle := boar.center() / TS
+	# The next point straight above its middle (a ledge it must climb).
+	boar._way = [Vector3(middle.x, 1.0, middle.y), Vector3(middle.x + 3.0, 0.0, middle.y)]
+	for i in 20:
+		boar.move(0.05, _voxel_at)
+	assert_true(boar.body.feet.is_finite(), "still somewhere: %s" % boar.body.feet)
+	assert_true(boar.heading.is_finite())
+	# Saved lost by an older version: left out when the world loads.
+	var lost := {"species": Species.Id.BOAR, "feet": Vector2(NAN, NAN), "height": 0.5}
+	assert_eq(Creatures.from_dict(lost), null)
+	var fine := boar.to_dict()
+	assert_true(Creatures.from_dict(fine) != null)
