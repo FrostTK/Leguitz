@@ -500,6 +500,38 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   plants (a few ripe plants where they fell), the items; VoxelModels.sugar_cane takes heights
   (the ripe one unchanged). Vines on a trellis are not turned at random (ChunkMesher._add_prop).
   The book's Farm chapter (More crops, Fruit trees).
+- Husbandry (phase 7, step 5; `src/sim/creatures/husbandry.gd`, Husbandry: static, given the
+  server; Creatures.update calls `update` every tick and `sense` before each animal thinks, like
+  Monsters.sense): an Animal keeps its farm life (`age` left as a young one, `love`,
+  `breed_rest`, `affection` 0..MAX_AFFECTION and the days it was `petted_day`, `fed_day`,
+  `cared_day`, `shorn`/`wool_in`, `milk_in`, `egg_in`; saved in creatures.cfg; `leader`, the
+  player leading it, is not). Msg.TEND_ANIMAL (client: BlockInteraction._tend_animal, the right
+  click or E on an animal aimed at, not with a bow; tends_here keeps food in hand from being
+  eaten) runs `tend`: its own lead lets it go, a LEAD (4 string make 2) takes it along, SHEARS
+  (2 iron ingots, SHEARS_DURABILITY) shear a sheep (SHEARED: wool falls, more when LOVED or
+  ADORED; grows back after WOOL_SECONDS), a BUCKET (3 iron ingots) milks a grown sheep
+  (MILKED, MILK_SECONDS) into a MILK_BUCKET (food, Items.LEFT_AFTER gives the bucket back once
+  drunk), what it eats (FEED) feeds it (grown: in love LOVE_SECONDS; young: grows FEED_GROWTH
+  sooner; once a day it loves more), anything else pets it (once a day). The player is told
+  how it went: Msg.ANIMAL_NOTICE (a HUD key with the species' name and the affection,
+  CreaturesView.notice_text). Two of a kind in love within MATE_RANGE walk to each other
+  (Animal.mate_at) and a young one is born (`_birth`: Animal.set_age, a body BABY_SIZE small,
+  GROW_SECONDS paced), its parents rest. On a lead an animal follows its player
+  (Animal.leader_at, `_follow`, hurrying when far); past LEAD_SNAP the lead snaps (it falls;
+  so it does when the animal dies). Chickens lay every EGG_SECONDS (two eggs now and then when
+  adored) into the nearest NEST_BOX with room within NEST_RANGE (NEST_BOX_1..3, Husbandry.NESTS,
+  ObjectShapes.STAGE_OF; the eggs are gathered through Picking, broken it gives its eggs too),
+  else on the ground; EGG fries into FRIED_EGG. A day without care (petted, fed, or a night
+  under a roof) takes a point of affection (`_neglect`, Creatures.day). At night
+  (Animal.night) animals sleep (Creature.State.SLEEP, appended); a loved one first looks for a
+  roof (`find_shelter`: the nearest ground tile within SHELTER_RANGE with a cube over it,
+  `covered`) and walks there. Entity messages carry `flags` (Animal.Flag: BABY, SHORN, LOVE)
+  and `lead` (the player's id). Client: CreaturesView.spawn/move take the messages, rebuild a
+  sheep's body shorn or not (CreatureModels.parts(kind, shorn)), throw pink bits over animals
+  in love (`burst` with a count), draw a sagging rope (boxes) from an animal to this player's
+  hand (`player`, `player_id`); CreatureBody scales the young (`size`) and lays sleepers down
+  (legs folded, FOLD, LIE_SINK). RanchModels: the nest box with its eggs, shears, buckets, the
+  lead, eggs. The book's Animals chapter (Husbandry). Cows and goats come with the next step.
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made

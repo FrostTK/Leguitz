@@ -38,6 +38,7 @@ const OBJECT_COLORS := {
 	Tiles.Block.PUMPKIN: Color(0.89, 0.48, 0.14),
 	Tiles.Block.MELON: Color(0.3, 0.55, 0.22),
 	Tiles.Block.TRELLIS: Color(0.6, 0.46, 0.28),
+	Tiles.Block.NEST_BOX: Color(0.82, 0.68, 0.32),
 }
 const PLANT_COLOR := Color(0.32, 0.58, 0.24)
 
@@ -70,6 +71,8 @@ static func _compute(voxel: int) -> Color:
 		return Color(ChestModel.WOOD[2])
 	if Composting.is_composter(block):
 		return Color(FarmModels.BIN[2])
+	if ObjectShapes.base_kind(block) == Tiles.Block.NEST_BOX:
+		return OBJECT_COLORS[Tiles.Block.NEST_BOX]
 	if DecorModels.build(ObjectShapes.base_kind(block), 0) != null:
 		return DecorModels.color_of(ObjectShapes.base_kind(block))
 	var kind := ObjectShapes.kind_of(block)

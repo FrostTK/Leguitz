@@ -120,6 +120,14 @@ static func eat(server: GameServer, session: GameServer.PlayerSession, slot: int
 		session.transport.send(Msg.inventory(session.inventory))
 		return
 	session.inventory.take(slot, 1)
+	if Items.LEFT_AFTER.has(item):
+		# Milk drunk: its bucket stays in hand.
+		var left: int = Items.LEFT_AFTER[item]
+		if session.inventory.items[slot] == Items.Id.NONE:
+			session.inventory.items[slot] = left
+			session.inventory.counts[slot] = 1
+		elif session.inventory.add(left, 1) > 0:
+			server.throw_item(session, left, 1)
 	session.food = mini(session.food + Items.FOOD[item], Vitals.MAX_FOOD)
 	session.transport.send(Msg.inventory(session.inventory))
 	_tell(session)

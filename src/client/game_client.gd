@@ -205,7 +205,7 @@ func _ready() -> void:
 	arrows.library = items
 	arrows.client_world = world
 	world_root.add_child(arrows)
-	creatures.burst.connect(func(at: Vector3, color: Color) -> void: interaction.burst(at, color))
+	creatures.burst.connect(interaction.burst)
 	first_person_held.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	world_viewport.camera.add_child(first_person_held)
 	hud_clock.clock = clock
@@ -254,6 +254,7 @@ func _setup_world() -> void:
 	root.add_child(world_environment)
 	creatures.light_parent = root
 	creatures.sky_at = world_view.sky_at
+	creatures.player = local_player
 	root.add_child(sun)
 	root.add_child(world_root)
 	world_root.add_child(world_view)
@@ -898,6 +899,7 @@ func _handle_message(message: Dictionary) -> void:
 		Msg.WELCOME:
 			player_id = message["player_id"]
 			dropped_items.player_id = player_id
+			creatures.player_id = player_id
 			world_info = message["world"]
 			local_player.spawn_at(message["spawn"], message["h"])
 			joined = true
@@ -953,18 +955,11 @@ func _handle_message(message: Dictionary) -> void:
 		Msg.ITEM_REMOVE:
 			dropped_items.remove(message["id"], message["by"])
 		Msg.ENTITY_SPAWN:
-			creatures.spawn(
-				message["id"],
-				message["kind"],
-				message["pos"],
-				message["h"],
-				message["heading"],
-				message["state"]
-			)
+			creatures.spawn(message)
 		Msg.ENTITY_MOVE:
-			creatures.move(
-				message["id"], message["pos"], message["h"], message["heading"], message["state"]
-			)
+			creatures.move(message)
+		Msg.ANIMAL_NOTICE:
+			hotbar.announce(creatures.notice_text(message))
 		Msg.ENTITY_HURT:
 			creatures.hurt(message["id"])
 		Msg.ENTITY_REMOVE:

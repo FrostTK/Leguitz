@@ -12,8 +12,9 @@ extends RefCounted
 ## chunks it has: Msg.ENTITY_SPAWN, then ENTITY_MOVE every SYNC_TICKS
 ## while they move, ENTITY_REMOVE when they leave its view or die. Players
 ## hit them (Msg.ATTACK, Combat): hurt, animals run away with their herd;
-## dead, creatures leave what they give. Never holds the server (the calls
-## needing it are given it).
+## dead, creatures leave what they give. Farm life (feeding, young ones,
+## leads, wool, milk, eggs, love, sleep): Husbandry. Never holds the server
+## (the calls needing it are given it).
 
 const SALT := 0x5A11E7
 const HERD_CHANCE := 0.3
@@ -34,6 +35,8 @@ var living: Dictionary[int, Creature] = {}
 ## The chunks whose herd was placed (with or without animals).
 var populated: Dictionary[Vector2i, bool] = {}
 var rng := RandomNumberGenerator.new()
+## The day (WorldClock.day_index) farm life last saw (Husbandry.update).
+var day := -1
 
 var _seed := 0
 var _next_id := 1
@@ -114,6 +117,7 @@ func update(server: GameServer, delta: float) -> void:
 		_populate_new()
 	if _ticks % MONSTER_TICKS == 0:
 		Monsters.come_and_go(server, self)
+	Husbandry.update(server, self)
 	var active := _active_chunks(sessions)
 	if active.is_empty():
 		return
@@ -125,6 +129,8 @@ func update(server: GameServer, delta: float) -> void:
 		var monster := creature as Monster
 		if monster != null:
 			Monsters.sense(server, self, monster, delta * 2.0)
+		else:
+			Husbandry.sense(server, self, creature as Animal, delta * 2.0)
 		creature.think(delta * 2.0, at, rng)
 		creature.move(delta * 2.0, at)
 		if monster != null and monster.strike:
@@ -308,7 +314,10 @@ static func _chunk_of(creature: Creature) -> Vector2i:
 ## its players see it go.
 func die(server: GameServer, creature: Creature) -> void:
 	var middle := creature.bounds().get_center()
-	for drop: Array in Species.DROPS[creature.species]:
+	var drops: Array = Species.DROPS[creature.species].duplicate()
+	if creature.led_by() >= 0:
+		drops.append([Items.Id.LEAD, 1, 1])
+	for drop: Array in drops:
 		var count := rng.randi_range(drop[1], drop[2])
 		if count > 0:
 			var speed := Vector3(rng.randf_range(-1.0, 1.0), 3.0, rng.randf_range(-1.0, 1.0))

@@ -311,6 +311,11 @@ enum Block {
 	YOUNG_PEACH_TREE,
 	PEACH_TREE,
 	PEACH_TREE_FRUIT,
+	# A nest box (Husbandry): empty, then holding 1 to 3 eggs.
+	NEST_BOX,
+	NEST_BOX_1,
+	NEST_BOX_2,
+	NEST_BOX_3,
 }
 
 const FLOWERS: Array[Block] = [

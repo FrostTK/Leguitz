@@ -21,6 +21,7 @@ const WATER := "water"
 const COMPOST := "compost"
 const SPREAD_COMPOST := "spread_compost"
 const PICK := "pick"
+const TEND_ANIMAL := "tend_animal"
 const SELECT_SLOT := "select_slot"
 const SLOT_CLICK := "slot_click"
 const SLOT_SPREAD := "slot_spread"
@@ -68,6 +69,7 @@ const ENTITY_SPAWN := "entity_spawn"
 const ENTITY_MOVE := "entity_move"
 const ENTITY_HURT := "entity_hurt"
 const ENTITY_REMOVE := "entity_remove"
+const ANIMAL_NOTICE := "animal_notice"
 const PUSH := "push"
 const LANTERN_OUT := "lantern_out"
 const ARROW_SPAWN := "arrow_spawn"
@@ -116,6 +118,8 @@ static func entity_move(creature: Creature) -> Dictionary:
 		"h": creature.body.height,
 		"heading": creature.heading,
 		"state": creature.state,
+		"flags": creature.flags(),
+		"lead": creature.led_by(),
 	}
 
 
@@ -194,6 +198,18 @@ static func spread_compost(cell: Vector3i, slot: int) -> Dictionary:
 ## The player picked what grows at `cell` (Picking.pick).
 static func pick(cell: Vector3i) -> Dictionary:
 	return {"t": PICK, "cell": cell}
+
+
+## The player used the animal `id` with hotbar slot `slot` in hand
+## (Husbandry.tend: feeding, petting, shearing, milking, a lead).
+static func tend_animal(id: int, slot: int) -> Dictionary:
+	return {"t": TEND_ANIMAL, "id": id, "slot": slot}
+
+
+## Something to tell the player about an animal of `kind`: a HUD key
+## taking the species' name and `value` (Husbandry).
+static func animal_notice(key: String, kind: int, value: int) -> Dictionary:
+	return {"t": ANIMAL_NOTICE, "key": key, "kind": kind, "value": value}
 
 
 ## The player placed the block of hotbar slot `slot` at `cell` (a

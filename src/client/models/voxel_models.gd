@@ -65,6 +65,9 @@ static func build(block: int, variant: int) -> VoxelGrid:
 	var crop := CropModels.build(block, variant)
 	if crop != null:
 		return crop
+	var ranch := RanchModels.build(block)
+	if ranch != null:
+		return ranch
 	if Composting.is_composter(block):
 		return FarmModels.composter(Composting.level_of(block))
 	var decor := DecorModels.build(block, variant)

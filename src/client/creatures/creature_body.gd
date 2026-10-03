@@ -8,7 +8,8 @@ extends Node3D
 ## and a moth's all the time, a lurker's arms reach out to strike and it
 ## pales, still, in the light, a mimic sits as a rock while dormant (legs
 ## and face hidden), a wisp pulses; it reddens when hurt and, dead, tips
-## over and fades away.
+## over and fades away. A young one is smaller (Animal.Flag.BABY); asleep,
+## an animal lies down, legs folded and head low.
 
 const SHADER := preload("res://src/client/shaders/voxel.gdshader")
 const VOXEL := 1.0 / 16.0
@@ -29,6 +30,11 @@ const DEATH_SECONDS := 1.2
 const MIMIC_SINK := 5.0
 ## A lurker in the light pales this much (dithered away).
 const FROZEN_FADE := 0.35
+## Asleep: legs folded this far (radians), the body this low (of its
+## height), the head this low (radians).
+const FOLD := 1.4
+const LIE_SINK := 0.3
+const SLEEP_PITCH := 0.55
 
 var id := 0
 var kind := Species.Id.SHEEP
@@ -38,6 +44,8 @@ var kind := Species.Id.SHEEP
 var target := Vector3.ZERO
 var heading := Vector2.DOWN
 var state := Creature.State.IDLE
+## What else it shows (Animal.Flag): young, shorn, in love.
+var flags := 0
 ## Dead: it tips over and fades; `finished` once gone.
 var dying := false
 var finished := false
@@ -59,12 +67,14 @@ var _climb := 0.0
 var _sink := 0.0
 var _fade := 0.0
 var _sky := -1.0
+var _rest := 0.0
 
 
 ## Builds the model of `animal_kind` from `meshes` (part name -> mesh).
-func setup(animal_id: int, animal_kind: int, meshes: Dictionary) -> void:
+func setup(animal_id: int, animal_kind: int, meshes: Dictionary, animal_flags := 0) -> void:
 	id = animal_id
 	kind = animal_kind as Species.Id
+	flags = animal_flags
 	_material.shader = SHADER
 	_material.set_shader_parameter("use_instance_data", false)
 	add_child(_root)
@@ -104,6 +114,11 @@ func hurt() -> void:
 	_hurt = 1.0
 
 
+## Its size (a young one is smaller).
+func size() -> float:
+	return Animal.BABY_SIZE if flags & Animal.Flag.BABY else 1.0
+
+
 func die() -> void:
 	dying = true
 
@@ -125,8 +140,12 @@ func animate(delta: float) -> void:
 	_phase += delta * speed * STRIDE * TAU
 	if state == Creature.State.FROZEN:
 		_swing = 0.0
+	scale = Vector3.ONE * size()
+	var asleep := state == Creature.State.SLEEP and not dying
+	_rest = move_toward(_rest, 1.0 if asleep else 0.0, delta * 2.0)
 	_animate_legs()
 	_root.position.y = absf(sin(_phase)) * _swing * VOXEL * 1.5
+	_root.position.y -= _rest * Species.TALL[kind] * LIE_SINK
 	if Species.FLIERS.has(kind):
 		_root.position.y = sin(_time * 3.0 + id) * VOXEL * 1.5
 		_root.rotation.x = lerpf(
@@ -158,6 +177,12 @@ func _animate_legs() -> void:
 	for name: String in ["leg_fr", "leg_bl", "leg_r", "leg_2", "leg_4", "leg_6"]:
 		if _joints.has(name):
 			_joints[name].rotation.x = -stride
+	if _rest > 0.0:
+		# Lying down: the legs fold under the body.
+		for name: String in _joints:
+			if name.begins_with("leg_"):
+				var fold := -FOLD if name.begins_with("leg_b") else FOLD
+				_joints[name].rotation.x = lerpf(_joints[name].rotation.x, fold, _rest)
 	if _joints.has("arm_l"):
 		var reach := -1.5 if state == Creature.State.STRIKE else 0.0
 		_joints["arm_l"].rotation.x = lerpf(_joints["arm_l"].rotation.x, reach - stride * 0.6, 0.3)
@@ -172,6 +197,7 @@ func _animate_head(delta: float) -> void:
 	var pitch := sin(_phase * 2.0) * _swing * 0.12
 	if state == Creature.State.GRAZE and not dying:
 		pitch = GRAZE_PITCH + sin(_time * 9.0) * 0.06
+	pitch = lerpf(pitch, SLEEP_PITCH, _rest)
 	head.rotation.x = lerpf(head.rotation.x, pitch, 1.0 - exp(-6.0 * delta))
 
 

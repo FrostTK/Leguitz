@@ -239,6 +239,7 @@ const TOPS := {
 	Tiles.Block.COMPOSTER: 14,
 	Tiles.Block.PUMPKIN: 12,
 	Tiles.Block.MELON: 11,
+	Tiles.Block.NEST_BOX: 7,
 }
 ## Other solid things players place, by kind: the square they block
 ## (voxels; the others facing them: BOX_SIZE).
@@ -253,6 +254,7 @@ const FOOTPRINTS := {
 	Tiles.Block.COMPOSTER: 14,
 	Tiles.Block.PUMPKIN: 14,
 	Tiles.Block.MELON: 14,
+	Tiles.Block.NEST_BOX: 14,
 }
 ## What keeps bodies out (fences, closed gates): two levels high, nobody
 ## jumps over.
@@ -306,6 +308,9 @@ const STAGE_OF := {
 	Tiles.Block.COMPOSTER_6: Tiles.Block.COMPOSTER,
 	Tiles.Block.COMPOSTER_FULL: Tiles.Block.COMPOSTER,
 	Tiles.Block.COMPOSTER_READY: Tiles.Block.COMPOSTER,
+	Tiles.Block.NEST_BOX_1: Tiles.Block.NEST_BOX,
+	Tiles.Block.NEST_BOX_2: Tiles.Block.NEST_BOX,
+	Tiles.Block.NEST_BOX_3: Tiles.Block.NEST_BOX,
 }
 ## Fences join their neighbors (fences, gates and cubes): their version is
 ## the sides they join (FENCE_SIDES bits, 16 versions), not their tile's.
@@ -322,6 +327,7 @@ const SINGLE := {
 	Tiles.Block.LANTERN_HANGING: true,
 	Tiles.Block.COMPOSTER: true,
 	Tiles.Block.TRELLIS: true,
+	Tiles.Block.NEST_BOX: true,
 }
 ## Small things stand anywhere in their tile (whole voxels), not centered.
 const WANDERING := {

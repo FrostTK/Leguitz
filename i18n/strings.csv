@@ -570,3 +570,27 @@ BOOK_FARM_PIPS,"A fruit gives pips or a pit (crafting grid): planted in grass or
 ITEM_RASPBERRY,Raspberry,Framboise
 ITEM_PEACH,Peach,Pêche
 ITEM_PEACH_PIT,Peach pit,Noyau de pêche
+ITEM_SHEARS,Shears,Cisailles
+ITEM_BUCKET,Bucket,Seau
+ITEM_MILK_BUCKET,Bucket of milk,Seau de lait
+ITEM_LEAD,Lead,Corde
+ITEM_EGG,Egg,Œuf
+ITEM_FRIED_EGG,Fried egg,Œuf au plat
+ITEM_NEST_BOX,Nest box,Pondoir
+HUD_ANIMAL_LOVES,%s: affection %d/%d,%s : affection %d/%d
+HUD_ANIMAL_PETTED,%s: already petted today (affection %d/%d),%s : a déjà eu ses câlins aujourd'hui (affection %d/%d)
+HUD_ANIMAL_IN_LOVE,%s: looking for a mate (affection %d/%d),%s : cherche un compagnon (affection %d/%d)
+HUD_ANIMAL_NOT_HUNGRY,%s: not hungry (affection %d/%d),%s : n'a pas faim (affection %d/%d)
+HUD_ANIMAL_YOUNG,%s: too young (affection %d/%d),%s : trop jeune (affection %d/%d)
+HUD_ANIMAL_SHORN,%s: its wool grows back (affection %d/%d),%s : sa laine repousse (affection %d/%d)
+HUD_ANIMAL_NO_MILK,%s: no milk yet (affection %d/%d),%s : pas encore de lait (affection %d/%d)
+HUD_ANIMAL_NOTHING,%s: nothing to get with that (affection %d/%d),%s : rien à en tirer avec ça (affection %d/%d)
+HUD_ANIMAL_LEAD_SNAPPED,%s: the lead snapped,%s : la corde a lâché
+BOOK_ANIMALS_FARM,Husbandry,Élevage
+BOOK_ANIMALS_BREED,"Feed two grown animals of a kind what they like (right click): they look for each other and a young one is born. It grows up in about a day; feeding it helps. Sheep eat wheat or cabbage; boars carrots, potatoes, beetroot or apples; chickens seeds, rice or corn; deer apples, cabbage or carrots.","Nourris deux bêtes adultes de la même espèce avec ce qu'elles aiment (clic droit) : elles se cherchent et un petit naît. Il grandit en une journée environ ; le nourrir l'aide. Les moutons mangent du blé ou du chou ; les sangliers des carottes, des pommes de terre, des betteraves ou des pommes ; les poules des graines, du riz ou du maïs ; les cerfs des pommes, du chou ou des carottes."
+BOOK_ANIMALS_LEAD,"A lead (4 strings make 2) takes an animal along (right click on it); right click it again to let it go. Too far, the lead snaps. Fences and gates keep a herd in its pen.","Une corde (4 ficelles en font 2) emmène une bête avec toi (clic droit dessus) ; clic droit à nouveau pour la lâcher. Trop loin, la corde lâche. Les barrières et les portails gardent un troupeau dans son enclos."
+BOOK_ANIMALS_SHEAR,"Shears (2 iron ingots) take a sheep's wool without hurting it; the more it loves you, the more wool. It grows back after a while.","Les cisailles (2 lingots de fer) prennent la laine d'un mouton sans le blesser ; plus il t'aime, plus il en donne. Elle repousse au bout d'un moment."
+BOOK_ANIMALS_MILK,A bucket (3 iron ingots) milks a grown sheep now and then. The milk is drunk (right click held) and the bucket stays.,Un seau (3 lingots de fer) trait une brebis adulte de temps en temps. Le lait se boit (clic droit maintenu) et le seau reste.
+BOOK_ANIMALS_EGGS,"Chickens lay eggs: in a nest box nearby (planks around wheat), gathered with a right click or {use}, else on the ground. The food furnace fries them.","Les poules pondent des œufs : dans un pondoir proche (des planches autour de blé), ramassés d'un clic droit ou {use}, sinon par terre. Le four alimentaire les cuit au plat."
+BOOK_ANIMALS_LOVE,"Pet your animals (right click, with nothing they eat in hand) and feed them every day: they love you more (up to 5) and give more: more wool, milk and eggs sooner, now and then two eggs. Left without care a whole day, they love you less.","Caresse tes bêtes (clic droit, sans rien qu'elles mangent en main) et nourris-les chaque jour : elles t'aiment plus (jusqu'à 5) et donnent plus : plus de laine, du lait et des œufs plus tôt, parfois deux œufs. Laissées sans soins toute une journée, elles t'aiment moins."
+BOOK_ANIMALS_SHELTER,"At night animals sleep. Those that love you look for a roof nearby (a hen house, a barn) and sleep under it; a night under a roof counts as care.","La nuit, les bêtes dorment. Celles qui t'aiment cherchent un toit à côté (un poulailler, une étable) et dorment dessous ; une nuit à l'abri compte comme un soin."

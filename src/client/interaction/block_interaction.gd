@@ -14,7 +14,9 @@ extends Node
 ## blocks placed are not used up and tools do not wear; a spectator aims
 ## at nothing. An animal nearer than the block aimed at (within
 ## Combat.REACH) is aimed at instead: the break button hits it, every
-## Combat.BLOW_SECONDS while held (Msg.ATTACK).
+## Combat.BLOW_SECONDS while held (Msg.ATTACK); the place button (or the
+## use key) tends an animal (Husbandry: feeds, pets, shears, milks, a
+## lead).
 
 ## Seconds between two chips flying off what is being broken.
 const CHIP_INTERVAL := 0.16
@@ -93,6 +95,8 @@ func _process(delta: float) -> void:
 ## or a furnace, swings a gate, fills or empties a composter, picks what is
 ## ripe. Returns whether there was something to use.
 func use_target() -> bool:
+	if _tend_animal():
+		return true
 	if target != null and Mining.swings(target.voxel):
 		_swing_gate(target.cell, target.voxel)
 		return true
@@ -116,7 +120,7 @@ func place() -> void:
 	if client.held_item() == Items.Id.GUIDE_BOOK:
 		client.open_book()
 		return
-	if _tend() or _sow_on_water() or target == null:
+	if _tend_animal() or _tend() or _sow_on_water() or target == null:
 		return
 	var player := client.local_player
 	var slot := client.inventory.selected
@@ -248,15 +252,37 @@ func _tend() -> bool:
 
 
 ## Whether a right click would tend what is aimed at rather than place or
-## eat what is in hand: sow it on farmland, put it in a composter, pick
-## what is ripe.
+## eat what is in hand: an animal, sow it on farmland, put it in a
+## composter, pick what is ripe.
 func tends_here() -> bool:
-	if sows_here():
+	if sows_here() or _animal_aimed():
 		return true
 	return (
 		target != null
 		and (not _composting(target.voxel).is_empty() or _pickable(target.cell, target.voxel))
 	)
+
+
+## An animal is aimed at (not a monster), and no bow is in hand (the bow
+## shoots it).
+func _animal_aimed() -> bool:
+	return (
+		target_creature >= 0
+		and client.held_item() != Items.Id.BOW
+		and client.creatures.is_animal(target_creature)
+	)
+
+
+## The animal aimed at is tended with what is in hand (the server decides
+## what it does and tells how it went: Husbandry.tend). Returns whether
+## there was one.
+func _tend_animal() -> bool:
+	if not _animal_aimed():
+		return false
+	var slot := -1 if client.book_in_hand else client.inventory.selected
+	client.transport.send(Msg.tend_animal(target_creature, slot))
+	client.player_model.swing()
+	return true
 
 
 ## Whether something ripe within reach is picked there (Picking).
@@ -716,8 +742,8 @@ static func _reach_span(
 
 
 ## Bits of `color` bursting from `at` (local units: an animal dying).
-func burst(at: Vector3, color: Color) -> void:
-	_debris.throw(_world_point(at), color, 18, 0.3)
+func burst(at: Vector3, color: Color, count := 18) -> void:
+	_debris.throw(_world_point(at), color, count, 0.3 if count > 6 else 0.12)
 
 
 ## A few crumbs of `color` at the player's mouth (eating; not in first

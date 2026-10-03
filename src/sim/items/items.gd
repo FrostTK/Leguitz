@@ -202,6 +202,13 @@ enum Id {
 	RASPBERRY,
 	PEACH,
 	PEACH_PIT,
+	SHEARS,
+	BUCKET,
+	MILK_BUCKET,
+	LEAD,
+	EGG,
+	FRIED_EGG,
+	NEST_BOX,
 }
 ## What a tool is made for (Mining.tool_for: what it breaks faster).
 enum Tool { NONE, PICKAXE, AXE, SHOVEL, SWORD, HOE }
@@ -242,8 +249,13 @@ const TOOLS := {
 	Id.GOLDEN_HOE: [Tool.HOE, Tier.GOLD],
 	Id.DIAMOND_HOE: [Tool.HOE, Tier.DIAMOND],
 }
-## How many shots a bow lasts (Minecraft's).
+## How many shots a bow lasts (Minecraft's), how many fleeces shears take.
 const BOW_DURABILITY := 384
+const SHEARS_DURABILITY := 238
+## Fewer of these in a stack.
+const SMALL_STACKS := {Id.BUCKET: 16, Id.EGG: 16, Id.LEAD: 16}
+## What a food leaves in hand once eaten (milk: its bucket).
+const LEFT_AFTER := {Id.MILK_BUCKET: Id.BUCKET}
 ## How many tiles a full watering can waters (Watering). A can keeps the
 ## water it holds in its slot's wear (Inventory.wear: 0, empty, as made).
 const CAN_WATER := 20
@@ -332,6 +344,7 @@ const PLACES_BLOCK := {
 	Id.ORANGE_SEEDS: Tiles.Block.ORANGE_SAPLING,
 	Id.RASPBERRY: Tiles.Block.RASPBERRIES_0,
 	Id.PEACH_PIT: Tiles.Block.PEACH_SAPLING,
+	Id.NEST_BOX: Tiles.Block.NEST_BOX,
 }
 
 ## What a ground gives (soil gives dirt); grounds left out give nothing.
@@ -473,6 +486,8 @@ const FOOD := {
 	Id.ORANGE: 4,
 	Id.RASPBERRY: 2,
 	Id.PEACH: 4,
+	Id.MILK_BUCKET: 3,
+	Id.FRIED_EGG: 4,
 }
 ## The planks each log is sawn into.
 const PLANKS_OF := {
@@ -554,9 +569,9 @@ static func max_stack(item: int) -> int:
 		return 0
 	if TOOLS.has(item) or item == Id.BOW or Armor.is_armor(item):
 		return 1
-	if item == Id.GUIDE_BOOK or item == Id.WATERING_CAN:
+	if item in [Id.GUIDE_BOOK, Id.WATERING_CAN, Id.SHEARS, Id.MILK_BUCKET]:
 		return 1
-	return MAX_STACK
+	return SMALL_STACKS.get(item, MAX_STACK)
 
 
 static func is_food(item: int) -> bool:
@@ -585,6 +600,8 @@ static func durability(item: int) -> int:
 		return TIER_DURABILITY[TOOLS[item][1]]
 	if item == Id.BOW:
 		return BOW_DURABILITY
+	if item == Id.SHEARS:
+		return SHEARS_DURABILITY
 	return Armor.durability(item)
 
 
@@ -647,6 +664,10 @@ static func drops(voxel: int, tile: Vector2i, rng: RandomNumberGenerator) -> Arr
 	elif BLOCK_DROPS.has(block):
 		var drop: Array = BLOCK_DROPS[block]
 		result.append(Vector2i(drop[0], rng.randi_range(drop[1], drop[2])))
+	elif Picking.PICKED.has(block) and ObjectShapes.STAGE_OF.has(block):
+		# A nest box holding eggs: the box and its eggs.
+		result.append(Vector2i(_placed_by[ObjectShapes.base_kind(block)], 1))
+		result.append(Picking.picking(block, rng))
 	elif block == Tiles.Block.COMPOSTER_READY:
 		result.append(Vector2i(Id.COMPOSTER, 1))
 		result.append(Vector2i(Id.COMPOST, 1))

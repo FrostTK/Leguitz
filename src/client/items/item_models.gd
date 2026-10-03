@@ -102,6 +102,9 @@ static func build(item: int) -> VoxelGrid:
 	var farm := FarmModels.item(item)
 	if farm != null:
 		return farm
+	var ranch := RanchModels.item(item)
+	if ranch != null:
+		return ranch
 	var sapling := SaplingModels.item(item)
 	if sapling != null:
 		return sapling
@@ -168,7 +171,7 @@ static func is_flat(item: int) -> bool:
 	return (
 		Items.TOOLS.has(item)
 		or Armor.is_armor(item)
-		or item in [Items.Id.STICK, Items.Id.FEATHER, Items.Id.BOW, Items.Id.ARROW]
+		or item in [Items.Id.STICK, Items.Id.FEATHER, Items.Id.BOW, Items.Id.ARROW, Items.Id.SHEARS]
 	)
 
 

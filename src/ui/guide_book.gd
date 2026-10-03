@@ -304,6 +304,21 @@ static func _animals() -> Array:
 		)
 		entries.append(_icon(Species.DROPS[kind][0][0], text))
 	entries.append(_text("BOOK_ANIMALS_COOK"))
+	(
+		entries
+		. append_array(
+			[
+				_heading("BOOK_ANIMALS_FARM"),
+				_icon(Items.Id.WHEAT, _t("BOOK_ANIMALS_BREED")),
+				_icon(Items.Id.LEAD, _t("BOOK_ANIMALS_LEAD")),
+				_icon(Items.Id.SHEARS, _t("BOOK_ANIMALS_SHEAR")),
+				_icon(Items.Id.MILK_BUCKET, _t("BOOK_ANIMALS_MILK")),
+				_icon(Items.Id.NEST_BOX, _t("BOOK_ANIMALS_EGGS")),
+				_text("BOOK_ANIMALS_LOVE"),
+				_text("BOOK_ANIMALS_SHELTER"),
+			]
+		)
+	)
 	return entries
 
 

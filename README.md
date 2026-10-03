@@ -25,8 +25,11 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Réglages d'affichage : plein écran, résolution, écran, synchro verticale, limite d'images (dont 100), compteur d'images, distance de vue, luminosité, taille de l'interface, champ de vision et sensibilité de la souris | ✅ |
 | Arrosage et soins : arrosoir en cuivre (rempli à l'eau ou à un évier, 20 cases), la pluie arrose les champs à ciel ouvert, rigoles d'irrigation, composteur et compost (une culture ou une pousse gagne un stade), cultures sous serre et à la lanterne | ✅ |
 | Nouvelles cultures : betterave, chou, maïs, tomate, fraise, framboise, lin, citrouille et pastèque (le fruit pousse à côté de la tige), riz en rizière, canne à sucre qui repousse, vigne sur treillis ; cueillette ; arbres fruitiers (pommier, cerisier, oranger, pêcher) en fleur puis en fruits ; plantes sauvages dans le monde | ✅ |
-| Élevage (reproduction, bébés, produits sans tuer), animaux de ferme, animaux sauvages et prédateurs | à venir |
+| Élevage : nourrir pour avoir des petits qui grandissent, corde pour mener une bête, enclos, cisailles (laine qui repousse), seau (lait de brebis), pondoir et œufs, affection qui fait donner plus, abris où les bêtes dorment la nuit | ✅ |
+| Animaux de ferme (vache, chèvre, canard, lapin, cochon, abeilles), animaux sauvages et prédateurs | à venir |
 | Cuisine, pêche, chien et chat, saisons | à venir |
+
+![Leguitz : l'élevage : un enclos de moutons (un tondu, des agneaux), un sanglier mené à la corde, un abri avec des pondoirs ; la nuit, les bêtes dorment couchées, sous l'abri pour celles qui le peuvent](docs/screenshots/phase7-elevage.png)
 
 ![Leguitz : les nouvelles cultures vues de dessus (champs en rangs, rizière, canne à sucre, vigne sur treillis, citrouille et pastèque, arbres fruitiers en fleur et en fruits) ; en 1re personne la rizière, la vigne et le verger](docs/screenshots/phase7-cultures.png)
 
@@ -290,7 +293,7 @@ Pour le multijoueur, il suffira de brancher un transport réseau.
 5. ✅ Survie et combat (vie, faim, nage, modes de jeu, animaux, monstres, combat et armures)
 6. Souterrain et structures (en pause : maison et jardin, torches et lanternes, lumière des grottes, coulées d'eau et de lave faits)
 7. Agriculture et élevage (en cours : végétation qui pousse, champs et cultures, arrosage et compost,
-   nouvelles cultures et arbres fruitiers)
+   nouvelles cultures et arbres fruitiers, élevage)
 8. Mode Arcade : scénario n°1 « Restauration » (restaurer une terre désolée avec éoliennes,
    irrigateurs et purificateurs, faire revenir forêts, rivières et animaux, puis recycler les
    bâtiments et continuer en survie)

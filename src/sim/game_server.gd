@@ -328,6 +328,8 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 			Composting.spread(self, session, message)
 		Msg.PICK:
 			Picking.pick(self, session, message)
+		Msg.TEND_ANIMAL:
+			Husbandry.tend(self, session, message)
 		Msg.SELECT_SLOT:
 			session.inventory.selected = clampi(
 				int(message.get("slot", 0)), 0, Inventory.HOTBAR - 1

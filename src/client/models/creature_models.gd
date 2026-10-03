@@ -19,6 +19,7 @@ class Part:
 
 const WOOL := ["#d6ccb6", "#e9e1cf", "#f6f1e5", "#fffcf4"]
 const SHEEP_FACE := ["#3b302b", "#4f413a", "#66554b"]
+const SHORN_SKIN := ["#b8a49a", "#cdb9ae", "#ddcdc2", "#ebdfd6"]
 const BOAR_HIDE := ["#2c1f18", "#3b2a20", "#4d3729", "#634733"]
 const BOAR_SNOUT := ["#8a6555", "#a87e6b"]
 const TUSK := "#efe4c4"
@@ -37,12 +38,17 @@ const EYE_SHINE := "#f4efe6"
 static var _parts: Dictionary[int, Array] = {}
 
 
-## The parts of a species' model (built once).
-static func parts(kind: int) -> Array:
+## The parts of a species' model (built once); `shorn`: a sheep without
+## its fleece.
+static func parts(kind: int, shorn := false) -> Array:
+	if kind == Species.Id.SHEEP and shorn:
+		if not _parts.has(-1):
+			_parts[-1] = _sheep(true)
+		return _parts[-1]
 	if not _parts.has(kind):
 		match kind:
 			Species.Id.SHEEP:
-				_parts[kind] = _sheep()
+				_parts[kind] = _sheep(false)
 			Species.Id.BOAR:
 				_parts[kind] = _boar()
 			Species.Id.CHICKEN:
@@ -145,13 +151,20 @@ static func _eyes(grid: VoxelGrid, left: int, right: int, y: int, z: int) -> voi
 
 ## A round, cream fleece on short dark legs; a dark face with drooping
 ## ears under a tuft of wool.
-static func _sheep() -> Array:
+## Shorn, its body is a slim pink-grey skin with a short fuzz.
+static func _sheep(shorn: bool) -> Array:
 	var leg := _leg(2, 6, ["#3b302b", "#e9e1cf"])
 	var parts: Array = _four_legs(leg, 1, 2, -5)
 	var body := VoxelGrid.new(Vector3i(13, 11, 17))
-	_fleece(body, Vector3(6.5, 5.2, 8.5), Vector3(5.6, 4.6, 7.6), 41)
-	# A little tail of wool.
-	body.ellipsoid(Vector3(6.5, 7.5, 0.6), Vector3(1.6, 1.6, 1.2), _v(WOOL[2]))
+	if shorn:
+		body.ellipsoid(
+			Vector3(6.5, 4.6, 8.5), Vector3(4.2, 3.4, 6.6), _shaded(SHORN_SKIN, 1.0, 8.0, 43)
+		)
+		body.ellipsoid(Vector3(6.5, 6.5, 0.9), Vector3(1.2, 1.2, 1.0), _v(SHORN_SKIN[2]))
+	else:
+		_fleece(body, Vector3(6.5, 5.2, 8.5), Vector3(5.6, 4.6, 7.6), 41)
+		# A little tail of wool.
+		body.ellipsoid(Vector3(6.5, 7.5, 0.6), Vector3(1.6, 1.6, 1.2), _v(WOOL[2]))
 	parts.append(make_part("body", body, Vector3(-6.5, 4.0, -8.5), Vector3(0.0, 4.0, 0.0)))
 	var head := VoxelGrid.new(Vector3i(9, 7, 7))
 	head.box(Vector3i(2, 0, 1), Vector3i(6, 4, 6), _shaded(SHEEP_FACE, 0.0, 4.0, 7))

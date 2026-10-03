@@ -115,6 +115,7 @@ const BLOCK_SECONDS := {
 	Tiles.Block.PUMPKIN: 1.0,
 	Tiles.Block.MELON: 1.0,
 	Tiles.Block.TRELLIS: 0.5,
+	Tiles.Block.NEST_BOX: 1.0,
 }
 ## Trees by hand: chopping a trunk takes a while (a young one less).
 const TREE_SECONDS := 3.5
@@ -168,6 +169,7 @@ const AXE_BLOCKS := {
 	Tiles.Block.PUMPKIN: true,
 	Tiles.Block.MELON: true,
 	Tiles.Block.TRELLIS: true,
+	Tiles.Block.NEST_BOX: true,
 }
 const PICKAXE_BLOCKS := {
 	Tiles.Block.ROCK: true,
@@ -210,6 +212,7 @@ const FLOOR_OBJECTS := {
 	Tiles.Block.COMPOSTER: true,
 	Tiles.Block.TRELLIS: true,
 	Tiles.Block.PUMPKIN: true,
+	Tiles.Block.NEST_BOX: true,
 }
 
 

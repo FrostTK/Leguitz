@@ -9,8 +9,8 @@ extends RefCounted
 ## what it does then is its kind's (`_on_hurt`).
 
 ## What it does; its players see it (Msg.ENTITY_MOVE): animals graze,
-## wander and flee; monsters chase, strike, lie dormant or freeze.
-enum State { IDLE, GRAZE, WANDER, FLEE, CHASE, STRIKE, DORMANT, FROZEN }
+## wander, flee and sleep; monsters chase, strike, lie dormant or freeze.
+enum State { IDLE, GRAZE, WANDER, FLEE, CHASE, STRIKE, DORMANT, FROZEN, SLEEP }
 
 ## A point of its way is reached this close (tiles).
 const REACHED := 0.3
@@ -72,6 +72,16 @@ func load_dict(data: Dictionary) -> void:
 	heading = data.get("heading", Vector2.DOWN)
 	if not heading.is_finite():
 		heading = Vector2.DOWN
+
+
+## What players see of it besides what it does (Animal.Flag bits).
+func flags() -> int:
+	return 0
+
+
+## The player leading it (PlayerSession.id; -1: none).
+func led_by() -> int:
+	return -1
 
 
 ## The middle of its box on the ground (world pixels).
