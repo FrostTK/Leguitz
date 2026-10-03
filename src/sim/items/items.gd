@@ -199,6 +199,9 @@ enum Id {
 	CHERRY_PITS,
 	ORANGE,
 	ORANGE_SEEDS,
+	RASPBERRY,
+	PEACH,
+	PEACH_PIT,
 }
 ## What a tool is made for (Mining.tool_for: what it breaks faster).
 enum Tool { NONE, PICKAXE, AXE, SHOVEL, SWORD, HOE }
@@ -327,6 +330,8 @@ const PLACES_BLOCK := {
 	Id.APPLE_SEEDS: Tiles.Block.APPLE_SAPLING,
 	Id.CHERRY_PITS: Tiles.Block.CHERRY_SAPLING,
 	Id.ORANGE_SEEDS: Tiles.Block.ORANGE_SAPLING,
+	Id.RASPBERRY: Tiles.Block.RASPBERRIES_0,
+	Id.PEACH_PIT: Tiles.Block.PEACH_SAPLING,
 }
 
 ## What a ground gives (soil gives dirt); grounds left out give nothing.
@@ -466,6 +471,8 @@ const FOOD := {
 	Id.APPLE: 4,
 	Id.CHERRIES: 2,
 	Id.ORANGE: 4,
+	Id.RASPBERRY: 2,
+	Id.PEACH: 4,
 }
 ## The planks each log is sawn into.
 const PLANKS_OF := {
@@ -492,6 +499,8 @@ const TREE_LOGS := {
 	Tiles.Block.APPLE_TREE_FRUIT: Id.OAK_LOG,
 	Tiles.Block.CHERRY_TREE_FRUIT: Id.OAK_LOG,
 	Tiles.Block.ORANGE_TREE_FRUIT: Id.OAK_LOG,
+	Tiles.Block.PEACH_TREE: Id.OAK_LOG,
+	Tiles.Block.PEACH_TREE_FRUIT: Id.OAK_LOG,
 }
 ## The chance that tall grass broken gives a wild carrot or potato too.
 const WILD_ROOTS := 0.08
@@ -507,6 +516,9 @@ const SAPLING_OF := {
 	Tiles.Block.YOUNG_APPLE_TREE: Id.APPLE_SEEDS,
 	Tiles.Block.YOUNG_CHERRY_TREE: Id.CHERRY_PITS,
 	Tiles.Block.YOUNG_ORANGE_TREE: Id.ORANGE_SEEDS,
+	Tiles.Block.PEACH_TREE: Id.PEACH_PIT,
+	Tiles.Block.PEACH_TREE_FRUIT: Id.PEACH_PIT,
+	Tiles.Block.YOUNG_PEACH_TREE: Id.PEACH_PIT,
 	Tiles.Block.OAK: Id.OAK_SAPLING,
 	Tiles.Block.SWAMP_OAK: Id.SWAMP_OAK_SAPLING,
 	Tiles.Block.BIRCH: Id.BIRCH_SAPLING,

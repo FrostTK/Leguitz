@@ -3,8 +3,8 @@ extends RefCounted
 ## The crops of phase 7's step 4 in their stages (Farming.stage_of: 3 is
 ## ripe), the wild plants the first seeds come from, pumpkins and melons,
 ## the trellis, and their items. Field crops grow in rows across their tile
-## (beetroot, cabbages, corn, tomatoes on stakes, strawberries, flax, rice
-## standing in the water); a pumpkin or melon stem creeps from the middle
+## (beetroot, cabbages, corn, tomatoes on stakes, strawberries, raspberry
+## canes, flax, rice standing in the water); a pumpkin or melon stem creeps from the middle
 ## of its tile; grapes climb a trellis; sugar cane grows back
 ## (VoxelModels.sugar_cane).
 
@@ -24,6 +24,9 @@ const TOMATO_GREEN := ["#5e9a32", "#7cb846"]
 const TOMATO_RED := ["#a8201e", "#d8322a", "#ff6a4a"]
 const STRAWBERRY_LEAF := ["#2e6a2e", "#43883c", "#62a650"]
 const STRAWBERRY_RED := ["#a81a2a", "#d42a3a", "#ff5a6a"]
+const RASPBERRY_CANE := ["#6a3e2e", "#8a5640"]
+const RASPBERRY_LEAF := ["#2e5e2a", "#447a36", "#5e9646"]
+const RASPBERRY_RED := ["#9a1440", "#d02c5a", "#f06a8c"]
 const PETALS := ["#f6f2e6", "#f2d046"]
 const FLAX_GREEN := ["#4f8a3a", "#6aa64a"]
 const FLAX_BLUE := ["#4a6ad8", "#7a98f0"]
@@ -42,6 +45,16 @@ const GRAPE_LEAF := ["#2f6a26", "#45883a", "#62a44c"]
 const GRAPE := ["#5a2e86", "#7e48b0", "#a678d8"]
 const VINE_WOOD := ["#4a2e1a", "#6a442a"]
 const LEAF_ITEM := ["#3f7a2a", "#5a9a3a"]
+## How many plants a wild one shows (the others: one).
+const WILD_COUNT := {
+	Tiles.Block.WILD_BEETROOT: 3,
+	Tiles.Block.WILD_CABBAGE: 2,
+	Tiles.Block.WILD_CORN: 2,
+	Tiles.Block.WILD_STRAWBERRY: 4,
+	Tiles.Block.WILD_FLAX: 7,
+	Tiles.Block.WILD_RICE: 3,
+	Tiles.Block.WILD_RASPBERRY: 2,
+}
 
 
 static func build(block: int, variant: int) -> VoxelGrid:
@@ -81,6 +94,9 @@ static func build(block: int, variant: int) -> VoxelGrid:
 		Tiles.Block.STRAWBERRIES_0:
 			for foot in _feet(rng, [3, 8, 13], 3):
 				_strawberry(grid, rng, foot, stage)
+		Tiles.Block.RASPBERRIES_0:
+			for foot in _feet(rng, [4, 12], 3):
+				_raspberry(grid, rng, foot, stage)
 		Tiles.Block.FLAX_0:
 			for foot in _feet(rng, [3, 8, 13], 5):
 				_flax(grid, rng, foot, stage)
@@ -165,6 +181,12 @@ static func item(item_id: int) -> VoxelGrid:
 			return _fruit(OrchardColors.TREES[Tiles.Block.ORANGE_TREE][3], 3.8, LEAF_ITEM[0])
 		Items.Id.ORANGE_SEEDS:
 			return _pips(rng, ["#e0d2a8", "#f6eccc"])
+		Items.Id.RASPBERRY:
+			return _raspberry_item()
+		Items.Id.PEACH:
+			return _fruit(["#d8483a", "#f4a058", "#ffd28c"], 3.7, LEAF_ITEM[1])
+		Items.Id.PEACH_PIT:
+			return _pit()
 	return null
 
 
@@ -332,6 +354,37 @@ static func _strawberry(
 			grid.set_voxel(at + Vector3i(0, 1, 0), _leaf(STRAWBERRY_RED[1]))
 			grid.set_voxel(at, _leaf(STRAWBERRY_RED[0]))
 			grid.set_voxel(at + Vector3i(1, 1, 0), _leaf(STRAWBERRY_RED[2]))
+
+
+## A raspberry plant: canes arching out from its foot, leaves along them;
+## white flowers, then red berries hanging under the leaves.
+static func _raspberry(
+	grid: VoxelGrid, rng: RandomNumberGenerator, foot: Vector3, stage: int
+) -> void:
+	var height: int = [3, 7, 10, 11][stage]
+	var canes := 2 if stage == 0 else 4
+	for k in canes:
+		var angle := TAU * (k + rng.randf() * 0.5) / canes
+		var out := Vector3(cos(angle), 0.0, sin(angle))
+		var reach := 0.8 + stage * 0.8
+		var steps := height + 2
+		for s in steps + 1:
+			var t := float(s) / steps
+			var p := foot + out * sin(t * PI * 0.5) * reach + Vector3(0, t * height, 0)
+			var color: String = RASPBERRY_CANE[k % 2] if stage >= 2 else RASPBERRY_LEAF[0]
+			grid.set_voxel(Vector3i(p.round()), _leaf(color))
+			if s % 2 == 1 and s > 1:
+				var across := Vector3(-out.z, 0.0, out.x) * (1 if s % 4 == 1 else -1)
+				var leaf := Vector3i((p + across).round())
+				grid.set_voxel(leaf, _leaf(RASPBERRY_LEAF[1 + s % 3 / 2]))
+				grid.set_voxel(leaf + Vector3i(0, 1, 0), _leaf(RASPBERRY_LEAF[2]))
+				var under := Vector3i((p - across * 0.5 + Vector3(0, -1, 0)).round())
+				if stage == 2 and s % 4 == 3:
+					grid.set_voxel(under, _leaf(PETALS[0]))
+				elif stage == 3 and s % 4 == 3:
+					grid.set_voxel(under, _leaf(RASPBERRY_RED[1]))
+					grid.set_voxel(under + Vector3i.DOWN, _leaf(RASPBERRY_RED[0]))
+					grid.set_voxel(under + Vector3i(1, 0, 0), _leaf(RASPBERRY_RED[2]))
 
 
 ## Flax: thin stems swaying, sky-blue flowers, then golden with round seed
@@ -517,17 +570,7 @@ static func _melon(rng: RandomNumberGenerator) -> VoxelGrid:
 static func _wild(block: int, rng: RandomNumberGenerator) -> VoxelGrid:
 	var grid := _grid(26)
 	var feet: Array[Vector3] = []
-	var count: int = (
-		{
-			Tiles.Block.WILD_BEETROOT: 3,
-			Tiles.Block.WILD_CABBAGE: 2,
-			Tiles.Block.WILD_CORN: 2,
-			Tiles.Block.WILD_STRAWBERRY: 4,
-			Tiles.Block.WILD_FLAX: 7,
-			Tiles.Block.WILD_RICE: 3,
-		}
-		. get(block, 1)
-	)
+	var count: int = WILD_COUNT.get(block, 1)
 	for i in count:
 		feet.append(Vector3(rng.randi_range(5, 11), 0, rng.randi_range(5, 11)))
 	for foot in feet:
@@ -548,6 +591,8 @@ static func _wild(block: int, rng: RandomNumberGenerator) -> VoxelGrid:
 				_rice(grid, rng, foot, 3)
 			Tiles.Block.WILD_GRAPES:
 				_wild_vine(grid, rng)
+			Tiles.Block.WILD_RASPBERRY:
+				_raspberry(grid, rng, foot, 3)
 	grid.sway = 0.6
 	grid.sway_from = 1
 	return grid
@@ -605,6 +650,33 @@ static func _fruit(colors: Array, radius: float, leaf: String) -> VoxelGrid:
 	grid.set_voxel(top + Vector3i(0, 1, 0), _solid("#5a3a20"))
 	grid.set_voxel(top + Vector3i(1, 0, 0), _solid(leaf))
 	grid.set_voxel(top + Vector3i(2, 1, 0), _solid(leaf))
+	return grid
+
+
+## A raspberry: a rounded cone of little red drupelets, its green cap.
+static func _raspberry_item() -> VoxelGrid:
+	var grid := VoxelGrid.new(Vector3i(7, 8, 7))
+	var paint := func(p: Vector3i) -> int:
+		if p.y >= 5 and p.x <= 3:
+			return _solid(RASPBERRY_RED[2])
+		return _solid(RASPBERRY_RED[(p.x + p.y + p.z) % 2])
+	grid.ellipsoid(Vector3(3.5, 3.2, 3.5), Vector3(2.8, 3.2, 2.8), paint)
+	for d: Vector3i in [
+		Vector3i(0, 0, 0), Vector3i(1, 0, 0), Vector3i(-1, 0, 0), Vector3i(0, 0, 1)
+	]:
+		grid.set_voxel(Vector3i(3, 6, 3) + d, _solid(RASPBERRY_LEAF[1]))
+	grid.set_voxel(Vector3i(3, 7, 3), _solid(RASPBERRY_LEAF[0]))
+	return grid
+
+
+## A peach pit: an oval stone, wrinkled with dark grooves.
+static func _pit() -> VoxelGrid:
+	var grid := VoxelGrid.new(Vector3i(8, 6, 6))
+	var paint := func(p: Vector3i) -> int:
+		if (p.x * 3 + p.y * 2 + p.z) % 5 == 0:
+			return _solid("#5a3420")
+		return _solid("#a06a44" if p.y >= 3 else "#84543a")
+	grid.ellipsoid(Vector3(4, 2.6, 3), Vector3(3.6, 2.6, 2.6), paint)
 	return grid
 
 

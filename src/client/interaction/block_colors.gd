@@ -19,6 +19,8 @@ const TREE_COLORS := {
 	Tiles.Block.APPLE_TREE_FRUIT: [OrchardColors.APPLE_BARK, OrchardColors.APPLE_LEAVES],
 	Tiles.Block.CHERRY_TREE_FRUIT: [OrchardColors.CHERRY_BARK, OrchardColors.CHERRY_LEAVES],
 	Tiles.Block.ORANGE_TREE_FRUIT: [OrchardColors.ORANGE_BARK, OrchardColors.ORANGE_LEAVES],
+	Tiles.Block.PEACH_TREE: [OrchardColors.PEACH_BARK, OrchardColors.PEACH_LEAVES],
+	Tiles.Block.PEACH_TREE_FRUIT: [OrchardColors.PEACH_BARK, OrchardColors.PEACH_LEAVES],
 }
 const OBJECT_COLORS := {
 	Tiles.Block.ROCK: Color(0.5, 0.5, 0.53),

@@ -7,15 +7,16 @@ extends RefCounted
 ## goes back to dirt after a while (FALLOW_SECONDS); watered (a can, the
 ## rain: Watering), it stays wet for a while too. Crops are sown on
 ## farmland (wheat seeds, carrots, potatoes, beetroot, cabbage, corn,
-## tomato, strawberries, flax, pumpkin and melon seeds) and grow a stage at
+## tomato, strawberries, raspberries, flax, pumpkin and melon seeds) and
+## grow a stage at
 ## a time (STAGES; on average after STAGE_SECONDS on wet farmland,
 ## DRY_SLOWER times longer on dry), in the light (Growth.LIGHT); some have
 ## other beds (BEDS: rice over shallow water, sugar cane on a bank, grapes
 ## on a trellis). A ripe crop gives its harvest and more seed (`harvest`);
 ## an unripe one only its seed back. A grown pumpkin or melon stem puts its
 ## fruit on a free tile beside it (`bear_fruit`), again once it is taken;
-## ripe tomatoes, strawberries, grapes and sugar cane are picked without
-## breaking them (Picking). Wild plants (WILD) give the first seeds.
+## ripe tomatoes, strawberries, raspberries, grapes and sugar cane are
+## picked without breaking them (Picking). Wild plants (WILD) give the first seeds.
 
 ## Where a crop grows (BEDS): on farmland, over still water one deep, on
 ## soil or sand with water beside, on a trellis standing on soil.
@@ -69,6 +70,9 @@ const STAGES := {
 	Tiles.Block.GRAPES_0: Tiles.Block.GRAPES_1,
 	Tiles.Block.GRAPES_1: Tiles.Block.GRAPES_2,
 	Tiles.Block.GRAPES_2: Tiles.Block.GRAPES_3,
+	Tiles.Block.RASPBERRIES_0: Tiles.Block.RASPBERRIES_1,
+	Tiles.Block.RASPBERRIES_1: Tiles.Block.RASPBERRIES_2,
+	Tiles.Block.RASPBERRIES_2: Tiles.Block.RASPBERRIES_3,
 }
 const RIPE := {
 	Tiles.Block.WHEAT_3: true,
@@ -85,6 +89,7 @@ const RIPE := {
 	Tiles.Block.RICE_3: true,
 	Tiles.Block.SUGAR_CANE: true,
 	Tiles.Block.GRAPES_3: true,
+	Tiles.Block.RASPBERRIES_3: true,
 }
 const SOWN := {
 	Tiles.Block.WHEAT_0: true,
@@ -101,6 +106,7 @@ const SOWN := {
 	Tiles.Block.RICE_0: true,
 	Tiles.Block.SUGAR_CANE_0: true,
 	Tiles.Block.GRAPES_0: true,
+	Tiles.Block.RASPBERRIES_0: true,
 }
 ## The crops that do not grow on farmland (by their sown stage).
 const BEDS := {
@@ -140,6 +146,7 @@ const SEED_OF := {
 	Tiles.Block.RICE_0: Items.Id.RICE,
 	Tiles.Block.SUGAR_CANE_0: Items.Id.SUGAR_CANE,
 	Tiles.Block.GRAPES_0: Items.Id.GRAPE_SEEDS,
+	Tiles.Block.RASPBERRIES_0: Items.Id.RASPBERRY,
 }
 const HARVEST := {
 	Tiles.Block.WHEAT_3: [Items.Id.WHEAT, 1, 1, 1, 3],
@@ -156,6 +163,7 @@ const HARVEST := {
 	Tiles.Block.RICE_3: [Items.Id.RICE, 2, 4, 0, 0],
 	Tiles.Block.SUGAR_CANE: [Items.Id.SUGAR_CANE, 1, 3, 0, 0],
 	Tiles.Block.GRAPES_3: [Items.Id.GRAPES, 2, 3, 1, 1],
+	Tiles.Block.RASPBERRIES_3: [Items.Id.RASPBERRY, 2, 3, 0, 0],
 }
 ## Wild plants (generation) and what they give: [[item, fewest, most]...].
 const WILD := {
@@ -167,6 +175,7 @@ const WILD := {
 	Tiles.Block.WILD_FLAX: [[Items.Id.FLAX, 1, 1], [Items.Id.FLAX_SEEDS, 1, 2]],
 	Tiles.Block.WILD_RICE: [[Items.Id.RICE, 1, 3]],
 	Tiles.Block.WILD_GRAPES: [[Items.Id.GRAPES, 1, 2], [Items.Id.GRAPE_SEEDS, 1, 2]],
+	Tiles.Block.WILD_RASPBERRY: [[Items.Id.RASPBERRY, 1, 3]],
 }
 ## Server: a hoe is used this far at most (local units, like placing).
 const REACH_LEEWAY := 1.5

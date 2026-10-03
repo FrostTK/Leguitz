@@ -16,6 +16,7 @@ const SPECIES := {
 	Tiles.Block.APPLE_SAPLING: [OrchardColors.APPLE_BARK, OrchardColors.APPLE_LEAVES],
 	Tiles.Block.CHERRY_SAPLING: [OrchardColors.CHERRY_BARK, OrchardColors.CHERRY_LEAVES],
 	Tiles.Block.ORANGE_SAPLING: [OrchardColors.ORANGE_BARK, OrchardColors.ORANGE_LEAVES],
+	Tiles.Block.PEACH_SAPLING: [OrchardColors.PEACH_BARK, OrchardColors.PEACH_LEAVES],
 }
 const SIZE := Vector3i(15, 16, 15)
 const MIDDLE := Vector3(7, 0, 7)

@@ -78,6 +78,7 @@ const SHAPED := [
 	{"ingredients": [Items.Id.APPLE], "result": [Items.Id.APPLE_SEEDS, 2]},
 	{"ingredients": [Items.Id.CHERRIES], "result": [Items.Id.CHERRY_PITS, 2]},
 	{"ingredients": [Items.Id.ORANGE], "result": [Items.Id.ORANGE_SEEDS, 2]},
+	{"ingredients": [Items.Id.PEACH], "result": [Items.Id.PEACH_PIT, 1]},
 	{"ingredients": [Items.Id.SUGAR_CANE], "result": [Items.Id.SUGAR, 1]},
 	{"ingredients": [Items.Id.BEETROOT], "result": [Items.Id.SUGAR, 1]},
 	{"ingredients": [Items.Id.FLAX], "result": [Items.Id.STRING, 1]},

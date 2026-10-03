@@ -57,6 +57,7 @@ const VEGETATION := {
 		[Tiles.Block.WILD_STRAWBERRY, 0.008],
 		[Tiles.Block.WILD_GRAPES, 0.002],
 		[Tiles.Block.PUMPKIN, 0.001],
+		[Tiles.Block.WILD_RASPBERRY, 0.004],
 	],
 	Biomes.Id.FLOWER_FOREST:
 	[
@@ -72,6 +73,7 @@ const VEGETATION := {
 		[Tiles.Block.TALL_GRASS, 0.06],
 		[Tiles.Block.BUSH, 0.01],
 		[Tiles.Block.WILD_STRAWBERRY, 0.01],
+		[Tiles.Block.WILD_RASPBERRY, 0.006],
 	],
 	Biomes.Id.DARK_FOREST:
 	[
@@ -88,6 +90,7 @@ const VEGETATION := {
 		[Tiles.Block.BERRY_BUSH, 0.012],
 		[Tiles.Block.ROCK, 0.004],
 		[Tiles.Block.PUMPKIN, 0.002],
+		[Tiles.Block.WILD_RASPBERRY, 0.006],
 	],
 	Biomes.Id.SNOWY_TAIGA: [[Tiles.Block.SNOWY_SPRUCE, 0.26], [Tiles.Block.FERN, 0.02]],
 	Biomes.Id.OLD_GROWTH_TAIGA:
@@ -97,6 +100,7 @@ const VEGETATION := {
 		[Tiles.Block.MOSSY_ROCK, 0.012],
 		[Tiles.Block.MUSHROOM_BROWN, 0.008],
 		[Tiles.Block.BERRY_BUSH, 0.008],
+		[Tiles.Block.WILD_RASPBERRY, 0.008],
 	],
 	Biomes.Id.SAVANNA:
 	[
@@ -165,20 +169,26 @@ const WILD_PLANTS := {
 	Tiles.Block.WILD_FLAX: true,
 	Tiles.Block.WILD_RICE: true,
 	Tiles.Block.WILD_GRAPES: true,
+	Tiles.Block.WILD_RASPBERRY: true,
 }
 const WILD_FRUITS := {Tiles.Block.PUMPKIN: true, Tiles.Block.MELON: true}
 ## Wild rice on the water: chance per tile.
 const WILD_RICE := {Biomes.Id.SWAMP: 0.03, Biomes.Id.RIVER: 0.006}
 ## Wild fruit trees: [the tree they stand for, the fruit tree, chance],
-## per biome. Half of them come in blossom (they grow their fruit:
-## WorldGenerator notes them), half bearing fruit.
+## per biome (the chances of one tree add up). Half of them come in blossom
+## (they grow their fruit: WorldGenerator notes them), half bearing fruit.
 const ORCHARDS := {
-	Biomes.Id.PLAINS: [[Tiles.Block.OAK, Tiles.Block.APPLE_TREE, 0.3]],
+	Biomes.Id.PLAINS:
+	[
+		[Tiles.Block.OAK, Tiles.Block.APPLE_TREE, 0.3],
+		[Tiles.Block.OAK, Tiles.Block.PEACH_TREE, 0.15],
+	],
 	Biomes.Id.FOREST: [[Tiles.Block.OAK, Tiles.Block.APPLE_TREE, 0.04]],
 	Biomes.Id.FLOWER_FOREST:
 	[
 		[Tiles.Block.OAK, Tiles.Block.APPLE_TREE, 0.1],
 		[Tiles.Block.BIRCH, Tiles.Block.CHERRY_TREE, 0.35],
+		[Tiles.Block.OAK, Tiles.Block.PEACH_TREE, 0.08],
 	],
 	Biomes.Id.BIRCH_FOREST: [[Tiles.Block.BIRCH, Tiles.Block.CHERRY_TREE, 0.03]],
 	Biomes.Id.MEADOW:
@@ -186,7 +196,11 @@ const ORCHARDS := {
 		[Tiles.Block.OAK, Tiles.Block.APPLE_TREE, 0.5],
 		[Tiles.Block.BIRCH, Tiles.Block.CHERRY_TREE, 0.5],
 	],
-	Biomes.Id.SAVANNA: [[Tiles.Block.ACACIA, Tiles.Block.ORANGE_TREE, 0.15]],
+	Biomes.Id.SAVANNA:
+	[
+		[Tiles.Block.ACACIA, Tiles.Block.ORANGE_TREE, 0.15],
+		[Tiles.Block.ACACIA, Tiles.Block.PEACH_TREE, 0.08],
+	],
 	Biomes.Id.SAVANNA_PLATEAU: [[Tiles.Block.ACACIA, Tiles.Block.ORANGE_TREE, 0.1]],
 	Biomes.Id.SPARSE_JUNGLE: [[Tiles.Block.JUNGLE_TREE, Tiles.Block.ORANGE_TREE, 0.12]],
 }
@@ -369,13 +383,15 @@ func undergrowth_for(biome: int, tx: int, ty: int) -> int:
 ## and then a wild fruit tree instead of one of the biome's (ORCHARDS), in
 ## blossom or bearing fruit.
 func orchard_tree(biome: int, tree: int, tx: int, ty: int) -> int:
+	var roll := HashUtil.unit2(_orchard_seed, tx, ty)
+	var chance := 0.0
 	for entry: Array in ORCHARDS.get(biome, []):
 		if entry[0] != tree:
 			continue
-		if HashUtil.unit2(_orchard_seed, tx, ty) >= entry[2]:
-			return tree
-		var bearing := HashUtil.unit2(_orchard_seed ^ 0x5EED, tx, ty) < 0.5
-		return Growth.FRUITING[entry[1]] if bearing else entry[1]
+		chance += entry[2]
+		if roll < chance:
+			var bearing := HashUtil.unit2(_orchard_seed ^ 0x5EED, tx, ty) < 0.5
+			return Growth.FRUITING[entry[1]] if bearing else entry[1]
 	return tree
 
 

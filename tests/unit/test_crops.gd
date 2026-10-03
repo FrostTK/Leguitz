@@ -64,7 +64,7 @@ func _player() -> Array:
 		for dz in range(-3, 4):
 			var cell := Vector3i(tile.x + dx, SEA - 1, tile.y + dz)
 			server.world.set_voxel(cell, Voxels.of_ground(Tiles.Ground.GRASS))
-			for up in range(1, 5):
+			for up in range(1, 9):
 				server.world.set_voxel(cell + Vector3i(0, up, 0), Voxels.AIR)
 	session.height = 0.0
 	return [server, transports[0], session]
@@ -80,6 +80,7 @@ func test_new_crops_are_sown_on_farmland_and_grow() -> void:
 		Items.Id.CORN,
 		Items.Id.TOMATO_SEEDS,
 		Items.Id.STRAWBERRY,
+		Items.Id.RASPBERRY,
 		Items.Id.FLAX_SEEDS,
 		Items.Id.PUMPKIN_SEEDS,
 		Items.Id.MELON_SEEDS,
@@ -280,6 +281,42 @@ func test_fruit_trees_blossom_bear_fruit_and_are_picked() -> void:
 		Voxels.of_block(Tiles.Block.CHERRY_TREE_FRUIT)
 	)
 	assert_true(chunk.growing.has(cell), "noted to bear fruit")
+
+
+func test_raspberries_and_peaches_are_picked() -> void:
+	var made := _player()
+	var server: GameServer = made[0]
+	var transport: LocalTransport = made[1]
+	var session: GameServer.PlayerSession = made[2]
+	server.clock.set_frozen(WorldClock.FROZEN_NOON)
+	var tile := Coords.world_to_tile(session.position)
+	var bed := Vector3i(tile.x + 1, SEA - 1, tile.y)
+	server.world.set_voxel(bed, Voxels.of_ground(Tiles.Ground.FARMLAND_WET))
+	server.world.set_voxel(bed + Vector3i.UP, Voxels.of_block(Tiles.Block.RASPBERRIES_3))
+	transport.send(Msg.pick(bed + Vector3i.UP))
+	server.process_messages()
+	var picked := Voxels.block_of(server.world.voxel_at(bed + Vector3i.UP))
+	assert_eq(picked, Tiles.Block.RASPBERRIES_2, "the canes stay")
+	assert_true(_count(session.inventory, Items.Id.RASPBERRY) >= 2, "raspberries in the bag")
+	# A peach pit grows into a tree in blossom, then bearing peaches.
+	var cell := Vector3i(tile.x - 2, SEA, tile.y)
+	var pit := Items.placed_voxel(Items.Id.PEACH_PIT)
+	assert_eq(Mining.placement(cell, pit, Vector2i(0, 1), server.world.voxel_at), {cell: pit})
+	server.world.set_voxel(cell, pit)
+	for i in 3:
+		Growth.update(server, 1.0)
+	assert_eq(Voxels.block_of(server.world.voxel_at(cell)), Tiles.Block.PEACH_TREE_FRUIT)
+	transport.send(Msg.pick(cell))
+	server.process_messages()
+	assert_eq(
+		Voxels.block_of(server.world.voxel_at(cell)), Tiles.Block.PEACH_TREE, "blossoms again"
+	)
+	assert_true(_count(session.inventory, Items.Id.PEACH) >= 2, "peaches in the bag")
+	var cells := PackedInt32Array()
+	cells.resize(Inventory.OWN_GRID * Inventory.OWN_GRID)
+	cells[0] = Items.Id.PEACH
+	assert_eq(Recipes.result_of(cells, Inventory.OWN_GRID), Vector2i(Items.Id.PEACH_PIT, 1))
+	assert_true(Items.FOOD.has(Items.Id.RASPBERRY) and Items.FOOD.has(Items.Id.PEACH))
 
 
 func test_wild_plants_and_fruit_trees_grow_in_the_world() -> void:

@@ -301,6 +301,16 @@ enum Block {
 	WILD_FLAX,
 	WILD_RICE,
 	WILD_GRAPES,
+	# Raspberries (a crop picked again and again) and the peach tree.
+	RASPBERRIES_0,
+	RASPBERRIES_1,
+	RASPBERRIES_2,
+	RASPBERRIES_3,
+	WILD_RASPBERRY,
+	PEACH_SAPLING,
+	YOUNG_PEACH_TREE,
+	PEACH_TREE,
+	PEACH_TREE_FRUIT,
 }
 
 const FLOWERS: Array[Block] = [
@@ -523,6 +533,12 @@ const NON_SOLID_BLOCKS := {
 	Block.WILD_FLAX: true,
 	Block.WILD_RICE: true,
 	Block.WILD_GRAPES: true,
+	Block.RASPBERRIES_0: true,
+	Block.RASPBERRIES_1: true,
+	Block.RASPBERRIES_2: true,
+	Block.RASPBERRIES_3: true,
+	Block.WILD_RASPBERRY: true,
+	Block.PEACH_SAPLING: true,
 }
 
 

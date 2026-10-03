@@ -45,6 +45,9 @@ const TREES := {
 	Tiles.Block.YOUNG_APPLE_TREE: [Vector2i(2, 4), Vector2i(22, 30)],
 	Tiles.Block.YOUNG_CHERRY_TREE: [Vector2i(2, 4), Vector2i(22, 30)],
 	Tiles.Block.YOUNG_ORANGE_TREE: [Vector2i(2, 4), Vector2i(22, 30)],
+	Tiles.Block.PEACH_TREE: [Vector2i(4, 6), Vector2i(34, 44)],
+	Tiles.Block.PEACH_TREE_FRUIT: [Vector2i(4, 6), Vector2i(34, 44)],
+	Tiles.Block.YOUNG_PEACH_TREE: [Vector2i(2, 4), Vector2i(22, 30)],
 }
 ## A fruit tree bearing fruit and the same tree in blossom: one shape (its
 ## trunk and its model's crown) for both.
@@ -52,6 +55,7 @@ const BEARING := {
 	Tiles.Block.APPLE_TREE_FRUIT: Tiles.Block.APPLE_TREE,
 	Tiles.Block.CHERRY_TREE_FRUIT: Tiles.Block.CHERRY_TREE,
 	Tiles.Block.ORANGE_TREE_FRUIT: Tiles.Block.ORANGE_TREE,
+	Tiles.Block.PEACH_TREE_FRUIT: Tiles.Block.PEACH_TREE,
 }
 ## Other solid objects: the size of the square they block (voxels) and how
 ## many levels up.
@@ -341,6 +345,7 @@ const WANDERING := {
 	Tiles.Block.WILD_STRAWBERRY: true,
 	Tiles.Block.WILD_FLAX: true,
 	Tiles.Block.WILD_RICE: true,
+	Tiles.Block.WILD_RASPBERRY: true,
 }
 
 ## block -> (kind, way index), for the facing objects; a wide object's

@@ -84,6 +84,9 @@ const COMPOSTABLE := {
 	Items.Id.CHERRY_PITS: true,
 	Items.Id.ORANGE: true,
 	Items.Id.ORANGE_SEEDS: true,
+	Items.Id.RASPBERRY: true,
+	Items.Id.PEACH: true,
+	Items.Id.PEACH_PIT: true,
 }
 
 

@@ -1,8 +1,8 @@
 class_name Picking
 extends RefCounted
 ## What is picked without being broken (a right click or the use key), on
-## the server (static, given the server): ripe tomatoes, strawberries and
-## grapes go back a stage and ripen again, sugar cane is cut back to its
+## the server (static, given the server): ripe tomatoes, strawberries,
+## raspberries and grapes go back a stage and ripen again, sugar cane is cut back to its
 ## first one, a fruit tree in fruit goes back into blossom (Growth.FRUITING);
 ## what is picked goes into the bag (`pick`; what does not fit falls at the
 ## player's feet).
@@ -18,6 +18,8 @@ const PICKED := {
 	Tiles.Block.APPLE_TREE_FRUIT: Tiles.Block.APPLE_TREE,
 	Tiles.Block.CHERRY_TREE_FRUIT: Tiles.Block.CHERRY_TREE,
 	Tiles.Block.ORANGE_TREE_FRUIT: Tiles.Block.ORANGE_TREE,
+	Tiles.Block.RASPBERRIES_3: Tiles.Block.RASPBERRIES_2,
+	Tiles.Block.PEACH_TREE_FRUIT: Tiles.Block.PEACH_TREE,
 }
 ## What picking gives: [item, fewest, most].
 const GIVES := {
@@ -28,6 +30,8 @@ const GIVES := {
 	Tiles.Block.APPLE_TREE_FRUIT: [Items.Id.APPLE, 2, 4],
 	Tiles.Block.CHERRY_TREE_FRUIT: [Items.Id.CHERRIES, 3, 5],
 	Tiles.Block.ORANGE_TREE_FRUIT: [Items.Id.ORANGE, 2, 4],
+	Tiles.Block.RASPBERRIES_3: [Items.Id.RASPBERRY, 2, 4],
+	Tiles.Block.PEACH_TREE_FRUIT: [Items.Id.PEACH, 2, 4],
 }
 
 

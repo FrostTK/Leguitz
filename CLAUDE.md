@@ -468,8 +468,8 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   .Bed: FIELD farmland, WATER rice over still water one deep over soil or sand, BANK sugar cane
   on soil or sand with water beside it or a row under, TRELLIS grapes; `sowing` is
   Mining.placement's rule for SOWN blocks, `holds` is Growth's check before a stage). New field
-  crops (BEETROOTS, CABBAGES, CORN sown from a cob, TOMATOES, STRAWBERRIES sown from a berry,
-  FLAX, PUMPKIN_STEM, MELON_STEM, each _0.._3), RICE_0..3, SUGAR_CANE_0/_1 then the old
+  crops (BEETROOTS, CABBAGES, CORN sown from a cob, TOMATOES, STRAWBERRIES and RASPBERRIES sown
+  from a berry, FLAX, PUMPKIN_STEM, MELON_STEM, each _0.._3), RICE_0..3, SUGAR_CANE_0/_1 then the old
   SUGAR_CANE (ripe; the SUGAR_CANE item now plants _0), TRELLIS (a floor object, sticks) and
   GRAPES_0..3 sown into it (Mining.fills; breaking a vine gives the trellis back). Grown stems
   (Farming.FRUIT_OF, kept in ChunkData.growing) put a PUMPKIN or MELON (solid furniture you
@@ -477,11 +477,12 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   while one lies beside them; a melon breaks into slices. `Picking` (src/sim/world/picking.gd,
   Msg.PICK; client: BlockInteraction._pick, from the right click before anything else but the
   can, and E) takes what is ripe without breaking it: PICKED (tomatoes, strawberries, grapes back
-  a stage, sugar cane cut back to _0, a fruit tree in fruit back into blossom) and GIVES, into
+  a stage, raspberries too, sugar cane cut back to _0, a fruit tree in fruit back into blossom)
+  and GIVES, into
   the bag (the rest thrown). Rice in hand is sown on the water aimed at
   (BlockInteraction._sow_on_water with the can's watery ray; the server accepts sown blocks not
-  touching a cube). Fruit trees: APPLE/CHERRY/ORANGE _SAPLING (planted from their pips:
-  APPLE_SEEDS, CHERRY_PITS, ORANGE_SEEDS, crafted from the fruit), YOUNG_*_TREE, *_TREE (in
+  touching a cube). Fruit trees: APPLE/CHERRY/ORANGE/PEACH _SAPLING (planted from their pips:
+  APPLE_SEEDS, CHERRY_PITS, ORANGE_SEEDS, PEACH_PIT, crafted from the fruit), YOUNG_*_TREE, *_TREE (in
   blossom) and *_TREE_FRUIT (Growth.FRUITING, FRUIT_SECONDS; ObjectShapes.BEARING: the same
   trunk, and TreeModels seeds the crown from the blossoming block, so only the dots differ:
   TreeModels._fruit_tree, _dot_crown, colors in OrchardColors). Generation: wild plants
@@ -490,7 +491,7 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   solid object around them, WorldGenerator._alone, and out of the trees' spacing) come last in
   VEGETATION, so they only take tiles that had nothing; WILD_RICE floats like lily pads
   (SALT_WILD_RICE); SurfaceBuilder.orchard_tree turns some of a biome's trees into fruit trees
-  after spacing (ORCHARDS, SALT_ORCHARDS), half in blossom, which the generator notes in
+  after spacing (ORCHARDS, SALT_ORCHARDS: the chances of one tree add up), half in blossom, which the generator notes in
   ChunkData.growing so they bear fruit. Recipes: seeds from a pumpkin, a melon slice, a tomato,
   grapes; pips from fruit; sugar from cane or beetroot; string from flax, LINEN from four
   (curtains take wool or linen); the food furnace roasts corn and cooks rice. CropModels

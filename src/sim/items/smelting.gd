@@ -58,6 +58,8 @@ const FOODS := {
 	Items.Id.APPLE: true,
 	Items.Id.CHERRIES: true,
 	Items.Id.ORANGE: true,
+	Items.Id.RASPBERRY: true,
+	Items.Id.PEACH: true,
 }
 ## What the factory furnace makes of the rest.
 const FACTORY := {

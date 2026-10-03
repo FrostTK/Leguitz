@@ -37,6 +37,7 @@ const SAPLINGS := {
 	Tiles.Block.APPLE_SAPLING: Tiles.Block.YOUNG_APPLE_TREE,
 	Tiles.Block.CHERRY_SAPLING: Tiles.Block.YOUNG_CHERRY_TREE,
 	Tiles.Block.ORANGE_SAPLING: Tiles.Block.YOUNG_ORANGE_TREE,
+	Tiles.Block.PEACH_SAPLING: Tiles.Block.YOUNG_PEACH_TREE,
 }
 const YOUNG := {
 	Tiles.Block.YOUNG_OAK: Tiles.Block.OAK,
@@ -49,12 +50,14 @@ const YOUNG := {
 	Tiles.Block.YOUNG_APPLE_TREE: Tiles.Block.APPLE_TREE,
 	Tiles.Block.YOUNG_CHERRY_TREE: Tiles.Block.CHERRY_TREE,
 	Tiles.Block.YOUNG_ORANGE_TREE: Tiles.Block.ORANGE_TREE,
+	Tiles.Block.YOUNG_PEACH_TREE: Tiles.Block.PEACH_TREE,
 }
 ## Fruit trees in blossom and the same trees bearing fruit.
 const FRUITING := {
 	Tiles.Block.APPLE_TREE: Tiles.Block.APPLE_TREE_FRUIT,
 	Tiles.Block.CHERRY_TREE: Tiles.Block.CHERRY_TREE_FRUIT,
 	Tiles.Block.ORANGE_TREE: Tiles.Block.ORANGE_TREE_FRUIT,
+	Tiles.Block.PEACH_TREE: Tiles.Block.PEACH_TREE_FRUIT,
 }
 ## Where a spruce grows snowy.
 const SNOWY_BIOMES := {
