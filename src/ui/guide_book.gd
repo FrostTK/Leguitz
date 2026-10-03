@@ -310,6 +310,7 @@ static func _animals() -> Array:
 			[
 				_heading("BOOK_ANIMALS_FARM"),
 				_icon(Items.Id.WHEAT, _t("BOOK_ANIMALS_BREED")),
+			_text("BOOK_ANIMALS_FEED"),
 				_icon(Items.Id.LEAD, _t("BOOK_ANIMALS_LEAD")),
 				_icon(Items.Id.SHEARS, _t("BOOK_ANIMALS_SHEAR")),
 				_icon(Items.Id.MILK_BUCKET, _t("BOOK_ANIMALS_MILK")),
