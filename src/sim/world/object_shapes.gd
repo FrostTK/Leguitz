@@ -34,6 +34,24 @@ const TREES := {
 	Tiles.Block.YOUNG_JUNGLE_TREE: [Vector2i(2, 4), Vector2i(34, 46)],
 	Tiles.Block.YOUNG_ACACIA: [Vector2i(2, 4), Vector2i(22, 32)],
 	Tiles.Block.YOUNG_SWAMP_OAK: [Vector2i(2, 4), Vector2i(26, 36)],
+	# Fruit trees: small orchard trees, in blossom or bearing fruit (the
+	# same trunk: BEARING), and young.
+	Tiles.Block.APPLE_TREE: [Vector2i(4, 6), Vector2i(36, 46)],
+	Tiles.Block.CHERRY_TREE: [Vector2i(4, 6), Vector2i(38, 50)],
+	Tiles.Block.ORANGE_TREE: [Vector2i(4, 6), Vector2i(34, 44)],
+	Tiles.Block.APPLE_TREE_FRUIT: [Vector2i(4, 6), Vector2i(36, 46)],
+	Tiles.Block.CHERRY_TREE_FRUIT: [Vector2i(4, 6), Vector2i(38, 50)],
+	Tiles.Block.ORANGE_TREE_FRUIT: [Vector2i(4, 6), Vector2i(34, 44)],
+	Tiles.Block.YOUNG_APPLE_TREE: [Vector2i(2, 4), Vector2i(22, 30)],
+	Tiles.Block.YOUNG_CHERRY_TREE: [Vector2i(2, 4), Vector2i(22, 30)],
+	Tiles.Block.YOUNG_ORANGE_TREE: [Vector2i(2, 4), Vector2i(22, 30)],
+}
+## A fruit tree bearing fruit and the same tree in blossom: one shape (its
+## trunk and its model's crown) for both.
+const BEARING := {
+	Tiles.Block.APPLE_TREE_FRUIT: Tiles.Block.APPLE_TREE,
+	Tiles.Block.CHERRY_TREE_FRUIT: Tiles.Block.CHERRY_TREE,
+	Tiles.Block.ORANGE_TREE_FRUIT: Tiles.Block.ORANGE_TREE,
 }
 ## Other solid objects: the size of the square they block (voxels) and how
 ## many levels up.
@@ -215,6 +233,8 @@ const TOPS := {
 	Tiles.Block.TABLE: 14,
 	Tiles.Block.CHAIR: 10,
 	Tiles.Block.COMPOSTER: 14,
+	Tiles.Block.PUMPKIN: 12,
+	Tiles.Block.MELON: 11,
 }
 ## Other solid things players place, by kind: the square they block
 ## (voxels; the others facing them: BOX_SIZE).
@@ -227,6 +247,8 @@ const FOOTPRINTS := {
 	Tiles.Block.GATE: 16,
 	Tiles.Block.CAMPFIRE: 12,
 	Tiles.Block.COMPOSTER: 14,
+	Tiles.Block.PUMPKIN: 14,
+	Tiles.Block.MELON: 14,
 }
 ## What keeps bodies out (fences, closed gates): two levels high, nobody
 ## jumps over.
@@ -295,6 +317,7 @@ const SINGLE := {
 	Tiles.Block.LANTERN: true,
 	Tiles.Block.LANTERN_HANGING: true,
 	Tiles.Block.COMPOSTER: true,
+	Tiles.Block.TRELLIS: true,
 }
 ## Small things stand anywhere in their tile (whole voxels), not centered.
 const WANDERING := {
@@ -311,6 +334,13 @@ const WANDERING := {
 	Tiles.Block.LILY_PAD: true,
 	Tiles.Block.ROCK: true,
 	Tiles.Block.MOSSY_ROCK: true,
+	Tiles.Block.WILD_BEETROOT: true,
+	Tiles.Block.WILD_CABBAGE: true,
+	Tiles.Block.WILD_CORN: true,
+	Tiles.Block.WILD_TOMATO: true,
+	Tiles.Block.WILD_STRAWBERRY: true,
+	Tiles.Block.WILD_FLAX: true,
+	Tiles.Block.WILD_RICE: true,
 }
 
 ## block -> (kind, way index), for the facing objects; a wide object's
@@ -505,6 +535,7 @@ static func offset_at(block: int, tile: Vector2i) -> Vector2i:
 ## over the whole range, in a shuffled order: every tree differs from its
 ## neighbors.
 static func trunk(block: int, variant: int) -> Vector2i:
+	block = BEARING.get(block, block)
 	var ranges: Array = TREES[block]
 	var widths: Vector2i = ranges[0]
 	var heights: Vector2i = ranges[1]

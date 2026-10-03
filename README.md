@@ -24,9 +24,11 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Ciel en 1re personne : levers et couchers de soleil, lune dans sa phase, étoiles et voie lactée, nuages raccord avec leurs ombres | ✅ |
 | Réglages d'affichage : plein écran, résolution, écran, synchro verticale, limite d'images (dont 100), compteur d'images, distance de vue, luminosité, taille de l'interface, champ de vision et sensibilité de la souris | ✅ |
 | Arrosage et soins : arrosoir en cuivre (rempli à l'eau ou à un évier, 20 cases), la pluie arrose les champs à ciel ouvert, rigoles d'irrigation, composteur et compost (une culture ou une pousse gagne un stade), cultures sous serre et à la lanterne | ✅ |
-| Nouvelles cultures et arbres fruitiers | à venir |
+| Nouvelles cultures : betterave, chou, maïs, tomate, fraise, lin, citrouille et pastèque (le fruit pousse à côté de la tige), riz en rizière, canne à sucre qui repousse, vigne sur treillis ; cueillette ; arbres fruitiers (pommier, cerisier, oranger) en fleur puis en fruits ; plantes sauvages dans le monde | ✅ |
 | Élevage (reproduction, bébés, produits sans tuer), animaux de ferme, animaux sauvages et prédateurs | à venir |
 | Cuisine, pêche, chien et chat, saisons | à venir |
+
+![Leguitz : les nouvelles cultures vues de dessus (champs en rangs, rizière, canne à sucre, vigne sur treillis, citrouille et pastèque, arbres fruitiers en fleur et en fruits) ; en 1re personne la rizière, la vigne et le verger](docs/screenshots/phase7-cultures.png)
 
 ![Leguitz : un potager vu de dessus (champ au bord de l'eau, champ arrosé à l'arrosoir, champ sec plus pâle, composteurs vide, en cours, plein et prêt) et en 1re personne, l'arrosoir en main ; l'arrosoir, le composteur et le compost](docs/screenshots/phase7-arrosage.png)
 
@@ -287,7 +289,8 @@ Pour le multijoueur, il suffira de brancher un transport réseau.
 4. ✅ Craft (recettes, établi, usure, coffres, fours, blocs de construction)
 5. ✅ Survie et combat (vie, faim, nage, modes de jeu, animaux, monstres, combat et armures)
 6. Souterrain et structures (en pause : maison et jardin, torches et lanternes, lumière des grottes, coulées d'eau et de lave faits)
-7. Agriculture et élevage (en cours : végétation qui pousse, champs et cultures, arrosage et compost)
+7. Agriculture et élevage (en cours : végétation qui pousse, champs et cultures, arrosage et compost,
+   nouvelles cultures et arbres fruitiers)
 8. Mode Arcade : scénario n°1 « Restauration » (restaurer une terre désolée avec éoliennes,
    irrigateurs et purificateurs, faire revenir forêts, rivières et animaux, puis recycler les
    bâtiments et continuer en survie)

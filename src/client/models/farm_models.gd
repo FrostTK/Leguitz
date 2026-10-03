@@ -6,7 +6,7 @@ extends RefCounted
 ## composter filling up (Composting: a slatted bin, the waste showing
 ## between its boards, dark compost when ready); and the farm's items:
 ## wheat, carrot, potato, baked potato, dough, bread, the watering can, the
-## composter, compost.
+## composter, compost. The crops of phase 7's step 4 are CropModels'.
 
 const WHEAT_GREEN := ["#3f7a2c", "#58993a", "#7cb84e"]
 const WHEAT_GOLD := ["#a8822e", "#d2a943", "#efcf6a", "#8a6a24"]
@@ -26,31 +26,23 @@ const CAN := ["#6e3820", "#9a5230", "#c06d3c", "#e39a5f", "#f5c08e"]
 ## The rows across the tile (z, voxels) and the plants in each.
 const ROWS: Array[int] = [3, 8, 13]
 const PER_ROW := 4
-
-## Each crop's stage (0 to 3).
-const STAGE := {
-	Tiles.Block.WHEAT_0: 0,
-	Tiles.Block.WHEAT_1: 1,
-	Tiles.Block.WHEAT_2: 2,
-	Tiles.Block.WHEAT_3: 3,
-	Tiles.Block.CARROTS_0: 0,
-	Tiles.Block.CARROTS_1: 1,
-	Tiles.Block.CARROTS_2: 2,
-	Tiles.Block.CARROTS_3: 3,
-	Tiles.Block.POTATOES_0: 0,
-	Tiles.Block.POTATOES_1: 1,
-	Tiles.Block.POTATOES_2: 2,
-	Tiles.Block.POTATOES_3: 3,
+## The crops drawn here (the others: CropModels).
+const OWN := {
+	Tiles.Block.WHEAT_0: true,
+	Tiles.Block.CARROTS_0: true,
+	Tiles.Block.POTATOES_0: true,
 }
 
 
 static func build(block: int, variant: int) -> VoxelGrid:
+	var kind := Farming.sown_of(block)
+	if not OWN.has(kind):
+		return CropModels.build(block, variant)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = HashUtil.hash2(0xFA21, block, variant)
 	var grid := VoxelGrid.new(Vector3i(16, 16, 16))
 	grid.pivot = Vector2(8, 8)
-	var stage: int = STAGE[block]
-	var kind := Farming.sown_of(block)
+	var stage := Farming.stage_of(block)
 	for z in ROWS:
 		for i in PER_ROW:
 			var x := 2 + i * 4 + rng.randi_range(-1, 1)
@@ -149,7 +141,7 @@ static func item(item_id: int) -> VoxelGrid:
 			return _dough()
 		Items.Id.BREAD:
 			return _bread()
-	return null
+	return CropModels.item(item_id)
 
 
 ## A stalk of wheat: green and short at first, then tall and golden under

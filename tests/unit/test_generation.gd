@@ -80,8 +80,9 @@ func test_surface_chunks_are_coherent() -> void:
 					var swamp := Voxels.ground_of(surface) == Tiles.Ground.SWAMP_WATER
 					assert_true(swamp or top == GameConst.SEA_LEVEL, "the sea at sea level")
 				var thing := chunk.object_on_surface(local)
-				if thing == Voxels.of_block(Tiles.Block.LILY_PAD):
-					assert_true(Voxels.is_liquid(surface), "lily pads float")
+				var floating := [Tiles.Block.LILY_PAD, Tiles.Block.WILD_RICE]
+				if Voxels.block_of(thing) in floating:
+					assert_true(Voxels.is_liquid(surface), "lily pads and wild rice float")
 				elif thing != Voxels.AIR and not Voxels.is_cube(thing):
 					assert_true(Voxels.is_cube(surface), "plants grow on ground")
 

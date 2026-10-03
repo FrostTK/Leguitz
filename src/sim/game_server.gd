@@ -326,6 +326,8 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 			Composting.put(self, session, message)
 		Msg.SPREAD_COMPOST:
 			Composting.spread(self, session, message)
+		Msg.PICK:
+			Picking.pick(self, session, message)
 		Msg.SELECT_SLOT:
 			session.inventory.selected = clampi(
 				int(message.get("slot", 0)), 0, Inventory.HOTBAR - 1
@@ -550,7 +552,7 @@ func _on_block_place(session: PlayerSession, message: Dictionary) -> void:
 		and Mining.can_place(voxel)
 		and not cells.is_empty()
 		and near <= Mining.REACH + REACH_LEEWAY
-		and (cells.size() > 1 or _against_terrain(cell))
+		and (cells.size() > 1 or _against_terrain(cell) or Farming.SOWN.has(Voxels.block_of(voxel)))
 	)
 	# Only what blocks bodies keeps out of anybody's way.
 	for at: Vector3i in cells:

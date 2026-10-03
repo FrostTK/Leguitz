@@ -255,6 +255,18 @@ static func _farm() -> Array:
 		_icon(Items.Id.COMPOSTER, _t("BOOK_FARM_COMPOSTER")),
 		_icon(Items.Id.COMPOST, _t("BOOK_FARM_COMPOST")),
 		_icon(Items.Id.LANTERN, _t("BOOK_FARM_LIGHT")),
+		_heading("BOOK_FARM_MORE"),
+		_icon(Items.Id.BEETROOT_SEEDS, _t("BOOK_FARM_WILD")),
+		_icon(Items.Id.CABBAGE, _t("BOOK_FARM_SOW_MORE")),
+		_icon(Items.Id.TOMATO, _t("BOOK_FARM_PICK")),
+		_icon(Items.Id.PUMPKIN, _t("BOOK_FARM_STEMS")),
+		_icon(Items.Id.RICE, _t("BOOK_FARM_RICE")),
+		_icon(Items.Id.SUGAR_CANE, _t("BOOK_FARM_CANE")),
+		_icon(Items.Id.TRELLIS, _t("BOOK_FARM_TRELLIS")),
+		_icon(Items.Id.FLAX, _t("BOOK_FARM_FLAX")),
+		_heading("BOOK_FARM_FRUIT_TREES"),
+		_icon(Items.Id.APPLE, _t("BOOK_FARM_ORCHARD")),
+		_icon(Items.Id.APPLE_SEEDS, _t("BOOK_FARM_PIPS")),
 	]
 
 

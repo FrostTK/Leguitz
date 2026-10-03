@@ -112,6 +112,9 @@ const BLOCK_SECONDS := {
 	Tiles.Block.LANTERN_HANGING: 1.0,
 	Tiles.Block.LANTERN_WALL: 1.0,
 	Tiles.Block.COMPOSTER: 1.5,
+	Tiles.Block.PUMPKIN: 1.0,
+	Tiles.Block.MELON: 1.0,
+	Tiles.Block.TRELLIS: 0.5,
 }
 ## Trees by hand: chopping a trunk takes a while (a young one less).
 const TREE_SECONDS := 3.5
@@ -162,6 +165,9 @@ const AXE_BLOCKS := {
 	Tiles.Block.BIG_GATE_OPEN: true,
 	Tiles.Block.CAMPFIRE: true,
 	Tiles.Block.COMPOSTER: true,
+	Tiles.Block.PUMPKIN: true,
+	Tiles.Block.MELON: true,
+	Tiles.Block.TRELLIS: true,
 }
 const PICKAXE_BLOCKS := {
 	Tiles.Block.ROCK: true,
@@ -202,6 +208,8 @@ const FLOOR_OBJECTS := {
 	Tiles.Block.TORCH: true,
 	Tiles.Block.LANTERN: true,
 	Tiles.Block.COMPOSTER: true,
+	Tiles.Block.TRELLIS: true,
+	Tiles.Block.PUMPKIN: true,
 }
 
 
@@ -281,12 +289,12 @@ static func placement(
 		return {cell: Voxels.of_block(ObjectShapes.facing(kind, front))}
 	if FLOOR_OBJECTS.has(block):
 		return {cell: voxel} if _bench_room(cell, voxel_at) else {}
-	if Growth.SAPLINGS.has(block) or Farming.SOWN.has(block):
+	if Farming.SOWN.has(block):
+		return Farming.sowing(cell, voxel, voxel_at)
+	if Growth.SAPLINGS.has(block):
 		var there: int = voxel_at.call(cell)
-		var soil: int = voxel_at.call(cell + Vector3i.DOWN)
 		var free := is_replaceable(there) and not Voxels.is_liquid(there)
-		var bed := Farming.is_farmland(soil) if Farming.SOWN.has(block) else Growth.is_soil(soil)
-		return {cell: voxel} if free and bed else {}
+		return {cell: voxel} if free and Growth.is_soil(voxel_at.call(cell + Vector3i.DOWN)) else {}
 	return {cell: voxel} if is_replaceable(voxel_at.call(cell)) else {}
 
 
@@ -320,10 +328,13 @@ static func under_ceiling(cell: Vector3i, voxel_at: Callable) -> Vector3i:
 
 
 ## Whether placing `voxel` aimed at `there` fills it (a torch into an empty
-## bracket) instead of going next to it.
+## bracket, grapes on a trellis) instead of going next to it.
 static func fills(there: int, voxel: int) -> bool:
+	var block := Voxels.block_of(voxel)
+	if Farming.bed_of(block) == Farming.Bed.TRELLIS and Farming.SOWN.has(block):
+		return Voxels.block_of(there) == Tiles.Block.TRELLIS
 	return (
-		Voxels.block_of(voxel) == Tiles.Block.TORCH
+		block == Tiles.Block.TORCH
 		and ObjectShapes.kind_of(Voxels.block_of(there)) == Tiles.Block.TORCH_BRACKET
 	)
 

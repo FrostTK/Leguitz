@@ -3,7 +3,7 @@ extends RefCounted
 ## Saplings (Growth): a little stem of their species' bark and a few tufts
 ## of its leaves; a spruce's is a tiny cone, an acacia's a flat tuft, a
 ## jungle tree's has broad leaves, a swamp oak's a strand of moss. Their
-## items look the same.
+## items look the same (a fruit tree's item is its pips: CropModels).
 
 const SPECIES := {
 	Tiles.Block.OAK_SAPLING: [TreeModels.OAK_BARK, TreeModels.OAK_LEAVES],
@@ -13,6 +13,9 @@ const SPECIES := {
 	Tiles.Block.JUNGLE_SAPLING: [TreeModels.JUNGLE_BARK, TreeModels.JUNGLE_LEAVES],
 	Tiles.Block.ACACIA_SAPLING: [TreeModels.ACACIA_BARK, TreeModels.ACACIA_LEAVES],
 	Tiles.Block.SWAMP_OAK_SAPLING: [TreeModels.SWAMP_BARK, TreeModels.SWAMP_LEAVES],
+	Tiles.Block.APPLE_SAPLING: [OrchardColors.APPLE_BARK, OrchardColors.APPLE_LEAVES],
+	Tiles.Block.CHERRY_SAPLING: [OrchardColors.CHERRY_BARK, OrchardColors.CHERRY_LEAVES],
+	Tiles.Block.ORANGE_SAPLING: [OrchardColors.ORANGE_BARK, OrchardColors.ORANGE_LEAVES],
 }
 const SIZE := Vector3i(15, 16, 15)
 const MIDDLE := Vector3(7, 0, 7)

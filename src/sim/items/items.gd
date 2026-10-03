@@ -171,6 +171,34 @@ enum Id {
 	WATERING_CAN,
 	COMPOSTER,
 	COMPOST,
+	BEETROOT_SEEDS,
+	BEETROOT,
+	CABBAGE_SEEDS,
+	CABBAGE,
+	CORN,
+	ROASTED_CORN,
+	TOMATO_SEEDS,
+	TOMATO,
+	STRAWBERRY,
+	FLAX_SEEDS,
+	FLAX,
+	LINEN,
+	PUMPKIN_SEEDS,
+	PUMPKIN,
+	MELON_SEEDS,
+	MELON_SLICE,
+	RICE,
+	COOKED_RICE,
+	SUGAR,
+	TRELLIS,
+	GRAPE_SEEDS,
+	GRAPES,
+	APPLE,
+	APPLE_SEEDS,
+	CHERRIES,
+	CHERRY_PITS,
+	ORANGE,
+	ORANGE_SEEDS,
 }
 ## What a tool is made for (Mining.tool_for: what it breaks faster).
 enum Tool { NONE, PICKAXE, AXE, SHOVEL, SWORD, HOE }
@@ -283,6 +311,22 @@ const PLACES_BLOCK := {
 	Id.CARROT: Tiles.Block.CARROTS_0,
 	Id.POTATO: Tiles.Block.POTATOES_0,
 	Id.COMPOSTER: Tiles.Block.COMPOSTER,
+	Id.BEETROOT_SEEDS: Tiles.Block.BEETROOTS_0,
+	Id.CABBAGE_SEEDS: Tiles.Block.CABBAGES_0,
+	Id.CORN: Tiles.Block.CORN_0,
+	Id.TOMATO_SEEDS: Tiles.Block.TOMATOES_0,
+	Id.STRAWBERRY: Tiles.Block.STRAWBERRIES_0,
+	Id.FLAX_SEEDS: Tiles.Block.FLAX_0,
+	Id.PUMPKIN_SEEDS: Tiles.Block.PUMPKIN_STEM_0,
+	Id.PUMPKIN: Tiles.Block.PUMPKIN,
+	Id.MELON_SEEDS: Tiles.Block.MELON_STEM_0,
+	Id.RICE: Tiles.Block.RICE_0,
+	Id.SUGAR_CANE: Tiles.Block.SUGAR_CANE_0,
+	Id.TRELLIS: Tiles.Block.TRELLIS,
+	Id.GRAPE_SEEDS: Tiles.Block.GRAPES_0,
+	Id.APPLE_SEEDS: Tiles.Block.APPLE_SAPLING,
+	Id.CHERRY_PITS: Tiles.Block.CHERRY_SAPLING,
+	Id.ORANGE_SEEDS: Tiles.Block.ORANGE_SAPLING,
 }
 
 ## What a ground gives (soil gives dirt); grounds left out give nothing.
@@ -386,6 +430,7 @@ const BLOCK_DROPS := {
 	Tiles.Block.GLASS: [Id.GLASS, 1, 1],
 	Tiles.Block.WOOL: [Id.WOOL, 1, 1],
 	Tiles.Block.WINDOW: [Id.WINDOW, 1, 1],
+	Tiles.Block.MELON: [Id.MELON_SLICE, 3, 6],
 }
 ## Food: how much satiety eating one gives (Vitals.MAX_FOOD points; see
 ## also Vitals.POISONS). Cooking pays: dried berries, the stew and cooked
@@ -409,6 +454,18 @@ const FOOD := {
 	Id.POTATO: 1,
 	Id.BAKED_POTATO: 5,
 	Id.BREAD: 5,
+	Id.BEETROOT: 1,
+	Id.CABBAGE: 3,
+	Id.CORN: 1,
+	Id.ROASTED_CORN: 5,
+	Id.TOMATO: 2,
+	Id.STRAWBERRY: 2,
+	Id.MELON_SLICE: 2,
+	Id.COOKED_RICE: 5,
+	Id.GRAPES: 2,
+	Id.APPLE: 4,
+	Id.CHERRIES: 2,
+	Id.ORANGE: 4,
 }
 ## The planks each log is sawn into.
 const PLANKS_OF := {
@@ -429,12 +486,27 @@ const TREE_LOGS := {
 	Tiles.Block.DARK_OAK: Id.DARK_OAK_LOG,
 	Tiles.Block.JUNGLE_TREE: Id.JUNGLE_LOG,
 	Tiles.Block.ACACIA: Id.ACACIA_LOG,
+	Tiles.Block.APPLE_TREE: Id.OAK_LOG,
+	Tiles.Block.CHERRY_TREE: Id.OAK_LOG,
+	Tiles.Block.ORANGE_TREE: Id.OAK_LOG,
+	Tiles.Block.APPLE_TREE_FRUIT: Id.OAK_LOG,
+	Tiles.Block.CHERRY_TREE_FRUIT: Id.OAK_LOG,
+	Tiles.Block.ORANGE_TREE_FRUIT: Id.OAK_LOG,
 }
 ## The chance that tall grass broken gives a wild carrot or potato too.
 const WILD_ROOTS := 0.08
 ## The sapling a tree (grown or young) gives: a felled tree one or two, a
-## young one its own back.
+## young one its own back (a fruit tree's are its pips).
 const SAPLING_OF := {
+	Tiles.Block.APPLE_TREE: Id.APPLE_SEEDS,
+	Tiles.Block.CHERRY_TREE: Id.CHERRY_PITS,
+	Tiles.Block.ORANGE_TREE: Id.ORANGE_SEEDS,
+	Tiles.Block.APPLE_TREE_FRUIT: Id.APPLE_SEEDS,
+	Tiles.Block.CHERRY_TREE_FRUIT: Id.CHERRY_PITS,
+	Tiles.Block.ORANGE_TREE_FRUIT: Id.ORANGE_SEEDS,
+	Tiles.Block.YOUNG_APPLE_TREE: Id.APPLE_SEEDS,
+	Tiles.Block.YOUNG_CHERRY_TREE: Id.CHERRY_PITS,
+	Tiles.Block.YOUNG_ORANGE_TREE: Id.ORANGE_SEEDS,
 	Tiles.Block.OAK: Id.OAK_SAPLING,
 	Tiles.Block.SWAMP_OAK: Id.SWAMP_OAK_SAPLING,
 	Tiles.Block.BIRCH: Id.BIRCH_SAPLING,
@@ -544,12 +616,17 @@ static func drops(voxel: int, tile: Vector2i, rng: RandomNumberGenerator) -> Arr
 		result.append(Vector2i(TREE_LOGS[block], ObjectShapes.blocking_levels(block, variant)))
 		result.append(Vector2i(Id.STICK, rng.randi_range(1, 2)))
 		result.append(Vector2i(SAPLING_OF[block], rng.randi_range(1, 2)))
+		# A fruit tree felled bearing fruit: the fruit too.
+		if Picking.PICKED.has(block):
+			result.append(Picking.picking(block, rng))
 	elif SAPLING_OF.has(block):
 		# A young tree: its sapling back, and a stick.
 		result.append(Vector2i(SAPLING_OF[block], 1))
 		result.append(Vector2i(Id.STICK, 1))
 	elif Farming.STAGES.has(block) or Farming.RIPE.has(block):
 		result.append_array(Farming.harvest(block, rng))
+	elif Farming.WILD.has(block):
+		result.append_array(Farming.wild_harvest(block, rng))
 	elif block == Tiles.Block.TALL_GRASS:
 		result.append(Vector2i(Id.SEEDS, 1))
 		# Now and then a wild carrot or potato in the grass.

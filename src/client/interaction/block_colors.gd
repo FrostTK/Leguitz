@@ -13,6 +13,12 @@ const TREE_COLORS := {
 	Tiles.Block.ACACIA: [TreeModels.ACACIA_BARK, TreeModels.ACACIA_LEAVES],
 	Tiles.Block.SPRUCE: [TreeModels.SPRUCE_BARK, TreeModels.SPRUCE_LEAVES],
 	Tiles.Block.SNOWY_SPRUCE: [TreeModels.SPRUCE_BARK, TreeModels.SPRUCE_LEAVES],
+	Tiles.Block.APPLE_TREE: [OrchardColors.APPLE_BARK, OrchardColors.APPLE_LEAVES],
+	Tiles.Block.CHERRY_TREE: [OrchardColors.CHERRY_BARK, OrchardColors.CHERRY_LEAVES],
+	Tiles.Block.ORANGE_TREE: [OrchardColors.ORANGE_BARK, OrchardColors.ORANGE_LEAVES],
+	Tiles.Block.APPLE_TREE_FRUIT: [OrchardColors.APPLE_BARK, OrchardColors.APPLE_LEAVES],
+	Tiles.Block.CHERRY_TREE_FRUIT: [OrchardColors.CHERRY_BARK, OrchardColors.CHERRY_LEAVES],
+	Tiles.Block.ORANGE_TREE_FRUIT: [OrchardColors.ORANGE_BARK, OrchardColors.ORANGE_LEAVES],
 }
 const OBJECT_COLORS := {
 	Tiles.Block.ROCK: Color(0.5, 0.5, 0.53),
@@ -27,6 +33,9 @@ const OBJECT_COLORS := {
 	Tiles.Block.FLOWER_PINK: Color(0.9, 0.5, 0.7),
 	Tiles.Block.MUSHROOM_RED: Color(0.75, 0.2, 0.18),
 	Tiles.Block.MUSHROOM_BROWN: Color(0.55, 0.38, 0.25),
+	Tiles.Block.PUMPKIN: Color(0.89, 0.48, 0.14),
+	Tiles.Block.MELON: Color(0.3, 0.55, 0.22),
+	Tiles.Block.TRELLIS: Color(0.6, 0.46, 0.28),
 }
 const PLANT_COLOR := Color(0.32, 0.58, 0.24)
 

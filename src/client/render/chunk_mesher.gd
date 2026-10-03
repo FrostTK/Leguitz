@@ -950,7 +950,7 @@ static func _add_prop(
 	var turn := prop_turn(tile)
 	if ObjectShapes.front_of(block) != Vector2i.ZERO:
 		turn = Basis(Vector3.UP, ObjectShapes.turn_of(block))
-	elif Mining.FLOOR_OBJECTS.has(block):
+	elif Mining.FLOOR_OBJECTS.has(block) or Farming.bed_of(block) == Farming.Bed.TRELLIS:
 		turn = Basis()
 	if ObjectShapes.is_wide_left(block):
 		var right := ObjectShapes.wide_right(block)

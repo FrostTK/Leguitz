@@ -211,7 +211,14 @@ func _generate_terrain(chunk: ChunkData) -> void:
 			var index := ly * size + lx
 			var at := (ly + 2) * span + (lx + 2)
 			var column := columns[at]
-			var block := _spaced(blocks, at, span, origin + Vector2i(lx, ly), column.biome)
+			var tile := origin + Vector2i(lx, ly)
+			var block := _spaced(blocks, at, span, tile, column.biome)
+			if ObjectShapes.is_tree(block):
+				block = surface.orchard_tree(column.biome, block, tile.x, tile.y)
+				if Growth.FRUITING.has(block):
+					# In blossom: it will bear fruit (Growth).
+					var cell := Vector3i(tile.x, GameConst.SEA_LEVEL + column.level, tile.y)
+					chunk.growing[cell] = true
 			if column.water:
 				voxels.append_array(_water_column(column, grounds[at], block))
 				chunk.tops[index] = GameConst.SEA_LEVEL
@@ -229,6 +236,8 @@ func _generate_terrain(chunk: ChunkData) -> void:
 ## others leave their tile to the undergrowth.
 func _spaced(blocks: PackedInt32Array, at: int, span: int, tile: Vector2i, biome: int) -> int:
 	var block := blocks[at]
+	if SurfaceBuilder.WILD_FRUITS.has(block):
+		return block if _alone(blocks, at, span) else Tiles.Block.AIR
 	if not _is_spaced(block):
 		return block
 	var rank := HashUtil.hash2(_spacing_seed, tile.x, tile.y)
@@ -243,9 +252,25 @@ func _spaced(blocks: PackedInt32Array, at: int, span: int, tile: Vector2i, biome
 
 
 ## Solid objects that keep their distance (not cube blocks: rock outcrops
-## form solid masses).
+## form solid masses; wild fruits keep away from them instead: _alone).
 static func _is_spaced(block: int) -> bool:
-	return Tiles.is_block_solid(block) and not Tiles.is_cube(block) and block != Tiles.Block.AIR
+	return (
+		Tiles.is_block_solid(block)
+		and not Tiles.is_cube(block)
+		and block != Tiles.Block.AIR
+		and not SurfaceBuilder.WILD_FRUITS.has(block)
+	)
+
+
+## Whether no solid object (but cubes) stands around a tile: a wild fruit
+## is only kept there (so no tree is thinned out for it).
+static func _alone(blocks: PackedInt32Array, at: int, span: int) -> bool:
+	for dy in range(-1, 2):
+		for dx in range(-1, 2):
+			var other := blocks[at + dy * span + dx]
+			if (dx != 0 or dy != 0) and Tiles.is_block_solid(other) and not Tiles.is_cube(other):
+				return false
+	return true
 
 
 ## Rock up to the filler, the filler (dirt under grass...), the surface

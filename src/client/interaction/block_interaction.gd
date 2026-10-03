@@ -24,6 +24,8 @@ const PAD_AIM_PITCH := 0.6
 const WATER_COLOR := Color("8cc8ec")
 const WASTE_COLOR := Color("6f8f3c")
 const COMPOST_COLOR := Color("4a3424")
+## Leaves rustling when something is picked.
+const PICK_COLOR := Color("5e9a3a")
 ## How far (local units) the mouse's ray looks for what a bow aims at.
 const AIM_FAR := 96.0
 
@@ -88,13 +90,13 @@ func _process(delta: float) -> void:
 
 
 ## Uses what is aimed at (InputBindings.USE): opens a workbench, a chest
-## or a furnace, swings a gate, fills or empties a composter. Returns
-## whether there was something to use.
+## or a furnace, swings a gate, fills or empties a composter, picks what is
+## ripe. Returns whether there was something to use.
 func use_target() -> bool:
 	if target != null and Mining.swings(target.voxel):
 		_swing_gate(target.cell, target.voxel)
 		return true
-	if target != null and _compost():
+	if target != null and (_compost() or _pick()):
 		return true
 	if target == null or not Mining.opens(target.voxel):
 		return false
@@ -114,7 +116,7 @@ func place() -> void:
 	if client.held_item() == Items.Id.GUIDE_BOOK:
 		client.open_book()
 		return
-	if _tend() or target == null:
+	if _tend() or _sow_on_water() or target == null:
 		return
 	var player := client.local_player
 	var slot := client.inventory.selected
@@ -156,12 +158,38 @@ func place() -> void:
 	for at: Vector3i in cells:
 		if Voxels.is_solid(cells[at]) and Mining.overlaps_body(at, player.position, player.height):
 			return
+	_put(cells, cell, slot, front, face)
+
+
+## Shows what is placed at once, uses it up (not in creative) and tells
+## the server.
+func _put(cells: Dictionary, cell: Vector3i, slot: int, front: Vector2i, face: Vector3i) -> void:
 	for at: Vector3i in cells:
 		_predict(at, cells[at])
 	if not client.modes.creative():
 		client.inventory.take(slot, 1)
 	client.transport.send(Msg.block_place(cell, slot, front, face))
 	client.player_model.swing()
+
+
+## Rice in hand is sown over the water aimed at (still, one deep: Farming
+## .sowing); the aiming ray goes through water. Returns whether rice was in
+## hand.
+func _sow_on_water() -> bool:
+	var slot := client.inventory.selected
+	var voxel := Items.placed_voxel(client.inventory.items[slot])
+	if client.book_in_hand or Farming.bed_of(Voxels.block_of(voxel)) != Farming.Bed.WATER:
+		return false
+	var water := _water_aimed()
+	if water == Vector3i.MAX:
+		return true
+	var player := client.local_player
+	var cell := water + Vector3i.UP
+	var cells := Mining.placement(cell, voxel, Vector2i(0, 1), client.world.voxel_at)
+	if cells.is_empty() or Mining.reach_to(player.position, player.height, cell) > Mining.REACH:
+		return true
+	_put(cells, cell, slot, Vector2i(0, 1), Vector3i.UP)
+	return true
 
 
 ## Whether what is in hand would be sown where the player aims (food
@@ -208,6 +236,8 @@ func _tend() -> bool:
 		return true
 	if target == null:
 		return false
+	if _pick():
+		return true
 	if Items.tool_of(held) == Items.Tool.HOE:
 		_till()
 		return true
@@ -218,11 +248,39 @@ func _tend() -> bool:
 
 
 ## Whether a right click would tend what is aimed at rather than place or
-## eat what is in hand: sow it on farmland, put it in a composter.
+## eat what is in hand: sow it on farmland, put it in a composter, pick
+## what is ripe.
 func tends_here() -> bool:
 	if sows_here():
 		return true
-	return target != null and not _composting(target.voxel).is_empty()
+	return (
+		target != null
+		and (not _composting(target.voxel).is_empty() or _pickable(target.cell, target.voxel))
+	)
+
+
+## Whether something ripe within reach is picked there (Picking).
+func _pickable(cell: Vector3i, voxel: int) -> bool:
+	var player := client.local_player
+	return (
+		Picking.can_pick(voxel)
+		and Mining.reach_to(player.position, player.height, cell) <= Mining.REACH
+	)
+
+
+## The ripe plant or the fruit tree aimed at is picked: shown at once as it
+## goes back (Picking.PICKED); the server puts what it gives in the bag
+## (Msg.PICK). Returns whether it did.
+func _pick() -> bool:
+	if not _pickable(target.cell, target.voxel):
+		return false
+	var cell := target.cell
+	_predict(cell, Voxels.of_block(Picking.PICKED[Voxels.block_of(target.voxel)]))
+	client.transport.send(Msg.pick(cell))
+	var up := 2.0 if ObjectShapes.is_tree(Voxels.block_of(target.voxel)) else 0.6
+	_debris.throw(_world_point(_cell_middle(cell, up)), PICK_COLOR, 10, 0.25)
+	client.player_model.swing()
+	return true
 
 
 ## The watering can in hand: filled at the water (or the sink) aimed at,
@@ -313,8 +371,7 @@ func _spread_compost() -> void:
 	if Farming.is_farmland(target.voxel):
 		cell += Vector3i.UP
 	var voxel := client.world.voxel_at(cell)
-	var block := Voxels.block_of(voxel)
-	if not (Farming.STAGES.has(block) or Growth.SAPLINGS.has(block) or Growth.YOUNG.has(block)):
+	if not Composting.takes_compost(Voxels.block_of(voxel)):
 		return
 	if Mining.reach_to(player.position, player.height, cell) > Mining.REACH:
 		return

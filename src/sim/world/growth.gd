@@ -1,8 +1,10 @@
 class_name Growth
 extends RefCounted
 ## What grows by itself, on the server (stateless, given the server):
-## saplings become young trees, then trees; bare dirt next to grass turns
-## into grass; crops grow and farmland gets wet or dries (Farming). The
+## saplings become young trees, then trees; fruit trees blossom, then bear
+## fruit (FRUITING; picked, they blossom again: Picking); bare dirt next to
+## grass turns into grass; crops grow, grown stems bear fruit beside them
+## and farmland gets wet or dries (Farming). The
 ## cells where something may grow are kept per chunk (ChunkData.growing:
 ## noted by WorldState.set_voxel, saved with the chunk). Every CHECK_TICKS
 ## each has a chance to go a stage further (on average after
@@ -18,6 +20,8 @@ const LIGHT := 9
 const SAPLING_SECONDS := 240.0
 const YOUNG_SECONDS := 480.0
 const GRASS_SECONDS := 60.0
+## How long a fruit tree in blossom takes to bear fruit.
+const FRUIT_SECONDS := 480.0
 ## Rows over a young tree (over a tree's trunk) that must be free.
 const CROWN_ROWS := 2
 
@@ -30,6 +34,9 @@ const SAPLINGS := {
 	Tiles.Block.JUNGLE_SAPLING: Tiles.Block.YOUNG_JUNGLE_TREE,
 	Tiles.Block.ACACIA_SAPLING: Tiles.Block.YOUNG_ACACIA,
 	Tiles.Block.SWAMP_OAK_SAPLING: Tiles.Block.YOUNG_SWAMP_OAK,
+	Tiles.Block.APPLE_SAPLING: Tiles.Block.YOUNG_APPLE_TREE,
+	Tiles.Block.CHERRY_SAPLING: Tiles.Block.YOUNG_CHERRY_TREE,
+	Tiles.Block.ORANGE_SAPLING: Tiles.Block.YOUNG_ORANGE_TREE,
 }
 const YOUNG := {
 	Tiles.Block.YOUNG_OAK: Tiles.Block.OAK,
@@ -39,6 +46,15 @@ const YOUNG := {
 	Tiles.Block.YOUNG_JUNGLE_TREE: Tiles.Block.JUNGLE_TREE,
 	Tiles.Block.YOUNG_ACACIA: Tiles.Block.ACACIA,
 	Tiles.Block.YOUNG_SWAMP_OAK: Tiles.Block.SWAMP_OAK,
+	Tiles.Block.YOUNG_APPLE_TREE: Tiles.Block.APPLE_TREE,
+	Tiles.Block.YOUNG_CHERRY_TREE: Tiles.Block.CHERRY_TREE,
+	Tiles.Block.YOUNG_ORANGE_TREE: Tiles.Block.ORANGE_TREE,
+}
+## Fruit trees in blossom and the same trees bearing fruit.
+const FRUITING := {
+	Tiles.Block.APPLE_TREE: Tiles.Block.APPLE_TREE_FRUIT,
+	Tiles.Block.CHERRY_TREE: Tiles.Block.CHERRY_TREE_FRUIT,
+	Tiles.Block.ORANGE_TREE: Tiles.Block.ORANGE_TREE_FRUIT,
 }
 ## Where a spruce grows snowy.
 const SNOWY_BIOMES := {
@@ -82,14 +98,17 @@ static func is_soil(voxel: int) -> bool:
 	return voxel < Voxels.BLOCK_BASE and (SOILS.has(voxel) or GRASSES.has(voxel))
 
 
-## Whether something set in a cell may grow: a sapling, a young tree, an
-## unripe crop, dirt, farmland, a full composter (rotting).
+## Whether something set in a cell may grow: a sapling, a young tree, a
+## fruit tree in blossom, an unripe crop, a grown stem, dirt, farmland, a
+## full composter (rotting).
 static func may_grow(voxel: int) -> bool:
 	var block := Voxels.block_of(voxel)
 	return (
 		SAPLINGS.has(block)
 		or YOUNG.has(block)
+		or FRUITING.has(block)
 		or Farming.STAGES.has(block)
+		or Farming.FRUIT_OF.has(block)
 		or voxel == Voxels.of_ground(Tiles.Ground.DIRT)
 		or Farming.is_farmland(voxel)
 		or block == Tiles.Block.COMPOSTER_FULL
@@ -146,8 +165,10 @@ static func _grow(
 		mean = SAPLING_SECONDS
 	elif YOUNG.has(block):
 		mean = YOUNG_SECONDS
-	elif Farming.STAGES.has(block):
-		if not Farming.is_farmland(world.loaded_voxel_at(cell + Vector3i.DOWN)):
+	elif FRUITING.has(block):
+		mean = FRUIT_SECONDS
+	elif Farming.STAGES.has(block) or Farming.FRUIT_OF.has(block):
+		if not Farming.holds(cell, block, world.loaded_voxel_at):
 			return
 		mean = Farming.stage_seconds(world, cell)
 	elif not dirt or not _bare(world, cell):
@@ -158,6 +179,9 @@ static func _grow(
 		return
 	var lit_at := cell + Vector3i.UP if dirt else cell
 	if Light.level(world, lit_at, server.clock) < LIGHT:
+		return
+	if Farming.FRUIT_OF.has(block):
+		Farming.bear_fruit(server, cell, block)
 		return
 	var next := next_stage(world, chunk, cell, voxel)
 	if next != voxel:
@@ -176,6 +200,8 @@ static func next_stage(world: WorldState, chunk: ChunkData, cell: Vector3i, voxe
 		return voxel
 	if Farming.STAGES.has(block):
 		return Voxels.of_block(Farming.STAGES[block])
+	if FRUITING.has(block):
+		return Voxels.of_block(FRUITING[block])
 	if not _spaced(world, cell):
 		return voxel
 	if SAPLINGS.has(block):

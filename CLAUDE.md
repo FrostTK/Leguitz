@@ -463,6 +463,42 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   sapling or a young tree (with room) grow a stage at once; the client predicts crops only
   (`guess_spread`). FarmModels: the can, the composter, compost. The book's Farm chapter
   (Watering and care).
+- More crops (phase 7, step 4): Farming's tables hold every crop by stage (STAGES, RIPE, SOWN,
+  SEED_OF, HARVEST; `stage_of`, `sown_of` through a lookup) and where each grows (BEDS, Farming
+  .Bed: FIELD farmland, WATER rice over still water one deep over soil or sand, BANK sugar cane
+  on soil or sand with water beside it or a row under, TRELLIS grapes; `sowing` is
+  Mining.placement's rule for SOWN blocks, `holds` is Growth's check before a stage). New field
+  crops (BEETROOTS, CABBAGES, CORN sown from a cob, TOMATOES, STRAWBERRIES sown from a berry,
+  FLAX, PUMPKIN_STEM, MELON_STEM, each _0.._3), RICE_0..3, SUGAR_CANE_0/_1 then the old
+  SUGAR_CANE (ripe; the SUGAR_CANE item now plants _0), TRELLIS (a floor object, sticks) and
+  GRAPES_0..3 sown into it (Mining.fills; breaking a vine gives the trellis back). Grown stems
+  (Farming.FRUIT_OF, kept in ChunkData.growing) put a PUMPKIN or MELON (solid furniture you
+  stand on, TOPS/FOOTPRINTS) on a free side over soil, sand or farmland (`bear_fruit`), none
+  while one lies beside them; a melon breaks into slices. `Picking` (src/sim/world/picking.gd,
+  Msg.PICK; client: BlockInteraction._pick, from the right click before anything else but the
+  can, and E) takes what is ripe without breaking it: PICKED (tomatoes, strawberries, grapes back
+  a stage, sugar cane cut back to _0, a fruit tree in fruit back into blossom) and GIVES, into
+  the bag (the rest thrown). Rice in hand is sown on the water aimed at
+  (BlockInteraction._sow_on_water with the can's watery ray; the server accepts sown blocks not
+  touching a cube). Fruit trees: APPLE/CHERRY/ORANGE _SAPLING (planted from their pips:
+  APPLE_SEEDS, CHERRY_PITS, ORANGE_SEEDS, crafted from the fruit), YOUNG_*_TREE, *_TREE (in
+  blossom) and *_TREE_FRUIT (Growth.FRUITING, FRUIT_SECONDS; ObjectShapes.BEARING: the same
+  trunk, and TreeModels seeds the crown from the blossoming block, so only the dots differ:
+  TreeModels._fruit_tree, _dot_crown, colors in OrchardColors). Generation: wild plants
+  (Tiles.Block.WILD_*, Farming.WILD: what they give; SurfaceBuilder.WILD_PLANTS, never
+  undergrowth) and wild fruits (SurfaceBuilder.WILD_FRUITS: pumpkins, melons, kept only with no
+  solid object around them, WorldGenerator._alone, and out of the trees' spacing) come last in
+  VEGETATION, so they only take tiles that had nothing; WILD_RICE floats like lily pads
+  (SALT_WILD_RICE); SurfaceBuilder.orchard_tree turns some of a biome's trees into fruit trees
+  after spacing (ORCHARDS, SALT_ORCHARDS), half in blossom, which the generator notes in
+  ChunkData.growing so they bear fruit. Recipes: seeds from a pumpkin, a melon slice, a tomato,
+  grapes; pips from fruit; sugar from cane or beetroot; string from flax, LINEN from four
+  (curtains take wool or linen); the food furnace roasts corn and cooks rice. CropModels
+  (src/client/models/crop_models.gd; FarmModels hands it every crop but wheat, carrots,
+  potatoes): rows of plants, a creeping stem, the trellis and its vine, pumpkins, melons, wild
+  plants (a few ripe plants where they fell), the items; VoxelModels.sugar_cane takes heights
+  (the ripe one unchanged). Vines on a trellis are not turned at random (ChunkMesher._add_prop).
+  The book's Farm chapter (More crops, Fruit trees).
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made

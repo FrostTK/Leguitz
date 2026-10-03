@@ -62,6 +62,9 @@ static func build(block: int, variant: int) -> VoxelGrid:
 		return SaplingModels.build(block, variant)
 	if Farming.is_crop(block):
 		return FarmModels.build(block, variant)
+	var crop := CropModels.build(block, variant)
+	if crop != null:
+		return crop
 	if Composting.is_composter(block):
 		return FarmModels.composter(Composting.level_of(block))
 	var decor := DecorModels.build(block, variant)
@@ -102,8 +105,6 @@ static func build(block: int, variant: int) -> VoxelGrid:
 			return _big_mushroom(rng)
 		Tiles.Block.CACTUS:
 			return _cactus(rng, variant)
-		Tiles.Block.SUGAR_CANE:
-			return _sugar_cane(rng)
 		Tiles.Block.LILY_PAD:
 			return _lily_pad(rng, variant)
 		Tiles.Block.WORKBENCH:
@@ -430,19 +431,23 @@ static func _cactus(rng: RandomNumberGenerator, variant: int) -> VoxelGrid:
 	return grid
 
 
-static func _sugar_cane(rng: RandomNumberGenerator) -> VoxelGrid:
-	var grid := VoxelGrid.new(Vector3i(14, 34, 14))
+## Sugar cane: canes `heights` voxels tall (fewest, most), ringed at their
+## nodes, a leaf off a node now and then (from `leaves_from` up).
+static func sugar_cane(
+	rng: RandomNumberGenerator, heights := Vector2i(20, 32), leaves_from := 6
+) -> VoxelGrid:
+	var grid := VoxelGrid.new(Vector3i(14, heights.y + 2, 14))
 	var cane := _v("#7fc45a", VoxelGrid.Kind.FOLIAGE)
 	var node := _v("#5a9a3f", VoxelGrid.Kind.FOLIAGE)
 	var leaf := _v("#94d468", VoxelGrid.Kind.FOLIAGE)
 	var spots: Array[Vector2i] = [Vector2i(4, 4), Vector2i(8, 5), Vector2i(5, 8), Vector2i(9, 9)]
 	for i in rng.randi_range(3, 4):
 		var s: Vector2i = spots[i]
-		var height := rng.randi_range(20, 32)
+		var height := rng.randi_range(heights.x, heights.y)
 		for y in height:
 			var paint := node if y % 5 == 4 else cane
 			grid.box(Vector3i(s.x, y, s.y), Vector3i(s.x + 1, y, s.y + 1), paint)
-			if y % 5 == 4 and y > 6 and rng.randf() < 0.6:
+			if y % 5 == 4 and y > leaves_from and rng.randf() < 0.6:
 				var d: Vector2i = [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN][
 					rng.randi_range(0, 3)
 				]

@@ -99,12 +99,12 @@ static func build(item: int) -> VoxelGrid:
 	var decor := DecorModels.item(item)
 	if decor != null:
 		return decor
-	var sapling := SaplingModels.item(item)
-	if sapling != null:
-		return sapling
 	var farm := FarmModels.item(item)
 	if farm != null:
 		return farm
+	var sapling := SaplingModels.item(item)
+	if sapling != null:
+		return sapling
 	match item:
 		Items.Id.STICK:
 			return _stick()

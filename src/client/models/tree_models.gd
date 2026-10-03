@@ -7,7 +7,11 @@ extends RefCounted
 ## show the branches; bark has grooves, knots and moss.
 ##
 ## Trunk sizes come from ObjectShapes (physics blocks the trunk drawn).
-## Every version of a tree differs in size and shape.
+## Every version of a tree differs in size and shape. Fruit trees are small
+## orchard trees, in blossom or bearing fruit (the same tree: see build).
+
+## How blossoms and fruit sit on a crown (_dot_crown).
+enum Dot { SINGLE, PAIR, BALL }
 
 const OAK_LEAVES := ["#1d4626", "#285d31", "#377739", "#529343", "#7cbb55"]
 const BIRCH_LEAVES := ["#3b6a24", "#51862e", "#6ca33b", "#91c152", "#bcdd7a"]
@@ -73,13 +77,20 @@ class Sketch:
 
 static func build(block: int, variant: int) -> VoxelGrid:
 	var rng := RandomNumberGenerator.new()
-	rng.seed = HashUtil.hash2(0x7EE5, block, variant)
+	# A fruit tree bearing fruit grows the crown of the same tree in
+	# blossom (ObjectShapes.BEARING).
+	rng.seed = HashUtil.hash2(0x7EE5, ObjectShapes.BEARING.get(block, block), variant)
 	var trunk := ObjectShapes.trunk(block, variant)
 	var young := Growth.YOUNG.has(block)
 	_leaf_floor = YOUNG_LEAF_FLOOR if young else LEAF_FLOOR
 	_strand_floor = YOUNG_STRAND_FLOOR if young else STRAND_FLOOR
 	# A young tree is its species' with a small trunk (ObjectShapes.TREES).
-	match Growth.YOUNG.get(block, block):
+	var species: int = Growth.YOUNG.get(block, block)
+	species = ObjectShapes.BEARING.get(species, species)
+	if OrchardColors.TREES.has(species):
+		var state := 0 if young else (2 if ObjectShapes.BEARING.has(block) else 1)
+		return _fruit_tree(rng, trunk, species, state)
+	match species:
 		Tiles.Block.BIRCH:
 			return _birch(rng, trunk)
 		Tiles.Block.DARK_OAK:
@@ -321,6 +332,87 @@ static func _spruce(rng: RandomNumberGenerator, trunk: Vector2i, snowy: bool) ->
 	if snowy:
 		_snow(sketch.grid)
 	return _finish(sketch, h)
+
+
+## A small orchard tree: a short trunk forking into a few spreading limbs
+## under a round crown, in blossom (`state` 1) or bearing its fruit (2);
+## young, leaves only (0). The blossoms and the fruit come last, from the
+## crown's own noise: the same tree either way.
+static func _fruit_tree(
+	rng: RandomNumberGenerator, trunk: Vector2i, species: int, state: int
+) -> VoxelGrid:
+	var palettes: Array = OrchardColors.TREES[species]
+	var w := trunk.x
+	var h := trunk.y
+	var scale := h / 40.0
+	var sketch := Sketch.new(int(70 * scale) + w * 2, h + int(34 * scale))
+	var salt := rng.randi()
+	var centers := _trunk_centers(sketch, rng, w, h, rng.randf_range(0.5, 2.5), 1.2)
+	var bark := _bark_paint(centers, palettes[0], 6.0, salt, 0.15)
+	_paint_trunk(sketch, centers, w, 0.65, 0.5, bark)
+	_roots(sketch, rng, w, rng.randi_range(3, 4), w * 1.3, w * 0.4, bark)
+	var wood := _wood_paint(palettes[0], salt)
+	var top := _top_of(centers)
+	var limbs := rng.randi_range(3, 4)
+	for i in limbs:
+		var angle := TAU * (i + rng.randf_range(-0.25, 0.25)) / limbs
+		var dir := Vector3(cos(angle), rng.randf_range(0.5, 0.8), sin(angle)).normalized()
+		var start := top - Vector3(0, rng.randf_range(0.0, 0.2) * h, 0)
+		var spec := {"spread": 0.8, "rise": 0.3, "children": Vector2i(2, 3)}
+		_grow(sketch, rng, start, dir, h * rng.randf_range(0.32, 0.42), w * 0.35, 1, spec, wood)
+	sketch.tips.append(top + Vector3(0, h * 0.2, 0))
+	_crown(sketch, rng, Vector3(9, 6.5, 9) * scale, 0.15, salt)
+	_light_leaves(sketch, palettes[1], salt)
+	if state == 1:
+		_dot_crown(sketch, palettes[2], OrchardColors.BLOSSOMS[species], salt, Dot.SINGLE)
+	elif state == 2:
+		var shape := Dot.PAIR if species == Tiles.Block.CHERRY_TREE else Dot.BALL
+		_dot_crown(sketch, palettes[3], OrchardColors.FRUITS[species], salt, shape)
+	return _finish(sketch, h)
+
+
+## Blossoms or fruit on the crown's outer leaves (`share` of them), by
+## `shape` (Dot): a voxel each, a hanging pair (cherries) or a ball two
+## voxels wide hanging from the leaf, lit on top.
+static func _dot_crown(sketch: Sketch, palette: Array, share: float, salt: int, shape: int) -> void:
+	var grid := sketch.grid
+	var colors: Array[int] = []
+	for hex: String in palette:
+		colors.append(VoxelGrid.voxel(Color(hex), VoxelGrid.Kind.FOLIAGE))
+	var sides: Array[Vector3i] = [
+		Vector3i.LEFT, Vector3i.RIGHT, Vector3i.UP, Vector3i.FORWARD, Vector3i.BACK
+	]
+	var spots: Array[Vector3i] = []
+	for z in range(sketch.leaf_low.z, sketch.leaf_high.z + 1):
+		for y in range(sketch.leaf_low.y, sketch.leaf_high.y + 1):
+			for x in range(sketch.leaf_low.x, sketch.leaf_high.x + 1):
+				var p := Vector3i(x, y, z)
+				var value := grid.get_voxel(p)
+				if value == 0 or VoxelGrid.kind_of(value) != VoxelGrid.Kind.FOLIAGE:
+					continue
+				if _noise(p, salt + 29) >= share:
+					continue
+				for side in sides:
+					if grid.get_voxel(p + side) == 0:
+						spots.append(p)
+						break
+	var paint_over := func(at: Vector3i, color: int) -> void:
+		var there := grid.get_voxel(at)
+		if there == 0 or VoxelGrid.kind_of(there) == VoxelGrid.Kind.FOLIAGE:
+			grid.set_voxel(at, color)
+	for p in spots:
+		if shape == Dot.PAIR:
+			paint_over.call(p, colors[2])
+			paint_over.call(p + Vector3i.DOWN, colors[1])
+			paint_over.call(p + Vector3i(1, -1, 0), colors[0])
+		elif shape == Dot.SINGLE:
+			paint_over.call(p, colors[int(_noise(p, salt + 31) * colors.size()) % colors.size()])
+		else:
+			for dz in 2:
+				for dy in 2:
+					for dx in 2:
+						var shade := 2 if dy == 0 else (1 if dx + dz < 2 else 0)
+						paint_over.call(p + Vector3i(dx, -dy, dz), colors[shade])
 
 
 # ---------------------------------------------------------------- trunks

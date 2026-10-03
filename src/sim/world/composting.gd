@@ -59,6 +59,31 @@ const COMPOSTABLE := {
 	Items.Id.DOUGH: true,
 	Items.Id.BREAD: true,
 	Items.Id.CHARRED_FOOD: true,
+	Items.Id.BEETROOT_SEEDS: true,
+	Items.Id.BEETROOT: true,
+	Items.Id.CABBAGE_SEEDS: true,
+	Items.Id.CABBAGE: true,
+	Items.Id.CORN: true,
+	Items.Id.ROASTED_CORN: true,
+	Items.Id.TOMATO_SEEDS: true,
+	Items.Id.TOMATO: true,
+	Items.Id.STRAWBERRY: true,
+	Items.Id.FLAX_SEEDS: true,
+	Items.Id.FLAX: true,
+	Items.Id.PUMPKIN_SEEDS: true,
+	Items.Id.PUMPKIN: true,
+	Items.Id.MELON_SEEDS: true,
+	Items.Id.MELON_SLICE: true,
+	Items.Id.RICE: true,
+	Items.Id.COOKED_RICE: true,
+	Items.Id.GRAPE_SEEDS: true,
+	Items.Id.GRAPES: true,
+	Items.Id.APPLE: true,
+	Items.Id.APPLE_SEEDS: true,
+	Items.Id.CHERRIES: true,
+	Items.Id.CHERRY_PITS: true,
+	Items.Id.ORANGE: true,
+	Items.Id.ORANGE_SEEDS: true,
 }
 
 
@@ -87,10 +112,9 @@ static func use(block: int, item: int) -> Dictionary:
 
 ## What compost spread on a voxel makes it (Voxels.AIR: nothing): an
 ## unripe crop its next stage, a sapling or a young tree what it grows into
-## if it has room.
+## if it has room, a fruit tree in blossom its fruit.
 static func spread_on(world: WorldState, cell: Vector3i, voxel: int) -> int:
-	var block := Voxels.block_of(voxel)
-	if not (Farming.STAGES.has(block) or Growth.SAPLINGS.has(block) or Growth.YOUNG.has(block)):
+	if not takes_compost(Voxels.block_of(voxel)):
 		return Voxels.AIR
 	var tile := Vector2i(cell.x, cell.z)
 	var chunk: ChunkData = world.chunks.get(Coords.tile_to_chunk(tile))
@@ -98,6 +122,16 @@ static func spread_on(world: WorldState, cell: Vector3i, voxel: int) -> int:
 		return Voxels.AIR
 	var next := Growth.next_stage(world, chunk, cell, voxel)
 	return Voxels.AIR if next == voxel else next
+
+
+## Whether compost makes a block grow (see spread_on).
+static func takes_compost(block: int) -> bool:
+	return (
+		Farming.STAGES.has(block)
+		or Growth.SAPLINGS.has(block)
+		or Growth.YOUNG.has(block)
+		or Growth.FRUITING.has(block)
+	)
 
 
 ## What a client may guess compost spread makes (a crop's next stage; a

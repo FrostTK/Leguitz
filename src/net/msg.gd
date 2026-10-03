@@ -20,6 +20,7 @@ const FILL_CAN := "fill_can"
 const WATER := "water"
 const COMPOST := "compost"
 const SPREAD_COMPOST := "spread_compost"
+const PICK := "pick"
 const SELECT_SLOT := "select_slot"
 const SLOT_CLICK := "slot_click"
 const SLOT_SPREAD := "slot_spread"
@@ -188,6 +189,11 @@ static func compost(cell: Vector3i, slot: int) -> Dictionary:
 ## (Composting.spread).
 static func spread_compost(cell: Vector3i, slot: int) -> Dictionary:
 	return {"t": SPREAD_COMPOST, "cell": cell, "slot": slot}
+
+
+## The player picked what grows at `cell` (Picking.pick).
+static func pick(cell: Vector3i) -> Dictionary:
+	return {"t": PICK, "cell": cell}
 
 
 ## The player placed the block of hotbar slot `slot` at `cell` (a

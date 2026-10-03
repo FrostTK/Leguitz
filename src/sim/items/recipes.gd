@@ -69,6 +69,24 @@ const SHAPED := [
 		"result": [Items.Id.WATERING_CAN, 1],
 	},
 	{"pattern": ["P P", "P P", "PPP"], "keys": {"P": PLANKS}, "result": [Items.Id.COMPOSTER, 1]},
+	# More crops: seeds from fruit, sugar, flax into string and linen, a
+	# trellis for the vines.
+	{"ingredients": [Items.Id.PUMPKIN], "result": [Items.Id.PUMPKIN_SEEDS, 4]},
+	{"ingredients": [Items.Id.MELON_SLICE], "result": [Items.Id.MELON_SEEDS, 1]},
+	{"ingredients": [Items.Id.TOMATO], "result": [Items.Id.TOMATO_SEEDS, 2]},
+	{"ingredients": [Items.Id.GRAPES], "result": [Items.Id.GRAPE_SEEDS, 2]},
+	{"ingredients": [Items.Id.APPLE], "result": [Items.Id.APPLE_SEEDS, 2]},
+	{"ingredients": [Items.Id.CHERRIES], "result": [Items.Id.CHERRY_PITS, 2]},
+	{"ingredients": [Items.Id.ORANGE], "result": [Items.Id.ORANGE_SEEDS, 2]},
+	{"ingredients": [Items.Id.SUGAR_CANE], "result": [Items.Id.SUGAR, 1]},
+	{"ingredients": [Items.Id.BEETROOT], "result": [Items.Id.SUGAR, 1]},
+	{"ingredients": [Items.Id.FLAX], "result": [Items.Id.STRING, 1]},
+	{"pattern": ["FF", "FF"], "keys": {"F": Items.Id.FLAX}, "result": [Items.Id.LINEN, 1]},
+	{
+		"pattern": ["S S", "SSS", "S S"],
+		"keys": {"S": Items.Id.STICK},
+		"result": [Items.Id.TRELLIS, 2],
+	},
 	{
 		"pattern": ["P", "S", "F"],
 		"keys": {"P": STONES, "S": Items.Id.STICK, "F": Items.Id.FEATHER},
@@ -109,7 +127,7 @@ const SHAPED := [
 	},
 	{
 		"pattern": ["SSS", "W W", "W W"],
-		"keys": {"S": Items.Id.STICK, "W": Items.Id.WOOL},
+		"keys": {"S": Items.Id.STICK, "W": [Items.Id.WOOL, Items.Id.LINEN]},
 		"result": [Items.Id.CURTAINS, 1],
 	},
 	{"pattern": ["GGG", "GGG"], "keys": {"G": Items.Id.GLASS}, "result": [Items.Id.GLASS_PANE, 16]},

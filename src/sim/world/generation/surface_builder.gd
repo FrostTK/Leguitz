@@ -8,6 +8,10 @@ const SALT_DECORATION := 30
 const SALT_OUTCROPS := 31
 const SALT_FLOWER_PATCHES := 32
 const SALT_FLOWER_COLORS := 33
+## Wild fruit trees and wild rice (their own draws: the rest stays as it
+## was).
+const SALT_ORCHARDS := 34
+const SALT_WILD_RICE := 35
 
 const SNOW_LINE := 78.0
 ## Voxels of filler (dirt under grass...) between the surface and the rock.
@@ -17,10 +21,20 @@ const OUTCROP_HEIGHT := 42.0
 
 ## Plants per biome: [[block, chance per tile], ...], tried in order. Trees
 ## and other solid objects are then thinned out so they never touch (see
-## WorldGenerator._spaced): their chances are higher than what remains.
+## WorldGenerator._spaced): their chances are higher than what remains. The
+## wild plants (WILD_PLANTS, WILD_FRUITS) come last: they only take tiles
+## that had nothing before them.
 const VEGETATION := {
 	Biomes.Id.PLAINS:
-	[[Tiles.Block.TALL_GRASS, 0.1], [Tiles.Block.OAK, 0.008], [Tiles.Block.BUSH, 0.006]],
+	[
+		[Tiles.Block.TALL_GRASS, 0.1],
+		[Tiles.Block.OAK, 0.008],
+		[Tiles.Block.BUSH, 0.006],
+		[Tiles.Block.WILD_BEETROOT, 0.004],
+		[Tiles.Block.WILD_CABBAGE, 0.003],
+		[Tiles.Block.WILD_FLAX, 0.003],
+		[Tiles.Block.PUMPKIN, 0.0012],
+	],
 	Biomes.Id.SNOWY_PLAINS: [[Tiles.Block.SNOWY_SPRUCE, 0.006], [Tiles.Block.ROCK, 0.002]],
 	Biomes.Id.DESERT:
 	[[Tiles.Block.CACTUS, 0.006], [Tiles.Block.DEAD_BUSH, 0.01], [Tiles.Block.SANDSTONE, 0.002]],
@@ -40,11 +54,25 @@ const VEGETATION := {
 		[Tiles.Block.BUSH, 0.02],
 		[Tiles.Block.FERN, 0.01],
 		[Tiles.Block.MUSHROOM_BROWN, 0.004],
+		[Tiles.Block.WILD_STRAWBERRY, 0.008],
+		[Tiles.Block.WILD_GRAPES, 0.002],
+		[Tiles.Block.PUMPKIN, 0.001],
 	],
 	Biomes.Id.FLOWER_FOREST:
-	[[Tiles.Block.OAK, 0.12], [Tiles.Block.BIRCH, 0.05], [Tiles.Block.TALL_GRASS, 0.05]],
+	[
+		[Tiles.Block.OAK, 0.12],
+		[Tiles.Block.BIRCH, 0.05],
+		[Tiles.Block.TALL_GRASS, 0.05],
+		[Tiles.Block.WILD_STRAWBERRY, 0.012],
+		[Tiles.Block.WILD_GRAPES, 0.004],
+	],
 	Biomes.Id.BIRCH_FOREST:
-	[[Tiles.Block.BIRCH, 0.34], [Tiles.Block.TALL_GRASS, 0.06], [Tiles.Block.BUSH, 0.01]],
+	[
+		[Tiles.Block.BIRCH, 0.34],
+		[Tiles.Block.TALL_GRASS, 0.06],
+		[Tiles.Block.BUSH, 0.01],
+		[Tiles.Block.WILD_STRAWBERRY, 0.01],
+	],
 	Biomes.Id.DARK_FOREST:
 	[
 		[Tiles.Block.DARK_OAK, 0.55],
@@ -59,6 +87,7 @@ const VEGETATION := {
 		[Tiles.Block.FERN, 0.08],
 		[Tiles.Block.BERRY_BUSH, 0.012],
 		[Tiles.Block.ROCK, 0.004],
+		[Tiles.Block.PUMPKIN, 0.002],
 	],
 	Biomes.Id.SNOWY_TAIGA: [[Tiles.Block.SNOWY_SPRUCE, 0.26], [Tiles.Block.FERN, 0.02]],
 	Biomes.Id.OLD_GROWTH_TAIGA:
@@ -70,20 +99,47 @@ const VEGETATION := {
 		[Tiles.Block.BERRY_BUSH, 0.008],
 	],
 	Biomes.Id.SAVANNA:
-	[[Tiles.Block.ACACIA, 0.02], [Tiles.Block.TALL_GRASS, 0.2], [Tiles.Block.BUSH, 0.004]],
-	Biomes.Id.SAVANNA_PLATEAU: [[Tiles.Block.ACACIA, 0.025], [Tiles.Block.TALL_GRASS, 0.15]],
+	[
+		[Tiles.Block.ACACIA, 0.02],
+		[Tiles.Block.TALL_GRASS, 0.2],
+		[Tiles.Block.BUSH, 0.004],
+		[Tiles.Block.WILD_CORN, 0.008],
+		[Tiles.Block.MELON, 0.002],
+	],
+	Biomes.Id.SAVANNA_PLATEAU:
+	[
+		[Tiles.Block.ACACIA, 0.025],
+		[Tiles.Block.TALL_GRASS, 0.15],
+		[Tiles.Block.WILD_CORN, 0.006],
+	],
 	Biomes.Id.JUNGLE:
 	[
 		[Tiles.Block.JUNGLE_TREE, 0.5],
 		[Tiles.Block.BUSH, 0.08],
 		[Tiles.Block.FERN, 0.08],
 		[Tiles.Block.TALL_GRASS, 0.05],
+		[Tiles.Block.MELON, 0.004],
+		[Tiles.Block.WILD_TOMATO, 0.004],
 	],
 	Biomes.Id.SPARSE_JUNGLE:
-	[[Tiles.Block.JUNGLE_TREE, 0.12], [Tiles.Block.BUSH, 0.05], [Tiles.Block.TALL_GRASS, 0.1]],
+	[
+		[Tiles.Block.JUNGLE_TREE, 0.12],
+		[Tiles.Block.BUSH, 0.05],
+		[Tiles.Block.TALL_GRASS, 0.1],
+		[Tiles.Block.WILD_TOMATO, 0.01],
+		[Tiles.Block.MELON, 0.004],
+		[Tiles.Block.WILD_GRAPES, 0.003],
+	],
 	Biomes.Id.BADLANDS: [[Tiles.Block.DEAD_BUSH, 0.012], [Tiles.Block.CACTUS, 0.004]],
 	Biomes.Id.MEADOW:
-	[[Tiles.Block.TALL_GRASS, 0.2], [Tiles.Block.BIRCH, 0.004], [Tiles.Block.OAK, 0.002]],
+	[
+		[Tiles.Block.TALL_GRASS, 0.2],
+		[Tiles.Block.BIRCH, 0.004],
+		[Tiles.Block.OAK, 0.002],
+		[Tiles.Block.WILD_FLAX, 0.012],
+		[Tiles.Block.WILD_BEETROOT, 0.004],
+	],
+	Biomes.Id.BEACH: [[Tiles.Block.WILD_CABBAGE, 0.006]],
 	Biomes.Id.GROVE: [[Tiles.Block.SNOWY_SPRUCE, 0.22]],
 	Biomes.Id.SNOWY_SLOPES: [[Tiles.Block.ROCK, 0.004]],
 	Biomes.Id.FROZEN_PEAKS: [[Tiles.Block.PACKED_ICE, 0.01]],
@@ -95,6 +151,44 @@ const VEGETATION := {
 		[Tiles.Block.MUSHROOM_RED, 0.03],
 		[Tiles.Block.MUSHROOM_BROWN, 0.03],
 	],
+}
+
+## The wild plants (they never stand for the undergrowth under a tree
+## thinned out) and the wild fruits (solid: kept only with no solid object
+## around them, WorldGenerator._spaced).
+const WILD_PLANTS := {
+	Tiles.Block.WILD_BEETROOT: true,
+	Tiles.Block.WILD_CABBAGE: true,
+	Tiles.Block.WILD_CORN: true,
+	Tiles.Block.WILD_TOMATO: true,
+	Tiles.Block.WILD_STRAWBERRY: true,
+	Tiles.Block.WILD_FLAX: true,
+	Tiles.Block.WILD_RICE: true,
+	Tiles.Block.WILD_GRAPES: true,
+}
+const WILD_FRUITS := {Tiles.Block.PUMPKIN: true, Tiles.Block.MELON: true}
+## Wild rice on the water: chance per tile.
+const WILD_RICE := {Biomes.Id.SWAMP: 0.03, Biomes.Id.RIVER: 0.006}
+## Wild fruit trees: [the tree they stand for, the fruit tree, chance],
+## per biome. Half of them come in blossom (they grow their fruit:
+## WorldGenerator notes them), half bearing fruit.
+const ORCHARDS := {
+	Biomes.Id.PLAINS: [[Tiles.Block.OAK, Tiles.Block.APPLE_TREE, 0.3]],
+	Biomes.Id.FOREST: [[Tiles.Block.OAK, Tiles.Block.APPLE_TREE, 0.04]],
+	Biomes.Id.FLOWER_FOREST:
+	[
+		[Tiles.Block.OAK, Tiles.Block.APPLE_TREE, 0.1],
+		[Tiles.Block.BIRCH, Tiles.Block.CHERRY_TREE, 0.35],
+	],
+	Biomes.Id.BIRCH_FOREST: [[Tiles.Block.BIRCH, Tiles.Block.CHERRY_TREE, 0.03]],
+	Biomes.Id.MEADOW:
+	[
+		[Tiles.Block.OAK, Tiles.Block.APPLE_TREE, 0.5],
+		[Tiles.Block.BIRCH, Tiles.Block.CHERRY_TREE, 0.5],
+	],
+	Biomes.Id.SAVANNA: [[Tiles.Block.ACACIA, Tiles.Block.ORANGE_TREE, 0.15]],
+	Biomes.Id.SAVANNA_PLATEAU: [[Tiles.Block.ACACIA, Tiles.Block.ORANGE_TREE, 0.1]],
+	Biomes.Id.SPARSE_JUNGLE: [[Tiles.Block.JUNGLE_TREE, Tiles.Block.ORANGE_TREE, 0.12]],
 }
 
 ## Chance of a flower on a tile inside a flower patch.
@@ -173,6 +267,8 @@ const SUGAR_CANE_BIOMES := {
 
 var _decoration_seed := 0
 var _flower_color_seed := 0
+var _orchard_seed := 0
+var _wild_rice_seed := 0
 var _outcrops: FastNoiseLite
 var _flower_patches: FastNoiseLite
 
@@ -180,6 +276,8 @@ var _flower_patches: FastNoiseLite
 func _init(world_seed: int) -> void:
 	_decoration_seed = HashUtil.derive_seed(world_seed, SALT_DECORATION)
 	_flower_color_seed = HashUtil.derive_seed(world_seed, SALT_FLOWER_COLORS)
+	_orchard_seed = HashUtil.derive_seed(world_seed, SALT_ORCHARDS)
+	_wild_rice_seed = HashUtil.derive_seed(world_seed, SALT_WILD_RICE)
 	_outcrops = ClimateSampler.make_fbm(world_seed, SALT_OUTCROPS, 1.0 / 22.0, 1, 0.0)
 	_flower_patches = ClimateSampler.make_fbm(world_seed, SALT_FLOWER_PATCHES, 1.0 / 28.0, 2, 0.0)
 
@@ -259,12 +357,26 @@ func block_for(
 func undergrowth_for(biome: int, tx: int, ty: int) -> int:
 	var plants: Array[int] = []
 	for entry: Array in VEGETATION.get(biome, []):
-		if not Tiles.is_block_solid(entry[0]):
+		if not Tiles.is_block_solid(entry[0]) and not WILD_PLANTS.has(entry[0]):
 			plants.append(entry[0])
 	var roll := HashUtil.unit2(_decoration_seed ^ 0x3C6EF372, tx, ty)
 	if plants.is_empty() or roll > 0.5:
 		return Tiles.Block.AIR
 	return plants[int(roll * 2.0 * plants.size()) % plants.size()]
+
+
+## The tree standing on a tile once spaced (WorldGenerator._spaced): now
+## and then a wild fruit tree instead of one of the biome's (ORCHARDS), in
+## blossom or bearing fruit.
+func orchard_tree(biome: int, tree: int, tx: int, ty: int) -> int:
+	for entry: Array in ORCHARDS.get(biome, []):
+		if entry[0] != tree:
+			continue
+		if HashUtil.unit2(_orchard_seed, tx, ty) >= entry[2]:
+			return tree
+		var bearing := HashUtil.unit2(_orchard_seed ^ 0x5EED, tx, ty) < 0.5
+		return Growth.FRUITING[entry[1]] if bearing else entry[1]
+	return tree
 
 
 ## Mountain rock: solid stone patches with visible ore veins.
@@ -321,6 +433,8 @@ func _water_block(biome: int, tx: int, ty: int) -> int:
 			chance = 0.015
 	if chance > 0.0 and HashUtil.unit2(_decoration_seed ^ 0x2468ACE, tx, ty) < chance:
 		return Tiles.Block.LILY_PAD
+	if HashUtil.unit2(_wild_rice_seed, tx, ty) < WILD_RICE.get(biome, 0.0):
+		return Tiles.Block.WILD_RICE
 	return Tiles.Block.AIR
 
 
