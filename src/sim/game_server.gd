@@ -503,7 +503,7 @@ func _spill_contents(cell: Vector3i) -> void:
 		_spill(cell, chest, Inventory.CHEST)
 	var furnace := world.take_furnace(cell)
 	if furnace != null:
-		_spill(cell, furnace.slots, Furnace.SLOTS)
+		_spill(cell, furnace.slots, furnace.slot_count())
 	world.contents_changed(cell)
 	for other in sessions:
 		if other.chest == cell:
@@ -709,14 +709,14 @@ func _update_furnaces(delta: float) -> void:
 			continue
 		for cell: Vector3i in chunk.furnaces.keys():
 			var furnace: Furnace = chunk.furnaces[cell]
-			var was := [furnace.fire, furnace.progress]
+			var was := [furnace.fire, furnace.progress, furnace.lane_progress.duplicate()]
 			match furnace.step(delta, clock):
 				Furnace.Step.BROKE:
 					_break_furnace(cell)
 				Furnace.Step.CHANGED:
 					_furnace_changed(cell)
 				_:
-					if was != [furnace.fire, furnace.progress]:
+					if was != [furnace.fire, furnace.progress, furnace.lane_progress]:
 						_send_furnace(cell)
 
 

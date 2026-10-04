@@ -198,6 +198,8 @@ static func _furnaces() -> Array:
 				{"kind": Kind.RECIPE, "text": _t(Items.name_key(result)), "recipes": made[result]}
 			)
 		entries.append(_text("BOOK_FURNACE_FOOD_ORE" if food else "BOOK_FURNACE_FACTORY_FOOD"))
+		if not food:
+			entries.append(_text("BOOK_FURNACE_FACTORY_LANES"))
 	entries.append(_heading("BOOK_FURNACE_FUELS"))
 	for fuel: Array in FUEL_ROWS:
 		var cooks := Smelting.burn_seconds(fuel[0]) / Smelting.COOK_SECONDS

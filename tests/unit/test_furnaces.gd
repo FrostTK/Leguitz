@@ -69,14 +69,14 @@ func test_longer_days_cook_slower() -> void:
 	var clock := WorldClock.new()
 	clock.set_normal(120.0)
 	var furnace := Furnace.new(FACTORY)
-	furnace.slots.items[Furnace.INPUT] = Items.Id.RAW_GOLD
-	furnace.slots.counts[Furnace.INPUT] = 1
-	furnace.slots.items[Furnace.FUEL] = Items.Id.COAL
-	furnace.slots.counts[Furnace.FUEL] = 1
+	furnace.slots.items[Furnace.LANES] = Items.Id.RAW_GOLD
+	furnace.slots.counts[Furnace.LANES] = 1
+	furnace.slots.items[Furnace.FUELS] = Items.Id.COAL
+	furnace.slots.counts[Furnace.FUELS] = 1
 	_run(furnace, clock, 10.5)
-	assert_eq(furnace.slots.items[Furnace.OUTPUT], N, "a 2-hour day: slower")
+	assert_eq(furnace.slots.items[Furnace.COOKED], N, "a 2-hour day: slower")
 	_run(furnace, clock, clock.scale_duration(Smelting.COOK_SECONDS) - 10.0)
-	assert_eq(furnace.slots.items[Furnace.OUTPUT], Items.Id.GOLD_INGOT)
+	assert_eq(furnace.slots.items[Furnace.COOKED], Items.Id.GOLD_INGOT)
 
 
 func test_ore_breaks_a_food_furnace_and_food_chars_in_a_factory_one() -> void:
@@ -94,28 +94,124 @@ func test_ore_breaks_a_food_furnace_and_food_chars_in_a_factory_one() -> void:
 	assert_true(broke, "the ore melted: it broke")
 	assert_eq(oven.slots.counts[Furnace.INPUT], 4, "the ore is lost")
 	var factory := Furnace.new(FACTORY)
-	factory.slots.items[Furnace.INPUT] = Items.Id.MUSHROOM_RED
-	factory.slots.counts[Furnace.INPUT] = 1
-	factory.slots.items[Furnace.FUEL] = Items.Id.OAK_PLANKS
-	factory.slots.counts[Furnace.FUEL] = 1
-	_run(factory, clock, 10.1)
-	assert_eq(factory.slots.items[Furnace.OUTPUT], Items.Id.CHARRED_FOOD)
+	factory.slots.items[Furnace.TO_COOK] = Items.Id.MUSHROOM_RED
+	factory.slots.counts[Furnace.TO_COOK] = 1
+	factory.slots.items[Furnace.FUELS] = Items.Id.OAK_PLANKS
+	factory.slots.counts[Furnace.FUELS] = 1
+	_run(factory, clock, 10.2)
+	assert_eq(factory.slots.items[Furnace.COOKED], Items.Id.CHARRED_FOOD)
 
 
 func test_no_room_for_what_it_makes_keeps_the_fire_out() -> void:
 	var clock := WorldClock.new()
 	var furnace := Furnace.new(FACTORY)
-	furnace.slots.items[Furnace.INPUT] = Items.Id.RAW_IRON
-	furnace.slots.counts[Furnace.INPUT] = 1
-	furnace.slots.items[Furnace.FUEL] = Items.Id.COAL
-	furnace.slots.counts[Furnace.FUEL] = 1
-	furnace.slots.items[Furnace.OUTPUT] = Items.Id.COPPER_INGOT
-	furnace.slots.counts[Furnace.OUTPUT] = 1
+	furnace.slots.items[Furnace.LANES] = Items.Id.RAW_IRON
+	furnace.slots.counts[Furnace.LANES] = 1
+	furnace.slots.items[Furnace.FUELS] = Items.Id.COAL
+	furnace.slots.counts[Furnace.FUELS] = 1
+	for slot in range(Furnace.COOKED, Furnace.FACTORY_SLOTS):
+		furnace.slots.items[slot] = Items.Id.COPPER_INGOT
+		furnace.slots.counts[slot] = Items.MAX_STACK
 	assert_eq(furnace.step(0.1, clock), Furnace.Step.NOTHING)
-	assert_false(furnace.burning(), "copper ingots in the way: not lit")
+	assert_false(furnace.burning(), "its chest full of copper ingots: not lit")
 	var copy := Furnace.from_dict(furnace.to_dict())
 	assert_eq(copy.kind, FACTORY, "its state travels")
-	assert_eq(copy.slots.items[Furnace.OUTPUT], Items.Id.COPPER_INGOT)
+	assert_eq(copy.slots.items[Furnace.FACTORY_SLOTS - 1], Items.Id.COPPER_INGOT)
+	assert_eq(copy.slots.items[Furnace.FUELS], Items.Id.COAL)
+
+
+func test_a_factory_furnace_cooks_four_kinds_at_once_burning_faster() -> void:
+	var clock := WorldClock.new()
+	var furnace := Furnace.new(FACTORY)
+	var to_cook := [
+		[Items.Id.RAW_IRON, 3],
+		[Items.Id.RAW_COPPER, 2],
+		[Items.Id.RAW_GOLD, 1],
+		[Items.Id.RAW_IRON, 2],
+		[Items.Id.OAK_LOG, 1],
+		[Items.Id.SAND, 4],
+	]
+	for i in to_cook.size():
+		furnace.slots.items[Furnace.TO_COOK + i] = to_cook[i][0]
+		furnace.slots.counts[Furnace.TO_COOK + i] = to_cook[i][1]
+	furnace.slots.items[Furnace.FUELS + 3] = Items.Id.COAL
+	furnace.slots.counts[Furnace.FUELS + 3] = 5
+	furnace.step(0.1, clock)
+	var lanes := []
+	for lane in Furnace.LANE_COUNT:
+		lanes.append(furnace.slots.items[Furnace.LANES + lane])
+	assert_eq(
+		lanes,
+		[Items.Id.RAW_IRON, Items.Id.RAW_COPPER, Items.Id.RAW_GOLD, Items.Id.OAK_LOG],
+		"four kinds, one a lane: the second iron and the sand wait"
+	)
+	assert_eq(furnace.slots.counts[Furnace.LANES], 3, "a whole stack")
+	assert_eq(furnace.slots.items[Furnace.TO_COOK + 3], Items.Id.RAW_IRON)
+	assert_eq(furnace.lanes_cooking(), 4)
+	assert_eq(furnace.slots.counts[Furnace.FUELS + 3], 4, "a lump of coal lit")
+	# One kind alone burns its fuel four times slower.
+	var alone := Furnace.new(FACTORY)
+	alone.slots.items[Furnace.TO_COOK] = Items.Id.RAW_IRON
+	alone.slots.counts[Furnace.TO_COOK] = 3
+	alone.slots.items[Furnace.FUELS] = Items.Id.COAL
+	alone.slots.counts[Furnace.FUELS] = 5
+	alone.step(0.1, clock)
+	_run(furnace, clock, 10.1)
+	_run(alone, clock, 10.1)
+	var burned_four := 1.0 - furnace.fire
+	var burned_one := 1.0 - alone.fire
+	assert_true(absf(burned_four - 4.0 * burned_one) < 0.01, "four times faster")
+	var made := []
+	for slot in range(Furnace.COOKED, Furnace.COOKED + 4):
+		made.append(furnace.slots.items[slot])
+	for item: int in [
+		Items.Id.IRON_INGOT, Items.Id.COPPER_INGOT, Items.Id.GOLD_INGOT, Items.Id.CHARCOAL
+	]:
+		assert_true(item in made, "%s made in the chest" % Items.name_key(item))
+	# The gold lane, done, takes the sand next (the iron is in a lane).
+	furnace.step(0.1, clock)
+	assert_eq(furnace.slots.items[Furnace.LANES + 2], Items.Id.SAND)
+	assert_eq(alone.slots.items[Furnace.COOKED], Items.Id.IRON_INGOT)
+
+
+func test_lanes_take_a_kind_each_and_old_saves_fill_the_chests() -> void:
+	var furnace := Furnace.new(FACTORY)
+	furnace.slots.items[Furnace.LANES] = Items.Id.RAW_IRON
+	furnace.slots.counts[Furnace.LANES] = 1
+	assert_false(furnace.fits(Furnace.LANES + 1, Items.Id.RAW_IRON), "a kind a lane")
+	assert_true(furnace.fits(Furnace.LANES + 1, Items.Id.RAW_GOLD))
+	assert_true(furnace.fits(Furnace.LANES, Items.Id.RAW_IRON), "more of its own")
+	assert_false(furnace.fits(Furnace.TO_COOK, Items.Id.COAL), "coal does not cook")
+	assert_true(furnace.fits(Furnace.FUELS, Items.Id.COAL))
+	assert_false(furnace.fits(Furnace.COOKED, Items.Id.IRON_INGOT), "what it made only gives")
+	var bag := Inventory.new()
+	bag.add(Items.Id.RAW_IRON, 4)
+	bag.click(0, false, false)
+	bag.click_furnace(furnace, Furnace.LANES + 1, false, false)
+	assert_eq(furnace.slots.items[Furnace.LANES + 1], N, "not a second iron lane")
+	bag.click_furnace(furnace, Furnace.LANES, false, false)
+	assert_eq(furnace.slots.counts[Furnace.LANES], 5, "by hand into its lane")
+	bag.add(Items.Id.OAK_LOG, 8)
+	bag.add(Items.Id.COAL, 6)
+	bag.click(0, false, true, null, furnace)
+	bag.click(1, false, true, null, furnace)
+	assert_eq(furnace.slots.items[Furnace.TO_COOK], Items.Id.OAK_LOG, "shift: logs to cook")
+	assert_eq(furnace.slots.items[Furnace.FUELS], Items.Id.COAL, "coal to burn")
+	# A factory furnace saved before it had lanes and chests.
+	var old := {
+		"kind": FACTORY,
+		"slots":
+		{
+			"items": PackedInt32Array([Items.Id.RAW_IRON, Items.Id.COAL, Items.Id.IRON_INGOT]),
+			"counts": PackedInt32Array([2, 3, 4]),
+			"wear": PackedInt32Array([0, 0, 0]),
+		},
+	}
+	var loaded := Furnace.from_dict(old)
+	assert_eq(loaded.slots.items[Furnace.LANES], Items.Id.RAW_IRON, "cooking in a lane")
+	assert_eq(loaded.slots.items[Furnace.FUELS], Items.Id.COAL, "its fuel in the fuel chest")
+	assert_eq(loaded.slots.counts[Furnace.COOKED], 4, "what it made in the chest")
+	assert_eq(loaded.slots.items[Furnace.FUEL], N, "nothing left out of place")
 
 
 func test_clicks_put_things_where_they_belong() -> void:

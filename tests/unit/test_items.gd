@@ -318,17 +318,17 @@ func test_a_left_drag_reaches_chests_furnaces_and_the_grid() -> void:
 	bag.click(0, false, false)
 	var targets := [
 		Vector2i(Inventory.Holder.CHEST, 4),
-		Vector2i(Inventory.Holder.FURNACE, Furnace.INPUT),
-		Vector2i(Inventory.Holder.FURNACE, Furnace.FUEL),
-		Vector2i(Inventory.Holder.FURNACE, Furnace.OUTPUT),
+		Vector2i(Inventory.Holder.FURNACE, Furnace.LANES),
+		Vector2i(Inventory.Holder.FURNACE, Furnace.FUELS),
+		Vector2i(Inventory.Holder.FURNACE, Furnace.COOKED),
 		Vector2i(Inventory.Holder.OWN, Inventory.CRAFT + 6),
 		Vector2i(Inventory.Holder.OWN, Inventory.CURSOR),
 	]
 	bag.spread(targets, chest, furnace)
 	assert_eq(chest.counts[4], 3, "the chest")
-	assert_eq(furnace.slots.counts[Furnace.FUEL], 3, "coal burns")
-	assert_eq(furnace.slots.items[Furnace.INPUT], Items.Id.NONE, "but does not cook")
-	assert_eq(furnace.slots.items[Furnace.OUTPUT], Items.Id.NONE, "the output only gives")
+	assert_eq(furnace.slots.counts[Furnace.FUELS], 3, "coal burns")
+	assert_eq(furnace.slots.items[Furnace.LANES], Items.Id.NONE, "but does not cook")
+	assert_eq(furnace.slots.items[Furnace.COOKED], Items.Id.NONE, "what it made only gives")
 	assert_eq(bag.counts[Inventory.CRAFT + 6], 3, "the crafting grid")
 	assert_eq(bag.counts[Inventory.CURSOR], 1)
 	bag.spread(targets)

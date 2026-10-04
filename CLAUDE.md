@@ -562,6 +562,17 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   lava lights) and glowing voxels; a food furnace breaking near the player is announced
   (`furnace_broke`). Recipes: food furnace 8 stones; factory furnace 8 stones around coal or
   charcoal, at the workbench. The book's Furnaces chapter lists what each makes and the fuels.
+  The factory furnace (Furnace.is_factory; asked by the owner) cooks up to four kinds at once:
+  LANES (LANE_COUNT 4, a kind each: `fits` refuses a kind another lane holds, `lane_holding`;
+  filled by hand or by `_fill_lanes`, which moves a whole stack of a kind no lane holds from
+  TO_COOK), one fire burning `lanes_cooking()` times faster (at least once), fuel taken from
+  FUELS, what is made added to COOKED (`gives_only`), each lane its own `lane_progress`; its
+  slots (FACTORY_SLOTS 64, `slot_count`) are three chests too: TO_COOK 18, FUELS 12, COOKED 30,
+  CHEST_COLUMNS 6 across; `shift_places` (what cooks, else what burns) for shift-clicks from the
+  bag. A factory furnace saved with the old three slots moves its fuel and what it made into the
+  chests (load_dict). InventoryScreen: the lanes with bars filling up, the flame and its "xN",
+  in the panel; the chests in panels beside it (`_side`: to cook and fuel on the left, cooked
+  on the right; `_factory_slots` by furnace slot). The food furnace keeps its three slots.
 - Vitality (`src/sim/survival/`; phase 5 must not copy Minecraft's style: its own HUD, words
   and monsters): `Vitals` holds the rules (MAX_HEALTH 20 points, falls over FALL_SAFE 3 levels
   cost a point a level unless the player lands on water, lava burns LAVA_DAMAGE every

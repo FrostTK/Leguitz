@@ -111,9 +111,9 @@ func click(
 		return
 	if shift and furnace != null and slot < SLOTS:
 		var before := counts[slot]
-		for into: int in [Furnace.INPUT, Furnace.FUEL]:
-			if items[slot] != Items.Id.NONE and furnace.fits(into, items[slot]):
-				_move(slot, furnace.slots, [into])
+		for places: Array in furnace.shift_places():
+			if items[slot] != Items.Id.NONE and furnace.fits(places[0], items[slot]):
+				_move(slot, furnace.slots, places)
 		if counts[slot] != before:
 			return
 	if shift:
@@ -142,17 +142,17 @@ func click_chest(chest: Inventory, slot: int, right: bool, shift: bool) -> void:
 
 ## A click on a slot of a furnace with this inventory's cursor: what it
 ## cooks and what it burns only go where they belong (Furnace.fits); what
-## it made only comes out, onto the cursor's stack too. Shift moves a
-## stack into this inventory's slots.
+## it made only comes out (Furnace.gives_only), onto the cursor's stack
+## too. Shift moves a stack into this inventory's slots.
 func click_furnace(furnace: Furnace, slot: int, right: bool, shift: bool) -> void:
-	if slot < 0 or slot >= Furnace.SLOTS:
+	if slot < 0 or slot >= furnace.slot_count():
 		return
 	var oven := furnace.slots
 	if shift:
 		oven._move(slot, self, range(SLOTS))
 		return
 	var held_item := items[CURSOR]
-	if slot == Furnace.OUTPUT:
+	if furnace.gives_only(slot):
 		var made := oven.items[slot]
 		if held_item == Items.Id.NONE:
 			_click_on(oven, slot, right)
@@ -225,7 +225,7 @@ func collect(chest: Inventory = null, furnace: Furnace = null) -> void:
 		for slot in CHEST:
 			sources.append([chest, slot])
 	if furnace != null:
-		for slot in Furnace.SLOTS:
+		for slot in furnace.slot_count():
 			sources.append([furnace.slots, slot])
 	for slot in range(HOTBAR, SLOTS) + range(HOTBAR):
 		sources.append([self, slot])
@@ -326,8 +326,9 @@ func _holder(target: Vector2i, chest: Inventory, furnace: Furnace) -> Inventory:
 			if chest != null and slot >= 0 and slot < CHEST:
 				return chest
 		Holder.FURNACE:
-			if furnace != null and (slot == Furnace.INPUT or slot == Furnace.FUEL):
-				return furnace.slots
+			if furnace != null and slot >= 0 and slot < furnace.slot_count():
+				if not furnace.gives_only(slot):
+					return furnace.slots
 	return null
 
 
