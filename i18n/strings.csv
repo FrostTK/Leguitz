@@ -626,3 +626,73 @@ BOOK_ANIMALS_PIGS,"Young boars born on your farm grow up as pigs: round and pink
 BOOK_ANIMALS_BEES,Bees,Abeilles
 BOOK_ANIMALS_HIVE,"Wild bee nests stand in plains, meadows and flower forests; a beehive (planks around honeycomb) does the same at home. By day its bees visit the flowers and crops around and it fills with honey, the faster the more flowers there are. Full, honey drips down it.","Des nids d'abeilles sauvages se trouvent dans les plaines, les prairies et les forêts fleuries ; une ruche (des planches autour de rayons de miel) fait de même chez toi. Le jour, ses abeilles butinent les fleurs et les cultures autour et elle se remplit de miel, d'autant plus vite qu'il y a de fleurs. Pleine, le miel coule le long de ses parois."
 BOOK_ANIMALS_HONEY,"A full hive gives a jar of honey to a glass bottle (3 glass make 3) or honeycomb to shears (right click or {use}). Honey feeds well, and the jar stays. Crops near a hive grow faster: its bees carry the pollen. At night the bees go home.","Une ruche pleine donne un pot de miel à un bocal en verre (3 verres en font 3) ou des rayons de miel aux cisailles (clic droit ou {use}). Le miel nourrit bien, et le bocal reste. Les cultures proches d'une ruche poussent plus vite : ses abeilles portent le pollen. La nuit, les abeilles rentrent."
+CHAT_PLACEHOLDER,"Say something, or /help","Dis quelque chose, ou /aide"
+CHAT_HOW,"Type a command after /, or /help for the list.","Tape une commande après /, ou /aide pour la liste."
+CHAT_UNKNOWN,Unknown command: /%s. Type /help for the list.,Commande inconnue : /%s. Tape /aide pour la liste.
+CHAT_NOT_ADMIN,%s is for the world's admins.,%s est réservée aux admins du monde.
+CHAT_USAGE,How to write it: %s,Comment l'écrire : %s
+CHAT_HELP_TITLE,Commands (/help <command> for one):,Commandes (/aide <commande> pour le détail) :
+CHAT_HELP_LINE,%s — %s,%s — %s
+CHAT_FOR_EVERYONE,For everyone,Pour tout le monde
+CHAT_FOR_ADMINS,For the world's admins,Pour les admins du monde
+CHAT_NO_PLAYER,No player called %s is here.,Aucun joueur nommé %s n'est là.
+CHAT_PASSED_OUT,Not while you are passed out.,Pas pendant que tu es évanoui.
+CHAT_WHICH,Which one? %s,Lequel ? %s
+CMD_HELP_USAGE,/help [command],/aide [commande]
+CMD_HELP_HELP,"Lists the commands you can use, or tells how one works.","Liste les commandes que tu peux utiliser, ou explique l'une d'elles."
+CMD_PLAYERS_USAGE,/players,/joueurs
+CMD_PLAYERS_HELP,Who is in the world (★: the admins).,Qui est dans le monde (★ : les admins).
+CMD_PLAYERS_DONE,%d in the world: %s,%d dans le monde : %s
+CMD_MSG_USAGE,/msg <player> <text>,/mp <joueur> <texte>
+CMD_MSG_HELP,Says something to one player only.,Dit quelque chose à un seul joueur.
+CMD_MSG_FROM,%s whispers: %s,%s te chuchote : %s
+CMD_MSG_TO,To %s: %s,À %s : %s
+CMD_WHERE_USAGE,/where,/où
+CMD_WHERE_HELP,"Tells where you are: your tile, your level and the biome.","Dit où tu es : ta case, ton niveau et le biome."
+CMD_WHERE_DONE,"You are at x %d, level %d, z %d: %s.","Tu es en x %d, niveau %d, z %d : %s."
+CMD_SEED_USAGE,/seed,/graine
+CMD_SEED_HELP,Tells the world's seed.,Donne la graine du monde.
+CMD_SEED_DONE,The world's seed: %s,Graine du monde : %s
+CMD_TP_USAGE,/tp random | spawn | <player> | <x> <z> | <x> <level> <z>,/tp hasard | départ | <joueur> | <x> <z> | <x> <niveau> <z>
+CMD_TP_HELP,"Takes you far away to a safe spot picked at random, back to the spawn, to a player, or to a tile (~ for where you are, ~10 for ten tiles further).","T'emmène loin, à un endroit sûr tiré au hasard, au point de départ, près d'un joueur ou sur une case (~ pour là où tu es, ~10 pour dix cases plus loin)."
+CMD_TP_DONE,"Here you are at x %d, level %d, z %d.","Te voilà en x %d, niveau %d, z %d."
+CMD_TP_RANDOM,Somewhere new: %s.,Un endroit nouveau : %s.
+CMD_TP_NOWHERE,"No safe spot found this time, try again.","Aucun endroit sûr trouvé cette fois, réessaie."
+CMD_TIME_USAGE,/time day | noon | evening | night | midnight | 7:30 | freeze | run,/heure jour | midi | soir | nuit | minuit | 7h30 | fige | reprend
+CMD_TIME_HELP,"Sets the time of day, or stops the clock and starts it again.","Change l'heure du jour, ou arrête l'horloge et la relance."
+CMD_TIME_DONE,It is now %s.,Il est maintenant %s.
+CMD_TIME_SYNCED,This world follows your computer's clock: change that in the pause menu.,Ce monde suit l'horloge de ton ordinateur : change-le dans le menu pause.
+CMD_WEATHER_USAGE,/weather clear | rain | storm,/météo beau | pluie | orage
+CMD_WEATHER_HELP,Changes the weather at once.,Change la météo tout de suite.
+CMD_WEATHER_DONE,Weather: %s.,Météo : %s.
+CMD_WEATHER_CLEAR,clear skies,beau temps
+CMD_WEATHER_RAIN,rain,pluie
+CMD_WEATHER_THUNDER,storm,orage
+CMD_GAMEMODE_USAGE,/gamemode survival | creative,/mode survie | créatif
+CMD_GAMEMODE_HELP,Switches the world to survival or creative (a hardcore world stays hardcore).,Passe le monde en survie ou en créatif (un monde hardcore le reste).
+CMD_MODE_DONE,Game mode: %s.,Mode de jeu : %s.
+CMD_MODE_HARDCORE,A hardcore world stays hardcore.,Un monde hardcore le reste.
+CMD_GIVE_USAGE,/give <item> [count],/donne <objet> [nombre]
+CMD_GIVE_HELP,"Gives you an item, named in English or French (oak planks, pot de miel…) or by the start of its name.","Te donne un objet, nommé en français ou en anglais (planches de chêne, honey jar…) ou par le début de son nom."
+CMD_GIVE_DONE,Here: %d × %s.,Voilà : %d × %s.
+CMD_GIVE_UNKNOWN,No item is called %s.,Aucun objet ne s'appelle %s.
+CMD_SUMMON_USAGE,/summon <creature> [count],/invoque <créature> [nombre]
+CMD_SUMMON_HELP,Brings animals or monsters around you (up to 10).,Fait venir des animaux ou des monstres autour de toi (jusqu'à 10).
+CMD_SUMMON_DONE,%d × %s around you.,%d × %s autour de toi.
+CMD_SUMMON_UNKNOWN,No creature is called %s.,Aucune créature ne s'appelle %s.
+CMD_SUMMON_NO_ROOM,No room around you.,Pas de place autour de toi.
+CMD_HEAL_USAGE,/heal,/soigne
+CMD_HEAL_HELP,"Fills your vitality, your satiety and your breath.","Remplit ta vitalité, ta satiété et ton souffle."
+CMD_HEAL_DONE,You feel fine.,Te voilà en pleine forme.
+CMD_ADMIN_USAGE,/admin list | add <player> | remove <player>,/admin liste | ajoute <joueur> | retire <joueur>
+CMD_ADMIN_HELP,The world's admins may use every command; the world's creator is the first of them.,Les admins du monde peuvent utiliser toutes les commandes ; le créateur du monde est le premier.
+CMD_ADMIN_LIST,Admins: %s,Admins : %s
+CMD_ADMIN_ALREADY,%s is already an admin.,%s est déjà admin.
+CMD_ADMIN_ADDED,%s is now an admin.,%s est maintenant admin.
+CMD_ADMIN_YOU,%s made you an admin.,%s t'a nommé admin.
+CMD_ADMIN_NOT,%s is not an admin.,%s n'est pas admin.
+CMD_ADMIN_LAST,A world keeps one admin at least.,Un monde garde au moins un admin.
+CMD_ADMIN_REMOVED,%s is no longer an admin.,%s n'est plus admin.
+BOOK_CHAT,Chat (/ for a command),Discuter (/ pour une commande)
+BOOK_CHAPTER_COMMANDS,Commands,Commandes
+BOOK_COMMANDS_INTRO,"Press {chat} to talk to everyone in the world, or / to type a command; Enter sends, Esc closes, the arrows bring back what you sent. Commands and words are typed in English or French, with or without accents. The world's creator is its first admin: admins may use every command and name other admins.","Appuie sur {chat} pour parler à tout le monde dans le monde, ou sur / pour taper une commande ; Entrée envoie, Échap ferme, les flèches rappellent ce que tu as envoyé. Les commandes et les mots se tapent en français ou en anglais, avec ou sans accents. Le créateur du monde en est le premier admin : les admins peuvent utiliser toutes les commandes et nommer d'autres admins."

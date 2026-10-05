@@ -5,7 +5,8 @@ extends RefCounted
 ## gamepad, tips, tools, the recipes, the furnaces, home and garden,
 ## survival, the animals,
 ## the monsters, combat (swords, the bow, armor) and the game modes
-## (creative's flight and debug keys). A chapter is a list of entries:
+## (creative's flight and debug keys), the chat's commands. A chapter is a
+## list of entries:
 ## Dictionaries with a "kind" (Kind) and their text already translated,
 ## built again when the language changes.
 
@@ -26,6 +27,7 @@ const CHAPTERS: Array[String] = [
 	"BOOK_CHAPTER_MONSTERS",
 	"BOOK_CHAPTER_COMBAT",
 	"BOOK_CHAPTER_MODES",
+	"BOOK_CHAPTER_COMMANDS",
 ]
 const TIP_COUNT := 16
 ## The tools chapter: what each kind of tool is for, shown with this tool.
@@ -61,6 +63,7 @@ static func chapters() -> Array[Array]:
 		_monsters(),
 		_combat(),
 		_modes(),
+		_commands(),
 	]
 
 
@@ -77,6 +80,7 @@ static func _controls() -> Array:
 		_combo("BOOK_ZOOM", "BOOK_ZOOM_MOUSE"),
 		_combo("BOOK_HAND", "BOOK_HAND_KEYS"),
 		_keys("BOOK_INVENTORY", InputNames.keys(InputBindings.INVENTORY)),
+		_keys("BOOK_CHAT", InputNames.keys(InputBindings.CHAT) + PackedStringArray(["/"])),
 		_keys("BOOK_DROP", InputNames.keys(InputBindings.DROP_ITEM)),
 		_keys("BOOK_VIEW", InputNames.keys(InputBindings.TOGGLE_VIEW)),
 		_keys("BOOK_ZOOM_VIEW", InputNames.keys(InputBindings.ZOOM_VIEW)),
@@ -406,6 +410,18 @@ static func _modes() -> Array:
 	]
 
 
+## The chat's commands: those for everyone, then the admins' (how to
+## write each and what it does, Commands.LIST).
+static func _commands() -> Array:
+	var entries := [_title("BOOK_CHAPTER_COMMANDS"), _text("BOOK_COMMANDS_INTRO")]
+	for admin: bool in [false, true]:
+		entries.append(_heading("CHAT_FOR_ADMINS" if admin else "CHAT_FOR_EVERYONE"))
+		for command in Commands.LIST:
+			if command["admin"] == admin:
+				entries.append(_combo(Commands.usage_key(command), Commands.help_key(command)))
+	return entries
+
+
 static func _title(key: String) -> Dictionary:
 	return {"kind": Kind.TITLE, "text": _t(key)}
 
@@ -433,7 +449,7 @@ static func _icon(item: int, text: String) -> Dictionary:
 	return {"kind": Kind.ICON, "item": item, "text": text}
 
 
-## A translated text; {use}, {inventory}, {jump} and {sprint} in it name
+## A translated text; {use}, {inventory}, {jump}, {sprint} and {chat} in it name
 ## the keys of those controls as they are bound ({place}: the button).
 static func _t(key: String) -> String:
 	var text := String(TranslationServer.translate(key))
@@ -446,5 +462,6 @@ static func _t(key: String) -> String:
 		"jump": " / ".join(InputNames.keys(InputBindings.JUMP)),
 		"sprint": " / ".join(InputNames.keys(InputBindings.SPRINT)),
 		"break": String(TranslationServer.translate("MOUSE_LEFT")).to_lower(),
+		"chat": " / ".join(InputNames.keys(InputBindings.CHAT)),
 	}
 	return text.format(keys)

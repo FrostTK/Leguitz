@@ -43,14 +43,14 @@ static func set_mode(server: GameServer, session: GameServer.PlayerSession, mode
 		if creative(server):
 			for other in server.sessions:
 				if other.joined and other.alive():
-					_restore(other)
+					restore(other)
 	for other in server.sessions:
 		if other.joined:
 			other.transport.send(Msg.game_mode(server.settings.game_mode, other.spectator))
 
 
 ## Vitality, satiety and air full again (told).
-static func _restore(session: GameServer.PlayerSession) -> void:
+static func restore(session: GameServer.PlayerSession) -> void:
 	session.health = Vitals.MAX_HEALTH
 	session.food = Vitals.MAX_FOOD
 	session.air = Vitals.MAX_AIR

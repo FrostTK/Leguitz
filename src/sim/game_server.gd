@@ -332,6 +332,8 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 			Husbandry.tend(self, session, message)
 		Msg.HARVEST_HIVE:
 			Apiary.harvest(self, session, message)
+		Msg.CHAT:
+			Chat.receive(self, session, message)
 		Msg.SELECT_SLOT:
 			session.inventory.selected = clampi(
 				int(message.get("slot", 0)), 0, Inventory.HOTBAR - 1
@@ -411,6 +413,7 @@ func _on_hello(session: PlayerSession, message: Dictionary) -> void:
 	)
 	_place_player(session)
 	session.joined = true
+	Chat.on_join(self, session)
 	session.transport.send(
 		Msg.welcome(session.id, session.position, session.height, settings.to_dict())
 	)

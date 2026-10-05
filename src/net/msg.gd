@@ -23,6 +23,7 @@ const SPREAD_COMPOST := "spread_compost"
 const PICK := "pick"
 const TEND_ANIMAL := "tend_animal"
 const HARVEST_HIVE := "harvest_hive"
+const CHAT := "chat"
 const SELECT_SLOT := "select_slot"
 const SLOT_CLICK := "slot_click"
 const SLOT_SPREAD := "slot_spread"
@@ -71,6 +72,7 @@ const ENTITY_MOVE := "entity_move"
 const ENTITY_HURT := "entity_hurt"
 const ENTITY_REMOVE := "entity_remove"
 const ANIMAL_NOTICE := "animal_notice"
+const CHAT_LINE := "chat_line"
 const PUSH := "push"
 const LANTERN_OUT := "lantern_out"
 const ARROW_SPAWN := "arrow_spawn"
@@ -205,6 +207,24 @@ static func pick(cell: Vector3i) -> Dictionary:
 ## (Husbandry.tend: feeding, petting, shearing, milking, a lead).
 static func tend_animal(id: int, slot: int) -> Dictionary:
 	return {"t": TEND_ANIMAL, "id": id, "slot": slot}
+
+
+## A line the player typed in the chat (a command when it starts with
+## "/"; Chat.receive).
+static func chat(text: String) -> Dictionary:
+	return {"t": CHAT, "text": text}
+
+
+## A player said `text` in the chat (to every player).
+static func chat_said(from: String, text: String) -> Dictionary:
+	return {"t": CHAT_LINE, "from": from, "text": text}
+
+
+## The chat tells the player something: a translation key, its args (a
+## Dictionary {"key": ...} is a word to translate too) and how it shows
+## (Chat.Tone).
+static func chat_notice(key: String, args: Array, tone: int) -> Dictionary:
+	return {"t": CHAT_LINE, "key": key, "args": args, "tone": tone}
 
 
 ## The player harvested the full hive at `cell` with what is in hotbar

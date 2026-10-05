@@ -1,6 +1,7 @@
 class_name WorldSettings
 extends RefCounted
-## Per-world settings chosen at creation (seed, game mode...).
+## Per-world settings chosen at creation (seed, game mode...), and its
+## admins (Chat: players who may use every command).
 ## The time settings live in WorldClock, which is saved with the world too.
 
 enum GameMode { CREATIVE, SURVIVAL, HARDCORE }
@@ -15,6 +16,7 @@ var world_name := "World"
 var world_seed := 0
 var game_mode: GameMode = GameMode.SURVIVAL
 var created_unix := 0.0
+var admins: Array[String] = []
 
 
 static func create(name: String, seed_text: String, mode: GameMode) -> WorldSettings:
@@ -41,6 +43,7 @@ func to_dict() -> Dictionary:
 		"world_seed": world_seed,
 		"game_mode": game_mode,
 		"created_unix": created_unix,
+		"admins": admins.duplicate(),
 	}
 
 
@@ -49,3 +52,6 @@ func load_dict(data: Dictionary) -> void:
 	world_seed = data.get("world_seed", world_seed)
 	game_mode = data.get("game_mode", GameMode.SURVIVAL) as GameMode
 	created_unix = data.get("created_unix", 0.0)
+	admins.clear()
+	for name: Variant in data.get("admins", []):
+		admins.append(str(name))

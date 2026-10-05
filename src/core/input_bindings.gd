@@ -57,6 +57,8 @@ const HOTBAR_SLOTS: Array[StringName] = [
 ]
 ## Takes the player's book (the 10th slot) in hand; again: opens it.
 const HOTBAR_BOOK := &"hotbar_book"
+## Opens the chat (ChatBox; "/" opens it on a command).
+const CHAT := &"chat"
 # Debug (creative-only later).
 const DEPTH_UP := &"depth_up"
 const DEPTH_DOWN := &"depth_down"
@@ -111,6 +113,7 @@ static func register_defaults() -> void:
 	_bind(CAMERA_RESET, [_key(KEY_HOME), _button(JOY_BUTTON_RIGHT_STICK)])
 	_bind(TOGGLE_VIEW, [_letter(KEY_V), _button(JOY_BUTTON_X)])
 	_bind(ZOOM_VIEW, [_letter(KEY_C)])
+	_bind(CHAT, [_letter(KEY_T)])
 	_bind(BREAK, [_axis(JOY_AXIS_TRIGGER_RIGHT, 1.0)])
 	_bind(PLACE, [_axis(JOY_AXIS_TRIGGER_LEFT, 1.0)])
 	_bind(TOGGLE_MAP, [_letter(KEY_M), _button(JOY_BUTTON_Y)])

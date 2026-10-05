@@ -625,6 +625,26 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   lies down, PlayerModel.set_down; eating: GameClient.wants_to_eat, food in hand and the right
   button or the left trigger held, one eaten every EAT_SECONDS, predicted, the arm at the mouth,
   crumbs, the first-person hand at the mouth). The book's Survival chapter lists what feeds.
+- Chat and commands (asked by the owner; `src/sim/chat/`, static, given the server): Msg.CHAT
+  (what a player typed) goes to Chat.receive: a line is said to every player (Msg.chat_said,
+  with the name), or after "/" is a command run by the server (Commands.run) that answers in
+  the chat (Chat.tell: Msg.chat_notice, a translation key and its args, a Dictionary {"key"}
+  being a word the reader translates too, in a Chat.Tone). Commands.LIST: each command's name,
+  French alias and whether it is the admins' (CMD_<NAME>_USAGE / _HELP in i18n); for everyone
+  help, players, msg (whisper), where, seed (Commands); admins tp (random: RANDOM_NEAR to
+  RANDOM_FAR on dry land with room to stand; spawn; a player; x z on the ground,
+  `_landing`; x level z; ~ relative), time (words, 7h30, freeze, run; refused when SYNCED),
+  weather, gamemode (WorldCommands), give, summon (not bees), heal (GameModes.restore), admin
+  list/add/remove (PlayerCommands). Names and words are matched plainly (Chat.plain: case,
+  accents, underscores; Chat.names_of: an enum's keys and the en/fr translations; Chat.lookup:
+  exact, else the only one starting so, else the close ones told). WorldSettings.admins
+  (saved with the world): the first player to join a world without any becomes one
+  (Chat.on_join). Client: ChatBox (src/ui; T, InputBindings.CHAT, or "/" opens it; Esc, Enter,
+  Up/Down through what was sent, the wheel scrolls; lines fade after LINE_SECONDS, as many as
+  fit over the hotbar; the world takes no input while typing: GameClient.screen_open);
+  ClientMessages handles every server message (moved out of GameClient). The book's Commands
+  chapter (GuideBook._commands) and its chat key. The debug keys (F4, F6, F7, Page Up/Down, M)
+  stay as they are.
 - Game modes (`WorldSettings.GameMode`, the world's; rules in `GameModes`, static, given the
   server): creative players fly (`PlayerBody.fly`, `flying`: two presses of jump within
   LocalPlayer.DOUBLE_JUMP_SECONDS, jump rises, sprint sinks, landing ends it, falls only count from

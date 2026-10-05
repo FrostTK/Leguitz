@@ -114,6 +114,8 @@ var modes := GameModeView.new()
 var inventory_screen := InventoryScreen.new()
 ## The player's book, open.
 var book_screen := BookScreen.new()
+## The chat (T; "/" for a command).
+var chat := ChatBox.new()
 ## The player's book is in hand (its slot: Settings.guide_book). Only the
 ## client knows: the server keeps the hotbar slot chosen before.
 var book_in_hand := false
@@ -211,6 +213,7 @@ func _ready() -> void:
 	hud_clock.clock = clock
 	pause_menu.clock = clock
 	debug_overlay.client = self
+	chat.client = self
 
 	_ui_root.theme = UiTheme.build()
 	_loading_label.text = "LOADING_WORLD"
@@ -226,6 +229,7 @@ func _ready() -> void:
 	_ui_root.add_child(archer.meter)
 	_ui_root.add_child(hotbar)
 	_ui_root.add_child(vitals.screen)
+	_ui_root.add_child(chat)
 	_ui_root.add_child(debug_overlay)
 	_ui_root.add_child(debug_map)
 	_ui_root.add_child(inventory_screen)
@@ -334,7 +338,7 @@ func _process(delta: float) -> void:
 	if transport == null:
 		return
 	for message in transport.poll():
-		_handle_message(message)
+		ClientMessages.handle(self, message)
 	if not get_tree().paused:
 		clock.advance(delta)
 		_update_view_mode(delta)
@@ -379,9 +383,7 @@ func _update_view_mode(delta: float) -> void:
 	first_person = move_toward(first_person, wanted, delta / DIVE_TIME)
 	if dive_hold >= 0.0:
 		first_person = dive_hold
-	var captured := (
-		view_mode.first_person and not inventory_screen.visible and not book_screen.visible
-	)
+	var captured := view_mode.first_person and not screen_open()
 	var mouse := Input.MOUSE_MODE_CAPTURED if captured else Input.MOUSE_MODE_VISIBLE
 	if Input.mouse_mode != mouse:
 		Input.mouse_mode = mouse
@@ -443,8 +445,7 @@ func _update_view(delta: float) -> void:
 	var zooming := (
 		first_person >= 1.0
 		and Input.is_action_pressed(InputBindings.ZOOM_VIEW)
-		and not inventory_screen.visible
-		and not book_screen.visible
+		and not screen_open()
 		and not get_tree().paused
 	)
 	world_viewport.zoom_towards(1.0 if zooming else 0.0, delta)
@@ -564,6 +565,7 @@ func pause() -> void:
 	debug_map.close()
 	inventory_screen.close()
 	book_screen.close()
+	chat.close()
 	interaction.stop()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if joined:
@@ -740,6 +742,17 @@ func _cycle_hand(step: int) -> void:
 	select_hand(posmod(hand_slot() + step, slots))
 
 
+## Whether a screen over the world takes the keys and the mouse: the
+## inventory, the book, the chat while typing.
+func screen_open() -> bool:
+	return inventory_screen.visible or book_screen.visible or chat.typing
+
+
+## The camera goes straight to the player (after a teleport).
+func snap_camera() -> void:
+	_needs_snap = true
+
+
 ## Opens the player's book (the world goes on).
 func open_book() -> void:
 	if not Settings.guide_book or book_screen.visible:
@@ -892,88 +905,6 @@ func _handle_look_input(event: InputEvent) -> bool:
 		_look_pitch = ENTRY_LOOK_PITCH
 		return true
 	return false
-
-
-func _handle_message(message: Dictionary) -> void:
-	match message.get("t"):
-		Msg.WELCOME:
-			player_id = message["player_id"]
-			dropped_items.player_id = player_id
-			creatures.player_id = player_id
-			world_info = message["world"]
-			local_player.spawn_at(message["spawn"], message["h"])
-			joined = true
-			_needs_snap = true
-		Msg.CHUNK_DATA:
-			var chunk := ChunkData.from_dict(message["chunk"])
-			world.store(chunk)
-			world_view.show_chunk(chunk)
-			weather_effects.terrain_changed()
-		Msg.CHUNK_UNLOAD:
-			world.remove(message["coord"])
-			world_view.remove_chunk(message["coord"])
-		Msg.TIME_STATE:
-			clock.load_dict(message["clock"])
-			if pause_menu.visible:
-				pause_menu.refresh_from_state()
-		Msg.PLAYER_CORRECTION:
-			local_player.apply_correction(message["pos"], message["h"])
-		Msg.PLAYER_TELEPORT:
-			local_player.apply_correction(message["pos"], message["h"])
-			_needs_snap = true
-		Msg.MAP_DATA:
-			debug_map.show_map(message["png"], message["scale"])
-		Msg.WEATHER_STATE:
-			weather_effects.apply_state(message["weather"])
-		Msg.WORLD_SAVED:
-			save_notice.flash()
-		Msg.BLOCK_CHANGED:
-			interaction.on_block_changed(message["cell"], message["voxel"])
-			weather_effects.terrain_changed()
-			actions.close_if_gone(message["cell"])
-		Msg.VITALS:
-			vitals.on_vitals(message["health"], message["food"], message["hurt"], message["air"])
-		Msg.DIED:
-			vitals.on_passed_out(message["cause"])
-		Msg.GAME_MODE:
-			modes.on_game_mode(message["mode"], message["spectator"])
-		Msg.INVENTORY:
-			var selected := inventory.selected
-			inventory.load_dict(message["inventory"])
-			# The hand follows the player's own choice (the server may lag).
-			inventory.selected = selected
-		Msg.CHEST:
-			if actions.chest != null and message["cell"] == actions.chest_cell:
-				actions.chest.load_dict(message["chest"])
-		Msg.FURNACE:
-			if actions.furnace != null and message["cell"] == actions.furnace_cell:
-				actions.furnace.load_dict(message["furnace"])
-		Msg.ITEM_SPAWN:
-			dropped_items.spawn(message["id"], message["item"], message["count"], message["pos"])
-		Msg.ITEM_MOVE:
-			dropped_items.move(message["id"], message["pos"])
-		Msg.ITEM_REMOVE:
-			dropped_items.remove(message["id"], message["by"])
-		Msg.ENTITY_SPAWN:
-			creatures.spawn(message)
-		Msg.ENTITY_MOVE:
-			creatures.move(message)
-		Msg.ANIMAL_NOTICE:
-			hotbar.announce(creatures.notice_text(message))
-		Msg.ENTITY_HURT:
-			creatures.hurt(message["id"])
-		Msg.ENTITY_REMOVE:
-			creatures.remove(message["id"], message["died"])
-		Msg.PUSH:
-			local_player.push(message["speed"], message["hop"])
-		Msg.ARROW_SPAWN:
-			arrows.spawn(message["id"], message["from"], message["velocity"])
-		Msg.ARROW_REMOVE:
-			arrows.remove(message["id"])
-		Msg.LANTERN_OUT:
-			lighting.lantern_out(message["seconds"])
-		var unknown:
-			push_warning("Client: unknown message type %s" % unknown)
 
 
 func _on_time_settings_requested(mode: int, value: float) -> void:
