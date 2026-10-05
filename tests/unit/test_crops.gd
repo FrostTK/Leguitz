@@ -319,6 +319,17 @@ func test_raspberries_and_peaches_are_picked() -> void:
 	assert_true(Items.FOOD.has(Items.Id.RASPBERRY) and Items.FOOD.has(Items.Id.PEACH))
 
 
+func test_a_tree_falls_only_when_it_is_gone() -> void:
+	var fruit := Voxels.of_block(Tiles.Block.PEACH_TREE_FRUIT)
+	var blossom := Voxels.of_block(Tiles.Block.PEACH_TREE)
+	assert_true(BlockInteraction.fells(fruit, Voxels.AIR), "felled")
+	assert_false(BlockInteraction.fells(fruit, blossom), "picked: the same tree in blossom")
+	assert_false(BlockInteraction.fells(blossom, fruit), "bearing fruit")
+	var young := Voxels.of_block(Tiles.Block.YOUNG_OAK)
+	assert_false(BlockInteraction.fells(young, Voxels.of_block(Tiles.Block.OAK)), "grown up")
+	assert_false(BlockInteraction.fells(Voxels.AIR, young))
+
+
 func test_wild_plants_and_fruit_trees_grow_in_the_world() -> void:
 	var generator := WorldGenerator.new(42)
 	var found := {}

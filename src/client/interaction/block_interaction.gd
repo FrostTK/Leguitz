@@ -591,7 +591,7 @@ func _on_changed(cell: Vector3i, before: int, after: int) -> void:
 		_debris.throw(_world_point(middle), BlockColors.of(before), 24, 0.4)
 		client.furnace_broke(cell)
 		return
-	if after == before or not ObjectShapes.is_tree(block):
+	if not fells(before, after):
 		return
 	var tile := Vector2i(cell.x, cell.z)
 	var props := client.world_view.props
@@ -611,6 +611,17 @@ func _on_changed(cell: Vector3i, before: int, after: int) -> void:
 	tree.wood = BlockColors.of(before)
 	tree.height = ObjectShapes.trunk(block, variant).y / float(GameConst.TILE_SIZE) + 2.0
 	client.world_root.add_child(tree)
+
+
+## Whether a voxel changing shows a tree falling: a tree gone (not one
+## turning into another: a young one grown, a fruit tree bearing its fruit
+## or picked).
+static func fells(before: int, after: int) -> bool:
+	return (
+		after != before
+		and ObjectShapes.is_tree(Voxels.block_of(before))
+		and not ObjectShapes.is_tree(Voxels.block_of(after))
+	)
 
 
 func _away_from_player(tile: Vector2i) -> Vector2:

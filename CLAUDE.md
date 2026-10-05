@@ -485,7 +485,8 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   APPLE_SEEDS, CHERRY_PITS, ORANGE_SEEDS, PEACH_PIT, crafted from the fruit), YOUNG_*_TREE, *_TREE (in
   blossom) and *_TREE_FRUIT (Growth.FRUITING, FRUIT_SECONDS; ObjectShapes.BEARING: the same
   trunk, and TreeModels seeds the crown from the blossoming block, so only the dots differ:
-  TreeModels._fruit_tree, _dot_crown, colors in OrchardColors). Generation: wild plants
+  TreeModels._fruit_tree, _dot_crown, colors in OrchardColors; a tree turning into another,
+  picked, bearing or grown up, never shows a tree falling: BlockInteraction.fells). Generation: wild plants
   (Tiles.Block.WILD_*, Farming.WILD: what they give; SurfaceBuilder.WILD_PLANTS, never
   undergrowth) and wild fruits (SurfaceBuilder.WILD_FRUITS: pumpkins, melons, kept only with no
   solid object around them, WorldGenerator._alone, and out of the trees' spacing) come last in

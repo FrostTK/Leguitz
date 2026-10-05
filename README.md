@@ -26,7 +26,7 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Arrosage et soins : arrosoir en cuivre (rempli à l'eau ou à un évier, 20 cases), la pluie arrose les champs à ciel ouvert, rigoles d'irrigation, composteur et compost (une culture ou une pousse gagne un stade), cultures sous serre et à la lanterne | ✅ |
 | Nouvelles cultures : betterave, chou, maïs, tomate, fraise, framboise, lin, citrouille et pastèque (le fruit pousse à côté de la tige), riz en rizière, canne à sucre qui repousse, vigne sur treillis ; cueillette ; arbres fruitiers (pommier, cerisier, oranger, pêcher) en fleur puis en fruits ; plantes sauvages dans le monde | ✅ |
 | Élevage : nourrir pour avoir des petits qui grandissent, corde pour mener une bête, enclos, cisailles (laine qui repousse), seau (lait de brebis), pondoir et œufs, affection qui fait donner plus, abris où les bêtes dorment la nuit | ✅ |
-| Four d'usine à 4 cuissons : quatre sortes à la fois sur un seul feu (qui brûle plus vite), avec ses coffres « À cuire », « Combustible » et « Cuit » | ✅ |
+| Four d'usine à 4 cuissons : quatre variétés à la fois sur un seul feu (qui brûle plus vite), avec ses coffres « À cuire », « Combustible » et « Cuit » | ✅ |
 | Animaux de ferme (vache, chèvre, canard, lapin, cochon, abeilles), animaux sauvages et prédateurs | à venir |
 | Cuisine, pêche, chien et chat, saisons | à venir |
 
