@@ -696,3 +696,7 @@ CMD_ADMIN_REMOVED,%s is no longer an admin.,%s n'est plus admin.
 BOOK_CHAT,Chat (/ for a command),Discuter (/ pour une commande)
 BOOK_CHAPTER_COMMANDS,Commands,Commandes
 BOOK_COMMANDS_INTRO,"Press {chat} to talk to everyone in the world, or / to type a command; Enter sends, Esc closes, the arrows bring back what you sent. Commands and words are typed in English or French, with or without accents. The world's creator is its first admin: admins may use every command and name other admins.","Appuie sur {chat} pour parler à tout le monde dans le monde, ou sur / pour taper une commande ; Entrée envoie, Échap ferme, les flèches rappellent ce que tu as envoyé. Les commandes et les mots se tapent en français ou en anglais, avec ou sans accents. Le créateur du monde en est le premier admin : les admins peuvent utiliser toutes les commandes et nommer d'autres admins."
+CMD_CLEAR_USAGE,/clear [item],/vide [objet]
+CMD_CLEAR_HELP,"Empties your inventory: the hotbar, the bag, the crafting grid and the armor you wear (with an item: only that one). What goes is lost.","Vide ton inventaire : la barre rapide, le sac, la grille d'artisanat et l'armure portée (avec un objet : seulement celui-là). Ce qui part est perdu."
+CMD_CLEAR_DONE,Inventory emptied: %d items gone.,Inventaire vidé : %d objets jetés.
+CMD_CLEAR_ONLY,%d × %s gone.,%d × %s jetés.

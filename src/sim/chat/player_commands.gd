@@ -1,7 +1,8 @@
 class_name PlayerCommands
 extends RefCounted
 ## The commands about items, creatures, the player and the admins
-## (Commands; static, given the server): give, summon, heal, admin. Items
+## (Commands; static, given the server): give, clear, summon, heal, admin.
+## Items
 ## and creatures are named in English or French or by their own name
 ## (oak_planks), accents and case aside, or by the start of only one of
 ## their names. Each returns false when its words do not fit (Commands
@@ -43,6 +44,32 @@ static func give(server: GameServer, session: GameServer.PlayerSession, args: Ar
 		server.throw_item(session, item, left, fresh)
 	session.transport.send(Msg.inventory(session.inventory))
 	Chat.tell(session, "CMD_GIVE_DONE", [count, Chat.word(Items.name_key(item))], Chat.Tone.DONE)
+	return true
+
+
+## clear [item]: empties the player's slots (hotbar, bag, what the cursor
+## holds, the crafting grid, the armor worn), or takes only that item.
+static func clear(_server: GameServer, session: GameServer.PlayerSession, args: Array) -> bool:
+	var only := -1
+	if not args.is_empty():
+		var typed := " ".join(PackedStringArray(args))
+		only = _find(item_names(), typed, session, "CMD_GIVE_UNKNOWN")
+		if only < 0:
+			return true
+	var bag := session.inventory
+	var removed := 0
+	for slot in Inventory.SIZE:
+		if bag.items[slot] != Items.Id.NONE and (only < 0 or bag.items[slot] == only):
+			removed += bag.counts[slot]
+			bag.items[slot] = Items.Id.NONE
+			bag.counts[slot] = 0
+			bag.wear[slot] = 0
+	session.transport.send(Msg.inventory(bag))
+	if only < 0:
+		Chat.tell(session, "CMD_CLEAR_DONE", [removed], Chat.Tone.DONE)
+	else:
+		var name := Chat.word(Items.name_key(only))
+		Chat.tell(session, "CMD_CLEAR_ONLY", [removed, name], Chat.Tone.DONE)
 	return true
 
 

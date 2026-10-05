@@ -3,7 +3,8 @@ extends TestCase
 ## run on the server and answer in the chat, admins (the first player to
 ## join, saved with the world), tp (random: far away on dry land; tiles,
 ## ~, players), time, weather, game mode, give (names in English or
-## French, accents aside), summon, heal; names and words matched plainly.
+## French, accents aside), clear, summon, heal; names and words matched
+## plainly; what Tab completes (ChatCompletion).
 
 const SEA := GameConst.SEA_LEVEL
 
@@ -78,7 +79,7 @@ func test_commands_answer_in_the_chat_and_admins_rule() -> void:
 	assert_eq(_keys(_type("/tp random", 1)), ["CHAT_NOT_ADMIN"])
 	var help := _type("/aide", 1)
 	assert_eq(help.size(), 1 + Commands.available(_server, _session(1)).size())
-	assert_eq(help.size(), 6, "the five for everyone")
+	assert_eq(help.size(), 7, "the six for everyone")
 	assert_eq(_type("/help", 0).size(), 1 + Commands.LIST.size(), "an admin's are all")
 	assert_eq(_keys(_type("/AIDE tp", 1)), ["CHAT_HELP_LINE", "CMD_TP_HELP"], "in detail")
 	assert_eq(_keys(_type("/joueurs", 1)), ["CMD_PLAYERS_DONE"])
@@ -207,3 +208,98 @@ func test_names_are_matched_plainly() -> void:
 	for command in Commands.LIST:
 		for key in [Commands.usage_key(command), Commands.help_key(command)]:
 			assert_ne(tr(key), key, "%s translated" % key)
+
+
+func test_clear_empties_the_inventory_or_one_item() -> void:
+	_start()
+	_type("/give stone 10")
+	_type("/give oak planks 5")
+	var bag := _session().inventory
+	bag.items[Inventory.ARMOR] = Items.Id.IRON_HELMET
+	bag.counts[Inventory.ARMOR] = 1
+	var lines := _type("/vide pierre")
+	assert_eq(_keys(lines), ["CMD_CLEAR_ONLY"])
+	assert_eq(lines[0]["args"][0], 10)
+	assert_eq([_held(Items.Id.STONE), _held(Items.Id.OAK_PLANKS)], [0, 5], "only the stone")
+	_type("/clear")
+	assert_eq(_held(Items.Id.OAK_PLANKS), 0)
+	assert_eq(bag.items[Inventory.ARMOR], Items.Id.NONE, "the armor worn too")
+	assert_eq(Commands.find("vide")["admin"], false, "for everyone")
+
+
+func test_tab_completes_commands_and_their_words() -> void:
+	var locale := TranslationServer.get_locale()
+	TranslationServer.set_locale("en")
+	assert_eq(ChatCompletion.options("/he")["options"], PackedStringArray(["help", "heal"]))
+	assert_eq(ChatCompletion.options("/don")["options"], PackedStringArray(["donne"]), "French")
+	var found := ChatCompletion.options("/tp r")
+	assert_eq(found["start"], 4)
+	assert_eq(found["options"], PackedStringArray(["random"]))
+	var words: PackedStringArray = ChatCompletion.options("/time ")["options"]
+	assert_eq(
+		words, PackedStringArray(["day", "noon", "evening", "night", "midnight", "freeze", "run"])
+	)
+	assert_true(ChatCompletion.options("/time day n")["options"].is_empty(), "the first word only")
+	assert_true("Oak planks" in ChatCompletion.options("/give oak pl")["options"])
+	assert_eq(ChatCompletion.options("/summon co")["options"], PackedStringArray(["Cow"]))
+	assert_eq(ChatCompletion.options("/help ti")["options"], PackedStringArray(["time"]))
+	var oaks := PackedStringArray(["Oak planks", "Oak log"])
+	assert_eq(ChatCompletion.common_start(oaks), "Oak ")
+	TranslationServer.set_locale("fr")
+	assert_true("météo" in ChatCompletion.options("/me")["options"], "as French writes it")
+	assert_eq(ChatCompletion.options("/heure mi")["options"], PackedStringArray(["midi", "minuit"]))
+	assert_true("Pot de miel" in ChatCompletion.options("/donne pot")["options"])
+	var english: PackedStringArray = ChatCompletion.options("/donne oak pl")["options"]
+	assert_true("Oak planks" in english, "else in English")
+	TranslationServer.set_locale(locale)
+
+
+func test_the_middle_click_takes_the_block_aimed_at_in_hand() -> void:
+	var stone := Voxels.of_block(Tiles.Block.STONE)
+	assert_eq(PickBlock.item_of(stone, false), Items.Id.STONE)
+	assert_eq(PickBlock.item_of(Voxels.of_ground(Tiles.Ground.DIRT), false), Items.Id.DIRT)
+	var lit := Voxels.of_block(Tiles.Block.FOOD_FURNACE_LIT)
+	assert_eq(PickBlock.item_of(lit, false), Items.Id.FOOD_FURNACE, "lit or not")
+	var hive := Voxels.of_block(Tiles.Block.BEEHIVE_2)
+	assert_eq(PickBlock.item_of(hive, false), Items.Id.BEEHIVE, "whatever its stage")
+	var wheat := Voxels.of_block(Tiles.Block.WHEAT_2)
+	assert_eq(PickBlock.item_of(wheat, false), Items.Id.SEEDS, "a crop: what sows it")
+	var grass := Voxels.of_ground(Tiles.Ground.GRASS)
+	assert_eq(PickBlock.item_of(grass, false), Items.Id.NONE, "no grass item in survival")
+	assert_eq(PickBlock.item_of(grass, true), Items.Id.DIRT, "creative: what it gives")
+	# Survival: only what the player has, nothing made.
+	var bag := Inventory.new()
+	bag.selected = 2
+	assert_eq(PickBlock.pick(bag, Items.Id.STONE, false), -1, "none: nothing")
+	bag.items[5] = Items.Id.STONE
+	bag.counts[5] = 3
+	assert_eq(PickBlock.pick(bag, Items.Id.STONE, false), 5, "in the hotbar: chosen")
+	assert_eq(bag.selected, 5)
+	bag.items[20] = Items.Id.OAK_PLANKS
+	bag.counts[20] = 7
+	bag.selected = 5
+	assert_eq(PickBlock.pick(bag, Items.Id.OAK_PLANKS, false), 0, "into the first free slot")
+	assert_eq([bag.items[0], bag.counts[0], bag.items[20]], [Items.Id.OAK_PLANKS, 7, Items.Id.NONE])
+	for slot in Inventory.HOTBAR:
+		bag.items[slot] = Items.Id.DIRT
+		bag.counts[slot] = 1
+	bag.items[30] = Items.Id.GLASS
+	bag.counts[30] = 4
+	bag.selected = 3
+	assert_eq(PickBlock.pick(bag, Items.Id.GLASS, false), 3, "a full hotbar: swapped")
+	assert_eq([bag.items[3], bag.counts[3], bag.items[30]], [Items.Id.GLASS, 4, Items.Id.DIRT])
+	# Creative: from the catalog; what was in hand goes into the bag.
+	assert_eq(PickBlock.pick(bag, Items.Id.BRICKS, true), 3)
+	assert_eq(bag.items[3], Items.Id.BRICKS)
+	assert_eq(bag.items[9], Items.Id.GLASS, "the glass into the bag")
+	# Through the server.
+	_start()
+	_session().inventory.items[12] = Items.Id.STONE
+	_session().inventory.counts[12] = 2
+	_clients[0].send(Msg.pick_block(Items.Id.STONE))
+	_server.process_messages()
+	var held := _session().inventory
+	assert_eq([held.items[held.selected], held.counts[held.selected]], [Items.Id.STONE, 2])
+	_clients[0].send(Msg.pick_block(Items.Id.DIAMOND))
+	_server.process_messages()
+	assert_eq(_held(Items.Id.DIAMOND), 0, "survival makes nothing")

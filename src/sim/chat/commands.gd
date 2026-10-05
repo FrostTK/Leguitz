@@ -5,8 +5,8 @@ extends RefCounted
 ## not matter) and its words. LIST says who may use each (admins only, see
 ## Chat.is_admin); each has its usage and help in the translations
 ## (CMD_<NAME>_USAGE, CMD_<NAME>_HELP: help lists them). Those for
-## everyone run here; travel and the world's are WorldCommands', items,
-## creatures and admins PlayerCommands'. Answers go to the chat (Chat.tell).
+## everyone run here; travel and the world's are WorldCommands', items
+## (give, clear), creatures and admins PlayerCommands'. Answers go to the chat (Chat.tell).
 
 ## The commands, in the order help lists them.
 const LIST: Array[Dictionary] = [
@@ -15,6 +15,7 @@ const LIST: Array[Dictionary] = [
 	{"name": "msg", "alias": "mp", "admin": false},
 	{"name": "where", "alias": "ou", "admin": false},
 	{"name": "seed", "alias": "graine", "admin": false},
+	{"name": "clear", "alias": "vide", "admin": false},
 	{"name": "tp", "alias": "tp", "admin": true},
 	{"name": "time", "alias": "heure", "admin": true},
 	{"name": "weather", "alias": "meteo", "admin": true},
@@ -53,6 +54,8 @@ static func run(server: GameServer, session: GameServer.PlayerSession, line: Str
 		"seed":
 			Chat.tell(session, "CMD_SEED_DONE", [str(server.settings.world_seed)])
 			done = true
+		"clear":
+			done = PlayerCommands.clear(server, session, args)
 		"tp":
 			done = WorldCommands.teleport(server, session, args)
 		"time":

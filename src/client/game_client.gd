@@ -610,7 +610,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 ## Breaking (left button held, right trigger), placing (right click, left
-## trigger) and using what is aimed at (E, B). Returns true when the event
+## trigger), using what is aimed at (E, B) and, in first person, taking the
+## block aimed at in hand (the middle click). Returns true when the event
 ## was used.
 func _handle_block_input(event: InputEvent) -> bool:
 	if event is InputEventJoypadButton or event is InputEventJoypadMotion:
@@ -625,6 +626,10 @@ func _handle_block_input(event: InputEvent) -> bool:
 	if button != null and button.button_index == MOUSE_BUTTON_RIGHT and view_mode.first_person:
 		if button.pressed:
 			interaction.place()
+		return true
+	if button != null and button.button_index == MOUSE_BUTTON_MIDDLE and view_mode.first_person:
+		if button.pressed:
+			interaction.pick_block()
 		return true
 	if event.is_action_pressed(InputBindings.BREAK):
 		interaction.breaking = true

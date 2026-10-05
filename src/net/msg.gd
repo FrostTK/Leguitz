@@ -24,6 +24,7 @@ const PICK := "pick"
 const TEND_ANIMAL := "tend_animal"
 const HARVEST_HIVE := "harvest_hive"
 const CHAT := "chat"
+const PICK_BLOCK := "pick_block"
 const SELECT_SLOT := "select_slot"
 const SLOT_CLICK := "slot_click"
 const SLOT_SPREAD := "slot_spread"
@@ -257,6 +258,11 @@ static func swing_gate(cell: Vector3i) -> Dictionary:
 ## The player took hotbar slot `slot` in hand.
 static func select_slot(slot: int) -> Dictionary:
 	return {"t": SELECT_SLOT, "slot": slot}
+
+
+## The player picked `item` with the middle click (PickBlock).
+static func pick_block(item: int) -> Dictionary:
+	return {"t": PICK_BLOCK, "item": item}
 
 
 ## A click on an inventory slot (see Inventory.click).

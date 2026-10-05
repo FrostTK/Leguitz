@@ -334,6 +334,8 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 			Apiary.harvest(self, session, message)
 		Msg.CHAT:
 			Chat.receive(self, session, message)
+		Msg.PICK_BLOCK:
+			PickBlock.on_message(self, session, message)
 		Msg.SELECT_SLOT:
 			session.inventory.selected = clampi(
 				int(message.get("slot", 0)), 0, Inventory.HOTBAR - 1

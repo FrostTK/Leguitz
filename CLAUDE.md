@@ -631,7 +631,8 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   the chat (Chat.tell: Msg.chat_notice, a translation key and its args, a Dictionary {"key"}
   being a word the reader translates too, in a Chat.Tone). Commands.LIST: each command's name,
   French alias and whether it is the admins' (CMD_<NAME>_USAGE / _HELP in i18n); for everyone
-  help, players, msg (whisper), where, seed (Commands); admins tp (random: RANDOM_NEAR to
+  help, players, msg (whisper), where, seed (Commands), clear (the player's slots, armor
+  and grid too, or one item: PlayerCommands); admins tp (random: RANDOM_NEAR to
   RANDOM_FAR on dry land with room to stand; spawn; a player; x z on the ground,
   `_landing`; x level z; ~ relative), time (words, 7h30, freeze, run; refused when SYNCED),
   weather, gamemode (WorldCommands), give, summon (not bees), heal (GameModes.restore), admin
@@ -640,11 +641,23 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   exact, else the only one starting so, else the close ones told). WorldSettings.admins
   (saved with the world): the first player to join a world without any becomes one
   (Chat.on_join). Client: ChatBox (src/ui; T, InputBindings.CHAT, or "/" opens it; Esc, Enter,
-  Up/Down through what was sent, the wheel scrolls; lines fade after LINE_SECONDS, as many as
-  fit over the hotbar; the world takes no input while typing: GameClient.screen_open);
+  Up/Down through what was sent, the wheel scrolls, Tab completes: ChatCompletion, a
+  command's name as the player's language writes it, its first word from its translated usage,
+  items and creatures by their names, else in English; the common start first, then each in
+  turn, the options listed under the lines; lines fade after LINE_SECONDS, as many as fit over
+  the hotbar; the world takes no input while typing: GameClient.screen_open);
   ClientMessages handles every server message (moved out of GameClient). The book's Commands
   chapter (GuideBook._commands) and its chat key. The debug keys (F4, F6, F7, Page Up/Down, M)
   stay as they are.
+- Pick block (asked by the owner; not in the book): the middle click in first person
+  (GameClient._handle_block_input, BlockInteraction.pick_block) takes the item of the block
+  aimed at in hand (`PickBlock`, src/sim/items, shared: `item_of` the item placing it, whatever
+  way it faces, its stage or its fire, in creative else what breaking it gives; `pick`: a
+  hotbar slot holding it is chosen, else a stack of it in the bag is swapped into the hotbar,
+  the slot in hand if empty, else the first empty one, else the one in hand; in creative, none
+  held, a stack from the catalog, what was in that slot going into the bag; in survival and
+  hardcore nothing is made). The client guesses it, Msg.PICK_BLOCK (the item) has the server do
+  the same.
 - Game modes (`WorldSettings.GameMode`, the world's; rules in `GameModes`, static, given the
   server): creative players fly (`PlayerBody.fly`, `flying`: two presses of jump within
   LocalPlayer.DOUBLE_JUMP_SECONDS, jump rises, sprint sinks, landing ends it, falls only count from

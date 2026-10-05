@@ -28,7 +28,8 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Élevage : nourrir pour avoir des petits qui grandissent, corde pour mener une bête, enclos, cisailles (laine qui repousse), seau (lait de brebis), pondoir et œufs, affection qui fait donner plus, abris où les bêtes dorment la nuit | ✅ |
 | Four d'usine à 4 cuissons : quatre variétés à la fois sur un seul feu (qui brûle plus vite), avec ses coffres « À cuire », « Combustible » et « Cuit » | ✅ |
 | Animaux de ferme : vaches et chèvres (lait, cuir), canards qui nagent et pondent, lapins, cochons nés des sangliers de la ferme ; abeilles, nids sauvages et ruches (miel au bocal, rayons aux cisailles ; les cultures proches poussent plus vite) | ✅ |
-| Chat (T) et commandes (/) : /aide, /joueurs, /mp, /où, /graine pour tous ; /tp (hasard, départ, un joueur, des coordonnées), /heure, /météo, /mode, /donne, /invoque, /soigne, /admin pour les admins du monde | ✅ |
+| Chat (T) et commandes (/), complétées avec Tab : /aide, /joueurs, /mp, /où, /graine, /vide pour tous ; /tp (hasard, départ, un joueur, des coordonnées), /heure, /météo, /mode, /donne, /invoque, /soigne, /admin pour les admins du monde | ✅ |
+| Clic molette en 1re personne : le bloc visé en main (en créatif même sans l'avoir ; en survie seulement s'il est dans l'inventaire) | ✅ |
 | Animaux sauvages, prédateurs et ravageurs | à venir |
 | Cuisine, pêche, chien et chat, saisons | à venir |
 

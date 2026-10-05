@@ -116,6 +116,21 @@ func use_target() -> bool:
 	return true
 
 
+## The middle click in first person: the item of the block aimed at goes
+## in hand (PickBlock: in survival only when the player has some), shown at
+## once.
+func pick_block() -> void:
+	if target == null:
+		return
+	var creative := client.modes.creative()
+	var item := PickBlock.item_of(target.voxel, creative)
+	var slot := PickBlock.pick(client.inventory, item, creative)
+	if slot < 0:
+		return
+	client.select_hand(slot)
+	client.transport.send(Msg.pick_block(item))
+
+
 ## Puts the block in hand against the side of the target (a right click);
 ## the player's book in hand opens instead.
 func place() -> void:

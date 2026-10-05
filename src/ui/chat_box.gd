@@ -3,7 +3,9 @@ extends Control
 ## The chat, at the bottom left over the hotbar's height. T opens it, "/"
 ## opens it on a command; Enter sends what is typed to the server
 ## (Msg.chat: it says it to every player, or runs the command, Chat and
-## Commands), Esc closes, Up and Down go back through what was sent. The
+## Commands), Esc closes, Up and Down go back through what was sent, Tab
+## completes a command and its words (ChatCompletion: what it could be
+## shows under the lines; Tab again goes through them, Shift back). The
 ## lines the server sends (Msg.CHAT_LINE: what players said, the answers
 ## to commands, in the reader's language) fade LINE_SECONDS after they
 ## came; while typing, the last TYPING_LINES show on a dark wooden board
@@ -33,6 +35,9 @@ const TONE_COLORS := {
 	Chat.Tone.WHISPER: "d6b8f0",
 }
 const SAID_COLOR := "ffffff"
+const HINT_COLOR := Color("d8c39a")
+## Options of a completion shown at most.
+const HINTS := 8
 const SLASH := 47
 
 var client: GameClient
@@ -51,6 +56,13 @@ var _labels: Array[RichTextLabel] = []
 ## The line of each label shown (-1: none).
 var _shown: Array[int] = []
 var _entry := LineEdit.new()
+## What Tab can complete (ChatCompletion), where that part starts, the one
+## shown (-1: none yet) and the text as Tab left it.
+var _options := PackedStringArray()
+var _option_start := 0
+var _option_at := -1
+var _completed := ""
+var _hint := Label.new()
 
 
 func _ready() -> void:
@@ -87,6 +99,13 @@ func _ready() -> void:
 	_entry.add_theme_color_override("font_placeholder_color", UiTheme.WOOD)
 	_entry.placeholder_text = "CHAT_PLACEHOLDER"
 	_entry.text_submitted.connect(_on_submitted)
+	_entry.text_changed.connect(_on_typed)
+	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_hint.add_theme_color_override("font_color", HINT_COLOR)
+	_hint.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.85))
+	_hint.visible = false
+	_log.add_child(_hint)
 	_entry.focus_exited.connect(_keep_focus)
 	add_child(_entry)
 	_set_board(false)
@@ -112,6 +131,7 @@ func close() -> void:
 	if not typing:
 		return
 	typing = false
+	_on_typed("")
 	_entry.visible = false
 	_entry.release_focus()
 	client.local_player.controls_enabled = not client.vitals.passed_out
@@ -157,6 +177,8 @@ func _process(delta: float) -> void:
 	for line in _lines:
 		line["age"] += delta
 	var room := size.y - BOTTOM - INPUT_HEIGHT - TOP_ROOM
+	if _hint.visible:
+		room -= _hint.get_combined_minimum_size().y + 1.0
 	var full := false
 	for i in range(_labels.size() - 1, -1, -1):
 		var index := _shown[i]
@@ -174,7 +196,7 @@ func _process(delta: float) -> void:
 
 
 ## While typing: Esc closes, Up and Down go through what was sent, the
-## wheel scrolls; Tab does nothing (it would move the focus).
+## wheel scrolls, Tab completes (it would move the focus otherwise).
 func _input(event: InputEvent) -> void:
 	if not typing:
 		return
@@ -187,7 +209,7 @@ func _input(event: InputEvent) -> void:
 			KEY_DOWN:
 				_browse(1)
 			KEY_TAB:
-				pass
+				_complete(-1 if (event as InputEventKey).shift_pressed else 1)
 			_:
 				return
 	elif event is InputEventMouseButton and event.pressed:
@@ -243,6 +265,58 @@ func _on_submitted(text: String) -> void:
 	close()
 
 
+## Tab: the part being typed becomes what it can only be, or what all it
+## can be begin with; then each in turn (`step`: -1 back).
+func _complete(step: int) -> void:
+	var text := _entry.text
+	if _option_at >= 0 and text == _completed and _options.size() > 1:
+		_option_at = posmod(_option_at + step, _options.size())
+		_set_text(text.left(_option_start) + _options[_option_at])
+		return
+	var found := ChatCompletion.options(text)
+	_options = found["options"]
+	_option_start = found["start"]
+	_option_at = -1
+	if _options.is_empty():
+		_show_hint()
+		return
+	var base := text.left(_option_start)
+	if _options.size() == 1:
+		_set_text(base + _options[0] + " ")
+		_options.clear()
+	else:
+		var common := ChatCompletion.common_start(_options)
+		var typed := text.substr(_option_start)
+		if common.length() > typed.length():
+			_set_text(base + common)
+		else:
+			_option_at = 0 if step > 0 else _options.size() - 1
+			_set_text(base + _options[_option_at])
+	_show_hint()
+
+
+func _set_text(text: String) -> void:
+	_entry.text = text
+	_entry.caret_column = text.length()
+	_completed = text
+
+
+## What the part typed could be, under the lines (none: hidden).
+func _show_hint() -> void:
+	_hint.visible = _options.size() > 1
+	if _hint.visible:
+		var shown := ", ".join(_options.slice(0, HINTS))
+		_hint.text = shown + (" …" if _options.size() > HINTS else "")
+		_board.visible = true
+
+
+## The player typed: a completion starts again.
+func _on_typed(_text: String) -> void:
+	_options.clear()
+	_option_at = -1
+	_show_hint()
+
+
 ## Back (-1) or forth (1) through the lines sent; past the last, empty.
 func _browse(step: int) -> void:
 	if _sent.is_empty():
@@ -283,6 +357,7 @@ func _layout() -> void:
 	var width := minf(WIDTH, size.x - MARGIN * 2.0)
 	for label in _labels:
 		label.custom_minimum_size.x = width
+	_hint.custom_minimum_size.x = width
 	_board.offset_left = MARGIN
 	_board.offset_bottom = -BOTTOM - INPUT_HEIGHT - 2.0
 	_board.offset_top = _board.offset_bottom
