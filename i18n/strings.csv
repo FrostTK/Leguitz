@@ -700,3 +700,8 @@ CMD_CLEAR_USAGE,/clear [item],/vide [objet]
 CMD_CLEAR_HELP,"Empties your inventory: the hotbar, the bag, the crafting grid and the armor you wear (with an item: only that one). What goes is lost.","Vide ton inventaire : la barre rapide, le sac, la grille d'artisanat et l'armure portée (avec un objet : seulement celui-là). Ce qui part est perdu."
 CMD_CLEAR_DONE,Inventory emptied: %d items gone.,Inventaire vidé : %d objets jetés.
 CMD_CLEAR_ONLY,%d × %s gone.,%d × %s jetés.
+SETTING_EXTREME,Extreme,Extrême
+SETTING_EXTREME_ABOUT,"Every graphics setting at its most: Ultra quality, HD rendering, 12 chunks in first person, models in full detail twice as far. And none of the savings: every creature animated every frame, every plant casting its shadow.","Tous les graphismes au maximum : qualité Ultra, rendu HD, 12 chunks en 1re personne, modèles détaillés deux fois plus loin. Et aucune économie : toutes les bêtes animées à chaque image, toutes les plantes projettent leur ombre."
+SETTING_EXTREME_PRO,"+ The finest picture: softer light and shadows, farther and more detailed views.","+ Le plus beau rendu : lumière et ombres plus fines, vues plus lointaines et plus détaillées."
+SETTING_EXTREME_CON,"− Much heavier: far fewer frames per second, the graphics card and the processor working hard (heat, fans). For powerful computers.","− Bien plus lourd : beaucoup moins d'images par seconde, carte graphique et processeur très sollicités (chaleur, ventilateurs). Pour les ordinateurs puissants."
+SETTING_EXTREME_BACK,"Turned off, your own settings come back.","Désactivé, tes propres réglages reviennent."

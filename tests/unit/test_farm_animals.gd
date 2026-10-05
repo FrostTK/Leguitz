@@ -208,7 +208,7 @@ func test_a_hive_fills_with_honey_by_its_flowers() -> void:
 	assert_eq(_bees(hive).size(), 1, "its bees come out by day, one at a time")
 	_place(_cell(5, 1), Tiles.Block.FLOWER_RED)
 	_place(_cell(1, -2), Tiles.Block.FLOWER_YELLOW)
-	assert_eq(Apiary.flowers_near(_server.world.loaded_voxel_at, hive).size(), 2)
+	assert_eq(Apiary.flowers_near(_server.world, hive).size(), 2)
 	for level in range(1, Apiary.FULL + 1):
 		Growth.update(_server, 1.0)
 		assert_eq(Apiary.level_of(_block(hive)), level, "a level of honey")

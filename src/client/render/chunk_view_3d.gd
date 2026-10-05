@@ -12,7 +12,6 @@ const LAVA_LIGHT_RANGE := 7.0
 ## How much a flame's light wavers (a share of its energy).
 const FLICKER := 0.12
 ## Flat on the water: no shadow worth drawing.
-const NO_SHADOW := {Tiles.Block.LILY_PAD: true}
 
 var coord := Vector2i.ZERO
 var terrain := MeshInstance3D.new()
@@ -30,6 +29,10 @@ var water_material: ShaderMaterial
 var caves_shown := false
 ## Level of detail of the props shown (see WorldView3D.lod_of).
 var props_lod := 0
+## Built at least once (shown), and out of the first-person view's reach
+## (hidden: see WorldView3D.set_far_reach).
+var built := false
+var far := false
 
 var _data_image := Image.create(
 	TerrainRenderer.DATA_SIZE, TerrainRenderer.DATA_SIZE, false, Image.FORMAT_RGBAF
@@ -170,6 +173,29 @@ func set_props_lod(library: PropLibrary, lod: int) -> void:
 	for i in _prop_keys.size():
 		var key := _prop_keys[i]
 		_props[i].multimesh.mesh = library.mesh(key.x, key.y, lod)
+	refresh_shadows(library)
+
+
+## Which props cast a shadow (PropLibrary.casts_shadow).
+func refresh_shadows(library: PropLibrary) -> void:
+	for i in _prop_keys.size():
+		_props[i].cast_shadow = (
+			GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+			if library.casts_shadow(_prop_keys[i].x, props_lod)
+			else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		)
+
+
+## Built: shows (unless out of reach).
+func show_built() -> void:
+	built = true
+	visible = not far
+
+
+## Out of the first-person view's reach: hidden (it is in the haze).
+func set_far(value: bool) -> void:
+	far = value
+	visible = built and not far
 
 
 ## Puts the lava lights at their place in the world (call again when the
@@ -217,9 +243,9 @@ func _apply_props(groups: Dictionary[Vector2i, Array], library: PropLibrary, lod
 			multimesh.set_instance_transform(n, entries[n][0])
 			multimesh.set_instance_custom_data(n, entries[n][1])
 		node.cast_shadow = (
-			GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-			if NO_SHADOW.has(key.x)
-			else GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+			GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+			if library.casts_shadow(key.x, lod)
+			else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		)
 		node.visible = true
 	for i in range(used, _props.size()):

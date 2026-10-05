@@ -3,7 +3,9 @@ extends VBoxContainer
 ## The player's own settings in the pause menu (the Settings autoload; each
 ## choice is applied and saved at once): display (window mode, screen,
 ## window size, vertical sync, frame limit, frame counter), graphics
-## (quality, HD, zoom, how far one sees in first person, brightness) and
+## (extreme, with its warning sign telling its pros and cons; quality, HD,
+## zoom, how far one sees in first person, brightness: extreme sets the
+## first ones, shown greyed out at their most) and
 ## game (language, interface size, first person's field of view and mouse
 ## speed, first person in caves, the player's book).
 
@@ -15,7 +17,12 @@ const LANGUAGE_KEYS := ["LANGUAGE_AUTO", "LANGUAGE_FR", "LANGUAGE_EN"]
 const WINDOW_KEYS := ["WINDOW_WINDOWED", "WINDOW_FULLSCREEN", "WINDOW_EXCLUSIVE"]
 const VSYNC_KEYS := ["VSYNC_OFF", "VSYNC_ON", "VSYNC_ADAPTIVE"]
 const QUALITY_KEYS := ["QUALITY_LOW", "QUALITY_MEDIUM", "QUALITY_HIGH", "QUALITY_ULTRA"]
-const ZOOM_CHOICES := [0, 2, 3, 4, 5, 6, 8]
+const ZOOM_CHOICES := [0, 1, 2, 3, 4, 5, 6, 8]
+## The settings extreme graphics take over (shown at their most, greyed).
+const EXTREME_KEYS: Array[StringName] = [&"graphics_quality", &"hd_rendering", &"far_view"]
+const EXTREME_TIP: Array[String] = [
+	"SETTING_EXTREME_ABOUT", "SETTING_EXTREME_PRO", "SETTING_EXTREME_CON", "SETTING_EXTREME_BACK"
+]
 const FAR_VIEW_CHOICES := [4, 6, 8, 10, 12]
 const BRIGHTNESS_CHOICES := [0.8, 0.9, 1.0, 1.15, 1.3, 1.5]
 const UI_SCALE_CHOICES := [0, 1, 2, 3, 4, 5, 6]
@@ -49,6 +56,11 @@ func _ready() -> void:
 	_add_toggle(&"show_fps", "SETTING_SHOW_FPS")
 
 	add_child(_section("MENU_GRAPHICS_SETTINGS"))
+	_add_toggle(&"extreme", "SETTING_EXTREME")
+	var row: Control = _toggles[&"extreme"].get_parent()
+	var warning := WarningSign.new("SETTING_EXTREME", EXTREME_TIP)
+	row.add_child(warning)
+	row.move_child(warning, 1)
 	_add_option(&"graphics_quality", [0, 1, 2, 3], _keyed.bind(QUALITY_KEYS), "SETTING_QUALITY")
 	_add_toggle(&"hd_rendering", "SETTING_HD")
 	_add_option(&"world_zoom", ZOOM_CHOICES, _zoom_text, "SETTING_ZOOM")
@@ -75,9 +87,11 @@ func refresh() -> void:
 	_updating = true
 	for key: StringName in _options:
 		var option: OptionButton = _options[key][0]
-		option.select(_closest(_options[key][1], Settings.get(key)))
+		option.select(_closest(_options[key][1], _shown(key)))
+		option.disabled = Settings.extreme and key in EXTREME_KEYS
 	for key: StringName in _toggles:
-		_toggles[key].button_pressed = Settings.get(key)
+		_toggles[key].button_pressed = _shown(key)
+		_toggles[key].disabled = Settings.extreme and key in EXTREME_KEYS
 	_fill_screens()
 	_fill_resolutions()
 	_updating = false
@@ -129,6 +143,20 @@ func _on_option_selected(index: int, key: StringName) -> void:
 func _on_toggled(enabled: bool, key: StringName) -> void:
 	if not _updating:
 		Settings.choose(key, enabled)
+		if key == &"extreme":
+			refresh.call_deferred()
+
+
+## A setting as it applies (extreme graphics take some over).
+func _shown(key: StringName) -> Variant:
+	match key:
+		&"graphics_quality":
+			return Settings.effective_quality()
+		&"hd_rendering":
+			return Settings.effective_hd()
+		&"far_view":
+			return Settings.effective_far_view()
+	return Settings.get(key)
 
 
 func _on_screen_selected(index: int) -> void:

@@ -139,20 +139,28 @@ static func note(chunk: ChunkData, cell: Vector3i, voxel: int) -> void:
 			chunk.growing[cell + Vector3i.DOWN] = true
 
 
-## Lets everything that may grow in the loaded chunks have its chance
-## (every CHECK_TICKS; `chance` instead of the odds of the durations: tests).
-static func update(server: GameServer, chance := -1.0) -> void:
+## Lets everything that may grow in the loaded chunks have its chance,
+## each chunk once every CHECK_TICKS: GameServer.tick gives each tick its
+## `slice` of them (slice_of), so no tick does it all at once (-1: all of
+## them now; `chance` instead of the odds of the durations: tests).
+static func update(server: GameServer, chance := -1.0, slice := -1) -> void:
 	var seconds := CHECK_TICKS * GameConst.TICK_DELTA
-	_hives.clear()
+	if slice <= 0:
+		_hives.clear()
+		for chunk: ChunkData in server.world.chunks.values():
+			for cell: Vector3i in chunk.growing:
+				if Apiary.is_hive(Voxels.block_of(server.world.loaded_voxel_at(cell))):
+					_hives.append(cell)
 	for chunk: ChunkData in server.world.chunks.values():
-		for cell: Vector3i in chunk.growing:
-			if Apiary.is_hive(Voxels.block_of(server.world.loaded_voxel_at(cell))):
-				_hives.append(cell)
-	for chunk: ChunkData in server.world.chunks.values():
-		if chunk.growing.is_empty():
+		if chunk.growing.is_empty() or (slice >= 0 and slice_of(chunk.coord) != slice):
 			continue
 		for cell: Vector3i in chunk.growing.keys():
 			_grow(server, chunk, cell, chance, seconds)
+
+
+## The tick (0 to CHECK_TICKS - 1) a chunk's plants have their chance on.
+static func slice_of(coord: Vector2i) -> int:
+	return posmod(coord.x * 7 + coord.y * 31, CHECK_TICKS)
 
 
 static func _grow(

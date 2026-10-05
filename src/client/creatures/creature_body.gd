@@ -52,6 +52,8 @@ var finished := false
 ## The sky light it stands in (0..1, see LightField): it darkens in a cave
 ## (smoothly, as it walks).
 var sky_light := 1.0
+## Seconds since it was last animated (CreaturesView may skip frames).
+var waited := 0.0
 
 var _root := Node3D.new()
 var _joints: Dictionary[String, Node3D] = {}
@@ -68,6 +70,10 @@ var _sink := 0.0
 var _fade := 0.0
 var _sky := -1.0
 var _rest := 0.0
+var _meshes: Array[MeshInstance3D] = []
+var _shadowed := true
+## The shader's parameters as last set (set again only when they change).
+var _parameters: Dictionary[StringName, float] = {}
 
 
 ## Builds the model of `animal_kind` from `meshes` (part name -> mesh).
@@ -97,9 +103,24 @@ func setup(animal_id: int, animal_kind: int, meshes: Dictionary, animal_flags :=
 		var mesh := MeshInstance3D.new()
 		mesh.mesh = meshes[part.name]
 		mesh.material_override = _material
+		_meshes.append(mesh)
 		mesh.position = part.offset * VOXEL
 		joint.add_child(mesh)
 		_joints[part.name] = joint
+
+
+## Whether its parts cast a shadow (CreaturesView spares small ones').
+func set_shadow(on: bool) -> void:
+	if on == _shadowed:
+		return
+	_shadowed = on
+	var cast := (
+		GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+		if on
+		else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	)
+	for mesh in _meshes:
+		mesh.cast_shadow = cast
 
 
 ## Puts it at once where it should be.
@@ -158,16 +179,16 @@ func animate(delta: float) -> void:
 	_animate_wings()
 	_animate_monster(delta)
 	_hurt = maxf(_hurt - delta / HURT_SECONDS, 0.0)
-	_material.set_shader_parameter("hurt", _hurt)
+	_set_parameter(&"hurt", _hurt)
 	var fade := _fade
 	if dying:
 		_death = minf(_death + delta / DEATH_SECONDS, 1.0)
 		_root.rotation.z = smoothstep(0.0, 0.4, _death) * PI * 0.5
 		fade = maxf(fade, smoothstep(0.45, 1.0, _death))
 		finished = _death >= 1.0
-	_material.set_shader_parameter("fade", fade)
+	_set_parameter(&"fade", fade)
 	_sky = sky_light if _sky < 0.0 else lerpf(_sky, sky_light, 1.0 - exp(-SKY_SHARPNESS * delta))
-	_material.set_shader_parameter("sky_light", _sky)
+	_set_parameter(&"sky_light", _sky)
 
 
 ## Diagonal pairs of legs swing together (a trot); a fowl's or a lurker's
@@ -236,3 +257,10 @@ func _animate_monster(delta: float) -> void:
 		Species.Id.SHADE_LURKER:
 			var pale := FROZEN_FADE if state == Creature.State.FROZEN else 0.0
 			_fade = move_toward(_fade, pale, delta * 2.0)
+
+
+## Sets a shader parameter when its value changed.
+func _set_parameter(name: StringName, value: float) -> void:
+	if absf(_parameters.get(name, -1.0) - value) > 0.001:
+		_parameters[name] = value
+		_material.set_shader_parameter(name, value)

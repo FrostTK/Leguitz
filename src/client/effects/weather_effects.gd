@@ -183,7 +183,7 @@ func _process(delta: float) -> void:
 	for particles: GPUParticles3D in _particles.values():
 		_place(particles, reach)
 	_place_roof(reach, delta)
-	var fine := first_person or Settings.hd_rendering
+	var fine := first_person or Settings.effective_hd()
 	if fine != _fine:
 		_fine = fine
 		var drop := FINE_DROP if fine else DROP

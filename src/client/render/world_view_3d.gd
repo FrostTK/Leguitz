@@ -14,6 +14,9 @@ extends Node3D
 ## Builds bake the sky light (LightField) into the faces and props; it
 ## reaches up to LightField.MAX cells, so a change letting light in or out
 ## rebuilds the chunks it may reach (voxel_changed). `sky_at` tells it.
+##
+## In first person, chunks farther than the haze (set_far_reach) are
+## hidden: zoomed far out before, many more stay loaded.
 
 const TOP_SHADER := preload("res://src/client/shaders/terrain3d_top.gdshader")
 const FACE_SHADER := preload("res://src/client/shaders/terrain3d_faces.gdshader")
@@ -61,6 +64,9 @@ var lod := 0
 ## First-person view: the props' detail follows each chunk's distance
 ## instead (see set_lod_by_distance).
 var lod_by_distance := false
+## First person: chunks whose middle lies farther than this from the
+## player (tiles) are hidden (see set_far_reach).
+var far_reach := INF
 ## Top-down view: the ground in view (tiles, see set_view_area).
 var view_center := Vector2.ZERO
 var view_half_size := Vector2.INF
@@ -123,6 +129,7 @@ func show_chunk(chunk: ChunkData) -> void:
 		var view: ChunkView3D = _pool.pop_back() if not _pool.is_empty() else _new_view()
 		# Hidden until built (a recycled view still holds its old chunk).
 		view.visible = false
+		view.built = false
 		view.coord = chunk.coord
 		_views[chunk.coord] = view
 	_mark_pending(chunk.coord, true)
@@ -176,6 +183,24 @@ func set_detail(value: float) -> void:
 	if value == detail:
 		return
 	detail = value
+	_refresh_lods()
+
+
+## Saves on small props' shadows (off: Settings.extreme; see PropLibrary).
+func set_thrifty(value: bool) -> void:
+	if value == props.thrifty:
+		return
+	props.thrifty = value
+	for view: ChunkView3D in _views.values():
+		view.refresh_shadows(props)
+
+
+## First person: how far chunks show (tiles from the player to a chunk's
+## middle; INF: all of them).
+func set_far_reach(reach: float) -> void:
+	if reach == far_reach:
+		return
+	far_reach = reach
 	_refresh_lods()
 
 
@@ -399,7 +424,8 @@ func _apply_results() -> void:
 			view.caves_shown = caves_shown
 			view.apply(result, props, lod_of(result.coord))
 			view.caps.visible = caps_shown
-			view.visible = true
+			view.set_far(_is_far(result.coord))
+			view.show_built()
 	if not left.is_empty():
 		_results_mutex.lock()
 		left.append_array(_results)
@@ -438,6 +464,15 @@ func _refresh_lods() -> void:
 	_lod_focus = focus_tile
 	for coord: Vector2i in _views:
 		_views[coord].set_props_lod(props, lod_of(coord))
+		_views[coord].set_far(_is_far(coord))
+
+
+## First person: a chunk out of the view's reach (see set_far_reach).
+func _is_far(coord: Vector2i) -> bool:
+	if not lod_by_distance:
+		return false
+	var middle := (Vector2(coord) + Vector2.ONE * 0.5) * GameConst.CHUNK_SIZE
+	return middle.distance_to(focus_tile) > far_reach
 
 
 func _mark_pending(coord: Vector2i, full: bool) -> void:

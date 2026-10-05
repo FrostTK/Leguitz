@@ -35,6 +35,8 @@ const REACH_LEEWAY := 1.5
 
 ## Each hive block -> [its kind's levels, its level].
 static var _levels := _build_levels()
+## By voxel id: a flower or a crop (bees visit it).
+static var _attracting := _build_attracting()
 
 
 static func is_hive(block: int) -> bool:
@@ -58,7 +60,7 @@ static func work(server: GameServer, cell: Vector3i, voxel: int, odds: float) ->
 	var world := server.world
 	if server.clock.is_night():
 		return
-	var flowers := flowers_near(world.loaded_voxel_at, cell)
+	var flowers := flowers_near(world, cell)
 	_send_bees(server, cell, voxel, flowers)
 	var level := level_of(Voxels.block_of(voxel))
 	if level >= FULL or flowers.is_empty():
@@ -68,16 +70,27 @@ static func work(server: GameServer, cell: Vector3i, voxel: int, odds: float) ->
 
 
 ## The flowers and crops within FLOWER_RANGE of a hive, nearest first
-## (cells).
-static func flowers_near(voxel_at: Callable, cell: Vector3i) -> Array[Vector3i]:
+## (cells; read straight from the loaded chunks: hundreds of cells a hive).
+static func flowers_near(world: WorldState, cell: Vector3i) -> Array[Vector3i]:
 	var found: Array[Vector3i] = []
+	var attracts := _attracting
+	var size := GameConst.CHUNK_SIZE
+	var height := GameConst.WORLD_HEIGHT
+	var low := maxi(cell.y - FLOWER_ROWS, 0)
+	var high := mini(cell.y + FLOWER_ROWS, height - 1)
 	for dz in range(-FLOWER_RANGE, FLOWER_RANGE + 1):
 		for dx in range(-FLOWER_RANGE, FLOWER_RANGE + 1):
-			for dy in range(-FLOWER_ROWS, FLOWER_ROWS + 1):
-				var at := cell + Vector3i(dx, dy, dz)
-				var block := Voxels.block_of(voxel_at.call(at))
-				if block in Tiles.FLOWERS or Farming.is_crop(block):
-					found.append(at)
+			var tile := Vector2i(cell.x + dx, cell.z + dz)
+			var chunk: ChunkData = world.chunks.get(Coords.tile_to_chunk(tile))
+			if chunk == null:
+				continue
+			var local := Coords.tile_to_local(tile)
+			var column := (local.y * size + local.x) * height
+			var voxels := chunk.voxels
+			for row in range(low, high + 1):
+				var voxel := voxels[column + row]
+				if voxel < attracts.size() and attracts[voxel] != 0:
+					found.append(Vector3i(tile.x, row, tile.y))
 	found.sort_custom(
 		func(a: Vector3i, b: Vector3i) -> bool:
 			return (a - cell).length_squared() < (b - cell).length_squared()
@@ -169,6 +182,15 @@ static func _send_bees(
 	var bee := creatures.add(Species.Id.BEE, feet, cell.y - GameConst.SEA_LEVEL + 1.0) as Bee
 	bee.home = cell
 	bee.flowers = spots.duplicate()
+
+
+static func _build_attracting() -> PackedByteArray:
+	var lookup := PackedByteArray()
+	lookup.resize(Voxels.BLOCK_BASE + Tiles.Block.size())
+	for block: int in Tiles.Block.values():
+		if block in Tiles.FLOWERS or Farming.is_crop(block):
+			lookup[Voxels.of_block(block)] = 1
+	return lookup
 
 
 static func _build_levels() -> Dictionary:

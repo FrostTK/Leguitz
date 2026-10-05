@@ -272,8 +272,7 @@ func tick() -> void:
 	Survival.update(self, sessions, GameConst.TICK_DELTA)
 	if tick_count % FURNACE_TICKS == 0:
 		_update_furnaces(GameConst.TICK_DELTA * FURNACE_TICKS)
-	if tick_count % Growth.CHECK_TICKS == 0:
-		Growth.update(self)
+	Growth.update(self, -1.0, tick_count % Growth.CHECK_TICKS)
 	if tick_count % UNLOAD_CHECK_TICKS == 0:
 		_unload_unused_chunks()
 	if storage != null and tick_count % AUTOSAVE_TICKS == 0:

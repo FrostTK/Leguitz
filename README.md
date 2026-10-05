@@ -30,6 +30,7 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Animaux de ferme : vaches et chèvres (lait, cuir), canards qui nagent et pondent, lapins, cochons nés des sangliers de la ferme ; abeilles, nids sauvages et ruches (miel au bocal, rayons aux cisailles ; les cultures proches poussent plus vite) | ✅ |
 | Chat (T) et commandes (/), complétées avec Tab : /aide, /joueurs, /mp, /où, /graine, /vide pour tous ; /tp (hasard, départ, un joueur, des coordonnées), /heure, /météo, /mode, /donne, /invoque, /soigne, /admin pour les admins du monde | ✅ |
 | Clic molette en 1re personne : le bloc visé en main (en créatif même sans l'avoir ; en survie seulement s'il est dans l'inventaire) | ✅ |
+| Performances : en 1re personne rien n'est dessiné au-delà de la brume, ombres et animations épargnées là où elles ne se voient pas, plus d'à-coups de la pousse des plantes ; case « Extrême » (tout au maximum, ses pour et contre au survol) | ✅ |
 | Animaux sauvages, prédateurs et ravageurs | à venir |
 | Cuisine, pêche, chien et chat, saisons | à venir |
 

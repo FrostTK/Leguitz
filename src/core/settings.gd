@@ -25,7 +25,13 @@ const DISPLAY_KEYS: Array[StringName] = [
 	&"brightness",
 	&"first_person_fov",
 	&"mouse_sensitivity",
+	&"extreme",
 ]
+## Extreme graphics (see `extreme`): the quality, the first-person view
+## and the props' detail reach they set.
+const EXTREME_QUALITY := 3
+const EXTREME_FAR_VIEW := 12
+const EXTREME_DETAIL := 2.0
 
 ## "auto" follows the system language, otherwise one of SUPPORTED_LANGUAGES.
 var language := LANGUAGE_AUTO
@@ -64,6 +70,13 @@ var mouse_sensitivity := 1.0
 var cave_first_person := true
 ## The player's book in a 10th slot beside the hotbar (see BookScreen).
 var guide_book := true
+## Every graphics setting at its most (Ultra, HD, the farthest first-person
+## view, props in full detail twice as far) and none of the savings
+## (CreaturesView animates every creature every frame, every plant casts
+## its shadow: PropLibrary.thrifty): the player's own choices are kept for
+## when it is off (`effective_quality`, `effective_hd`,
+## `effective_far_view`).
+var extreme := false
 
 ## The user's own values of the settings overridden for this session only
 ## (developer options): those are saved instead.
@@ -111,23 +124,19 @@ func set_world_zoom(value: int) -> void:
 	changed.emit(&"world_zoom")
 
 
-func set_graphics_quality(value: int) -> void:
-	graphics_quality = clampi(value, 0, 3)
-	_save_choice(&"graphics_quality")
-	changed.emit(&"graphics_quality")
+## The graphics quality applied (see `extreme`).
+func effective_quality() -> int:
+	return EXTREME_QUALITY if extreme else graphics_quality
 
 
-func set_hd_rendering(value: bool) -> void:
-	hd_rendering = value
-	_save_choice(&"hd_rendering")
-	changed.emit(&"hd_rendering")
+## Whether the world renders at full screen resolution (see `extreme`).
+func effective_hd() -> bool:
+	return extreme or hd_rendering
 
 
-func set_max_fps(value: int) -> void:
-	max_fps = maxi(value, 0)
-	apply_max_fps()
-	_save_choice(&"max_fps")
-	changed.emit(&"max_fps")
+## Chunks seen in first person (see `extreme`).
+func effective_far_view() -> int:
+	return EXTREME_FAR_VIEW if extreme else far_view
 
 
 func apply_max_fps() -> void:
@@ -159,18 +168,6 @@ func _notification(what: int) -> void:
 		Engine.max_fps = BACKGROUND_FPS
 	elif what == NOTIFICATION_APPLICATION_FOCUS_IN:
 		apply_max_fps()
-
-
-func set_cave_first_person(value: bool) -> void:
-	cave_first_person = value
-	_save_choice(&"cave_first_person")
-	changed.emit(&"cave_first_person")
-
-
-func set_guide_book(value: bool) -> void:
-	guide_book = value
-	_save_choice(&"guide_book")
-	changed.emit(&"guide_book")
 
 
 func set_show_debug(value: bool) -> void:

@@ -282,7 +282,7 @@ func _setup_world() -> void:
 
 
 func _on_settings_changed(key: StringName) -> void:
-	if key == &"graphics_quality":
+	if key in [&"graphics_quality", &"extreme"]:
 		_apply_quality()
 	elif key == &"cave_first_person":
 		view_mode.set_automatic(Settings.cave_first_person)
@@ -293,9 +293,15 @@ func _on_settings_changed(key: StringName) -> void:
 		world_viewport.first_person_fov = Settings.first_person_fov
 
 
+## The graphics quality, the props' detail reach and the savings
+## (Settings.extreme sets them all to their most).
 func _apply_quality() -> void:
-	lighting.apply_quality(Settings.graphics_quality)
-	world_view.set_detail(WorldView3D.DETAIL_BY_QUALITY[Settings.graphics_quality])
+	var quality := Settings.effective_quality()
+	lighting.apply_quality(quality)
+	var detail := WorldView3D.DETAIL_BY_QUALITY[quality]
+	world_view.set_detail(Settings.EXTREME_DETAIL if Settings.extreme else detail)
+	world_view.set_thrifty(not Settings.extreme)
+	creatures.thrifty = not Settings.extreme
 
 
 ## `min_view_distance` is the smallest radius (chunks) to load around the
@@ -319,7 +325,7 @@ func needed_view_distance() -> int:
 	var half := maxf(c * ground.x + s * ground.y, s * ground.x + c * ground.y) * 0.5
 	var radius := ceili(half / GameConst.CHUNK_SIZE) + 2
 	if view_mode.first_person or first_person > 0.0:
-		radius = maxi(radius, Settings.far_view)
+		radius = maxi(radius, Settings.effective_far_view())
 	return clampi(
 		maxi(radius, _min_view_distance), GameConst.MIN_VIEW_DISTANCE, GameConst.MAX_VIEW_DISTANCE
 	)
@@ -495,6 +501,11 @@ func _update_view(delta: float) -> void:
 	lighting.camera_distance = world_viewport.camera_distance
 	lighting.view_depth = world_viewport.far_ground_distance()
 	world_view.set_lod_by_distance(first_person > 0.5)
+	# Beyond the haze nothing shows: what the top-down view loaded stays
+	# loaded, hidden.
+	world_view.set_far_reach((Settings.effective_far_view() + 1.0) * GameConst.CHUNK_SIZE)
+	creatures.zoomed_out = first_person < 0.5 and world_viewport.world_zoom <= 2
+	creatures.eye = eye if first_person > 0.5 else Vector3.INF
 	var ground := world_viewport.ground_size()
 	world_view.set_lod(WorldView3D.lod_for_view(ground, world_view.detail))
 	var center := Vector2(_camera_local.x, _camera_local.z)

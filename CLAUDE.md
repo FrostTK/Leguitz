@@ -161,9 +161,27 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   the frame rate when F3 is off), `far_view` (chunks loaded in first person; the haze follows:
   LightingController.FIRST_PERSON_HAZE_PER_CHUNK), `brightness` (Environment adjustment),
   `ui_scale`, `first_person_fov` (WorldViewport.first_person_fov, dive_frame's `end_fov`),
-  `mouse_sensitivity`. A game cannot change a screen's resolution or refresh rate (the system
-  does). DisplayModes does nothing under the headless display server (tests). Never call
-  Settings.choose or save_settings in tests: they write the user's real settings file.
+  `mouse_sensitivity`, `extreme` (asked by the owner: every graphics setting at its most,
+  EXTREME_QUALITY Ultra, HD, EXTREME_FAR_VIEW 12, EXTREME_DETAIL props' reach, and none of the
+  savings below; read the graphics through Settings.effective_quality / effective_hd /
+  effective_far_view, the player's own choices are kept; SettingsPanel shows the row first in
+  Graphics with a WarningSign, a dark red "!" triangle whose tooltip tells the pros and cons,
+  and greys EXTREME_KEYS out at their most; ZOOM_CHOICES has x1). A game cannot change a
+  screen's resolution or refresh rate (the system does). DisplayModes does nothing under the
+  headless display server (tests). Never call Settings.choose or save_settings in tests: they
+  write the user's real settings file (tests set Settings.extreme and put it back).
+- Savings (measured on the owner's world: the game is held back by the main thread, the
+  graphics card waits): in first person, chunks farther than the haze are hidden
+  (WorldView3D.set_far_reach, (effective_far_view + 1) chunks; the top-down view at zoom 1
+  keeps ~360 loaded); while thrifty (off: extreme) small props (PropLibrary.is_small, no
+  taller than SMALL_HEIGHT) in their coarser copies cast no shadow (PropLibrary.casts_shadow,
+  ChunkView3D.refresh_shadows), CreaturesView does not animate creatures out of the camera's
+  view (they catch up, CreatureBody.waited) and animates those small on screen (zoomed out to
+  x2 or less, or FAR_ANIMATION from a first-person eye) every other frame, small kinds then
+  without shadow (CreatureBody.set_shadow). Always: CreatureBody sets its shader parameters only
+  when they change; Growth.update runs each tick on a slice of the chunks (Growth.slice_of,
+  each chunk once every CHECK_TICKS: no more 100 ms hitch every 5 s); Apiary.flowers_near reads
+  the chunks' voxels straight (it takes the WorldState).
 - Movement is Minecraft-like (`src/sim/physics/player_body.gd`, shared client/server) among voxels
   (`voxel_at` callable, Voxels.UNKNOWN = not loaded = solid): body 1.7 levels tall, walk up 0.2,
   jump 1.25, bump ceilings, fall off edges; solid objects block their footprint up their height

@@ -8,6 +8,11 @@ extends Node3D
 ## fades, and bursts into bits (`burst`). Farm life (Husbandry): young ones
 ## are small, a shorn sheep shows its skin, one in love gives off pink bits
 ## (hearts), one on a lead is tied to its player's hand by a rope.
+## While `thrifty` (off: Settings.extreme), what cannot be seen is spared:
+## a creature out of the camera's view is not animated (it catches up when
+## back), one small on screen (zoomed far out, or far from a first-person
+## eye) is animated every other frame, and small kinds then cast no
+## shadow.
 
 ## Bits flying off a creature: where (local units), their color, how many.
 signal burst(at: Vector3, color: Color, count: int)
@@ -45,6 +50,20 @@ const ROPE_SEGMENTS := 8
 const ROPE_SAG := 0.35
 const ROPE_ON_ANIMAL := 0.75
 const ROPE_IN_HAND := 0.85
+## Small kinds: no shadow when small on screen (thrifty).
+const SMALL := {
+	Species.Id.BEE: true,
+	Species.Id.RABBIT: true,
+	Species.Id.CHICKEN: true,
+	Species.Id.DUCK: true,
+	Species.Id.LANTERN_MOTH: true,
+}
+## First person: creatures farther than this from the eye (global units)
+## are small on screen.
+const FAR_ANIMATION := 24.0
+## A creature left unanimated catches up at most this much at once
+## (seconds).
+const MOST_WAITED := 0.5
 
 ## Where the wisps' lights go (the 3D world, outside the stretched root).
 var light_parent: Node
@@ -55,8 +74,16 @@ var sky_at := Callable()
 ## its hand.
 var player_id := -1
 var player: LocalPlayer
+## Spares what cannot be seen (see the class).
+var thrifty := true
+## Top-down and zoomed far out: every creature is small on screen.
+var zoomed_out := false
+## First person: the eye (global; INF top-down).
+var eye := Vector3.INF
 
 var _bodies: Dictionary[int, CreatureBody] = {}
+## Frames drawn (staggers the creatures animated every other frame).
+var _frame := 0
 ## Per species: part name -> mesh.
 var _meshes: Dictionary[int, Dictionary] = {}
 ## Dead ones tipping over and fading.
@@ -213,14 +240,22 @@ func pick(origin: Vector3, direction: Vector3, length: float) -> Vector2:
 
 
 func _process(delta: float) -> void:
+	_frame += 1
+	var camera := get_viewport().get_camera_3d() if is_inside_tree() else null
 	for body: CreatureBody in _bodies.values():
+		body.waited = minf(body.waited + delta, MOST_WAITED)
+		var small := _small_on_screen(body)
+		body.set_shadow(not (thrifty and small and SMALL.has(body.kind)))
+		if thrifty and not _due(body, small, camera):
+			continue
 		if sky_at.is_valid():
 			var at := body.target
 			var cell := Vector3i(
 				floori(at.x), floori(at.y + 0.5) + GameConst.SEA_LEVEL, floori(at.z)
 			)
 			body.sky_light = sky_at.call(cell) / float(LightField.MAX)
-		body.animate(delta)
+		body.animate(body.waited)
+		body.waited = 0.0
 	if not _lights.is_empty() and is_inside_tree():
 		var root := global_transform
 		var time := Time.get_ticks_msec() * 0.001
@@ -242,6 +277,24 @@ func _process(delta: float) -> void:
 				var top: float = Species.TALL[body.kind] * body.size() + 0.15
 				burst.emit(body.position + Vector3(0.0, top, 0.0), HEART_COLOR, 3)
 	_draw_leads()
+
+
+## Whether a creature is small on screen (zoomed far out, or far from the
+## first-person eye).
+func _small_on_screen(body: CreatureBody) -> bool:
+	return (
+		zoomed_out or (eye != Vector3.INF and body.global_position.distance_to(eye) > FAR_ANIMATION)
+	)
+
+
+## Whether a creature is animated this frame (thrifty): in the camera's
+## view (where it is or where it goes), every other frame when small.
+func _due(body: CreatureBody, small: bool, camera: Camera3D) -> bool:
+	if camera != null:
+		var seen := camera.is_position_in_frustum(body.global_position)
+		if not seen and not camera.is_position_in_frustum(to_global(body.target)):
+			return false
+	return not small or (_frame + body.id) % 2 == 0
 
 
 func _place(body: CreatureBody, message: Dictionary) -> void:

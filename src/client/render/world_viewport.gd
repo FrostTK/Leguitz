@@ -102,7 +102,7 @@ func refresh_size() -> void:
 	var window := get_window()
 	var screen := window.size
 	world_zoom = Settings.effective_world_zoom(screen.y)
-	hd = Settings.hd_rendering
+	hd = Settings.effective_hd()
 	_render_scale = 1 if hd else world_zoom
 	viewport.size = Vector2i(
 		ceili(float(screen.x) / _render_scale) + MARGIN * 2,
@@ -280,6 +280,6 @@ func _process(_delta: float) -> void:
 
 
 func _on_settings_changed(key: StringName) -> void:
-	if key in [&"world_zoom", &"hd_rendering"]:
+	if key in [&"world_zoom", &"hd_rendering", &"extreme"]:
 		refresh_size()
 	request_frame()
