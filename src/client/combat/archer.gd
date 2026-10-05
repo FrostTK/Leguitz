@@ -55,12 +55,23 @@ static func ballistic(start: Vector3, goal: Vector3, speed: float) -> Vector3:
 	return Vector3(across.x * cos(angle), sin(angle), across.y * cos(angle))
 
 
+## The bow in hand, the button held and arrows left; not aimed at what the
+## right click uses (a chest, a gate...: BlockInteraction.usable_here).
+func _may_draw() -> bool:
+	return (
+		client.held_item() == Items.Id.BOW
+		and client.wants_to_use()
+		and _has_arrows()
+		and not client.interaction.usable_here()
+	)
+
+
 func _process(delta: float) -> void:
 	if client == null or not client.joined:
 		return
 	if client.dragging():
 		drawn = 0.0
-	elif client.held_item() == Items.Id.BOW and client.wants_to_use() and _has_arrows():
+	elif _may_draw():
 		drawn += delta
 	elif drawn > 0.0:
 		if drawn >= MIN_DRAW:

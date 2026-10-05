@@ -131,9 +131,24 @@ func pick_block() -> void:
 	client.transport.send(Msg.pick_block(item))
 
 
+## Whether a right click uses what is aimed at as E does (a workbench, a
+## chest, a furnace, a gate) rather than placing against it: unless Shift
+## (InputBindings.SPRINT) is held, as in Minecraft.
+func usable_here() -> bool:
+	return (
+		target != null
+		and (Mining.opens(target.voxel) or Mining.swings(target.voxel))
+		and not Input.is_action_pressed(InputBindings.SPRINT)
+	)
+
+
 ## Puts the block in hand against the side of the target (a right click);
-## the player's book in hand opens instead.
+## aimed at something to use, uses it (use_target); the player's book in
+## hand opens instead.
 func place() -> void:
+	if usable_here():
+		use_target()
+		return
 	if client.held_item() == Items.Id.GUIDE_BOOK:
 		client.open_book()
 		return
@@ -270,9 +285,9 @@ func _tend() -> bool:
 
 ## Whether a right click would tend what is aimed at rather than place or
 ## eat what is in hand: an animal, sow it on farmland, put it in a
-## composter, pick what is ripe, take a hive's honey.
+## composter, pick what is ripe, take a hive's honey, use it (usable_here).
 func tends_here() -> bool:
-	if sows_here() or _animal_aimed() or _hive_ready(client.held_item()):
+	if sows_here() or _animal_aimed() or _hive_ready(client.held_item()) or usable_here():
 		return true
 	return (
 		target != null

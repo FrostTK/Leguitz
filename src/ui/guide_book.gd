@@ -75,7 +75,7 @@ static func _controls() -> Array:
 		_keys("BOOK_JUMP", InputNames.keys(InputBindings.JUMP)),
 		_keys("BOOK_BREAK", [_t("MOUSE_LEFT")]),
 		_keys("BOOK_PLACE", [_t("MOUSE_RIGHT")]),
-		_keys("BOOK_USE", InputNames.keys(InputBindings.USE)),
+		_keys("BOOK_USE", [_t("MOUSE_RIGHT")] + Array(InputNames.keys(InputBindings.USE))),
 		_combo("BOOK_CAMERA", "BOOK_CAMERA_MOUSE"),
 		_combo("BOOK_ZOOM", "BOOK_ZOOM_MOUSE"),
 		_combo("BOOK_HAND", "BOOK_HAND_KEYS"),

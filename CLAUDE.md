@@ -200,7 +200,9 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   the voxel lies on. Left button held breaks, right click places (a right drag still turns the
   camera), gamepad triggers; placing uses the block in hand. E (gamepad B, InputBindings.USE)
   uses what is aimed at: opens a workbench, a chest or a furnace (`Mining.opens`,
-  BlockInteraction.use_target); the right click never opens them.
+  BlockInteraction.use_target); the right click does the same on them and on gates (asked by
+  the owner: BlockInteraction.usable_here, first thing in `place`, also in `tends_here` and
+  keeping the bow from drawing, Archer._may_draw); Shift + right click places against them.
 - Items (`src/sim/items/`): `Items` is the registry (ids saved: only append; name key ITEM_<ID>
   in i18n, stack size, the voxel a block item places, what each broken voxel gives: grass gives
   dirt, a tree a log per level of trunk). `Inventory` (hotbar 9 + bag 27 + the cursor's stack +
