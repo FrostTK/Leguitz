@@ -3,9 +3,9 @@ extends RefCounted
 ## Ways for animals over the voxels (A*): from tile to tile, eight ways
 ## (no cutting corners), up one level at a time (a jump) and down a few
 ## (MAX_DROP), only where the body fits (`tall` levels free over the
-## ground), never into water, lava or the tile of a solid object (a
-## trunk, a rock, furniture). Within a budget of nodes: an unreachable
-## goal gives the way to the closest place found.
+## ground), never into water (but for swimmers: over it), lava or the tile
+## of a solid object (a trunk, a rock, furniture). Within a budget of
+## nodes: an unreachable goal gives the way to the closest place found.
 
 ## Levels an animal drops down at most, and the nodes a search may open.
 const MAX_DROP := 3
@@ -14,6 +14,8 @@ const DIAGONAL := 1.4142
 ## Extra cost of a climb and of each level dropped (they prefer the flat).
 const CLIMB_COST := 0.6
 const DROP_COST := 0.3
+## A swimmer floats this far under the top of a water cell (levels).
+const FLOAT := 0.3
 const NEIGHBORS: Array[Vector2i] = [
 	Vector2i(1, 0),
 	Vector2i(-1, 0),
@@ -31,7 +33,7 @@ const NEIGHBORS: Array[Vector2i] = [
 ## height of its ground), the start left out. Empty when there is no way
 ## (or the closest place found is not nearer than the start).
 static func find(
-	start: Vector2i, height: float, goal: Vector2i, voxel_at: Callable, tall: float
+	start: Vector2i, height: float, goal: Vector2i, voxel_at: Callable, tall: float, swims := false
 ) -> Array[Vector3]:
 	var heights := {start: height}
 	var costs := {start: 0.0}
@@ -55,13 +57,13 @@ static func find(
 		var at: float = heights[here]
 		for step in NEIGHBORS:
 			var next := here + step
-			var ground := ground_at(next, at, voxel_at, tall)
+			var ground := ground_at(next, at, voxel_at, tall, swims)
 			if is_nan(ground):
 				continue
 			if step.x != 0 and step.y != 0:
 				# Diagonally only past both sides.
-				var side_a := ground_at(here + Vector2i(step.x, 0), at, voxel_at, tall)
-				var side_b := ground_at(here + Vector2i(0, step.y), at, voxel_at, tall)
+				var side_a := ground_at(here + Vector2i(step.x, 0), at, voxel_at, tall, swims)
+				var side_b := ground_at(here + Vector2i(0, step.y), at, voxel_at, tall, swims)
 				if is_nan(side_a) or is_nan(side_b) or side_a > at + 0.5 or side_b > at + 0.5:
 					continue
 			var cost: float = costs[here] + (DIAGONAL if step.x != 0 and step.y != 0 else 1.0)
@@ -88,14 +90,20 @@ static func find(
 
 ## The height (levels) a body `tall` levels high stands at on a tile,
 ## coming from `from` (levels): up one level at most, down MAX_DROP at
-## most, with room for it and no liquid; NAN where it cannot.
-static func ground_at(tile: Vector2i, from: float, voxel_at: Callable, tall: float) -> float:
+## most, with room for it and no liquid (a swimmer floats on water, FLOAT
+## under its top); NAN where it cannot.
+static func ground_at(
+	tile: Vector2i, from: float, voxel_at: Callable, tall: float, swims := false
+) -> float:
 	var sea := GameConst.SEA_LEVEL
 	var top := floori(from + 1.01) + sea - 1
 	var bottom := floori(from - MAX_DROP + 0.01) + sea - 1
 	var ground := NAN
 	for row in range(top, bottom - 1, -1):
 		var voxel: int = voxel_at.call(Vector3i(tile.x, row, tile.y))
+		if swims and Voxels.is_water(voxel):
+			ground = float(row + 1 - sea) - FLOAT
+			break
 		if voxel == Voxels.UNKNOWN or Voxels.is_liquid(voxel):
 			return NAN
 		if Voxels.is_cube(voxel):
@@ -107,7 +115,7 @@ static func ground_at(tile: Vector2i, from: float, voxel_at: Callable, tall: flo
 	if is_nan(ground):
 		return NAN
 	# Room for the body, above the ground and up to where it comes from.
-	var first := int(ground) + sea
+	var first := ceili(ground) + sea
 	var last := ceili(maxf(ground, from) + tall - 0.01) + sea
 	for row in range(first, last):
 		var voxel: int = voxel_at.call(Vector3i(tile.x, row, tile.y))

@@ -49,6 +49,8 @@ const GHOST_ABOVE := 24.0
 ## The body's box at the feet (world pixels) and its height (levels).
 var box := BOX
 var tall := BODY_HEIGHT
+## How far under a liquid's surface the feet float (a duck rides on it).
+var float_depth := FLOAT_DEPTH
 var feet := Vector2.ZERO
 var height := 0.0
 var vertical_speed := 0.0
@@ -255,13 +257,13 @@ func step(motion: Vector2, jump: bool, delta: float, voxel_at: Callable) -> void
 
 
 ## Moves in water or lava: sinking slowly, rising while `jump` is held up
-## to float FLOAT_DEPTH under the surface, leaping out when held against a
+## to float `float_depth` under the surface, leaping out when held against a
 ## bank (`blocked`) near the surface; lands on the ground `below`.
 func _swim(jump: bool, blocked: bool, below: float, delta: float, voxel_at: Callable) -> void:
 	on_ground = false
 	var tile := Coords.world_to_tile(feet)
 	var row := floori(height + 0.05) + GameConst.SEA_LEVEL
-	var floating := _surface(tile, row, voxel_at) - FLOAT_DEPTH
+	var floating := _surface(tile, row, voxel_at) - float_depth
 	var leaping := vertical_speed > SWIM_UP + 0.01
 	if jump and blocked and height >= floating - 0.25 and not leaping:
 		vertical_speed = sqrt(2.0 * GRAVITY * LEAP_HEIGHT)

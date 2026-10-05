@@ -97,6 +97,17 @@ const SHAPED := [
 		"keys": {"P": PLANKS, "W": Items.Id.WHEAT},
 		"result": [Items.Id.NEST_BOX, 1],
 	},
+	# Bees: glass bottles for the honey, a beehive of planks and honeycomb.
+	{
+		"pattern": ["G G", " G "],
+		"keys": {"G": Items.Id.GLASS},
+		"result": [Items.Id.GLASS_BOTTLE, 3],
+	},
+	{
+		"pattern": ["PPP", "HHH", "PPP"],
+		"keys": {"P": PLANKS, "H": Items.Id.HONEYCOMB},
+		"result": [Items.Id.BEEHIVE, 1],
+	},
 	{
 		"pattern": ["P", "S", "F"],
 		"keys": {"P": STONES, "S": Items.Id.STICK, "F": Items.Id.FEATHER},

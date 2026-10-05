@@ -95,6 +95,9 @@ const AROUND: Array[Vector2i] = [
 	Vector2i(1, 1),
 ]
 
+## The hives of the loaded chunks, gathered at each update (pollination).
+static var _hives: Array[Vector3i] = []
+
 
 ## Whether a sapling can be planted on a voxel.
 static func is_soil(voxel: int) -> bool:
@@ -103,7 +106,7 @@ static func is_soil(voxel: int) -> bool:
 
 ## Whether something set in a cell may grow: a sapling, a young tree, a
 ## fruit tree in blossom, an unripe crop, a grown stem, dirt, farmland, a
-## full composter (rotting).
+## full composter (rotting), a hive (honey, bees).
 static func may_grow(voxel: int) -> bool:
 	var block := Voxels.block_of(voxel)
 	return (
@@ -112,6 +115,7 @@ static func may_grow(voxel: int) -> bool:
 		or FRUITING.has(block)
 		or Farming.STAGES.has(block)
 		or Farming.FRUIT_OF.has(block)
+		or Apiary.is_hive(block)
 		or voxel == Voxels.of_ground(Tiles.Ground.DIRT)
 		or Farming.is_farmland(voxel)
 		or block == Tiles.Block.COMPOSTER_FULL
@@ -139,6 +143,11 @@ static func note(chunk: ChunkData, cell: Vector3i, voxel: int) -> void:
 ## (every CHECK_TICKS; `chance` instead of the odds of the durations: tests).
 static func update(server: GameServer, chance := -1.0) -> void:
 	var seconds := CHECK_TICKS * GameConst.TICK_DELTA
+	_hives.clear()
+	for chunk: ChunkData in server.world.chunks.values():
+		for cell: Vector3i in chunk.growing:
+			if Apiary.is_hive(Voxels.block_of(server.world.loaded_voxel_at(cell))):
+				_hives.append(cell)
 	for chunk: ChunkData in server.world.chunks.values():
 		if chunk.growing.is_empty():
 			continue
@@ -158,6 +167,10 @@ static func _grow(
 		var watered := Watering.dry_out(server, chunk, cell, seconds)
 		Farming.settle_farmland(server, cell, voxel, chance if chance >= 0.0 else fallow, watered)
 		return
+	if Apiary.is_hive(block):
+		var honey := seconds / server.clock.scale_duration(Apiary.HONEY_SECONDS)
+		Apiary.work(server, cell, voxel, chance if chance >= 0.0 else honey)
+		return
 	if block == Tiles.Block.COMPOSTER_FULL:
 		var rot := seconds / server.clock.scale_duration(Composting.ROT_SECONDS)
 		if server.rng.randf() < (chance if chance >= 0.0 else rot):
@@ -174,6 +187,8 @@ static func _grow(
 		if not Farming.holds(cell, block, world.loaded_voxel_at):
 			return
 		mean = Farming.stage_seconds(world, cell)
+		if Apiary.pollinated(_hives, cell):
+			mean *= Apiary.POLLINATED
 	elif not dirt or not _bare(world, cell):
 		chunk.growing.erase(cell)
 		return

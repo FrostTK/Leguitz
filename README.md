@@ -27,7 +27,8 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Nouvelles cultures : betterave, chou, maïs, tomate, fraise, framboise, lin, citrouille et pastèque (le fruit pousse à côté de la tige), riz en rizière, canne à sucre qui repousse, vigne sur treillis ; cueillette ; arbres fruitiers (pommier, cerisier, oranger, pêcher) en fleur puis en fruits ; plantes sauvages dans le monde | ✅ |
 | Élevage : nourrir pour avoir des petits qui grandissent, corde pour mener une bête, enclos, cisailles (laine qui repousse), seau (lait de brebis), pondoir et œufs, affection qui fait donner plus, abris où les bêtes dorment la nuit | ✅ |
 | Four d'usine à 4 cuissons : quatre variétés à la fois sur un seul feu (qui brûle plus vite), avec ses coffres « À cuire », « Combustible » et « Cuit » | ✅ |
-| Animaux de ferme (vache, chèvre, canard, lapin, cochon, abeilles), animaux sauvages et prédateurs | à venir |
+| Animaux de ferme : vaches et chèvres (lait, cuir), canards qui nagent et pondent, lapins, cochons nés des sangliers de la ferme ; abeilles, nids sauvages et ruches (miel au bocal, rayons aux cisailles ; les cultures proches poussent plus vite) | ✅ |
+| Animaux sauvages, prédateurs et ravageurs | à venir |
 | Cuisine, pêche, chien et chat, saisons | à venir |
 
 ![Leguitz : l'élevage : un enclos de moutons (un tondu, des agneaux), un sanglier mené à la corde, un abri avec des pondoirs ; la nuit, les bêtes dorment couchées, sous l'abri pour celles qui le peuvent](docs/screenshots/phase7-elevage.png)

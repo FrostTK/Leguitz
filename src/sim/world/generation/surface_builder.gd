@@ -34,6 +34,7 @@ const VEGETATION := {
 		[Tiles.Block.WILD_CABBAGE, 0.003],
 		[Tiles.Block.WILD_FLAX, 0.003],
 		[Tiles.Block.PUMPKIN, 0.0012],
+		[Tiles.Block.BEE_NEST, 0.0008],
 	],
 	Biomes.Id.SNOWY_PLAINS: [[Tiles.Block.SNOWY_SPRUCE, 0.006], [Tiles.Block.ROCK, 0.002]],
 	Biomes.Id.DESERT:
@@ -66,6 +67,7 @@ const VEGETATION := {
 		[Tiles.Block.TALL_GRASS, 0.05],
 		[Tiles.Block.WILD_STRAWBERRY, 0.012],
 		[Tiles.Block.WILD_GRAPES, 0.004],
+		[Tiles.Block.BEE_NEST, 0.004],
 	],
 	Biomes.Id.BIRCH_FOREST:
 	[
@@ -142,6 +144,7 @@ const VEGETATION := {
 		[Tiles.Block.OAK, 0.002],
 		[Tiles.Block.WILD_FLAX, 0.012],
 		[Tiles.Block.WILD_BEETROOT, 0.004],
+		[Tiles.Block.BEE_NEST, 0.003],
 	],
 	Biomes.Id.BEACH: [[Tiles.Block.WILD_CABBAGE, 0.006]],
 	Biomes.Id.GROVE: [[Tiles.Block.SNOWY_SPRUCE, 0.22]],
@@ -158,8 +161,8 @@ const VEGETATION := {
 }
 
 ## The wild plants (they never stand for the undergrowth under a tree
-## thinned out) and the wild fruits (solid: kept only with no solid object
-## around them, WorldGenerator._spaced).
+## thinned out) and the wild fruits and bee nests (solid: kept only with no
+## solid object around them, WorldGenerator._spaced).
 const WILD_PLANTS := {
 	Tiles.Block.WILD_BEETROOT: true,
 	Tiles.Block.WILD_CABBAGE: true,
@@ -171,7 +174,9 @@ const WILD_PLANTS := {
 	Tiles.Block.WILD_GRAPES: true,
 	Tiles.Block.WILD_RASPBERRY: true,
 }
-const WILD_FRUITS := {Tiles.Block.PUMPKIN: true, Tiles.Block.MELON: true}
+const WILD_FRUITS := {
+	Tiles.Block.PUMPKIN: true, Tiles.Block.MELON: true, Tiles.Block.BEE_NEST: true
+}
 ## Wild rice on the water: chance per tile.
 const WILD_RICE := {Biomes.Id.SWAMP: 0.03, Biomes.Id.RIVER: 0.006}
 ## Wild fruit trees: [the tree they stand for, the fruit tree, chance],
@@ -393,6 +398,11 @@ func orchard_tree(biome: int, tree: int, tx: int, ty: int) -> int:
 			var bearing := HashUtil.unit2(_orchard_seed ^ 0x5EED, tx, ty) < 0.5
 			return Growth.FRUITING[entry[1]] if bearing else entry[1]
 	return tree
+
+
+## A wild bee nest's honey (0 to Apiary.FULL), by its tile.
+func nest_honey(tx: int, ty: int) -> int:
+	return int(HashUtil.unit2(_orchard_seed ^ 0xB33, tx, ty) * (Apiary.FULL + 1))
 
 
 ## Mountain rock: solid stone patches with visible ore veins.

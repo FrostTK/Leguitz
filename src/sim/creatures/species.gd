@@ -4,11 +4,28 @@ extends RefCounted
 ## where they live and what they give; the monsters' blows. Ids are saved
 ## with the animals: only append to the enum, never renumber.
 
-enum Id { SHEEP, BOAR, CHICKEN, DEER, LANTERN_MOTH, SHADE_LURKER, ROCK_MIMIC, WISP }
+enum Id {
+	SHEEP,
+	BOAR,
+	CHICKEN,
+	DEER,
+	LANTERN_MOTH,
+	SHADE_LURKER,
+	ROCK_MIMIC,
+	WISP,
+	COW,
+	GOAT,
+	DUCK,
+	RABBIT,
+	PIG,
+	BEE,
+}
 
-## The monsters (Monster), and those that fly.
+## The monsters (Monster), those that fly, and the animals that swim
+## (their ways go over water: Pathfinder).
 const MONSTERS := {Id.LANTERN_MOTH: true, Id.SHADE_LURKER: true, Id.ROCK_MIMIC: true, Id.WISP: true}
-const FLIERS := {Id.LANTERN_MOTH: true, Id.WISP: true}
+const FLIERS := {Id.LANTERN_MOTH: true, Id.WISP: true, Id.BEE: true}
+const SWIMMERS := {Id.DUCK: true}
 
 ## Name keys (i18n), and where each lives in a word (the book).
 const NAME_KEYS := {
@@ -20,6 +37,12 @@ const NAME_KEYS := {
 	Id.SHADE_LURKER: "CREATURE_SHADE_LURKER",
 	Id.ROCK_MIMIC: "CREATURE_ROCK_MIMIC",
 	Id.WISP: "CREATURE_WISP",
+	Id.COW: "CREATURE_COW",
+	Id.GOAT: "CREATURE_GOAT",
+	Id.DUCK: "CREATURE_DUCK",
+	Id.RABBIT: "CREATURE_RABBIT",
+	Id.PIG: "CREATURE_PIG",
+	Id.BEE: "CREATURE_BEE",
 }
 ## Monsters: how they hunt, in words (the book).
 const HOW_KEYS := {
@@ -37,6 +60,12 @@ const HOME_KEYS := {
 	Id.SHADE_LURKER: "CREATURE_SHADE_LURKER_HOME",
 	Id.ROCK_MIMIC: "CREATURE_ROCK_MIMIC_HOME",
 	Id.WISP: "CREATURE_WISP_HOME",
+	Id.COW: "CREATURE_COW_HOME",
+	Id.GOAT: "CREATURE_GOAT_HOME",
+	Id.DUCK: "CREATURE_DUCK_HOME",
+	Id.RABBIT: "CREATURE_RABBIT_HOME",
+	Id.PIG: "CREATURE_PIG_HOME",
+	Id.BEE: "CREATURE_BEE_HOME",
 }
 ## The body's box at the feet (world pixels, like PlayerBody.BOX) and its
 ## height (levels).
@@ -49,6 +78,12 @@ const BOX := {
 	Id.SHADE_LURKER: Vector2(10.0, 8.0),
 	Id.ROCK_MIMIC: Vector2(13.0, 13.0),
 	Id.WISP: Vector2(6.0, 6.0),
+	Id.COW: Vector2(13.0, 13.0),
+	Id.GOAT: Vector2(10.0, 10.0),
+	Id.DUCK: Vector2(7.0, 7.0),
+	Id.RABBIT: Vector2(6.0, 6.0),
+	Id.PIG: Vector2(12.0, 12.0),
+	Id.BEE: Vector2(4.0, 4.0),
 }
 const TALL := {
 	Id.SHEEP: 1.1,
@@ -59,6 +94,12 @@ const TALL := {
 	Id.SHADE_LURKER: 1.8,
 	Id.ROCK_MIMIC: 0.9,
 	Id.WISP: 0.5,
+	Id.COW: 1.3,
+	Id.GOAT: 1.1,
+	Id.DUCK: 0.6,
+	Id.RABBIT: 0.55,
+	Id.PIG: 0.9,
+	Id.BEE: 0.35,
 }
 ## Vitality (the player's points: a bare hand takes 1).
 const HEALTH := {
@@ -70,6 +111,12 @@ const HEALTH := {
 	Id.SHADE_LURKER: 16,
 	Id.ROCK_MIMIC: 20,
 	Id.WISP: 6,
+	Id.COW: 10,
+	Id.GOAT: 8,
+	Id.DUCK: 4,
+	Id.RABBIT: 3,
+	Id.PIG: 10,
+	Id.BEE: 2,
 }
 ## Tiles per second: wandering, and running away (monsters: drawing back).
 const WALK_SPEED := {
@@ -81,6 +128,12 @@ const WALK_SPEED := {
 	Id.SHADE_LURKER: 1.0,
 	Id.ROCK_MIMIC: 1.0,
 	Id.WISP: 1.2,
+	Id.COW: 1.1,
+	Id.GOAT: 1.4,
+	Id.DUCK: 1.0,
+	Id.RABBIT: 1.6,
+	Id.PIG: 1.2,
+	Id.BEE: 1.8,
 }
 const FLEE_SPEED := {
 	Id.SHEEP: 3.4,
@@ -91,6 +144,12 @@ const FLEE_SPEED := {
 	Id.SHADE_LURKER: 3.0,
 	Id.ROCK_MIMIC: 2.0,
 	Id.WISP: 3.0,
+	Id.COW: 3.2,
+	Id.GOAT: 4.2,
+	Id.DUCK: 3.2,
+	Id.RABBIT: 5.5,
+	Id.PIG: 3.4,
+	Id.BEE: 3.0,
 }
 ## Monsters: tiles per second hunting (fliers: diving at the player), what
 ## their blow takes off, and what it is called when it makes a player pass
@@ -123,8 +182,15 @@ const DROPS := {
 	Id.SHADE_LURKER: [[Items.Id.SHADE_ESSENCE, 0, 1]],
 	Id.ROCK_MIMIC: [[Items.Id.STONE, 2, 4], [Items.Id.RAW_IRON, 0, 1]],
 	Id.WISP: [[Items.Id.WISP_EMBER, 1, 1]],
+	Id.COW: [[Items.Id.RAW_BEEF, 1, 3], [Items.Id.HIDE, 0, 2]],
+	Id.GOAT: [[Items.Id.RAW_MUTTON, 1, 2], [Items.Id.HIDE, 0, 1]],
+	Id.DUCK: [[Items.Id.RAW_DUCK, 1, 1], [Items.Id.FEATHER, 0, 2]],
+	Id.RABBIT: [[Items.Id.RAW_RABBIT, 1, 1], [Items.Id.HIDE, 0, 1]],
+	Id.PIG: [[Items.Id.RAW_PORK, 2, 3]],
+	Id.BEE: [[Items.Id.HONEYCOMB, 0, 0]],
 }
-## Where herds are found, and how many in one.
+## Where herds are found, and how many in one (pigs are born on farms to
+## boars, bees come out of hives: none in the wild).
 const BIOMES := {
 	Id.SHEEP: [Biomes.Id.PLAINS, Biomes.Id.MEADOW, Biomes.Id.SNOWY_PLAINS, Biomes.Id.GROVE],
 	Id.BOAR: [Biomes.Id.FOREST, Biomes.Id.DARK_FOREST, Biomes.Id.OLD_GROWTH_TAIGA, Biomes.Id.SWAMP],
@@ -146,12 +212,39 @@ const BIOMES := {
 		Biomes.Id.OLD_GROWTH_TAIGA,
 		Biomes.Id.MEADOW,
 	],
+	Id.COW: [Biomes.Id.PLAINS, Biomes.Id.MEADOW, Biomes.Id.SAVANNA],
+	Id.GOAT:
+	[
+		Biomes.Id.SNOWY_SLOPES,
+		Biomes.Id.GROVE,
+		Biomes.Id.STONY_PEAKS,
+		Biomes.Id.JAGGED_PEAKS,
+	],
+	Id.DUCK: [Biomes.Id.RIVER, Biomes.Id.SWAMP],
+	Id.RABBIT:
+	[
+		Biomes.Id.FOREST,
+		Biomes.Id.BIRCH_FOREST,
+		Biomes.Id.FLOWER_FOREST,
+		Biomes.Id.TAIGA,
+		Biomes.Id.SNOWY_PLAINS,
+		Biomes.Id.SNOWY_TAIGA,
+		Biomes.Id.DESERT,
+	],
+	Id.PIG: [],
+	Id.BEE: [],
 }
 const HERD := {
 	Id.SHEEP: Vector2i(2, 4),
 	Id.BOAR: Vector2i(2, 3),
 	Id.CHICKEN: Vector2i(2, 4),
 	Id.DEER: Vector2i(1, 3),
+	Id.COW: Vector2i(2, 4),
+	Id.GOAT: Vector2i(2, 3),
+	Id.DUCK: Vector2i(2, 4),
+	Id.RABBIT: Vector2i(1, 3),
+	Id.PIG: Vector2i(1, 1),
+	Id.BEE: Vector2i(1, 1),
 }
 
 

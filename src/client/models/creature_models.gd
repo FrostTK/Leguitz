@@ -33,6 +33,13 @@ const DEER_BELLY := "#ecdcbd"
 const ANTLER := ["#a8916a", "#cdb98f", "#e6d8b4"]
 const HOOF := "#1f1714"
 const EYE := "#17110f"
+const COW_HIDE := ["#4a2e1c", "#6a4428", "#8a5a36"]
+const COW_PATCH := ["#e2dccf", "#f4f0e6"]
+const GOAT := ["#a8a094", "#c6beb0", "#e2dcd0"]
+const GOAT_HORN := ["#4a3c30", "#6a5846"]
+const DUCK := ["#6a6058", "#8a8074", "#a89e90"]
+const RABBIT := ["#6a5240", "#8a6c54", "#a8886c"]
+const PIG := ["#d07a7c", "#e89a9a", "#f6bcb8"]
 const EYE_SHINE := "#f4efe6"
 
 static var _parts: Dictionary[int, Array] = {}
@@ -55,6 +62,18 @@ static func parts(kind: int, shorn := false) -> Array:
 				_parts[kind] = _chicken()
 			Species.Id.DEER:
 				_parts[kind] = _deer()
+			Species.Id.COW:
+				_parts[kind] = _cow()
+			Species.Id.GOAT:
+				_parts[kind] = _goat()
+			Species.Id.DUCK:
+				_parts[kind] = _duck()
+			Species.Id.RABBIT:
+				_parts[kind] = _rabbit()
+			Species.Id.PIG:
+				_parts[kind] = _pig()
+			Species.Id.BEE:
+				_parts[kind] = _bee()
 			_:
 				_parts[kind] = MonsterModels.build(kind)
 	return _parts[kind]
@@ -306,4 +325,156 @@ static func _deer() -> Array:
 		antlers.line(top, base + Vector3(side * 2.2, 6.5, 0.5), 0.4, paint)
 	var on_head := Vector3(-5.5, 22.0, 5.5)
 	parts.append(make_part("antlers", antlers, on_head, Vector3(0.0, 13.0, 5.0)))
+	return parts
+
+
+# ---------------------------------------------------------------- farm animals
+
+
+## A cow: a long brown body with white patches, a pink udder, short horns,
+## a pale muzzle, a thin tail ending in a tuft.
+static func _cow() -> Array:
+	var leg := _leg(2, 7, ["#4a3020", "#7a5234"])
+	var parts: Array = _four_legs(leg, 2, 4, -7)
+	var body := VoxelGrid.new(Vector3i(13, 11, 19))
+	var hide := _shaded(COW_HIDE, 1.0, 9.0, 47)
+	var coat := func(p: Vector3i) -> int:
+		if _noise(p / 3, 53) > 0.62:
+			return _v(COW_PATCH[1 if p.y > 5 else 0])
+		return hide.call(p)
+	body.ellipsoid(Vector3(6.5, 5.2, 9.5), Vector3(5.8, 4.8, 8.6), coat)
+	body.box(Vector3i(5, 0, 5), Vector3i(7, 1, 7), _v("#e8a0a0"))
+	body.box(Vector3i(6, 6, 0), Vector3i(6, 8, 0), _v(COW_HIDE[0]))
+	body.box(Vector3i(6, 4, 0), Vector3i(6, 5, 0), _v("#2a1a10"))
+	parts.append(make_part("body", body, Vector3(-6.5, 6.0, -9.5), Vector3(0.0, 6.0, 0.0)))
+	var head := VoxelGrid.new(Vector3i(10, 9, 8))
+	head.box(Vector3i(2, 0, 0), Vector3i(7, 6, 5), _shaded(COW_HIDE, 0.0, 6.0, 59))
+	head.box(Vector3i(2, 4, 3), Vector3i(7, 6, 5), _v(COW_PATCH[1]))
+	head.box(Vector3i(2, 0, 6), Vector3i(7, 3, 7), _v("#d8b8a8"))
+	head.set_voxel(Vector3i(3, 1, 7), _v("#5a3a30"))
+	head.set_voxel(Vector3i(6, 1, 7), _v("#5a3a30"))
+	_eyes(head, 2, 7, 3, 5)
+	# Ears out to the sides, short pale horns over them.
+	for x: int in [0, 1, 8, 9]:
+		head.set_voxel(Vector3i(x, 5, 2), _v(COW_HIDE[1]))
+	for x: int in [2, 7]:
+		head.set_voxel(Vector3i(x, 7, 2), _v("#efe4c4"))
+		head.set_voxel(Vector3i(x + (1 if x == 2 else -1), 8, 2), _v("#d8c8a0"))
+	parts.append(make_part("head", head, Vector3(-5.0, 9.0, 7.0), Vector3(0.0, 13.0, 8.0)))
+	return parts
+
+
+## A goat: slim, pale grey and cream, a beard, horns curving back over its
+## neck.
+static func _goat() -> Array:
+	var leg := _leg(2, 6, ["#5a4a3a", "#bfb6a6"], "#2a2420")
+	var parts: Array = _four_legs(leg, 1, 3, -5)
+	var body := VoxelGrid.new(Vector3i(9, 9, 15))
+	body.ellipsoid(Vector3(4.5, 4.4, 7.5), Vector3(3.9, 3.8, 6.8), _shaded(GOAT, 1.0, 8.0, 61))
+	body.box(Vector3i(4, 6, 0), Vector3i(4, 8, 1), _v(GOAT[2]))
+	parts.append(make_part("body", body, Vector3(-4.5, 5.0, -7.5), Vector3(0.0, 5.0, 0.0)))
+	var head := VoxelGrid.new(Vector3i(8, 11, 9))
+	var coat := _shaded(GOAT, 0.0, 9.0, 67)
+	for i in 4:
+		head.box(Vector3i(3, i, 1 + i / 2), Vector3i(5, i + 1, 3 + i / 2), coat)
+	head.box(Vector3i(2, 4, 3), Vector3i(5, 7, 7), coat)
+	head.box(Vector3i(3, 2, 6), Vector3i(4, 3, 7), _v("#e8e2d6"))
+	_eyes(head, 2, 5, 6, 5)
+	for x: int in [2, 5]:
+		head.box(Vector3i(x, 8, 4), Vector3i(x, 9, 4), _v(GOAT_HORN[1]))
+		head.set_voxel(Vector3i(x, 10, 3), _v(GOAT_HORN[0]))
+		head.set_voxel(Vector3i(x, 9, 2), _v(GOAT_HORN[0]))
+	head.set_voxel(Vector3i(0, 7, 4), _v(GOAT[1]))
+	head.set_voxel(Vector3i(7, 7, 4), _v(GOAT[1]))
+	parts.append(make_part("head", head, Vector3(-4.0, 7.0, 4.5), Vector3(0.0, 9.0, 6.0)))
+	return parts
+
+
+## A mallard: a grey-brown body, a dark green head over a white collar, a
+## flat yellow bill, orange feet.
+static func _duck() -> Array:
+	var parts: Array = []
+	var leg := VoxelGrid.new(Vector3i(3, 3, 3))
+	leg.box(Vector3i(1, 1, 1), Vector3i(1, 2, 1), _v("#e8822a"))
+	leg.box(Vector3i(0, 0, 1), Vector3i(2, 0, 2), _v("#e8822a"))
+	for spot in [["leg_fl", -2.5], ["leg_fr", -0.5]]:
+		var corner := Vector3(spot[1], 0.0, -1.5)
+		parts.append(make_part(spot[0], leg, corner, corner + Vector3(1.5, 3.0, 1.5)))
+	var body := VoxelGrid.new(Vector3i(7, 7, 11))
+	body.ellipsoid(Vector3(3.5, 3.0, 5.4), Vector3(3.0, 2.6, 4.6), _shaded(DUCK, 0.0, 6.0, 71))
+	body.box(Vector3i(2, 4, 0), Vector3i(4, 5, 1), _v("#2a2a30"))
+	parts.append(make_part("body", body, Vector3(-3.5, 2.0, -5.5), Vector3(0.0, 2.0, 0.0)))
+	for side in [["wing_l", -3.5, -0.5], ["wing_r", 2.5, 0.5]]:
+		var wing := VoxelGrid.new(Vector3i(1, 3, 5))
+		wing.box(Vector3i(0, 0, 0), Vector3i(0, 2, 4), _v(DUCK[1]))
+		wing.box(Vector3i(0, 1, 1), Vector3i(0, 1, 2), _v("#3a5ab8"))
+		var corner := Vector3(side[1], 3.0, -2.5)
+		parts.append(make_part(side[0], wing, corner, corner + Vector3(0.5 - side[2], 3.0, 3.0)))
+	var head := VoxelGrid.new(Vector3i(3, 5, 6))
+	head.box(Vector3i(0, 0, 0), Vector3i(2, 0, 2), _v("#f2f2ee"))
+	head.box(Vector3i(0, 1, 0), Vector3i(2, 4, 2), _v("#1e5a32"))
+	head.box(Vector3i(0, 2, 3), Vector3i(2, 2, 5), _v("#e8c040"))
+	head.set_voxel(Vector3i(0, 3, 2), _v(EYE))
+	head.set_voxel(Vector3i(2, 3, 2), _v(EYE))
+	parts.append(make_part("head", head, Vector3(-1.5, 5.0, 3.0), Vector3(0.0, 5.0, 3.5)))
+	return parts
+
+
+## A rabbit: a round brown body, a white tuft of a tail, long ears.
+static func _rabbit() -> Array:
+	var leg := _leg(2, 2, [RABBIT[1]], RABBIT[0])
+	var parts: Array = _four_legs(leg, 1, 1, -4)
+	var body := VoxelGrid.new(Vector3i(7, 6, 9))
+	body.ellipsoid(Vector3(3.5, 3.0, 4.5), Vector3(3.0, 2.6, 3.8), _shaded(RABBIT, 0.0, 5.0, 73))
+	body.box(Vector3i(3, 3, 0), Vector3i(3, 4, 0), _v("#f6f2ea"))
+	parts.append(make_part("body", body, Vector3(-3.5, 1.0, -4.5), Vector3(0.0, 1.0, 0.0)))
+	var head := VoxelGrid.new(Vector3i(5, 8, 5))
+	head.box(Vector3i(1, 0, 0), Vector3i(3, 3, 3), _shaded(RABBIT, 0.0, 3.0, 79))
+	head.set_voxel(Vector3i(2, 1, 4), _v("#e8a0a8"))
+	_eyes(head, 1, 3, 2, 3)
+	for x: int in [1, 3]:
+		head.box(Vector3i(x, 4, 1), Vector3i(x, 7, 1), _v(RABBIT[1]))
+		head.box(Vector3i(x, 5, 2), Vector3i(x, 6, 2), _v("#e8b8b8"))
+	parts.append(make_part("head", head, Vector3(-2.5, 4.0, 2.0), Vector3(0.0, 5.0, 3.0)))
+	return parts
+
+
+## A pig: a farm-born boar, pink and round, a flat snout, floppy ears, a
+## curly tail.
+static func _pig() -> Array:
+	var leg := _leg(2, 4, [PIG[0], PIG[1]], "#8a5a50")
+	var parts: Array = _four_legs(leg, 1, 3, -6)
+	var body := VoxelGrid.new(Vector3i(11, 10, 17))
+	body.ellipsoid(Vector3(5.5, 4.6, 8.5), Vector3(4.9, 4.4, 7.8), _shaded(PIG, 1.0, 8.0, 83))
+	for p: Vector3i in [Vector3i(5, 6, 0), Vector3i(6, 7, 0), Vector3i(5, 8, 0), Vector3i(4, 7, 0)]:
+		body.set_voxel(p, _v(PIG[0]))
+	parts.append(make_part("body", body, Vector3(-5.5, 3.0, -8.5), Vector3(0.0, 3.0, 0.0)))
+	var head := VoxelGrid.new(Vector3i(8, 7, 9))
+	head.box(Vector3i(1, 0, 0), Vector3i(6, 5, 6), _shaded(PIG, 0.0, 5.0, 89))
+	head.box(Vector3i(2, 0, 7), Vector3i(5, 3, 8), _v("#e8908e"))
+	head.set_voxel(Vector3i(3, 1, 8), _v("#8a4a48"))
+	head.set_voxel(Vector3i(4, 1, 8), _v("#8a4a48"))
+	_eyes(head, 1, 6, 3, 5)
+	for x: int in [0, 1, 6, 7]:
+		head.set_voxel(Vector3i(x, 5, 3), _v(PIG[0]))
+		head.set_voxel(Vector3i(x, 4, 4), _v(PIG[0]))
+	parts.append(make_part("head", head, Vector3(-4.0, 3.5, 6.0), Vector3(0.0, 7.0, 7.0)))
+	return parts
+
+
+## A bee: a fuzzy striped body, a dark head, two pale wings.
+static func _bee() -> Array:
+	var parts: Array = []
+	var body := VoxelGrid.new(Vector3i(3, 3, 5))
+	for z in 5:
+		var color := "#1e1a14" if z in [1, 3] else "#f2c030"
+		if z == 4:
+			color = "#2a2420"
+		body.box(Vector3i(0, 0, z), Vector3i(2, 2, z), _v(color))
+	parts.append(make_part("body", body, Vector3(-1.5, 1.0, -2.5), Vector3(0.0, 1.0, 0.0)))
+	for side in [["wing_l", -1.5, -0.5], ["wing_r", 1.5, 0.5]]:
+		var wing := VoxelGrid.new(Vector3i(1, 1, 3))
+		wing.box(Vector3i(0, 0, 0), Vector3i(0, 0, 2), _v("#e8f0ff"))
+		var corner := Vector3(side[1] - 0.5, 4.0, -1.5)
+		parts.append(make_part(side[0], wing, corner, corner + Vector3(0.5 - side[2], 0.0, 1.5)))
 	return parts

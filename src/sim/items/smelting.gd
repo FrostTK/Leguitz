@@ -25,6 +25,9 @@ const FOOD := {
 	Items.Id.CORN: Items.Id.ROASTED_CORN,
 	Items.Id.RICE: Items.Id.COOKED_RICE,
 	Items.Id.EGG: Items.Id.FRIED_EGG,
+	Items.Id.RAW_BEEF: Items.Id.COOKED_BEEF,
+	Items.Id.RAW_RABBIT: Items.Id.COOKED_RABBIT,
+	Items.Id.RAW_DUCK: Items.Id.COOKED_DUCK,
 }
 ## Food, raw or cooked: it chars in the factory furnace.
 const FOODS := {
@@ -63,6 +66,12 @@ const FOODS := {
 	Items.Id.PEACH: true,
 	Items.Id.EGG: true,
 	Items.Id.FRIED_EGG: true,
+	Items.Id.RAW_BEEF: true,
+	Items.Id.COOKED_BEEF: true,
+	Items.Id.RAW_RABBIT: true,
+	Items.Id.COOKED_RABBIT: true,
+	Items.Id.RAW_DUCK: true,
+	Items.Id.COOKED_DUCK: true,
 }
 ## What the factory furnace makes of the rest.
 const FACTORY := {

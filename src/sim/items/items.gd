@@ -209,6 +209,16 @@ enum Id {
 	EGG,
 	FRIED_EGG,
 	NEST_BOX,
+	RAW_BEEF,
+	COOKED_BEEF,
+	RAW_RABBIT,
+	COOKED_RABBIT,
+	RAW_DUCK,
+	COOKED_DUCK,
+	GLASS_BOTTLE,
+	HONEY_BOTTLE,
+	HONEYCOMB,
+	BEEHIVE,
 }
 ## What a tool is made for (Mining.tool_for: what it breaks faster).
 enum Tool { NONE, PICKAXE, AXE, SHOVEL, SWORD, HOE }
@@ -253,9 +263,12 @@ const TOOLS := {
 const BOW_DURABILITY := 384
 const SHEARS_DURABILITY := 238
 ## Fewer of these in a stack.
-const SMALL_STACKS := {Id.BUCKET: 16, Id.EGG: 16, Id.LEAD: 16}
-## What a food leaves in hand once eaten (milk: its bucket).
-const LEFT_AFTER := {Id.MILK_BUCKET: Id.BUCKET}
+const SMALL_STACKS := {
+	Id.BUCKET: 16, Id.EGG: 16, Id.LEAD: 16, Id.GLASS_BOTTLE: 16, Id.HONEY_BOTTLE: 16
+}
+## What a food leaves in hand once eaten (milk: its bucket; honey: its
+## bottle).
+const LEFT_AFTER := {Id.MILK_BUCKET: Id.BUCKET, Id.HONEY_BOTTLE: Id.GLASS_BOTTLE}
 ## How many tiles a full watering can waters (Watering). A can keeps the
 ## water it holds in its slot's wear (Inventory.wear: 0, empty, as made).
 const CAN_WATER := 20
@@ -345,6 +358,7 @@ const PLACES_BLOCK := {
 	Id.RASPBERRY: Tiles.Block.RASPBERRIES_0,
 	Id.PEACH_PIT: Tiles.Block.PEACH_SAPLING,
 	Id.NEST_BOX: Tiles.Block.NEST_BOX,
+	Id.BEEHIVE: Tiles.Block.BEEHIVE,
 }
 
 ## What a ground gives (soil gives dirt); grounds left out give nothing.
@@ -449,6 +463,10 @@ const BLOCK_DROPS := {
 	Tiles.Block.WOOL: [Id.WOOL, 1, 1],
 	Tiles.Block.WINDOW: [Id.WINDOW, 1, 1],
 	Tiles.Block.MELON: [Id.MELON_SLICE, 3, 6],
+	Tiles.Block.BEE_NEST: [Id.HONEYCOMB, 1, 2],
+	Tiles.Block.BEE_NEST_1: [Id.HONEYCOMB, 1, 2],
+	Tiles.Block.BEE_NEST_2: [Id.HONEYCOMB, 1, 3],
+	Tiles.Block.BEE_NEST_3: [Id.HONEYCOMB, 2, 3],
 }
 ## Food: how much satiety eating one gives (Vitals.MAX_FOOD points; see
 ## also Vitals.POISONS). Cooking pays: dried berries, the stew and cooked
@@ -488,6 +506,13 @@ const FOOD := {
 	Id.PEACH: 4,
 	Id.MILK_BUCKET: 3,
 	Id.FRIED_EGG: 4,
+	Id.RAW_BEEF: 3,
+	Id.COOKED_BEEF: 8,
+	Id.RAW_RABBIT: 2,
+	Id.COOKED_RABBIT: 5,
+	Id.RAW_DUCK: 2,
+	Id.COOKED_DUCK: 6,
+	Id.HONEY_BOTTLE: 6,
 }
 ## The planks each log is sawn into.
 const PLANKS_OF := {

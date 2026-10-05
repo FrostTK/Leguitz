@@ -14,6 +14,9 @@ enum State { IDLE, GRAZE, WANDER, FLEE, CHASE, STRIKE, DORMANT, FROZEN, SLEEP }
 
 ## A point of its way is reached this close (tiles).
 const REACHED := 0.3
+## A swimmer's feet float this far under the surface (levels): it rides on
+## the water.
+const SWIMMER_FLOAT := 0.15
 ## Hardly moving this long on its way: it gives up.
 const STUCK_SECONDS := 1.5
 ## A blow throws it back this fast (tiles per second, fading by
@@ -53,6 +56,8 @@ func setup(kind: int, feet: Vector2, height: float) -> void:
 	body.tall = Species.TALL[kind]
 	body.place(feet, height)
 	body.flying = Species.FLIERS.has(kind)
+	if Species.SWIMMERS.has(kind):
+		body.float_depth = SWIMMER_FLOAT
 	health = Species.HEALTH[kind]
 
 
@@ -196,7 +201,8 @@ func _knocked(delta: float) -> Vector2:
 
 ## Looks for a way to `goal`; false if there is none.
 func _walk_to(goal: Vector2i, voxel_at: Callable) -> bool:
-	_way = Pathfinder.find(tile(), body.height, goal, voxel_at, body.tall)
+	var swims := Species.SWIMMERS.has(species)
+	_way = Pathfinder.find(tile(), body.height, goal, voxel_at, body.tall, swims)
 	return not _way.is_empty()
 
 

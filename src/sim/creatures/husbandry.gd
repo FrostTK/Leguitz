@@ -64,12 +64,29 @@ const FEED := {
 		Items.Id.CORN,
 	],
 	Species.Id.DEER: [Items.Id.APPLE, Items.Id.CABBAGE, Items.Id.CARROT],
+	Species.Id.COW: [Items.Id.WHEAT, Items.Id.CABBAGE],
+	Species.Id.GOAT: [Items.Id.WHEAT, Items.Id.CABBAGE, Items.Id.CARROT, Items.Id.APPLE],
+	Species.Id.DUCK:
+	[
+		Items.Id.SEEDS,
+		Items.Id.BEETROOT_SEEDS,
+		Items.Id.CABBAGE_SEEDS,
+		Items.Id.TOMATO_SEEDS,
+		Items.Id.FLAX_SEEDS,
+		Items.Id.RICE,
+		Items.Id.CORN,
+	],
+	Species.Id.RABBIT: [Items.Id.CARROT, Items.Id.CABBAGE, Items.Id.BEETROOT],
+	Species.Id.PIG:
+	[Items.Id.CARROT, Items.Id.POTATO, Items.Id.BEETROOT, Items.Id.APPLE, Items.Id.CORN],
 }
+## The young of a species born on a farm (a boar's: a pig).
+const BORN_AS := {Species.Id.BOAR: Species.Id.PIG}
 ## Who gives wool to shears (and how many fleeces at least, at most), milk
 ## to a bucket, eggs.
 const SHEARED := {Species.Id.SHEEP: Vector2i(1, 2)}
-const MILKED := {Species.Id.SHEEP: true}
-const LAYS := {Species.Id.CHICKEN: true}
+const MILKED := {Species.Id.SHEEP: true, Species.Id.COW: true, Species.Id.GOAT: true}
+const LAYS := {Species.Id.CHICKEN: true, Species.Id.DUCK: true}
 ## A nest box by the eggs in it.
 const NESTS: Array[int] = [
 	Tiles.Block.NEST_BOX, Tiles.Block.NEST_BOX_1, Tiles.Block.NEST_BOX_2, Tiles.Block.NEST_BOX_3
@@ -250,7 +267,8 @@ static func _birth(
 ) -> void:
 	var feet := (mother.body.feet + father.body.feet) * 0.5
 	var height := maxf(mother.body.height, father.body.height)
-	var young := creatures.add(mother.species, feet, height) as Animal
+	var kind: int = BORN_AS.get(mother.species, mother.species)
+	var young := creatures.add(kind, feet, height) as Animal
 	young.set_age(server.clock.scale_duration(GROW_SECONDS))
 	young.heading = mother.heading
 	# Born to loved parents, it knows its players a little.

@@ -22,6 +22,12 @@ const BITS := {
 	Species.Id.SHADE_LURKER: Color("1f1830"),
 	Species.Id.ROCK_MIMIC: Color("7c7b87"),
 	Species.Id.WISP: Color("c8ff8a"),
+	Species.Id.COW: Color("6a4428"),
+	Species.Id.GOAT: Color("c6beb0"),
+	Species.Id.DUCK: Color("8a8074"),
+	Species.Id.RABBIT: Color("8a6c54"),
+	Species.Id.PIG: Color("e89a9a"),
+	Species.Id.BEE: Color("f2c030"),
 }
 ## A wisp's light: its color, how far and how bright, and how it flickers.
 const WISP_LIGHT := Color(0.6, 1.0, 0.45)
@@ -169,7 +175,7 @@ func has(id: int) -> bool:
 ## Whether the creature `id` shown is an animal (not a monster).
 func is_animal(id: int) -> bool:
 	var body: CreatureBody = _bodies.get(id)
-	return body != null and not Species.is_monster(body.kind)
+	return body != null and not Species.is_monster(body.kind) and body.kind != Species.Id.BEE
 
 
 ## The translated name of an animal's species ("" if not shown).

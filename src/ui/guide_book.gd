@@ -297,6 +297,8 @@ static func _survival() -> Array:
 static func _animals() -> Array:
 	var entries := [_title("BOOK_CHAPTER_ANIMALS"), _text("BOOK_ANIMALS_INTRO")]
 	for kind: int in Species.BIOMES:
+		if kind == Species.Id.BEE:
+			continue
 		var gifts := PackedStringArray()
 		for drop: Array in Species.DROPS[kind]:
 			gifts.append(_t(Items.name_key(drop[0])).to_lower())
@@ -319,6 +321,10 @@ static func _animals() -> Array:
 				_icon(Items.Id.NEST_BOX, _t("BOOK_ANIMALS_EGGS")),
 				_text("BOOK_ANIMALS_LOVE"),
 				_text("BOOK_ANIMALS_SHELTER"),
+				_icon(Items.Id.RAW_PORK, _t("BOOK_ANIMALS_PIGS")),
+				_heading("BOOK_ANIMALS_BEES"),
+				_icon(Items.Id.BEEHIVE, _t("BOOK_ANIMALS_HIVE")),
+				_icon(Items.Id.HONEY_BOTTLE, _t("BOOK_ANIMALS_HONEY")),
 			]
 		)
 	)

@@ -65,6 +65,19 @@ const MEATS := {
 	Items.Id.COOKED_CHICKEN: ["#8a4e22", "#b8742f", "#dca159"],
 	Items.Id.RAW_VENISON: ["#6b1d22", "#8f2a2e", "#b4474b"],
 	Items.Id.COOKED_VENISON: ["#4a2a16", "#6e4022", "#94603a"],
+	Items.Id.RAW_BEEF: ["#8a1e24", "#b2343a", "#d45a5c"],
+	Items.Id.COOKED_BEEF: ["#4e2c18", "#74462a", "#9c6a44"],
+	Items.Id.RAW_RABBIT: ["#c88070", "#e0a090", "#f0c4b4"],
+	Items.Id.COOKED_RABBIT: ["#7a4a24", "#a46a36", "#cc9458"],
+	Items.Id.RAW_DUCK: ["#b85a50", "#d4786c", "#eca094"],
+	Items.Id.COOKED_DUCK: ["#6e3a1a", "#9a5a2a", "#c88446"],
+}
+## Meats cut like another (the default: a steak).
+const MEAT_SHAPES := {
+	Items.Id.RAW_RABBIT: Items.Id.RAW_CHICKEN,
+	Items.Id.COOKED_RABBIT: Items.Id.RAW_CHICKEN,
+	Items.Id.RAW_DUCK: Items.Id.RAW_CHICKEN,
+	Items.Id.COOKED_DUCK: Items.Id.RAW_CHICKEN,
 }
 const BONE := ["#cfc4aa", "#f2ead8"]
 const FAT := "#f4e8dc"
@@ -105,6 +118,9 @@ static func build(item: int) -> VoxelGrid:
 	var ranch := RanchModels.item(item)
 	if ranch != null:
 		return ranch
+	var apiary := ApiaryModels.item(item)
+	if apiary != null:
+		return apiary
 	var sapling := SaplingModels.item(item)
 	if sapling != null:
 		return sapling
@@ -461,7 +477,7 @@ static func _meat(item: int) -> VoxelGrid:
 			index = 2
 		return _v(colors[index])
 	var grid: VoxelGrid
-	match item:
+	match MEAT_SHAPES.get(item, item):
 		Items.Id.RAW_MUTTON, Items.Id.COOKED_MUTTON:
 			grid = VoxelGrid.new(Vector3i(13, 6, 7))
 			grid.ellipsoid(Vector3(5.0, 2.7, 3.5), Vector3(4.6, 2.7, 3.1), paint)

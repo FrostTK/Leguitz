@@ -22,6 +22,7 @@ const COMPOST := "compost"
 const SPREAD_COMPOST := "spread_compost"
 const PICK := "pick"
 const TEND_ANIMAL := "tend_animal"
+const HARVEST_HIVE := "harvest_hive"
 const SELECT_SLOT := "select_slot"
 const SLOT_CLICK := "slot_click"
 const SLOT_SPREAD := "slot_spread"
@@ -204,6 +205,12 @@ static func pick(cell: Vector3i) -> Dictionary:
 ## (Husbandry.tend: feeding, petting, shearing, milking, a lead).
 static func tend_animal(id: int, slot: int) -> Dictionary:
 	return {"t": TEND_ANIMAL, "id": id, "slot": slot}
+
+
+## The player harvested the full hive at `cell` with what is in hotbar
+## slot `slot` (Apiary.harvest: a glass bottle, shears).
+static func harvest_hive(cell: Vector3i, slot: int) -> Dictionary:
+	return {"t": HARVEST_HIVE, "cell": cell, "slot": slot}
 
 
 ## Something to tell the player about an animal of `kind`: a HUD key

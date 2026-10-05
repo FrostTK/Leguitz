@@ -337,8 +337,8 @@ BOOK_MODES_HARDCORE,"Survival with one life: passing out ends your adventure, an
 ITEM_WOOL,Wool,Laine
 ITEM_RAW_MUTTON,Raw mutton,Mouton cru
 ITEM_COOKED_MUTTON,Roast leg of mutton,Gigot rôti
-ITEM_RAW_PORK,Raw boar meat,Viande de sanglier crue
-ITEM_COOKED_PORK,Roast boar,Rôti de sanglier
+ITEM_RAW_PORK,Raw pork,Porc cru
+ITEM_COOKED_PORK,Roast pork,Rôti de porc
 ITEM_RAW_CHICKEN,Raw chicken,Poulet cru
 ITEM_COOKED_CHICKEN,Roast chicken,Poulet rôti
 ITEM_RAW_VENISON,Raw venison,Venaison crue
@@ -588,11 +588,11 @@ HUD_ANIMAL_NOTHING,%s: nothing to get with that (affection %d/%d),%s : rien à e
 HUD_ANIMAL_LEAD_SNAPPED,%s: the lead snapped,%s : la corde a lâché
 BOOK_ANIMALS_FARM,Husbandry,Élevage
 BOOK_ANIMALS_BREED,"Feed two grown animals of a kind what they like (right click): they look for each other and a young one is born. It grows up in about a day; feeding it helps.","Nourris deux bêtes adultes de la même espèce avec ce qu'elles aiment (clic droit) : elles se cherchent et un petit naît. Il grandit en une journée environ ; le nourrir l'aide."
-BOOK_ANIMALS_FEED,"Sheep eat wheat or cabbage; boars carrots, potatoes, beetroot or apples; chickens seeds, rice or corn; deer apples, cabbage or carrots.","Les moutons mangent du blé ou du chou ; les sangliers des carottes, des pommes de terre, des betteraves ou des pommes ; les poules des graines, du riz ou du maïs ; les cerfs des pommes, du chou ou des carottes."
+BOOK_ANIMALS_FEED,"Sheep and cows eat wheat or cabbage; goats wheat, cabbage, carrots or apples; boars and pigs carrots, potatoes, beetroot or apples (pigs corn too); chickens and ducks seeds, rice or corn; rabbits carrots, cabbage or beetroot; deer apples, cabbage or carrots.","Les moutons et les vaches mangent du blé ou du chou ; les chèvres du blé, du chou, des carottes ou des pommes ; les sangliers et les cochons des carottes, des pommes de terre, des betteraves ou des pommes (les cochons du maïs aussi) ; les poules et les canards des graines, du riz ou du maïs ; les lapins des carottes, du chou ou des betteraves ; les cerfs des pommes, du chou ou des carottes."
 BOOK_ANIMALS_LEAD,"A lead (4 strings make 2) takes an animal along (right click on it); right click it again to let it go. Too far, the lead snaps. Fences and gates keep a herd in its pen.","Une corde (4 ficelles en font 2) emmène une bête avec toi (clic droit dessus) ; clic droit à nouveau pour la lâcher. Trop loin, la corde lâche. Les barrières et les portails gardent un troupeau dans son enclos."
 BOOK_ANIMALS_SHEAR,"Shears (2 iron ingots) take a sheep's wool without hurting it; the more it loves you, the more wool. It grows back after a while.","Les cisailles (2 lingots de fer) prennent la laine d'un mouton sans le blesser ; plus il t'aime, plus il en donne. Elle repousse au bout d'un moment."
-BOOK_ANIMALS_MILK,A bucket (3 iron ingots) milks a grown sheep now and then. The milk is drunk (right click held) and the bucket stays.,Un seau (3 lingots de fer) trait une brebis adulte de temps en temps. Le lait se boit (clic droit maintenu) et le seau reste.
-BOOK_ANIMALS_EGGS,"Chickens lay eggs: in a nest box nearby (planks around wheat), gathered with a right click or {use}, else on the ground. The food furnace fries them.","Les poules pondent des œufs : dans un pondoir proche (des planches autour de blé), ramassés d'un clic droit ou {use}, sinon par terre. Le four alimentaire les cuit au plat."
+BOOK_ANIMALS_MILK,"A bucket (3 iron ingots) milks a grown cow, goat or sheep now and then. The milk is drunk (right click held) and the bucket stays.","Un seau (3 lingots de fer) trait une vache, une chèvre ou une brebis adulte de temps en temps. Le lait se boit (clic droit maintenu) et le seau reste."
+BOOK_ANIMALS_EGGS,"Chickens and ducks lay eggs: in a nest box nearby (planks around wheat), gathered with a right click or {use}, else on the ground. The food furnace fries them.","Les poules et les canards pondent des œufs : dans un pondoir proche (des planches autour de blé), ramassés d'un clic droit ou {use}, sinon par terre. Le four alimentaire les cuit au plat."
 BOOK_ANIMALS_LOVE,"Pet your animals (right click, with nothing they eat in hand) and feed them every day: they love you more (up to 5) and give more: more wool, milk and eggs sooner, now and then two eggs. Left without care a whole day, they love you less.","Caresse tes bêtes (clic droit, sans rien qu'elles mangent en main) et nourris-les chaque jour : elles t'aiment plus (jusqu'à 5) et donnent plus : plus de laine, du lait et des œufs plus tôt, parfois deux œufs. Laissées sans soins toute une journée, elles t'aiment moins."
 BOOK_ANIMALS_SHELTER,"At night animals sleep. Those that love you look for a roof nearby (a hen house, a barn) and sleep under it; a night under a roof counts as care.","La nuit, les bêtes dorment. Celles qui t'aiment cherchent un toit à côté (un poulailler, une étable) et dorment dessous ; une nuit à l'abri compte comme un soin."
 FURNACE_TO_COOK,To cook,À cuire
@@ -600,3 +600,29 @@ FURNACE_FUELS,Fuel,Combustible
 FURNACE_COOKED,Cooked,Cuit
 FURNACE_FACTORY_LANES_HINT,"Up to four kinds at once. The more cook together, the faster the fuel burns.","Jusqu'à quatre variétés à la fois. Plus il en cuit ensemble, plus vite brûle le combustible."
 BOOK_FURNACE_FACTORY_LANES,"It cooks up to four kinds at once, on one fire: the more cook together, the faster it burns. What is to cook goes into its chest on the left (it takes it from there by itself, or put it straight into a free place), its fuel into the chest under it; what it made waits in the chest on the right.","Il cuit jusqu'à quatre variétés à la fois, sur un seul feu : plus il en cuit ensemble, plus vite il brûle. Ce qu'il faut cuire va dans son coffre de gauche (il s'y sert tout seul, ou pose-le directement dans une cuisson libre), le combustible dans le coffre du dessous ; ce qu'il a cuit attend dans le coffre de droite."
+ITEM_RAW_BEEF,Raw beef,Bœuf cru
+ITEM_COOKED_BEEF,Beef steak,Steak de bœuf
+ITEM_RAW_RABBIT,Raw rabbit,Lapin cru
+ITEM_COOKED_RABBIT,Roast rabbit,Lapin rôti
+ITEM_RAW_DUCK,Raw duck,Canard cru
+ITEM_COOKED_DUCK,Roast duck,Canard rôti
+ITEM_GLASS_BOTTLE,Glass bottle,Bocal en verre
+ITEM_HONEY_BOTTLE,Jar of honey,Pot de miel
+ITEM_HONEYCOMB,Honeycomb,Rayon de miel
+ITEM_BEEHIVE,Beehive,Ruche
+CREATURE_COW,Cow,Vache
+CREATURE_GOAT,Goat,Chèvre
+CREATURE_DUCK,Mallard,Canard
+CREATURE_RABBIT,Rabbit,Lapin
+CREATURE_PIG,Pig,Cochon
+CREATURE_BEE,Bee,Abeille
+CREATURE_COW_HOME,"plains, meadows, savannas","plaines, prairies, savanes"
+CREATURE_GOAT_HOME,"snowy slopes, groves, peaks","pentes enneigées, bosquets, sommets"
+CREATURE_DUCK_HOME,"rivers, swamps","rivières, marais"
+CREATURE_RABBIT_HOME,"forests, taigas, snowy plains, deserts","forêts, taïgas, plaines enneigées, déserts"
+CREATURE_PIG_HOME,"born on a farm, to boars","naît à la ferme, de sangliers"
+CREATURE_BEE_HOME,around its hive,autour de sa ruche
+BOOK_ANIMALS_PIGS,"Young boars born on your farm grow up as pigs: round and pink, they never run wild. Ducks swim across rivers and ponds.","Les petits des sangliers nés à la ferme deviennent des cochons : ronds et roses, ils ne retournent jamais à l'état sauvage. Les canards traversent les rivières et les mares à la nage."
+BOOK_ANIMALS_BEES,Bees,Abeilles
+BOOK_ANIMALS_HIVE,"Wild bee nests stand in plains, meadows and flower forests; a beehive (planks around honeycomb) does the same at home. By day its bees visit the flowers and crops around and it fills with honey, the faster the more flowers there are. Full, honey drips down it.","Des nids d'abeilles sauvages se trouvent dans les plaines, les prairies et les forêts fleuries ; une ruche (des planches autour de rayons de miel) fait de même chez toi. Le jour, ses abeilles butinent les fleurs et les cultures autour et elle se remplit de miel, d'autant plus vite qu'il y a de fleurs. Pleine, le miel coule le long de ses parois."
+BOOK_ANIMALS_HONEY,"A full hive gives a jar of honey to a glass bottle (3 glass make 3) or honeycomb to shears (right click or {use}). Honey feeds well, and the jar stays. Crops near a hive grow faster: its bees carry the pollen. At night the bees go home.","Une ruche pleine donne un pot de miel à un bocal en verre (3 verres en font 3) ou des rayons de miel aux cisailles (clic droit ou {use}). Le miel nourrit bien, et le bocal reste. Les cultures proches d'une ruche poussent plus vite : ses abeilles portent le pollen. La nuit, les abeilles rentrent."

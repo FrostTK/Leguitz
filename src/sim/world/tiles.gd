@@ -316,6 +316,16 @@ enum Block {
 	NEST_BOX_1,
 	NEST_BOX_2,
 	NEST_BOX_3,
+	# Beehives (players make them) and wild bee nests (Apiary), empty, then
+	# holding more and more honey (3: full).
+	BEEHIVE,
+	BEEHIVE_1,
+	BEEHIVE_2,
+	BEEHIVE_3,
+	BEE_NEST,
+	BEE_NEST_1,
+	BEE_NEST_2,
+	BEE_NEST_3,
 }
 
 const FLOWERS: Array[Block] = [

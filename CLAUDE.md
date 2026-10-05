@@ -532,7 +532,32 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   in love (`burst` with a count), draw a sagging rope (boxes) from an animal to this player's
   hand (`player`, `player_id`); CreatureBody scales the young (`size`) and lays sleepers down
   (legs folded, FOLD, LIE_SINK). RanchModels: the nest box with its eggs, shears, buckets, the
-  lead, eggs. The book's Animals chapter (Husbandry). Cows and goats come with the next step.
+  lead, eggs. The book's Animals chapter (Husbandry).
+- Farm animals (phase 7, step 6): Species COW (plains, meadows, savannas), GOAT (mountains),
+  DUCK (rivers, swamps; Species.SWIMMERS: Pathfinder.find/ground_at `swims` go over water,
+  FLOAT under a water cell's top; PlayerBody.float_depth, Creature.SWIMMER_FLOAT, so it rides
+  on it), RABBIT (forests, taigas, snow, desert; CreatureBody hops it), PIG (no BIOMES: a
+  boar's young is born a pig, Husbandry.BORN_AS) and BEE; Husbandry's FEED, MILKED (sheep,
+  cows, goats), LAYS (chickens, ducks). Meats RAW_/COOKED_ BEEF, RABBIT, DUCK (raw duck makes
+  sick; ItemModels.MEAT_SHAPES: rabbit and duck cut like chicken). Bees
+  (`src/sim/creatures/apiary.gd`, Apiary: static, given the server; `bee.gd`, Bee extends
+  Creature, not saved): a BEEHIVE (planks around honeycomb; Mining.FLOOR_OBJECTS) or a wild
+  BEE_NEST (on a stump; SurfaceBuilder: plains, flower forests, meadows, among WILD_FRUITS,
+  WorldGenerator gives it some honey and notes it in ChunkData.growing) is a block by its honey,
+  Apiary.HIVES (0 to FULL 3, STAGE_OF). Growth gives each hive its turn (`Apiary.work`): by
+  day it sends a bee out per check up to BEES (a nest one less), telling them of the flowers
+  and crops within FLOWER_RANGE (`flowers_near`, again each check); it fills a level on average
+  every HONEY_SECONDS (paced) divided by the flowers near (up to MOST_FLOWERS), not without
+  any. A Bee flies (FLIERS, body.fly) from its hive to a flower, hovers (GRAZE), back, and so
+  on; at night it flies home and goes in (Apiary.sense, Creatures.update; its hive gone, it
+  goes). Crops within POLLINATION_RANGE of a hive (Growth gathers `_hives` each update) take
+  POLLINATED of the time a stage. Full, a hive gives a HONEY_BOTTLE to a GLASS_BOTTLE (3 glass
+  make 3; honey is food, Items.LEFT_AFTER gives the bottle back) or COMBS honeycomb to shears
+  (they wear): Msg.HARVEST_HIVE, Apiary.harvest; the client predicts it
+  (BlockInteraction._harvest_hive, right click or E; tends_here). A wild nest broken gives
+  honeycomb. Client: CreatureModels (_cow, _goat, _duck, _rabbit, _pig, _bee), CreatureBody
+  (a bee's wings always beating), ApiaryModels (the hive at each level, honey oozing down its
+  front, the nest, the bottles, honeycomb). The book's Animals chapter (pigs, Bees).
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made

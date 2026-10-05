@@ -53,6 +53,8 @@ func _init(world_state: WorldState, world_seed: int) -> void:
 static func make(kind: int, feet: Vector2, height: float) -> Creature:
 	if Species.is_monster(kind):
 		return Monster.create(kind, feet, height)
+	if kind == Species.Id.BEE:
+		return Bee.create(kind, feet, height)
 	return Animal.create(kind, feet, height)
 
 
@@ -129,8 +131,12 @@ func update(server: GameServer, delta: float) -> void:
 		var monster := creature as Monster
 		if monster != null:
 			Monsters.sense(server, self, monster, delta * 2.0)
-		else:
+		elif creature is Animal:
 			Husbandry.sense(server, self, creature as Animal, delta * 2.0)
+		elif creature is Bee:
+			Apiary.sense(server, self, creature as Bee)
+			if not living.has(creature.id):
+				continue
 		creature.think(delta * 2.0, at, rng)
 		creature.move(delta * 2.0, at)
 		if monster != null and monster.strike:

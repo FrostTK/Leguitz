@@ -145,6 +145,9 @@ func animate(delta: float) -> void:
 	_rest = move_toward(_rest, 1.0 if asleep else 0.0, delta * 2.0)
 	_animate_legs()
 	_root.position.y = absf(sin(_phase)) * _swing * VOXEL * 1.5
+	if kind == Species.Id.RABBIT:
+		# It hops.
+		_root.position.y = absf(sin(_phase * 0.5)) * _swing * VOXEL * 6.0
 	_root.position.y -= _rest * Species.TALL[kind] * LIE_SINK
 	if Species.FLIERS.has(kind):
 		_root.position.y = sin(_time * 3.0 + id) * VOXEL * 1.5
@@ -210,6 +213,8 @@ func _animate_wings() -> void:
 	var open := (0.5 + sin(_time * 28.0) * 0.5) * 0.9 if flapping else 0.0
 	if moth:
 		open = sin(_time * 16.0 + id) * 0.8
+	elif kind == Species.Id.BEE:
+		open = sin(_time * 60.0 + id) * 0.7
 	_joints["wing_l"].rotation.z = -open
 	_joints["wing_r"].rotation.z = open
 

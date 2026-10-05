@@ -26,6 +26,7 @@ const PAD_AIM_PITCH := 0.6
 const WATER_COLOR := Color("8cc8ec")
 const WASTE_COLOR := Color("6f8f3c")
 const COMPOST_COLOR := Color("4a3424")
+const HONEY_COLOR := Color("e8a020")
 ## Leaves rustling when something is picked.
 const PICK_COLOR := Color("5e9a3a")
 ## How far (local units) the mouse's ray looks for what a bow aims at.
@@ -93,14 +94,15 @@ func _process(delta: float) -> void:
 
 ## Uses what is aimed at (InputBindings.USE): opens a workbench, a chest
 ## or a furnace, swings a gate, fills or empties a composter, picks what is
-## ripe. Returns whether there was something to use.
+## ripe, takes a full hive's honey. Returns whether there was something to
+## use.
 func use_target() -> bool:
 	if _tend_animal():
 		return true
 	if target != null and Mining.swings(target.voxel):
 		_swing_gate(target.cell, target.voxel)
 		return true
-	if target != null and (_compost() or _pick()):
+	if target != null and (_compost() or _pick() or _harvest_hive()):
 		return true
 	if target == null or not Mining.opens(target.voxel):
 		return false
@@ -240,7 +242,7 @@ func _tend() -> bool:
 		return true
 	if target == null:
 		return false
-	if _pick():
+	if _pick() or _harvest_hive():
 		return true
 	if Items.tool_of(held) == Items.Tool.HOE:
 		_till()
@@ -253,9 +255,9 @@ func _tend() -> bool:
 
 ## Whether a right click would tend what is aimed at rather than place or
 ## eat what is in hand: an animal, sow it on farmland, put it in a
-## composter, pick what is ripe.
+## composter, pick what is ripe, take a hive's honey.
 func tends_here() -> bool:
-	if sows_here() or _animal_aimed():
+	if sows_here() or _animal_aimed() or _hive_ready(client.held_item()):
 		return true
 	return (
 		target != null
@@ -283,6 +285,35 @@ func _tend_animal() -> bool:
 	client.transport.send(Msg.tend_animal(target_creature, slot))
 	client.player_model.swing()
 	return true
+
+
+## A full hive aimed at, a glass bottle or shears in hand: it is empty at
+## once, the bottle used; the server gives the honey (Apiary.harvest).
+func _harvest_hive() -> bool:
+	var held := client.held_item()
+	if not _hive_ready(held):
+		return false
+	var cell := target.cell
+	var slot := client.inventory.selected
+	_predict(cell, Voxels.of_block(Apiary.with_level(Voxels.block_of(target.voxel), 0)))
+	if held == Items.Id.GLASS_BOTTLE and not client.modes.creative():
+		client.inventory.take(slot, 1)
+	client.transport.send(Msg.harvest_hive(cell, slot))
+	_debris.throw(_world_point(_cell_middle(cell, 0.8)), HONEY_COLOR, 10, 0.2)
+	client.player_model.swing()
+	return true
+
+
+## Whether the hive aimed at is full and within reach, with what takes its
+## honey in hand.
+func _hive_ready(held: int) -> bool:
+	if target == null or not (held in [Items.Id.GLASS_BOTTLE, Items.Id.SHEARS]):
+		return false
+	var player := client.local_player
+	return (
+		Apiary.level_of(Voxels.block_of(target.voxel)) == Apiary.FULL
+		and Mining.reach_to(player.position, player.height, target.cell) <= Mining.REACH
+	)
 
 
 ## Whether something ripe within reach is picked there (Picking).

@@ -213,6 +213,11 @@ func _generate_terrain(chunk: ChunkData) -> void:
 			var column := columns[at]
 			var tile := origin + Vector2i(lx, ly)
 			var block := _spaced(blocks, at, span, tile, column.biome)
+			if block == Tiles.Block.BEE_NEST:
+				# Some honey in it already; its bees come out (Growth).
+				block = Apiary.with_level(block, surface.nest_honey(tile.x, tile.y))
+				var nest := Vector3i(tile.x, GameConst.SEA_LEVEL + column.level, tile.y)
+				chunk.growing[nest] = true
 			if ObjectShapes.is_tree(block):
 				block = surface.orchard_tree(column.biome, block, tile.x, tile.y)
 				if Growth.FRUITING.has(block):
