@@ -43,10 +43,7 @@ const TOOL_HEADS := {
 	Items.Tier.GOLD: ["#94640f", "#dda72a", "#f6cd47", "#fff2a0"],
 	Items.Tier.DIAMOND: ["#11757b", "#35c2c6", "#86eeee", "#e2ffff"],
 }
-const HANDLE := ["#5c3b1f", "#7a5230", "#94683d"]
 const SQRT_HALF := 0.70710678
-## Across the handle, from the middle of its 2-voxel staircase.
-const HANDLE_MIDDLE := 0.3535534
 ## A brick (fired mud, see Smelting): shaped like an ingot.
 const BRICK := ["#6e2f20", "#9a4a34", "#b8644a", "#d4886a"]
 ## Ingots: the colors of their metal (the tools' heads).
@@ -81,14 +78,9 @@ const MEAT_SHAPES := {
 }
 const BONE := ["#cfc4aa", "#f2ead8"]
 const FAT := "#f4e8dc"
-## Tools lie on the diagonal of a TOOL_SIZE grid, like the icons of block
-## games: the handle from the bottom left, the head at the top right. The
-## hand holds the handle at TOOL_GRIP (grid units), its axis TOOL_AXIS;
-## the axe's blade is on the TOOL_SIDE of it.
-const TOOL_SIZE := Vector3i(16, 16, 3)
-const TOOL_GRIP := Vector3(3.1, 2.6, 1.5)
-const TOOL_AXIS := Vector3(SQRT_HALF, SQRT_HALF, 0.0)
-const TOOL_SIDE := Vector3(-SQRT_HALF, SQRT_HALF, 0.0)
+## Thin items (arrows, feathers...) lie on the diagonal of a 16 x 16 grid
+## like the icons of block games (the tools and the bow: ToolModels).
+const DIAGONAL_GRID := Vector2i(16, 16)
 
 
 ## The model of an item (null for block items).
@@ -102,7 +94,7 @@ static func build(item: int) -> VoxelGrid:
 	if FLOWERS.has(item):
 		return _flower(FLOWERS[item])
 	if Items.TOOLS.has(item):
-		return _tool(Items.tool_of(item), TOOL_HEADS[Items.tier_of(item)])
+		return ToolModels.icon(item)
 	if INGOTS.has(item):
 		return _ingot(TOOL_HEADS[INGOTS[item]])
 	if MEATS.has(item):
@@ -177,7 +169,7 @@ static func build(item: int) -> VoxelGrid:
 		Items.Id.WISP_EMBER:
 			return _wisp_ember()
 		Items.Id.BOW:
-			return _bow()
+			return ToolModels.icon(item)
 		Items.Id.ARROW:
 			return _arrow()
 		Items.Id.STRING:
@@ -207,118 +199,6 @@ static func _ingot(colors: Array) -> VoxelGrid:
 	grid.box(Vector3i(2, 2, 1), Vector3i(9, 2, 1), _v(colors[3]))
 	grid.box(Vector3i(1, 1, 1), Vector3i(10, 1, 1), _v(colors[2]))
 	return grid
-
-
-## A tool on the diagonal: the handle, a stick from the bottom left, and
-## the head at the top right, three voxels deep where it holds the handle,
-## one at its points and edges.
-static func _tool(kind: int, head: Array) -> VoxelGrid:
-	var grid := VoxelGrid.new(TOOL_SIZE)
-	var handle_end: float = (
-		{
-			Items.Tool.PICKAXE: 15.0,
-			Items.Tool.AXE: 15.3,
-			Items.Tool.SWORD: 5.4,
-			Items.Tool.HOE: 15.0,
-		}
-		. get(kind, 12.0)
-	)
-	for x in TOOL_SIZE.x:
-		for y in TOOL_SIZE.y:
-			# Along the handle (u) and across it (v, > 0 on the upper left).
-			var u := (x + y + 1.0) * SQRT_HALF
-			var v := (y - x) * SQRT_HALF + HANDLE_MIDDLE
-			var shade := _tool_head(kind, u, v)
-			if shade.x >= 0:
-				for z in range(1 - shade.y, 2 + shade.y):
-					grid.set_voxel(Vector3i(x, y, z), _v(head[shade.x]))
-			elif u > 1.4 and u < handle_end and absf(v) < 0.4:
-				var dark := int(u * SQRT_HALF) % 3 == 0
-				var color: String = HANDLE[2] if v < 0.0 else HANDLE[0 if dark else 1]
-				grid.set_voxel(Vector3i(x, y, 1), _v(color))
-	return grid
-
-
-## The head of a tool at (u, v) (see _tool): [its color (index in the
-## head's colors, -1: not the head), 1 if three voxels deep else 0].
-static func _tool_head(kind: int, u: float, v: float) -> Vector2i:
-	match kind:
-		Items.Tool.PICKAXE:
-			# A curved bar across the top of the handle, pointed at both ends.
-			var reach := absf(v) / 7.6
-			var half := 1.75 - 1.15 * reach * reach
-			var d := Vector2(u - 6.4, v).length() - 9.8
-			if reach > 1.0 or absf(d) > half:
-				return Vector2i(-1, 0)
-			var shade := 1
-			if d > half * 0.35:
-				shade = 2
-			elif d < -half * 0.4:
-				shade = 0
-			if reach > 0.82 or (d > half * 0.6 and reach < 0.35):
-				shade = 3
-			return Vector2i(shade, 1 if absf(v) < 2.2 else 0)
-		Items.Tool.AXE:
-			# A blade on the upper left of the handle's top, flaring towards
-			# its edge, and a short poll on the other side.
-			if v >= 0.0 and v <= 6.3:
-				var flare := maxf(v - 1.8, 0.0) * 0.5
-				if u < 9.8 - flare or u > 14.0 + flare:
-					return Vector2i(-1, 0)
-				var shade := 1
-				if v > 5.7:
-					shade = 3
-				elif v > 5.0:
-					shade = 2
-				elif v < 1.0:
-					shade = 0
-				return Vector2i(shade, 1 if v < 2.6 else 0)
-			if v < 0.0 and v > -2.0 and u > 11.0 and u < 13.4:
-				return Vector2i(0 if v > -1.0 else 1, 1)
-		Items.Tool.SWORD:
-			# A crossguard over the grip, then a blade tapering to its point,
-			# a ridge down its middle and bright edges.
-			if u >= 5.0 and u < 6.5 and absf(v) <= 2.4:
-				return Vector2i(0, 1)
-			if u < 6.5 or u > 21.2:
-				return Vector2i(-1, 0)
-			var tip := maxf(u - 18.4, 0.0) / 2.8
-			var half := 1.3 * (1.0 - tip)
-			if absf(v) > half + 0.1:
-				return Vector2i(-1, 0)
-			var shade := 1
-			if absf(v) > half - 0.45:
-				shade = 3
-			elif absf(v) < 0.3:
-				shade = 2
-			return Vector2i(shade, 1 if u < 8.0 else 0)
-		Items.Tool.HOE:
-			# A neck out of the handle's top, then a flat blade turned down
-			# along the handle, bright at its edge.
-			if v >= 0.0 and v < 4.4 and u >= 13.2 and u <= 14.9:
-				return Vector2i(0 if v < 1.2 else 1, 1 if v < 2.0 else 0)
-			if v >= 4.4 and v <= 6.4 and u >= 9.4 and u <= 14.9:
-				var shade := 3 if u < 10.4 else (2 if v > 5.6 else 1)
-				return Vector2i(shade, 0)
-		Items.Tool.SHOVEL:
-			# A spade rounded at its tip, behind a collar on the handle.
-			if u >= 11.4 and u < 12.8 and absf(v) <= 1.25:
-				return Vector2i(0, 1)
-			if u < 12.8 or u > 20.6:
-				return Vector2i(-1, 0)
-			var tip := maxf(u - 17.8, 0.0) / 2.8
-			var half := 2.85 * sqrt(maxf(1.0 - tip * tip, 0.0))
-			if absf(v) > half:
-				return Vector2i(-1, 0)
-			var shade := 1
-			if u > 20.1:
-				shade = 3
-			elif absf(v) > half - 0.75 or u > 19.6:
-				shade = 2
-			elif absf(v) < 0.4 and u < 16.5:
-				shade = 0
-			return Vector2i(shade, 0)
-	return Vector2i(-1, 0)
 
 
 ## A short log lying down: bark around, rings at both ends.
@@ -558,36 +438,18 @@ static func _hide() -> VoxelGrid:
 	return grid
 
 
-## Along the diagonal of a TOOL_SIZE grid like the tools (`u` along it,
+## Along the diagonal of a 16 x 16 grid like the tools (`u` along it,
 ## `v` across), with `paint(u, v)` giving a voxel or 0.
 static func _diagonal(paint: Callable) -> VoxelGrid:
-	var grid := VoxelGrid.new(Vector3i(TOOL_SIZE.x, TOOL_SIZE.y, 1))
-	for x in TOOL_SIZE.x:
-		for y in TOOL_SIZE.y:
+	var grid := VoxelGrid.new(Vector3i(DIAGONAL_GRID.x, DIAGONAL_GRID.y, 1))
+	for x in DIAGONAL_GRID.x:
+		for y in DIAGONAL_GRID.y:
 			var u := (x + y + 1.0) * SQRT_HALF
 			var v := (y - x) * SQRT_HALF
 			var value: int = paint.call(u, v)
 			if value != 0:
 				grid.set_voxel(Vector3i(x, y, 0), value)
 	return grid
-
-
-## A bow on the diagonal: a limb bending towards the upper left, wrapped
-## in leather at its grip, and its string straight across.
-static func _bow() -> VoxelGrid:
-	return _diagonal(
-		func(u: float, v: float) -> int:
-			if u < 1.6 or u > 21.0:
-				return 0
-			var bend := 3.6 * sin(PI * (u - 1.6) / 19.4)
-			if absf(v - bend) < 0.75:
-				if absf(u - 11.3) < 1.6:
-					return _v("#5c3b1f")
-				return _v("#8a5a30" if v > bend else "#b07a44")
-			if absf(v) < 0.4 and u > 2.2 and u < 20.4:
-				return _v("#e8e2d2")
-			return 0
-	)
 
 
 ## An arrow on the diagonal: a stone head, a shaft, white fletching.

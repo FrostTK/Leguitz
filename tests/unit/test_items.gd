@@ -85,14 +85,20 @@ func test_every_item_has_a_model_and_tools_a_handle() -> void:
 		if Items.placed_voxel(item) == Voxels.AIR:
 			var grid := ItemModels.build(item)
 			assert_true(grid != null and not grid.is_empty(), "%s looks" % Items.name_key(item))
-	var pickaxe := ItemModels.build(Items.Id.DIAMOND_PICKAXE)
-	assert_ne(pickaxe.get_voxel(Vector3i(ItemModels.TOOL_GRIP)), 0, "held by its handle")
+	for item: int in Items.TOOLS.keys() + [Items.Id.BOW]:
+		var name := Items.name_key(item)
+		var model := ToolModels.held(item)
+		assert_false(model.is_empty(), "%s in hand" % name)
+		var grip := ToolModels.grip(item) * 16.0
+		var cell := Vector3i(Vector3(model.pivot.x, grip.y, model.pivot.y).floor())
+		assert_ne(model.get_voxel(cell), 0, "%s held by its grip" % name)
+	for stage in ToolModels.DRAW_STAGES:
+		assert_false(ToolModels.held(Items.Id.BOW, stage).is_empty(), "the bow drawn")
 	var hand := Vector3(0.1, -0.4, 0.2)
-	var held := ItemLibrary.held_tool(Basis(), hand, 0.3, 0.75)
-	var size := ItemModels.TOOL_SIZE
-	var grip := (ItemModels.TOOL_GRIP - Vector3(size.x * 0.5, 0.0, size.z * 0.5)) / 16.0
+	var grip := ToolModels.grip(Items.Id.DIAMOND_PICKAXE)
+	var held := ItemLibrary.in_hand(Vector3(0, 0.3, 1), Vector3.DOWN, grip, 0.5, hand)
 	assert_true((held * grip).is_equal_approx(hand), "the grip in the hand")
-	var handle := (held.basis * ItemModels.TOOL_AXIS).normalized()
+	var handle := held.basis.y.normalized()
 	assert_true(handle.z > 0.9 and handle.y > 0.2, "the handle forward, lifted a little")
 
 

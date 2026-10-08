@@ -44,31 +44,11 @@ const LANTERN_TOWARDS_CAMERA := 0.45
 ## A right click moving less than this (screen pixels) places a block; more
 ## is a drag turning the camera.
 const CLICK_SLOP := 6.0
-## Size (local units) of what the player holds: in the hand of the body,
-## and in first person, where it sits at the bottom right of the view.
+## Size (local units) of what the player holds in the hand of the body
+## (not tools, swords nor the bow: ToolModels).
 const HELD_SIZE := 0.28
-const FIRST_PERSON_HELD_SIZE := 0.16
-const FIRST_PERSON_HELD_AT := Vector3(0.36, -0.3, -0.62)
-const FIRST_PERSON_HELD_TURN := Vector3(-0.15, 0.7, 0.0)
-## Where a bow comes to as it is drawn (first person): its middle there,
-## turned upright (its string on the right, leaning a little).
-const FIRST_PERSON_DRAW_AT := Vector3(0.1, -0.1, -0.5)
-const FIRST_PERSON_DRAW_TURN := Vector3(0.0, -0.3, PI * 0.25 + 0.2)
-## Where food goes while it is eaten (in front of the mouth).
-const FIRST_PERSON_EAT_AT := Vector3(0.14, -0.3, -0.52)
 ## A food furnace breaking is told to players within this many tiles.
 const FURNACE_NEWS_RANGE := 12.0
-## First person: a tool is held by the handle at the bottom right of the
-## view, upright (the handle going up, a little forward and left, camera
-## space), turned FIRST_PERSON_TOOL_ROLL about it from facing the eye so
-## it shows its depth; the wrist swings it through strokes (radians: arm
-## raised, striking; see PlayerModel), its size in local units per unit of
-## the model.
-const FIRST_PERSON_TOOL_AT := Vector3(0.3, -0.36, -0.5)
-const FIRST_PERSON_TOOL_HANDLE := Vector3(-0.2, 0.95, -0.3)
-const FIRST_PERSON_TOOL_ROLL := -0.6
-const FIRST_PERSON_TOOL_STROKE := Vector2(-0.35, 1.0)
-const FIRST_PERSON_TOOL_SIZE := 0.3
 ## The hand's "slot" of the player's book (beside the hotbar's 9).
 const BOOK_SLOT := Inventory.HOTBAR
 
@@ -127,8 +107,8 @@ var creatures := CreaturesView.new()
 var arrows := ArrowsView.new()
 var archer := Archer.new()
 var item_icons := ItemIcons.new()
-## What is in hand in first person (a child of the camera).
-var first_person_held := MeshInstance3D.new()
+## The arm and what is in hand in first person (a child of the camera).
+var held_view := HeldView.new()
 ## Chooses between the top-down view and first person (caves, V).
 var view_mode := ViewMode.new()
 ## 0 = top-down view, 1 = first person, in between during the dive.
@@ -208,8 +188,8 @@ func _ready() -> void:
 	arrows.client_world = world
 	world_root.add_child(arrows)
 	creatures.burst.connect(interaction.burst)
-	first_person_held.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	world_viewport.camera.add_child(first_person_held)
+	held_view.library = items
+	world_viewport.camera.add_child(held_view)
 	hud_clock.clock = clock
 	pause_menu.clock = clock
 	debug_overlay.client = self
@@ -351,8 +331,9 @@ func _process(delta: float) -> void:
 		_update_orbit(delta)
 		local_player.step(delta)
 		_update_view(delta)
-		_update_held()
 		player_model.set_armor(_worn())
+		held_view.set_armor(_worn())
+		_update_held(delta)
 	hotbar.book_shown = Settings.guide_book
 	hotbar.book_selected = book_in_hand
 	inventory_screen.book_shown = Settings.guide_book
@@ -816,58 +797,47 @@ func furnace_broke(cell: Vector3i) -> void:
 
 
 ## Puts what is in hand in the body's hand and, in first person, at the
-## bottom right of the view, swinging with the arm's strokes.
-func _update_held() -> void:
+## bottom right of the view with the arm (HeldView).
+func _update_held(delta: float) -> void:
 	var held := held_item()
-	var model := items.mesh(held) if held != Items.Id.NONE else null
-	# Zooming in, the hand goes down (it would fill the narrowed view).
-	first_person_held.visible = model != null and first_person >= 1.0 and world_viewport.zoom < 0.05
 	if held != _shown_held:
 		_shown_held = held
-		first_person_held.mesh = model
-		if Items.tool_of(held) != Items.Tool.NONE:
-			player_model.hold_tool(model)
-		else:
-			player_model.hold(model, HELD_SIZE * items.fit(held) if model != null else 0.0)
-	if not first_person_held.visible:
-		return
-	var stroke := player_model.strike_phase
-	if Items.tool_of(held) != Items.Tool.NONE:
-		var pitch := 0.0
-		if stroke >= 0.0:
-			pitch = lerpf(FIRST_PERSON_TOOL_STROKE.x, FIRST_PERSON_TOOL_STROKE.y, stroke)
-		first_person_held.transform = ItemLibrary.held_tool(
-			_first_person_tool_frame(),
-			FIRST_PERSON_TOOL_AT,
-			pitch,
-			FIRST_PERSON_TOOL_SIZE,
-			FIRST_PERSON_TOOL_ROLL
+		_hold(held)
+	# Zooming in, the hand goes down (it would fill the narrowed view); a
+	# spectator has none.
+	held_view.visible = (
+		first_person >= 1.0 and world_viewport.zoom < 0.98 and not local_player.ghost
+	)
+	if held_view.visible:
+		held_view.animate(
+			delta,
+			player_model,
+			local_player.speed,
+			vitals.eating,
+			vitals.eat_time,
+			world_viewport.zoom,
+			lighting.sky_seen,
+			player_model.hurt
 		)
+
+
+## Gives the body's hand and the first-person view what is in hand: tools,
+## swords and the bow by their grip (ToolModels), anything else resting in
+## the hand.
+func _hold(held: int) -> void:
+	held_view.show_item(held)
+	if held == Items.Id.NONE:
+		player_model.hold(null, 0.0)
+	elif held == Items.Id.BOW:
+		var stages: Array[Mesh] = []
+		for stage in ToolModels.DRAW_STAGES:
+			stages.append(items.held_mesh(held, stage))
+		player_model.hold_bow(stages, ToolModels.grip(held))
+	elif ToolModels.has(held):
+		var sword := Items.tool_of(held) == Items.Tool.SWORD
+		player_model.hold_tool(items.held_mesh(held), ToolModels.grip(held), sword)
 	else:
-		var dip := maxf(stroke, 0.0)
-		var at := FIRST_PERSON_HELD_AT + Vector3(0.0, -0.05, -0.04) * dip
-		if vitals.eating:
-			# Up to the mouth, munching.
-			var munch := sin(vitals.eat_time * 18.0) * 0.015
-			at = FIRST_PERSON_EAT_AT + Vector3(0.0, munch, 0.0)
-		var turn := FIRST_PERSON_HELD_TURN + Vector3(-0.6, 0.0, 0.0) * dip
-		var size := FIRST_PERSON_HELD_SIZE * items.fit(held)
-		# A bow drawn comes up to the middle of the view.
-		var drawn := smoothstep(0.0, 1.0, archer.power())
-		at = at.lerp(FIRST_PERSON_DRAW_AT, drawn)
-		turn = turn.lerp(FIRST_PERSON_DRAW_TURN, drawn)
-		first_person_held.rotation = turn
-		first_person_held.scale = Vector3.ONE * size
-		var middle := Basis.from_euler(turn) * model.get_aabb().get_center() * size
-		first_person_held.position = at - middle * drawn
-
-
-## First person: the hand's basis for a tool (its z along the handle, its
-## y towards the front, where the head strikes; the axe's blade inwards).
-static func _first_person_tool_frame() -> Basis:
-	var handle := FIRST_PERSON_TOOL_HANDLE.normalized()
-	var front := (Vector3.FORWARD - handle * Vector3.FORWARD.dot(handle)).normalized()
-	return Basis(front.cross(handle), front, handle)
+		player_model.hold(items.mesh(held), HELD_SIZE * items.fit(held))
 
 
 ## Mouse drag (right or middle button) orbits the camera around the

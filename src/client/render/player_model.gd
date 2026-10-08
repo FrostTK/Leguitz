@@ -5,6 +5,12 @@ extends Node3D
 ## where it goes. Also carries the lantern (in world space: lights do not
 ## support the root's stretch).
 
+## What the right hand holds.
+enum Holding { NOTHING, ITEM, TOOL, SWORD, BOW }
+## A stroke of the right arm: a tool or the hand striking down (breaking,
+## a blow), a sword slashing across, a quick jab (placing, using).
+enum Stroke { MINE, SLASH, JAB }
+
 const SHADER := preload("res://src/client/shaders/voxel.gdshader")
 ## Render layer of the body: the lantern it carries must not shadow it
 ## (only the sun and the moon do).
@@ -19,26 +25,38 @@ const TURN_SHARPNESS := 14.0
 ## Strides per tile walked, and how far the limbs swing (radians).
 const STRIDE := 0.9
 const SWING := 0.75
-## Tools are held by the handle at TOOL_HAND, upright (turned TOOL_ROLL
-## about the handle: their flat side to the side, the axe's blade
-## forward), a voxel of the model being TOOL_SCALE of a voxel of the
-## world; the wrist lifts the head TOOL_REST (radians) at rest, and
-## through a stroke from the first angle (arm raised) to the second
-## (striking down).
-const TOOL_HAND := Vector3(0.0, -7.5, 0.5) * VOXEL
-const TOOL_SCALE := 0.75
-const TOOL_ROLL := PI * 0.25
-const TOOL_REST := 1.25
-const TOOL_STROKE := Vector2(0.35, -0.8)
-## A bow drawn (`aiming`) lies across in front of the chest (its middle
-## there, body voxels), its curve forward: seen from above as a bow, tipped
-## BOW_TILT (radians) towards the front so that it shows from the front
-## too.
-const BOW_AT := Vector3(0.0, 17.0, 6.0)
-const BOW_TILT := 0.25
-## A drawn bow is bigger than in hand at rest: its box's longest side
-## (local units).
-const BOW_SIZE := 0.75
+## How long a stroke lasts (seconds; held, they follow one another).
+const STROKE_SECONDS := {Stroke.MINE: 0.5, Stroke.SLASH: 0.38, Stroke.JAB: 0.26}
+## The fist, in the arm's space (from the shoulder, body voxels): a little
+## outwards, so that what it swings passes beside the head, never through
+## it. Tools are held by their grip there (ToolModels), in the arm's plane:
+## the handle along the wrist's angle, the side that strikes towards it.
+const FIST := Vector3(-0.5, -7.0, 0.0) * VOXEL
+## The arm's poses through a stroke [pitch, roll inwards, wrist] (radians):
+## at rest, raised, struck. A tool strikes down in front, the handle in
+## line with the arm; a sword slashes down and across; the hand jabs.
+const MINE_POSES: Array[Vector3] = [
+	Vector3(-0.35, 0.0, 0.15), Vector3(-2.6, 0.0, 0.0), Vector3(-0.9, 0.0, -1.43)
+]
+const SLASH_POSES: Array[Vector3] = [
+	Vector3(-0.4, 0.0, 0.25), Vector3(-2.3, -0.45, 0.2), Vector3(-0.85, 0.55, -1.1)
+]
+const HAND_POSES: Array[Vector3] = [
+	Vector3(-0.3, 0.0, 0.0), Vector3(-1.9, 0.0, 0.0), Vector3(-0.7, 0.0, 0.0)
+]
+const JAB_POSES: Array[Vector3] = [
+	Vector3(-0.3, 0.0, 0.0), Vector3(-0.3, 0.0, 0.0), Vector3(-1.25, 0.15, -0.35)
+]
+## A bow drawn (`aiming`) lies across in front of the chest (its grip
+## there, body voxels), its back forward, the string pulled to the chest:
+## seen from above as a bow, tipped BOW_TILT (radians) towards the front
+## so that it shows from the front too.
+const BOW_AT := Vector3(0.0, 17.0, 7.0)
+const BOW_TILT := 0.3
+## In hand at rest, the bow stands upright (in the arm's space, leaning a
+## little forward), its back towards the body and its string outwards: seen
+## face on from the front, not edge on.
+const BOW_LIMBS := Vector3(0.0, 1.0, 0.15)
 
 ## The armor's meshes, built once: (item, part) -> mesh.
 static var _armor_meshes: Dictionary[Vector2i, Mesh] = {}
@@ -48,38 +66,52 @@ var lantern := OmniLight3D.new()
 ## and under cover under the ceiling (world space; INF: high above the
 ## head, an even circle of light seen from above).
 var lantern_override := Vector3.INF
-## The right arm strikes again and again (breaking a block).
+## The right arm strikes again and again (breaking a block, hitting).
 var swinging := false
+## Where the right arm is in its stroke: 0 at rest, -1 raised, 1 struck
+## (read by HeldView), and the stroke's kind.
+var stroke := 0.0
+var stroke_kind := Stroke.MINE
+## How far the bow is drawn (0..1, Archer): it bends.
+var draw := 0.0
 ## Eating: the right hand at the mouth, munching.
 var eating := false
 ## Swimming: arms sweeping, legs kicking.
 var swimming := false
 ## Drawing a bow (0..1): both arms raised towards the front.
 var aiming := 0.0
-## Where the right arm is in its stroke: 0 raised, 1 striking down (-1: no
-## stroke going on).
-var strike_phase := -1.0
+## How red a hurt makes the body (0..1, see set_hurt; HeldView follows).
+var hurt := 0.0
+## What the right hand holds (see hold, hold_tool, hold_bow).
+var holding := Holding.NOTHING
 
 var _body := Node3D.new()
-## What the right hand holds (an item's model; see hold), and whether it
-## is a tool (held by its handle, see hold_tool).
+## What the right hand holds (an item's model; see hold).
 var _held := MeshInstance3D.new()
-var _holds_tool := false
 ## Where a held item (not a tool) rests in the hand (see hold).
 var _held_rest := Transform3D()
+## A tool's or the bow's grip (model units), the bow's stages.
+var _grip := Vector3.ZERO
+var _bow_stages: Array[Mesh] = []
 ## The armor worn (its meshes, and the items they show).
 var _armor: Array[MeshInstance3D] = []
 var _armor_items: Array[int] = []
 var _arms: Array[Node3D] = []
+## The right arm (the body faces +z: its right is -x) and the left one.
+var _right: Node3D
+var _left: Node3D
 var _legs: Array[Node3D] = []
 var _yaw := 0.0
 var _phase := 0.0
 var _swing := 0.0
 var _material := ShaderMaterial.new()
-## Phase of the strokes, and how long a single stroke (placing) lasts.
+## Munching (eating).
 var _strike := 0.0
 var _swim_time := 0.0
-var _strike_left := 0.0
+## How far the stroke going on is (0..1; -1: none) and whether a single
+## one is asked (swing).
+var _stroke_time := -1.0
+var _single := false
 
 
 func _ready() -> void:
@@ -102,11 +134,13 @@ func _ready() -> void:
 		_body.add_child(shoulder)
 		_part("arm", Vector3(0, -8, 0), shoulder, material)
 		_arms.append(shoulder)
+	_right = _arms[0]
+	_left = _arms[1]
 	# In the right hand, at the end of the arm.
 	# Like the body, out of the lantern's shadows (held close to it, what is
 	# in hand would throw a huge one); the sun's and the moon's stay.
 	_held.layers = PLAYER_LAYER
-	_arms[0].add_child(_held)
+	_right.add_child(_held)
 
 	lantern.top_level = true
 	lantern.light_color = Color(1.0, 0.8, 0.52)
@@ -142,28 +176,22 @@ func animate(feet: Vector3, heading: Vector2, speed: float, airborne: bool, delt
 		elif airborne:
 			_legs[i].rotation.x = 0.35 * side
 			_arms[i].rotation.x = -1.1
-	strike_phase = -1.0
+	_advance_stroke(delta)
+	var pose := Vector3(_right.rotation.x, 0.0, MINE_POSES[0].z)
+	if holding in [Holding.TOOL, Holding.SWORD] and not swimming and not airborne:
+		# Held a little forward, swinging less with the walk.
+		pose.x = arm_pose(stroke_kind, holding, 0.0).x + _right.rotation.x * 0.4
+	if _stroke_time >= 0.0:
+		pose = arm_pose(stroke_kind, holding, stroke)
 	if aiming > 0.0:
-		_arms[0].rotation.x = lerpf(_arms[0].rotation.x, -1.5, aiming)
-		_arms[1].rotation.x = lerpf(_arms[1].rotation.x, -1.6 - aiming * 0.2, aiming)
+		_left.rotation.x = lerpf(_left.rotation.x, -1.5, aiming)
+		pose.x = lerpf(pose.x, -1.6 - aiming * 0.2, aiming)
 	if eating:
 		_strike += delta * 18.0
-		_arms[0].rotation.x = -2.1 + sin(_strike) * 0.12
-	elif swinging or _strike_left > 0.0:
-		_strike += delta * 13.0
-		_strike_left -= delta
-		_arms[0].rotation.x = -1.3 + sin(_strike) * 0.7
-		strike_phase = (sin(_strike) + 1.0) * 0.5
-	if _holds_tool:
-		var pitch := TOOL_REST
-		if strike_phase >= 0.0:
-			pitch = lerpf(TOOL_STROKE.x, TOOL_STROKE.y, strike_phase)
-		_held.transform = ItemLibrary.held_tool(Basis(), TOOL_HAND, pitch, TOOL_SCALE, TOOL_ROLL)
-	elif _held.mesh != null:
-		_held.transform = _held_rest
-		if aiming > 0.0:
-			var drawn := _arms[0].transform.affine_inverse() * _bow_pose()
-			_held.transform = _held_rest.interpolate_with(drawn, aiming)
+		pose = Vector3(-2.1 + sin(_strike) * 0.12, 0.0, 0.0)
+	_right.rotation.x = pose.x
+	_right.rotation.z = pose.y
+	_place_held(pose.z)
 	_body.position.y = absf(sin(_phase)) * _swing * VOXEL * 1.2
 	if is_inside_tree():
 		var above := global_position + Vector3(0, LANTERN_HEIGHT, 0)
@@ -185,7 +213,7 @@ func set_armor(items: Array[int]) -> void:
 		mesh.queue_free()
 	_armor.clear()
 	var anchors := {
-		"body": _body, "arm_r": _arms[0], "arm_l": _arms[1], "leg_r": _legs[0], "leg_l": _legs[1]
+		"body": _body, "arm_r": _right, "arm_l": _left, "leg_r": _legs[0], "leg_l": _legs[1]
 	}
 	for item in items:
 		if item == Items.Id.NONE:
@@ -193,7 +221,7 @@ func set_armor(items: Array[int]) -> void:
 		var index := 0
 		for part: Array in ArmorModels.worn(item):
 			var mesh := MeshInstance3D.new()
-			mesh.mesh = _armor_mesh(item, index, part[1])
+			mesh.mesh = armor_mesh(item, index, part[1])
 			mesh.material_override = _material
 			mesh.layers = PLAYER_LAYER
 			mesh.position = part[2] * VOXEL
@@ -202,7 +230,9 @@ func set_armor(items: Array[int]) -> void:
 			index += 1
 
 
-static func _armor_mesh(item: int, index: int, grid: VoxelGrid) -> Mesh:
+## The mesh of a piece of armor's part (built once; HeldView shows the
+## sleeves too).
+static func armor_mesh(item: int, index: int, grid: VoxelGrid) -> Mesh:
 	var key := Vector2i(item, index)
 	if not _armor_meshes.has(key):
 		_armor_meshes[key] = VoxelMesher.build(grid)
@@ -213,40 +243,139 @@ static func _armor_mesh(item: int, index: int, grid: VoxelGrid) -> Mesh:
 ## size (local units).
 func hold(model: Mesh, size: float) -> void:
 	_held.mesh = model
-	_holds_tool = false
+	holding = Holding.ITEM if model != null else Holding.NOTHING
 	if model != null:
 		_held_rest = Transform3D(
 			Basis.from_euler(Vector3(-0.5, 0.0, 0.0)).scaled(Vector3.ONE * size),
-			Vector3(0.0, -8.5 * VOXEL - model.get_aabb().size.y * size * 0.5, 2 * VOXEL)
+			FIST + Vector3(0.0, -1.5 * VOXEL - model.get_aabb().size.y * size * 0.5, 1.5 * VOXEL)
 		)
 		_held.transform = _held_rest
 
 
-## Where a drawn bow is, in the body's space (see BOW_AT): the model's
-## diagonal (ItemModels lays it there) across the body, its flat side up.
-func _bow_pose() -> Transform3D:
-	var box := _held.mesh.get_aabb().size
-	var size := BOW_SIZE / maxf(box.x, maxf(box.y, box.z))
-	var turn := Basis(Vector3.RIGHT, PI * 0.5 - BOW_TILT) * Basis(Vector3.BACK, -PI * 0.25)
-	var middle := _held.mesh.get_aabb().get_center()
-	return Transform3D(turn.scaled(Vector3.ONE * size), BOW_AT * VOXEL - turn * middle * size)
-
-
-## Puts a tool in the right hand, held by its handle (see ItemLibrary.held_tool).
-func hold_tool(model: Mesh) -> void:
+## Puts a tool or a sword (ToolModels.held) in the right hand, held by its
+## grip (model units).
+func hold_tool(model: Mesh, grip: Vector3, sword: bool) -> void:
 	_held.mesh = model
-	_holds_tool = true
+	_grip = grip
+	holding = Holding.SWORD if sword else Holding.TOOL
 
 
-## One stroke of the right arm (placing a block).
+## Puts the bow in the right hand: its model at each stage of the draw
+## (ToolModels.DRAW_STAGES), held by its grip.
+func hold_bow(stages: Array[Mesh], grip: Vector3) -> void:
+	_bow_stages = stages
+	_held.mesh = stages[0]
+	_grip = grip
+	holding = Holding.BOW
+
+
+## One stroke of the right arm (placing a block, using something).
 func swing() -> void:
-	_strike_left = 0.25
+	_single = true
+
+
+## The arm's pose [pitch, roll inwards, wrist] for a stroke of `kind` at
+## `at` (see stroke) holding `what`.
+static func arm_pose(kind: int, what: int, at: float) -> Vector3:
+	var poses := HAND_POSES
+	if kind == Stroke.JAB:
+		poses = JAB_POSES
+	elif kind == Stroke.SLASH:
+		poses = SLASH_POSES
+	elif what in [Holding.TOOL, Holding.SWORD]:
+		poses = MINE_POSES
+	if at < 0.0:
+		return poses[0].lerp(poses[1], -at)
+	return poses[0].lerp(poses[2], at)
+
+
+## Where the arm is through a stroke (`t` 0..1): a tool or a sword is
+## raised, struck down fast and brought back; a jab goes out and back.
+static func stroke_curve(t: float, kind: int) -> float:
+	if kind == Stroke.JAB:
+		if t < 0.35:
+			var out := t / 0.35
+			return 1.0 - (1.0 - out) * (1.0 - out)
+		return 1.0 - smoothstep(0.35, 1.0, t)
+	if t < 0.35:
+		return -smoothstep(0.0, 0.35, t)
+	if t < 0.55:
+		var down := (t - 0.35) / 0.2
+		return -1.0 + 2.0 * down * down
+	return 1.0 - smoothstep(0.55, 1.0, t)
+
+
+## Strokes follow one another while `swinging`; a single one when asked.
+func _advance_stroke(delta: float) -> void:
+	if _stroke_time < 0.0:
+		var kind := -1
+		if swinging:
+			kind = Stroke.SLASH if holding == Holding.SWORD else Stroke.MINE
+		elif _single:
+			kind = _use_stroke()
+		_single = false
+		if kind < 0:
+			stroke = 0.0
+			return
+		stroke_kind = kind as Stroke
+		_stroke_time = 0.0
+	_stroke_time += delta / STROKE_SECONDS[stroke_kind]
+	if _stroke_time >= 1.0:
+		_stroke_time = -1.0
+		stroke = 0.0
+	else:
+		stroke = stroke_curve(_stroke_time, stroke_kind)
+
+
+## The stroke of a single use: a tool strikes, a sword slashes, the bow
+## none (it shoots), anything else jabs.
+func _use_stroke() -> int:
+	match holding:
+		Holding.TOOL:
+			return Stroke.MINE
+		Holding.SWORD:
+			return Stroke.SLASH
+		Holding.BOW:
+			return -1
+	return Stroke.JAB
+
+
+## Places what is in hand: a tool by its grip at the fist, turned by the
+## wrist (`wrist`, radians: 0 the handle forward, > 0 up); the bow leaning
+## in hand (BOW_LIMBS), or across the chest drawn; an item resting in the
+## hand.
+func _place_held(wrist: float) -> void:
+	if _held.mesh == null:
+		return
+	match holding:
+		Holding.TOOL, Holding.SWORD:
+			var handle := Vector3(0.0, sin(wrist), cos(wrist))
+			var front := Vector3(0.0, -cos(wrist), sin(wrist))
+			_held.transform = ItemLibrary.in_hand(handle, front, _grip, ToolModels.SCALE, FIST)
+		Holding.BOW:
+			var stage := ToolModels.stage_of(draw) if aiming > 0.0 else 0
+			_held.mesh = _bow_stages[stage]
+			var rest := ItemLibrary.in_hand(BOW_LIMBS, Vector3.RIGHT, _grip, ToolModels.SCALE, FIST)
+			_held.transform = rest
+			if aiming > 0.0:
+				var drawn := _right.transform.affine_inverse() * _bow_pose()
+				_held.transform = rest.interpolate_with(drawn, aiming)
+		_:
+			_held.transform = _held_rest
+
+
+## Where a drawn bow is, in the body's space (see BOW_AT): its limbs across,
+## its back forward and tipped up, the string towards the chest.
+func _bow_pose() -> Transform3D:
+	var front := Vector3(0.0, sin(BOW_TILT), cos(BOW_TILT))
+	return ItemLibrary.in_hand(Vector3.RIGHT, front, _grip, ToolModels.SCALE, BOW_AT * VOXEL)
 
 
 ## Dithers the body away (0 = shown, 1 = gone; its shadow stays, and so
 ## does the shadow of what it holds, drawn in first person by the view).
 ## Reddens the body (0: not at all; a hurt flashes it).
 func set_hurt(amount: float) -> void:
+	hurt = amount
 	_material.set_shader_parameter("hurt", amount)
 
 

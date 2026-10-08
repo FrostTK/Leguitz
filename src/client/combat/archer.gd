@@ -78,6 +78,7 @@ func _process(delta: float) -> void:
 			_shoot(power())
 		drawn = 0.0
 	client.player_model.aiming = smoothstep(0.0, 0.25, drawn)
+	client.player_model.draw = power()
 	meter.queue_redraw()
 
 

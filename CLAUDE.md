@@ -100,7 +100,7 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   (`Render3D.root_basis(yaw, pitch, amount)`), the body dithers away (shadow kept), the lantern is
   carried in the left hand. C held (InputBindings.ZOOM_VIEW, letter keys) zooms in:
   WorldViewport.zoom eases to ZOOM_FOV (zoom_towards), looking turns slower (look_scale), the
-  item in hand goes down. No cut, no see-through hole (globals `cut_height`, `see_through_on`); during the
+  arm and the item in hand go down (HeldView, drawn with a field of view of its own). No cut, no see-through hole (globals `cut_height`, `see_through_on`); during the
   dive the backs of faces vanish (`section_on`) so the camera sees through the rock it crosses.
   In first person: caves always shown, props' detail by distance, haze, split sun shadows, a
   procedural sky, 6 chunks loaded; the mouse is captured (released by the pause menu).
@@ -128,7 +128,8 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   moss), meshed by VoxelMesher (greedy faces + AO) and saved by
   `godot --headless --path . -s res://tools/gen_models.gd [-- --only=oak]` into `assets/models/`
   (commit the .res files; rerun after changing a model; all of them take ~15 min). Every non-cube
-  block needs a model (tested). `voxel.gdshader` handles wind, wetness and leaf backlight;
+  block needs a model (tested). `voxel.gdshader` (its code in voxel.gdshaderinc, shared with
+  voxel_view.gdshader, what is in hand in first person) handles wind, wetness and leaf backlight;
   VoxelGrid.Kind.GLOW voxels (fire) light themselves (VoxelMesher UV.y = 2, EMISSION).
   `see_through.gdshaderinc` (voxel and terrain shaders) dithers away what stands between the
   camera and the player, around them. Each model also has coarser copies (`_lod1` = 2 voxels per
@@ -256,11 +257,34 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   hotbar slot in hand (-1: the player's book); the client wears its copy at once
   (BlockInteraction._wear_tool: bits of the head and "broke" over the hotbar), the server sends
   the inventory. ItemSlot draws a worn tool's bar (green to red).
-  Models lie on the diagonal of a 16x16 grid like block-game icons (ItemModels; flat items' icons
-  face the camera); hands hold them by `ItemModels.TOOL_GRIP` through `ItemLibrary.held_tool`,
-  upright and turned about the handle (`roll`; the body: PlayerModel.TOOL_ROLL 45°, readable from
-  the front, a side and the back, the wrist following `PlayerModel.strike_phase`; first person:
-  bottom right of the view, turned to show its depth, the body's copy only casts its shadow).
+  Tools, swords and the bow (asked by the owner, more lifelike): `ToolModels` draws each once as
+  a profile (`_paint(kind, u, v)`: u along the handle, v across towards the side that strikes,
+  in model voxels of ToolModels.SCALE, half a body voxel; a thickness each: grained wood, a
+  leather-wrapped grip, the head in TOOL_HEADS' colors with darker eyes and bright sharpened
+  edges and points) built straight for the hands (`held`: handle along y, striking side +z,
+  pivot on the grip, `grip`) and on the diagonal of a 16x16 grid for icons and items on the
+  ground (`icon`, fitted inside the grid's diamond by `_fit`; ItemModels.build hands it the
+  tools and the bow). The bow has DRAW_STAGES models (limbs bending, `stage_of(draw)`), its
+  string and arrow thin boxes (`bow_lines`, ItemLibrary._add_lines), not voxels.
+  `ItemLibrary.held_mesh`, `in_hand(handle, front, grip, size, fist)` (a model by its grip at a
+  fist). Third person (PlayerModel; the right arm is `_right` = _arms[0], at -x: the body faces
+  +z): `holding` (Holding: ITEM, TOOL, SWORD, BOW), tools held at FIST (a little outwards) in the
+  arm's plane, the wrist's angle in the arm's pose; strokes (`stroke` -1 raised .. 0 .. 1
+  struck, `stroke_kind`: MINE, SLASH, JAB; `stroke_curve`: raised, struck fast, back;
+  STROKE_SECONDS) follow one another while `swinging`, one per `swing()` (a tool strikes, a
+  sword slashes, else a jab, the bow none); `arm_pose` (MINE/SLASH/HAND/JAB_POSES); tested to
+  never go through the head; the bow upright at rest (BOW_LIMBS), across the chest drawn.
+  First person: `HeldView` (child of the camera; GameClient._hold / _update_held) shows the
+  right arm (the body's arm model, armor sleeves) and what it holds, drawn with its own field of
+  view (VIEW_FOV 70°, whatever Settings.first_person_fov) and in front of the world
+  (`view_model.gdshaderinc`: voxel_view.gdshader, held_block.gdshader for blocks' cubes; a
+  shader writing POSITION must write it for every vertex, so voxel.gdshader never does), so it
+  never cuts into a wall nor changes with the field of view; poses [fist, handle, front] at
+  rest, raised and struck (TOOL_POSES: down onto the crosshair; SWORD_POSES: across to the left;
+  HAND_POSES: a jab), bobbing with the walk, lagging behind the look, rising when what is in
+  hand changes, lowered by the zoom, food to the mouth, the bow drawn in front leaning right
+  (the arm hidden), trembling at full draw; never culled (extra_cull_margin), no shadow (the
+  body's copy casts it).
   What is in hand is on PlayerModel.PLAYER_LAYER like the body: the lantern (left hand in first
   person, LANTERN_IN_HAND) throws no shadow of it, the sun and the moon do. F7 (creative) asks the server
   for the next material's tools (Msg.DEBUG_GIVE_TOOLS, announced over the hotbar); the F3 screen
@@ -777,7 +801,8 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   the release shoots along the crosshair in first person, ahead with a gamepad, else the low
   ballistic arc (`Archer.ballistic`) landing on BlockInteraction.aim_point (a creature under the
   mouse: its middle); a gauge over the head, PlayerModel.aiming raises the arms and brings the
-  bow across the chest (BOW_AT), the first-person bow comes upright; the arrow is taken at once,
+  bow across the chest (BOW_AT), bending as it is drawn (PlayerModel.draw, ToolModels stages),
+  the first-person bow comes up in front, an arrow on the string; the arrow is taken at once,
   predicted), `ArrowsView` (world root: flies them, stuck when they meet a block). Recipes:
   wool -> 4 string, stone point + stick + feather -> 4 arrows, the bow (sticks and string) at
   the workbench. Armor (`Armor`, shared: helmet, chestplate, leggings, boots of hide, copper,

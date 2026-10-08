@@ -11,6 +11,8 @@ const VOXEL_SHADER := preload("res://src/client/shaders/voxel.gdshader")
 var voxel_material := ShaderMaterial.new()
 
 var _meshes: Dictionary[int, Mesh] = {}
+## The tools' models in hand (see held_mesh).
+var _held: Dictionary[int, Mesh] = {}
 ## Per item: the factor bringing its model to a 1-unit box.
 var _fits: Dictionary[int, float] = {}
 var _icons: Dictionary[int, Texture2D] = {}
@@ -36,31 +38,65 @@ func fit(item: int) -> float:
 	return _fits[item]
 
 
-## Where a tool sits in a hand. `frame`: the hand's basis (the handle
-## goes along its z; the tool lies flat across its y, the axe's blade
-## towards its -x), `hand`: where it holds it, `pitch`: the wrist (radians,
-## > 0 tilts the head towards y), `size`: local units per unit of the model.
-static func held_tool(
-	frame: Basis, hand: Vector3, pitch: float, size: float, roll := 0.0
+## The model held in hand: the tools, swords and bow straight
+## (ToolModels.held, `stage`: how far a bow is drawn), else the item's own.
+func held_mesh(item: int, stage := 0) -> Mesh:
+	if not ToolModels.has(item):
+		return mesh(item)
+	var key := item * ToolModels.DRAW_STAGES + stage
+	if not _held.has(key):
+		var model := VoxelMesher.build(ToolModels.held(item, stage))
+		if item == Items.Id.BOW:
+			_add_lines(model, ToolModels.bow_lines(stage))
+		for surface in model.get_surface_count():
+			model.surface_set_material(surface, voxel_material)
+		_held[key] = model
+	return _held[key]
+
+
+## Thin boxes ([from, to, half thickness across x, half thickness across
+## the other way, color]) added to a model as a surface of its own, colored
+## like voxels (voxel.gdshader).
+static func _add_lines(model: ArrayMesh, lines: Array) -> void:
+	var tool := SurfaceTool.new()
+	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for line: Array in lines:
+		var from: Vector3 = line[0]
+		var to: Vector3 = line[1]
+		var along := (to - from).normalized()
+		var across := Vector3.RIGHT * float(line[2])
+		var other := along.cross(Vector3.RIGHT).normalized() * float(line[3])
+		var color: Color = line[4]
+		var corners: Array[Vector3] = []
+		for end: Vector3 in [from, to]:
+			for side: Vector2 in [Vector2(-1, -1), Vector2(1, -1), Vector2(1, 1), Vector2(-1, 1)]:
+				corners.append(end + across * side.x + other * side.y)
+		var faces := [
+			[0, 1, 2, 3], [7, 6, 5, 4], [0, 4, 5, 1], [1, 5, 6, 2], [2, 6, 7, 3], [3, 7, 4, 0]
+		]
+		for face: Array in faces:
+			var a: Vector3 = corners[face[0]]
+			var normal := (corners[face[1]] - a).cross(corners[face[2]] - a).normalized()
+			# Both ways round: whichever faces out is drawn.
+			for order: Array in [[0, 1, 2, 0, 2, 3], [0, 2, 1, 0, 3, 2]]:
+				for i: int in order:
+					tool.set_color(Color(color.r, color.g, color.b, 1.0))
+					tool.set_uv(Vector2.ZERO)
+					tool.set_normal(normal if order[1] == 1 else -normal)
+					tool.add_vertex(corners[face[i]])
+	tool.commit(model)
+
+
+## Where a model sits in a hand: its y (the handle) along `handle`, its z
+## (the side that strikes) towards `front`, `size` local units per unit of
+## the model, its point `grip` (model units) at `fist`.
+static func in_hand(
+	handle: Vector3, front: Vector3, grip: Vector3, size: float, fist: Vector3
 ) -> Transform3D:
-	# The model's handle along z, its flat side facing -y.
-	var to_hand := Basis(
-		Vector3(ItemModels.SQRT_HALF, 0.0, ItemModels.SQRT_HALF),
-		Vector3(-ItemModels.SQRT_HALF, 0.0, ItemModels.SQRT_HALF),
-		Vector3(0.0, -1.0, 0.0)
-	)
-	var basis := (
-		frame
-		* Basis(Vector3.RIGHT, -pitch)
-		* Basis(Vector3.BACK, roll)
-		* to_hand
-		* Basis.from_scale(Vector3.ONE * size)
-	)
-	var grid := ItemModels.TOOL_SIZE
-	var grip := (
-		(ItemModels.TOOL_GRIP - Vector3(grid.x * 0.5, 0.0, grid.z * 0.5)) * VoxelMesher.VOXEL
-	)
-	return Transform3D(basis, hand - basis * grip)
+	var y := handle.normalized()
+	var z := (front - y * front.dot(y)).normalized()
+	var basis := Basis(y.cross(z), y, z).scaled(Vector3.ONE * size)
+	return Transform3D(basis, fist - basis * grip)
 
 
 ## The item's icon (null until ItemIcons rendered it).
