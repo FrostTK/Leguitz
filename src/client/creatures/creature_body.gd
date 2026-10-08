@@ -35,6 +35,11 @@ const FROZEN_FADE := 0.35
 const FOLD := 1.4
 const LIE_SINK := 0.3
 const SLEEP_PITCH := 0.55
+## A bear warning rears up this far (radians), lifted this much (levels);
+## a wolf's or a bear's blow lunges this far forward (levels).
+const REAR_PITCH := 0.75
+const REAR_LIFT := 0.45
+const LUNGE := 0.3
 
 var id := 0
 var kind := Species.Id.SHEEP
@@ -70,6 +75,8 @@ var _sink := 0.0
 var _fade := 0.0
 var _sky := -1.0
 var _rest := 0.0
+var _rear := 0.0
+var _lunge := 0.0
 var _meshes: Array[MeshInstance3D] = []
 var _shadowed := true
 ## The shader's parameters as last set (set again only when they change).
@@ -166,11 +173,11 @@ func animate(delta: float) -> void:
 	_rest = move_toward(_rest, 1.0 if asleep else 0.0, delta * 2.0)
 	_animate_legs()
 	_root.position.y = absf(sin(_phase)) * _swing * VOXEL * 1.5
-	if kind == Species.Id.RABBIT:
+	if kind in [Species.Id.RABBIT, Species.Id.FROG]:
 		# It hops.
 		_root.position.y = absf(sin(_phase * 0.5)) * _swing * VOXEL * 6.0
 	_root.position.y -= _rest * Species.TALL[kind] * LIE_SINK
-	if Species.FLIERS.has(kind):
+	if Species.FLIERS.has(kind) and not _landed():
 		_root.position.y = sin(_time * 3.0 + id) * VOXEL * 1.5
 		_root.rotation.x = lerpf(
 			_root.rotation.x, 0.5 if state == Creature.State.STRIKE else 0.0, 0.2
@@ -178,6 +185,7 @@ func animate(delta: float) -> void:
 	_animate_head(delta)
 	_animate_wings()
 	_animate_monster(delta)
+	_animate_wild(delta)
 	_hurt = maxf(_hurt - delta / HURT_SECONDS, 0.0)
 	_set_parameter(&"hurt", _hurt)
 	var fade := _fade
@@ -231,10 +239,12 @@ func _animate_wings() -> void:
 		return
 	var moth := kind == Species.Id.LANTERN_MOTH
 	var flapping := moth or state == Creature.State.FLEE or absf(_climb) > 1.0
+	if kind == Species.Id.CROW:
+		flapping = not _landed()
 	var open := (0.5 + sin(_time * 28.0) * 0.5) * 0.9 if flapping else 0.0
 	if moth:
 		open = sin(_time * 16.0 + id) * 0.8
-	elif kind == Species.Id.BEE:
+	elif kind in [Species.Id.BEE, Species.Id.LANTERN_BUMBLEBEE]:
 		open = sin(_time * 60.0 + id) * 0.7
 	_joints["wing_l"].rotation.z = -open
 	_joints["wing_r"].rotation.z = open
@@ -257,6 +267,36 @@ func _animate_monster(delta: float) -> void:
 		Species.Id.SHADE_LURKER:
 			var pale := FROZEN_FADE if state == Creature.State.FROZEN else 0.0
 			_fade = move_toward(_fade, pale, delta * 2.0)
+
+
+## A bear warning rears up on its hind legs; a wolf's or a bear's blow
+## lunges; a fish's tail sweeps; a mole stays out of sight under its field
+## until it comes up.
+func _animate_wild(delta: float) -> void:
+	match kind:
+		Species.Id.WOLF, Species.Id.BEAR:
+			var alert := state == Creature.State.ALERT and not dying
+			_rear = move_toward(_rear, 1.0 if alert else 0.0, delta * 4.0)
+			_root.rotation.x = -_rear * REAR_PITCH
+			_root.position.y += _rear * REAR_LIFT
+			for name: String in ["leg_fl", "leg_fr"]:
+				_joints[name].rotation.x = lerpf(_joints[name].rotation.x, -1.2, _rear)
+			var striking := state == Creature.State.STRIKE and not dying
+			_lunge = move_toward(_lunge, 1.0 if striking else 0.0, delta * 8.0)
+			_root.position.z = _lunge * LUNGE
+		Species.Id.FISH:
+			var beat := 6.0 + _swing * 14.0
+			_joints["tail"].rotation.y = sin(_time * beat + id) * 0.5
+		Species.Id.MOLE:
+			var up := state == Creature.State.IDLE or dying
+			_sink = move_toward(_sink, 0.0 if up else 1.0, delta * 3.0)
+			_root.position.y -= _sink * Species.TALL[kind] * 1.2
+			_root.visible = _sink < 0.95
+
+
+## A crow pecking on the ground (not flying).
+func _landed() -> bool:
+	return kind == Species.Id.CROW and state == Creature.State.GRAZE
 
 
 ## Sets a shader parameter when its value changed.

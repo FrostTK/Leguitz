@@ -33,11 +33,25 @@ const BITS := {
 	Species.Id.RABBIT: Color("8a6c54"),
 	Species.Id.PIG: Color("e89a9a"),
 	Species.Id.BEE: Color("f2c030"),
+	Species.Id.WOLF: Color("6e6a64"),
+	Species.Id.BEAR: Color("523620"),
+	Species.Id.FROG: Color("548a34"),
+	Species.Id.TURTLE: Color("56602c"),
+	Species.Id.BEAVER: Color("644226"),
+	Species.Id.FISH: Color("a8c4ce"),
+	Species.Id.MOLE: Color("36302c"),
+	Species.Id.CROW: Color("1e2228"),
+	Species.Id.LANTERN_BUMBLEBEE: Color("ffe27a"),
 }
-## A wisp's light: its color, how far and how bright, and how it flickers.
-const WISP_LIGHT := Color(0.6, 1.0, 0.45)
-const WISP_RANGE := 6.0
-const WISP_ENERGY := 1.6
+## The lights some carry (a wisp, a lantern bumblebee): their color, how
+## far and how bright (they flicker).
+const LIGHTS := {
+	Species.Id.WISP: [Color(0.6, 1.0, 0.45), 6.0, 1.6],
+	Species.Id.LANTERN_BUMBLEBEE: [Color(1.0, 0.85, 0.45), 4.0, 1.1],
+}
+## Dirt thrown up by a mole digging under a field, this often (seconds).
+const DIRT_COLOR := Color("5e4028")
+const DIRT_SECONDS := 0.35
 ## Pink bits over an animal in love, this often (seconds).
 const HEART_COLOR := Color("ff6f9c")
 const HEART_SECONDS := 0.7
@@ -57,6 +71,11 @@ const SMALL := {
 	Species.Id.CHICKEN: true,
 	Species.Id.DUCK: true,
 	Species.Id.LANTERN_MOTH: true,
+	Species.Id.FROG: true,
+	Species.Id.FISH: true,
+	Species.Id.MOLE: true,
+	Species.Id.CROW: true,
+	Species.Id.LANTERN_BUMBLEBEE: true,
 }
 ## First person: creatures farther than this from the eye (global units)
 ## are small on screen.
@@ -65,7 +84,7 @@ const FAR_ANIMATION := 24.0
 ## (seconds).
 const MOST_WAITED := 0.5
 
-## Where the wisps' lights go (the 3D world, outside the stretched root).
+## Where the creatures' lights go (the 3D world, outside the stretched root).
 var light_parent: Node
 ## The sky light of a cell (tile x, row, tile y; see WorldView3D.sky_at):
 ## bodies darken in caves.
@@ -88,13 +107,14 @@ var _frame := 0
 var _meshes: Dictionary[int, Dictionary] = {}
 ## Dead ones tipping over and fading.
 var _dying: Array[CreatureBody] = []
-## The wisps' lights, by creature id.
+## The creatures' lights (LIGHTS), by creature id.
 var _lights: Dictionary[int, OmniLight3D] = {}
 ## The leads: creature id -> the player leading it, and their ropes.
 var _leads: Dictionary[int, int] = {}
 var _ropes: Dictionary[int, Node3D] = {}
 var _rope_material := StandardMaterial3D.new()
 var _hearts := 0.0
+var _dirt := 0.0
 
 
 func _ready() -> void:
@@ -118,11 +138,11 @@ func spawn(message: Dictionary) -> void:
 	_bodies[id] = body
 	_place(body, message)
 	body.snap()
-	if kind == Species.Id.WISP and light_parent != null:
+	if LIGHTS.has(kind) and light_parent != null:
 		var light := OmniLight3D.new()
-		light.light_color = WISP_LIGHT
-		light.omni_range = WISP_RANGE
-		light.light_energy = WISP_ENERGY
+		light.light_color = LIGHTS[kind][0]
+		light.omni_range = LIGHTS[kind][1]
+		light.light_energy = LIGHTS[kind][2]
 		light_parent.add_child(light)
 		_lights[id] = light
 
@@ -202,7 +222,12 @@ func has(id: int) -> bool:
 ## Whether the creature `id` shown is an animal (not a monster).
 func is_animal(id: int) -> bool:
 	var body: CreatureBody = _bodies.get(id)
-	return body != null and not Species.is_monster(body.kind) and body.kind != Species.Id.BEE
+	return (
+		body != null
+		and not Species.is_monster(body.kind)
+		and body.kind != Species.Id.BEE
+		and not Species.PESTS.has(body.kind)
+	)
 
 
 ## The translated name of an animal's species ("" if not shown).
@@ -262,7 +287,8 @@ func _process(delta: float) -> void:
 		for id: int in _lights:
 			var light := _lights[id]
 			light.global_position = root * (_bodies[id].position + Vector3(0.0, 0.25, 0.0))
-			light.light_energy = WISP_ENERGY * (0.85 + 0.15 * sin(time * 11.0 + id))
+			var energy: float = LIGHTS[_bodies[id].kind][2]
+			light.light_energy = energy * (0.85 + 0.15 * sin(time * 11.0 + id))
 	for body in _dying.duplicate():
 		body.animate(delta)
 		if body.finished:
@@ -276,7 +302,19 @@ func _process(delta: float) -> void:
 			if body.flags & Animal.Flag.LOVE:
 				var top: float = Species.TALL[body.kind] * body.size() + 0.15
 				burst.emit(body.position + Vector3(0.0, top, 0.0), HEART_COLOR, 3)
+	_dig(delta)
 	_draw_leads()
+
+
+## Moles digging under a field throw up dirt.
+func _dig(delta: float) -> void:
+	_dirt += delta
+	if _dirt < DIRT_SECONDS:
+		return
+	_dirt = 0.0
+	for body: CreatureBody in _bodies.values():
+		if body.kind == Species.Id.MOLE and body.state != Creature.State.IDLE:
+			burst.emit(body.position + Vector3(0.0, 0.05, 0.0), DIRT_COLOR, 2)
 
 
 ## Whether a creature is small on screen (zoomed far out, or far from the

@@ -41,6 +41,10 @@ const OBJECT_COLORS := {
 	Tiles.Block.NEST_BOX: Color(0.82, 0.68, 0.32),
 	Tiles.Block.BEEHIVE: Color(0.63, 0.48, 0.29),
 	Tiles.Block.BEE_NEST: Color(0.77, 0.69, 0.53),
+	Tiles.Block.SCARECROW: Color(0.78, 0.63, 0.3),
+	Tiles.Block.MOLEHILL: Color(0.37, 0.25, 0.16),
+	Tiles.Block.BEAVER_DAM: Color(0.42, 0.29, 0.16),
+	Tiles.Block.TURTLE_EGGS: Color(0.93, 0.91, 0.85),
 }
 const PLANT_COLOR := Color(0.32, 0.58, 0.24)
 
@@ -75,7 +79,7 @@ static func _compute(voxel: int) -> Color:
 		return Color(FarmModels.BIN[2])
 	if ObjectShapes.base_kind(block) == Tiles.Block.NEST_BOX:
 		return OBJECT_COLORS[Tiles.Block.NEST_BOX]
-	if Apiary.is_hive(block):
+	if Apiary.is_hive(block) or ObjectShapes.base_kind(block) == Tiles.Block.TURTLE_EGGS:
 		return OBJECT_COLORS[ObjectShapes.base_kind(block)]
 	if DecorModels.build(ObjectShapes.base_kind(block), 0) != null:
 		return DecorModels.color_of(ObjectShapes.base_kind(block))

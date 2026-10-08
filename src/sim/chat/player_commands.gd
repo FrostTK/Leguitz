@@ -160,13 +160,14 @@ static func item_names() -> Dictionary:
 	return _items
 
 
-## Plain names of the creatures one can summon (not bees).
+## Plain names of the creatures one can summon (not bees nor pests: they
+## come for a field).
 static func species_names() -> Dictionary:
 	if _species.is_empty():
 		var keys := {}
 		var own := {}
 		for kind: int in Species.NAME_KEYS:
-			if kind != Species.Id.BEE:
+			if kind != Species.Id.BEE and not Species.PESTS.has(kind):
 				keys[kind] = Species.NAME_KEYS[kind]
 				own[kind] = Species.Id.find_key(kind)
 		_species = Chat.names_of(keys, own)

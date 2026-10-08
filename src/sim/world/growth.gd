@@ -95,8 +95,10 @@ const AROUND: Array[Vector2i] = [
 	Vector2i(1, 1),
 ]
 
-## The hives of the loaded chunks, gathered at each update (pollination).
+## The hives of the loaded chunks, gathered at each update (pollination),
+## and the lantern bumblebees out (Pests: crops near them grow at night).
 static var _hives: Array[Vector3i] = []
+static var _glows: Array[Vector3] = []
 
 
 ## Whether a sapling can be planted on a voxel.
@@ -106,7 +108,7 @@ static func is_soil(voxel: int) -> bool:
 
 ## Whether something set in a cell may grow: a sapling, a young tree, a
 ## fruit tree in blossom, an unripe crop, a grown stem, dirt, farmland, a
-## full composter (rotting), a hive (honey, bees).
+## full composter (rotting), a hive (honey, bees), turtle eggs (hatching).
 static func may_grow(voxel: int) -> bool:
 	var block := Voxels.block_of(voxel)
 	return (
@@ -116,6 +118,7 @@ static func may_grow(voxel: int) -> bool:
 		or Farming.STAGES.has(block)
 		or Farming.FRUIT_OF.has(block)
 		or Apiary.is_hive(block)
+		or block in Wildlife.EGGS
 		or voxel == Voxels.of_ground(Tiles.Ground.DIRT)
 		or Farming.is_farmland(voxel)
 		or block == Tiles.Block.COMPOSTER_FULL
@@ -146,6 +149,7 @@ static func note(chunk: ChunkData, cell: Vector3i, voxel: int) -> void:
 static func update(server: GameServer, chance := -1.0, slice := -1) -> void:
 	var seconds := CHECK_TICKS * GameConst.TICK_DELTA
 	if slice <= 0:
+		_glows = Pests.glowing(server.creatures)
 		_hives.clear()
 		for chunk: ChunkData in server.world.chunks.values():
 			for cell: Vector3i in chunk.growing:
@@ -179,6 +183,10 @@ static func _grow(
 		var honey := seconds / server.clock.scale_duration(Apiary.HONEY_SECONDS)
 		Apiary.work(server, cell, voxel, chance if chance >= 0.0 else honey)
 		return
+	if block in Wildlife.EGGS:
+		var hatch := seconds / server.clock.scale_duration(Wildlife.HATCH_SECONDS)
+		Wildlife.hatch(server, cell, block, chance if chance >= 0.0 else hatch)
+		return
 	if block == Tiles.Block.COMPOSTER_FULL:
 		var rot := seconds / server.clock.scale_duration(Composting.ROT_SECONDS)
 		if server.rng.randf() < (chance if chance >= 0.0 else rot):
@@ -195,7 +203,7 @@ static func _grow(
 		if not Farming.holds(cell, block, world.loaded_voxel_at):
 			return
 		mean = Farming.stage_seconds(world, cell)
-		if Apiary.pollinated(_hives, cell):
+		if Apiary.pollinated(_hives, cell) or Pests.lit_by(_glows, cell):
 			mean *= Apiary.POLLINATED
 	elif not dirt or not _bare(world, cell):
 		chunk.growing.erase(cell)
@@ -205,7 +213,9 @@ static func _grow(
 		return
 	var lit_at := cell + Vector3i.UP if dirt else cell
 	if Light.level(world, lit_at, server.clock) < LIGHT:
-		return
+		# In the dark only crops a lantern bumblebee glows over grow.
+		if not (Farming.STAGES.has(block) and Pests.lit_by(_glows, cell)):
+			return
 	if Farming.FRUIT_OF.has(block):
 		Farming.bear_fruit(server, cell, block)
 		return

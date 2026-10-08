@@ -119,11 +119,11 @@ static func _item_keys() -> PackedStringArray:
 	return keys
 
 
-## The name keys of the creatures one can summon (not bees).
+## The name keys of the creatures one can summon (not bees nor pests).
 static func _creature_keys() -> PackedStringArray:
 	var keys := PackedStringArray()
 	for kind: int in Species.NAME_KEYS:
-		if kind != Species.Id.BEE:
+		if kind != Species.Id.BEE and not Species.PESTS.has(kind):
 			keys.append(Species.NAME_KEYS[kind])
 	return keys
 

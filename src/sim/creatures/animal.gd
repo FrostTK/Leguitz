@@ -51,6 +51,8 @@ var shorn := false
 var wool_in := 0.0
 var milk_in := 0.0
 var egg_in := 0.0
+## Wildlife: seconds until a turtle lays its eggs, a beaver builds its dam.
+var chore_in := 0.0
 ## The player leading it on a lead (PlayerSession.id, -1: none; not saved)
 ## and where they stand (world pixels), where its mate stands, whether it
 ## is night and where it sleeps tonight (Husbandry.sense, every step).
@@ -122,6 +124,7 @@ func to_dict() -> Dictionary:
 				"wool_in": wool_in,
 				"milk_in": milk_in,
 				"egg_in": egg_in,
+				"chore_in": chore_in,
 			}
 		)
 	)
@@ -140,6 +143,7 @@ func load_dict(data: Dictionary) -> void:
 	wool_in = _finite(data.get("wool_in", 0.0))
 	milk_in = _finite(data.get("milk_in", 0.0))
 	egg_in = _finite(data.get("egg_in", 0.0))
+	chore_in = _finite(data.get("chore_in", 0.0))
 
 
 func think(delta: float, voxel_at: Callable, rng: RandomNumberGenerator) -> void:

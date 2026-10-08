@@ -60,6 +60,7 @@ const BEARING := {
 ## Other solid objects: the size of the square they block (voxels) and how
 ## many levels up.
 const SOLIDS := {
+	Tiles.Block.SCARECROW: [4, 2],
 	Tiles.Block.ROCK: [10, 1],
 	Tiles.Block.MOSSY_ROCK: [10, 1],
 	Tiles.Block.CACTUS: [8, 2],
@@ -242,6 +243,7 @@ const TOPS := {
 	Tiles.Block.NEST_BOX: 7,
 	Tiles.Block.BEEHIVE: 14,
 	Tiles.Block.BEE_NEST: 14,
+	Tiles.Block.BEAVER_DAM: 16,
 }
 ## Other solid things players place, by kind: the square they block
 ## (voxels; the others facing them: BOX_SIZE).
@@ -259,6 +261,7 @@ const FOOTPRINTS := {
 	Tiles.Block.NEST_BOX: 14,
 	Tiles.Block.BEEHIVE: 12,
 	Tiles.Block.BEE_NEST: 12,
+	Tiles.Block.BEAVER_DAM: 16,
 }
 ## What keeps bodies out (fences, closed gates): two levels high, nobody
 ## jumps over.
@@ -321,6 +324,8 @@ const STAGE_OF := {
 	Tiles.Block.BEE_NEST_1: Tiles.Block.BEE_NEST,
 	Tiles.Block.BEE_NEST_2: Tiles.Block.BEE_NEST,
 	Tiles.Block.BEE_NEST_3: Tiles.Block.BEE_NEST,
+	Tiles.Block.TURTLE_EGGS_1: Tiles.Block.TURTLE_EGGS,
+	Tiles.Block.TURTLE_EGGS_2: Tiles.Block.TURTLE_EGGS,
 }
 ## Fences join their neighbors (fences, gates and cubes): their version is
 ## the sides they join (FENCE_SIDES bits, 16 versions), not their tile's.
@@ -330,6 +335,10 @@ const FENCE_SIDES: Array[Vector2i] = [
 const FENCE_VARIANTS := 16
 ## Objects with a single version (no random ones).
 const SINGLE := {
+	Tiles.Block.SCARECROW: true,
+	Tiles.Block.MOLEHILL: true,
+	Tiles.Block.BEAVER_DAM: true,
+	Tiles.Block.TURTLE_EGGS: true,
 	Tiles.Block.TABLE: true,
 	Tiles.Block.CAMPFIRE: true,
 	Tiles.Block.TORCH: true,

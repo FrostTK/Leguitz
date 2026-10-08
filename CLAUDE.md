@@ -578,6 +578,43 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   honeycomb. Client: CreatureModels (_cow, _goat, _duck, _rabbit, _pig, _bee), CreatureBody
   (a bee's wings always beating), ApiaryModels (the hive at each level, honey oozing down its
   front, the nest, the bottles, honeycomb). The book's Animals chapter (pigs, Bees).
+- Wild animals and pests (phase 7, step 7): Species WOLF, BEAR (PREDATORS: Predator extends
+  Animal, saved; CHASE_SPEED, DAMAGE, Vitals.Cause WOLF/BEAR, armored), FROG, TURTLE, BEAVER
+  (swimmers), FISH (AQUATIC: Fish extends Animal, swims with body.fly, a step leaving the water
+  is undone; Creatures.populate puts them in water at least 2 deep, `water_spot`), and pests
+  (PESTS, no BIOMES, never saved, not summoned): MOLE (Mole), CROW (Crow), LANTERN_BUMBLEBEE (a
+  Bee). `Wildlife` (static, given the server; Creatures.update calls `sense` for the animals it
+  `minds` and `land_blow` when a Predator strikes): a predator hit (`provoked`) turns, with its
+  pack (PACK_RANGE), on the player who struck it for ANGER_SECONDS; a bear warns a player within
+  WARN_RANGE (State.ALERT, appended: it rears up) and charges after WARN_SECONDS, sleeps at
+  night; at night wolves go for a player within NIGHT_RANGE who is not `Light.is_lit`; hungry, a
+  predator chases the nearest Species.PREY (its pack's) for Predator.CHASE_SECONDS, eats it (no
+  drops) and the eaters are fed HUNGER_SECONDS (paced); never a creative player nor a spectator
+  (Monsters.hunts). Turtles lay TURTLE_EGGS on sand every EGG_SECONDS (Animal.chore_in, saved),
+  not within EGG_SPACING of other eggs; Growth hatches them a stage at a time (TURTLE_EGGS, _1,
+  _2: STAGE_OF, cracked models; then young turtles; HATCH_SECONDS); the TURTLE_EGG item puts them
+  back on sand (Mining.placement, can_place). Beavers build BEAVER_DAM (furniture stood on, TOPS
+  16, its model rising from the riverbed out of the water; gives sticks) in still water by a bank
+  or the dam (`dam_spot`, MOST_DAM within DAM_RANGE) every DAM_SECONDS. Wolves, bears and fish
+  are `is_wild`: tending them tells HUD_ANIMAL_WILD. `Pests` (static; Creatures runs
+  `come_and_go` every PEST_TICKS, `sense` before each pest thinks) around players monsters may
+  hunt with MIN_CROPS crops within FIELD_CHUNKS (`crops_near`, from ChunkData.growing): a mole
+  (MOLE_CHANCE) tunnels from crop to crop out of sight (WANDER), gnaws one (GRAZE, then the crop
+  becomes a MOLEHILL, gives dirt), comes up (IDLE: only then `hurt_by` lands; hurt or after
+  RAVAGES it leaves); crows (by day, MAX_CROWS) fly in to the young crops (`is_young`: stages 0
+  and 1) not watched by a SCARECROW within SCARE_RANGE (`scarecrows` reads the chunks' voxels
+  straight; a pumpkin over wheat and sticks, two levels tall), peck one after PECK_SECONDS (it
+  goes) and go on to the next, flee (FLEE, then `gone`) from a player within CROW_FLEE, the
+  night, a blow or a scarecrow; lantern bumblebees (night, MAX_BUMBLEBEES) come out among the
+  flowers (Apiary.flowers_near) and go at dawn: Growth gathers their middles (`Pests.glowing`)
+  and crops within GLOW_RANGE (`lit_by`) grow in the dark and POLLINATED faster. Items RAW_FISH
+  (roasts into COOKED_FISH), SCARECROW, TURTLE_EGG. Client: WildModels (the nine bodies, a
+  fish's "tail" part, the bumblebee's GLOW tail; the blocks and items; it uses CreatureModels'
+  public helpers voxel_of, leg_grid, four_legs, eyes, shaded, noise), CreatureBody (frogs hop,
+  a bear rears on ALERT, wolves and bears lunge on STRIKE, a fish's tail sweeps, a mole sinks
+  out of sight unless up, a crow flaps unless pecking), CreaturesView (LIGHTS: the wisp's and
+  the bumblebees' lights; a digging mole throws up dirt). The book: Animals (Wild animals,
+  GuideBook.WILD_ICONS, CREATURE_<KIND>_HOW) and Farm (Pests).
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made
@@ -655,7 +692,7 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   and grid too, or one item: PlayerCommands); admins tp (random: RANDOM_NEAR to
   RANDOM_FAR on dry land with room to stand; spawn; a player; x z on the ground,
   `_landing`; x level z; ~ relative), time (words, 7h30, freeze, run; refused when SYNCED),
-  weather, gamemode (WorldCommands), give, summon (not bees), heal (GameModes.restore), admin
+  weather, gamemode (WorldCommands), give, summon (not bees nor pests), heal (GameModes.restore), admin
   list/add/remove (PlayerCommands). Names and words are matched plainly (Chat.plain: case,
   accents, underscores; Chat.names_of: an enum's keys and the en/fr translations; Chat.lookup:
   exact, else the only one starting so, else the close ones told). WorldSettings.admins

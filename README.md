@@ -31,8 +31,10 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Chat (T) et commandes (/), complétées avec Tab : /aide, /joueurs, /mp, /où, /graine, /vide pour tous ; /tp (hasard, départ, un joueur, des coordonnées), /heure, /météo, /mode, /donne, /invoque, /soigne, /admin pour les admins du monde | ✅ |
 | Clic molette en 1re personne : le bloc visé en main (en créatif même sans l'avoir ; en survie seulement s'il est dans l'inventaire) | ✅ |
 | Performances : en 1re personne rien n'est dessiné au-delà de la brume, ombres et animations épargnées là où elles ne se voient pas, plus d'à-coups de la pousse des plantes ; case « Extrême » (tout au maximum, ses pour et contre au survol) | ✅ |
-| Animaux sauvages, prédateurs et ravageurs | à venir |
+| Animaux sauvages : loups en meute (chassent moutons et lapins, la nuit le joueur resté dans le noir, se vengent ensemble), ours des taïgas (se dresse pour prévenir, puis charge ; dort la nuit), grenouilles, tortues qui pondent sur les plages (les œufs éclosent), castors qui bâtissent des barrages, poissons dans les rivières et les mers. Ravageurs : taupe qui ronge les cultures par en dessous (taupinières), corbeaux qui picorent les semis (chassés par l'épouvantail), bourdons-lanternes dont la lueur fait pousser les cultures la nuit | ✅ |
 | Cuisine, pêche, chien et chat, saisons | à venir |
+
+![Leguitz : les animaux sauvages : une meute de loups sur des moutons, un ours dressé qui prévient le joueur, des tortues et leurs nids d'œufs sur la plage, un barrage de castors en travers d'une rivière (grenouilles, poissons sous l'eau), des corbeaux sur un champ sans épouvantail et un épouvantail sur l'autre, des taupinières ; la nuit, des bourdons-lanternes éclairent un champ](docs/screenshots/phase7-sauvages.png)
 
 ![Leguitz : l'élevage : un enclos de moutons (un tondu, des agneaux), un sanglier mené à la corde, un abri avec des pondoirs ; la nuit, les bêtes dorment couchées, sous l'abri pour celles qui le peuvent](docs/screenshots/phase7-elevage.png)
 

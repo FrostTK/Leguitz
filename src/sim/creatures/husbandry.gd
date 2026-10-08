@@ -149,6 +149,10 @@ static func tend(
 		return
 	if not _within_reach(session, animal):
 		return
+	if Wildlife.is_wild(animal.species):
+		# Wolves, bears and fish are no farm animals.
+		_notice(session, animal, "HUD_ANIMAL_WILD")
+		return
 	var slot := int(message.get("slot", -1))
 	var bag := session.inventory
 	var held := bag.items[slot] if slot >= 0 and slot < Inventory.HOTBAR else Items.Id.NONE

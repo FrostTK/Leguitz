@@ -118,6 +118,10 @@ const BLOCK_SECONDS := {
 	Tiles.Block.NEST_BOX: 1.0,
 	Tiles.Block.BEEHIVE: 1.5,
 	Tiles.Block.BEE_NEST: 1.0,
+	Tiles.Block.SCARECROW: 1.0,
+	Tiles.Block.MOLEHILL: 0.4,
+	Tiles.Block.BEAVER_DAM: 1.2,
+	Tiles.Block.TURTLE_EGGS: 0.1,
 }
 ## Trees by hand: chopping a trunk takes a while (a young one less).
 const TREE_SECONDS := 3.5
@@ -174,6 +178,8 @@ const AXE_BLOCKS := {
 	Tiles.Block.NEST_BOX: true,
 	Tiles.Block.BEEHIVE: true,
 	Tiles.Block.BEE_NEST: true,
+	Tiles.Block.SCARECROW: true,
+	Tiles.Block.BEAVER_DAM: true,
 }
 const PICKAXE_BLOCKS := {
 	Tiles.Block.ROCK: true,
@@ -218,6 +224,7 @@ const FLOOR_OBJECTS := {
 	Tiles.Block.PUMPKIN: true,
 	Tiles.Block.NEST_BOX: true,
 	Tiles.Block.BEEHIVE: true,
+	Tiles.Block.SCARECROW: true,
 }
 
 
@@ -243,6 +250,7 @@ static func can_place(voxel: int) -> bool:
 		or FLOOR_OBJECTS.has(block)
 		or Growth.SAPLINGS.has(block)
 		or Farming.SOWN.has(block)
+		or block == Tiles.Block.TURTLE_EGGS
 	)
 
 
@@ -299,6 +307,11 @@ static func placement(
 		return {cell: voxel} if _bench_room(cell, voxel_at) else {}
 	if Farming.SOWN.has(block):
 		return Farming.sowing(cell, voxel, voxel_at)
+	if block == Tiles.Block.TURTLE_EGGS:
+		# Turtle eggs go back into the sand.
+		var sand: bool = voxel_at.call(cell + Vector3i.DOWN) == Voxels.of_ground(Tiles.Ground.SAND)
+		var spot: int = voxel_at.call(cell)
+		return {cell: voxel} if sand and is_replaceable(spot) and not Voxels.is_liquid(spot) else {}
 	if Growth.SAPLINGS.has(block):
 		var there: int = voxel_at.call(cell)
 		var free := is_replaceable(there) and not Voxels.is_liquid(there)

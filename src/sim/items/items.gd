@@ -219,6 +219,10 @@ enum Id {
 	HONEY_BOTTLE,
 	HONEYCOMB,
 	BEEHIVE,
+	RAW_FISH,
+	COOKED_FISH,
+	SCARECROW,
+	TURTLE_EGG,
 }
 ## What a tool is made for (Mining.tool_for: what it breaks faster).
 enum Tool { NONE, PICKAXE, AXE, SHOVEL, SWORD, HOE }
@@ -359,6 +363,8 @@ const PLACES_BLOCK := {
 	Id.PEACH_PIT: Tiles.Block.PEACH_SAPLING,
 	Id.NEST_BOX: Tiles.Block.NEST_BOX,
 	Id.BEEHIVE: Tiles.Block.BEEHIVE,
+	Id.SCARECROW: Tiles.Block.SCARECROW,
+	Id.TURTLE_EGG: Tiles.Block.TURTLE_EGGS,
 }
 
 ## What a ground gives (soil gives dirt); grounds left out give nothing.
@@ -467,6 +473,11 @@ const BLOCK_DROPS := {
 	Tiles.Block.BEE_NEST_1: [Id.HONEYCOMB, 1, 2],
 	Tiles.Block.BEE_NEST_2: [Id.HONEYCOMB, 1, 3],
 	Tiles.Block.BEE_NEST_3: [Id.HONEYCOMB, 2, 3],
+	Tiles.Block.MOLEHILL: [Id.DIRT, 1, 1],
+	Tiles.Block.BEAVER_DAM: [Id.STICK, 2, 4],
+	Tiles.Block.TURTLE_EGGS: [Id.TURTLE_EGG, 1, 1],
+	Tiles.Block.TURTLE_EGGS_1: [Id.TURTLE_EGG, 1, 1],
+	Tiles.Block.TURTLE_EGGS_2: [Id.TURTLE_EGG, 1, 1],
 }
 ## Food: how much satiety eating one gives (Vitals.MAX_FOOD points; see
 ## also Vitals.POISONS). Cooking pays: dried berries, the stew and cooked
@@ -513,6 +524,8 @@ const FOOD := {
 	Id.RAW_DUCK: 2,
 	Id.COOKED_DUCK: 6,
 	Id.HONEY_BOTTLE: 6,
+	Id.RAW_FISH: 2,
+	Id.COOKED_FISH: 6,
 }
 ## The planks each log is sawn into.
 const PLANKS_OF := {

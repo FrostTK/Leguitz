@@ -109,6 +109,11 @@ const SHAPED := [
 		"result": [Items.Id.BEEHIVE, 1],
 	},
 	{
+		"pattern": [" U ", "SWS", " S "],
+		"keys": {"U": Items.Id.PUMPKIN, "S": Items.Id.STICK, "W": Items.Id.WHEAT},
+		"result": [Items.Id.SCARECROW, 1],
+	},
+	{
 		"pattern": ["P", "S", "F"],
 		"keys": {"P": STONES, "S": Items.Id.STICK, "F": Items.Id.FEATHER},
 		"result": [Items.Id.ARROW, 4],

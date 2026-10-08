@@ -13,8 +13,11 @@ extends RefCounted
 ## while they move, ENTITY_REMOVE when they leave its view or die. Players
 ## hit them (Msg.ATTACK, Combat): hurt, animals run away with their herd;
 ## dead, creatures leave what they give. Farm life (feeding, young ones,
-## leads, wool, milk, eggs, love, sleep): Husbandry. Never holds the server
-## (the calls needing it are given it).
+## leads, wool, milk, eggs, love, sleep): Husbandry. Wild ones (predators'
+## hunts, turtles' eggs, beavers' dams): Wildlife; fish are born in the
+## water of their chunk. What comes to fields (moles, crows, lantern
+## bumblebees): Pests. Never holds the server (the calls needing it are
+## given it).
 
 const SALT := 0x5A11E7
 const HERD_CHANCE := 0.3
@@ -53,8 +56,16 @@ func _init(world_state: WorldState, world_seed: int) -> void:
 static func make(kind: int, feet: Vector2, height: float) -> Creature:
 	if Species.is_monster(kind):
 		return Monster.create(kind, feet, height)
-	if kind == Species.Id.BEE:
+	if kind == Species.Id.BEE or kind == Species.Id.LANTERN_BUMBLEBEE:
 		return Bee.create(kind, feet, height)
+	if Species.PREDATORS.has(kind):
+		return Predator.create(kind, feet, height)
+	if Species.AQUATIC.has(kind):
+		return Fish.create(kind, feet, height)
+	if kind == Species.Id.MOLE:
+		return Mole.create(kind, feet, height)
+	if kind == Species.Id.CROW:
+		return Crow.create(kind, feet, height)
 	return Animal.create(kind, feet, height)
 
 
@@ -119,6 +130,8 @@ func update(server: GameServer, delta: float) -> void:
 		_populate_new()
 	if _ticks % MONSTER_TICKS == 0:
 		Monsters.come_and_go(server, self)
+	if _ticks % Pests.PEST_TICKS == 7:
+		Pests.come_and_go(server, self)
 	Husbandry.update(server, self)
 	var active := _active_chunks(sessions)
 	if active.is_empty():
@@ -133,14 +146,20 @@ func update(server: GameServer, delta: float) -> void:
 			Monsters.sense(server, self, monster, delta * 2.0)
 		elif creature is Animal:
 			Husbandry.sense(server, self, creature as Animal, delta * 2.0)
-		elif creature is Bee:
+			if Wildlife.minds(creature.species):
+				Wildlife.sense(server, self, creature as Animal, delta * 2.0)
+		elif creature.species == Species.Id.BEE:
 			Apiary.sense(server, self, creature as Bee)
-			if not living.has(creature.id):
-				continue
+		else:
+			Pests.sense(server, self, creature)
+		if not living.has(creature.id):
+			continue
 		creature.think(delta * 2.0, at, rng)
 		creature.move(delta * 2.0, at)
 		if monster != null and monster.strike:
 			Monsters.land_blow(server, monster)
+		elif creature is Predator and (creature as Predator).strike:
+			Wildlife.land_blow(server, self, creature as Predator)
 
 
 ## Shows each player the creatures of the chunks it has (see the class).
@@ -195,7 +214,7 @@ func attack(server: GameServer, session: GameServer.PlayerSession, id: int, slot
 		bag.wear_out(slot)
 		session.transport.send(Msg.inventory(bag))
 	Survival.spend(server, session, Vitals.BREAK_EFFORT)
-	if target is Animal:
+	if target is Animal and not (target is Predator):
 		var reach := HERD_PANIC * GameConst.TILE_SIZE
 		for other: Creature in living.values():
 			if other is Animal and other != target and other.species == target.species:
@@ -260,13 +279,19 @@ func populate(chunk: ChunkData) -> void:
 	var herd: Vector2i = Species.HERD[kind]
 	var count := herd.x + (h >> 20) % (herd.y - herd.x + 1)
 	var placed := 0
+	var aquatic := Species.AQUATIC.has(kind)
 	for i in count * SPOT_TRIES:
 		if placed >= count:
 			break
 		var spot := HashUtil.hash2(_seed + 7919 * (i + 1), coord.x, coord.y)
 		var local := Vector2i(spot & 15, (spot >> 4) & 15)
 		var row := chunk.top_row(local)
-		if not free_spot(chunk, local, row, Species.TALL[kind]):
+		if aquatic:
+			# Fish: in the water, a row under its top.
+			row = water_spot(chunk, local)
+			if row < 0:
+				continue
+		elif not free_spot(chunk, local, row, Species.TALL[kind]):
 			continue
 		var tile := coord * GameConst.CHUNK_SIZE + local
 		var box: Vector2 = Species.BOX[kind]
@@ -288,6 +313,18 @@ static func free_spot(chunk: ChunkData, local: Vector2i, row: int, tall: float) 
 		if Voxels.is_solid(voxel) or Voxels.is_liquid(voxel):
 			return false
 	return true
+
+
+## The row a fish is born in, in a column of water at least two deep (-1:
+## not one).
+static func water_spot(chunk: ChunkData, local: Vector2i) -> int:
+	var top := chunk.top_row(local)
+	for row in range(top, maxi(top - 4, 1), -1):
+		var voxel := chunk.get_voxel(Vector3i(local.x, row, local.y))
+		var under := chunk.get_voxel(Vector3i(local.x, row - 1, local.y))
+		if Voxels.is_water(voxel) and Voxels.is_water(under):
+			return row - 1
+	return -1
 
 
 func _populate_new() -> void:

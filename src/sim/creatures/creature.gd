@@ -9,8 +9,9 @@ extends RefCounted
 ## what it does then is its kind's (`_on_hurt`).
 
 ## What it does; its players see it (Msg.ENTITY_MOVE): animals graze,
-## wander, flee and sleep; monsters chase, strike, lie dormant or freeze.
-enum State { IDLE, GRAZE, WANDER, FLEE, CHASE, STRIKE, DORMANT, FROZEN, SLEEP }
+## wander, flee and sleep; monsters chase, strike, lie dormant or freeze;
+## a bear warns (ALERT) before it charges.
+enum State { IDLE, GRAZE, WANDER, FLEE, CHASE, STRIKE, DORMANT, FROZEN, SLEEP, ALERT }
 
 ## A point of its way is reached this close (tiles).
 const REACHED := 0.3

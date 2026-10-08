@@ -13,6 +13,7 @@ extends RefCounted
 const COOK_SECONDS := 10.0
 ## What the food furnace makes of each food.
 const FOOD := {
+	Items.Id.RAW_FISH: Items.Id.COOKED_FISH,
 	Items.Id.BERRIES: Items.Id.DRIED_BERRIES,
 	Items.Id.MUSHROOM_RED: Items.Id.MUSHROOM_STEW,
 	Items.Id.MUSHROOM_BROWN: Items.Id.MUSHROOM_STEW,
@@ -31,6 +32,7 @@ const FOOD := {
 }
 ## Food, raw or cooked: it chars in the factory furnace.
 const FOODS := {
+	Items.Id.RAW_FISH: true,
 	Items.Id.BERRIES: true,
 	Items.Id.MUSHROOM_RED: true,
 	Items.Id.MUSHROOM_BROWN: true,

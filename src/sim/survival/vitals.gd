@@ -9,7 +9,7 @@ extends RefCounted
 ## clients show it (VitalsBar).
 
 ## What hurt a player (said when they pass out).
-enum Cause { NONE, FALL, LAVA, STARVATION, POISON, DROWNING, MOTH, LURKER, MIMIC, WISP }
+enum Cause { NONE, FALL, LAVA, STARVATION, POISON, DROWNING, MOTH, LURKER, MIMIC, WISP, WOLF, BEAR }
 
 const MAX_HEALTH := 20
 ## Falls up to this many levels are harmless; each level more costs a
@@ -55,7 +55,14 @@ const AIR_STEP := 0.25
 ## Foods that make one sick raw: the vitality they cost.
 const POISONS := {Items.Id.MUSHROOM_RED: 2, Items.Id.RAW_CHICKEN: 1, Items.Id.RAW_DUCK: 1}
 ## The blows armor protects from (Armor).
-const ARMORED := {Cause.MOTH: true, Cause.LURKER: true, Cause.MIMIC: true, Cause.WISP: true}
+const ARMORED := {
+	Cause.MOTH: true,
+	Cause.LURKER: true,
+	Cause.MIMIC: true,
+	Cause.WISP: true,
+	Cause.WOLF: true,
+	Cause.BEAR: true,
+}
 ## Translation keys of the causes.
 const CAUSE_KEYS := {
 	Cause.NONE: "DEATH_CAUSE_NONE",
@@ -68,6 +75,8 @@ const CAUSE_KEYS := {
 	Cause.LURKER: "DEATH_CAUSE_LURKER",
 	Cause.MIMIC: "DEATH_CAUSE_MIMIC",
 	Cause.WISP: "DEATH_CAUSE_WISP",
+	Cause.WOLF: "DEATH_CAUSE_WOLF",
+	Cause.BEAR: "DEATH_CAUSE_BEAR",
 }
 
 

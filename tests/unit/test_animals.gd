@@ -57,7 +57,8 @@ func test_every_species_is_described() -> void:
 		assert_true(Species.FLEE_SPEED[kind] > Species.WALK_SPEED[kind], "they run away fast")
 		assert_true(Species.BOX[kind].x <= GameConst.TILE_SIZE, "fits between trees")
 	assert_true(Species.living_in(Biomes.Id.PLAINS).has(Species.Id.SHEEP))
-	assert_true(Species.living_in(Biomes.Id.OCEAN).is_empty())
+	var at_sea := Species.living_in(Biomes.Id.OCEAN)
+	assert_true(at_sea.size() == 1 and at_sea.has(Species.Id.FISH), "only fish at sea")
 
 
 func test_ways_climb_one_level_go_round_walls_and_avoid_water() -> void:

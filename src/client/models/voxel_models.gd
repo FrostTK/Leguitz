@@ -71,6 +71,9 @@ static func build(block: int, variant: int) -> VoxelGrid:
 	var apiary := ApiaryModels.build(block)
 	if apiary != null:
 		return apiary
+	var wild := WildModels.build(block)
+	if wild != null:
+		return wild
 	if Composting.is_composter(block):
 		return FarmModels.composter(Composting.level_of(block))
 	var decor := DecorModels.build(block, variant)

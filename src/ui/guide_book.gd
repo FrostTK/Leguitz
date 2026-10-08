@@ -45,6 +45,15 @@ const TOOL_ROWS := [
 	[Items.Id.IRON_SWORD, "BOOK_TOOLS_SWORD"],
 	[Items.Id.IRON_HOE, "BOOK_TOOLS_HOE"],
 ]
+## The wild animals told apart from the herds (Animals chapter), each
+## shown with this item.
+const WILD_ICONS := {
+	Species.Id.WOLF: Items.Id.HIDE,
+	Species.Id.BEAR: Items.Id.RAW_BEEF,
+	Species.Id.FROG: Items.Id.LILY_PAD,
+	Species.Id.TURTLE: Items.Id.TURTLE_EGG,
+	Species.Id.BEAVER: Items.Id.STICK,
+}
 
 
 ## The entries of every chapter, in CHAPTERS order.
@@ -273,6 +282,10 @@ static func _farm() -> Array:
 		_heading("BOOK_FARM_FRUIT_TREES"),
 		_icon(Items.Id.APPLE, _t("BOOK_FARM_ORCHARD")),
 		_icon(Items.Id.APPLE_SEEDS, _t("BOOK_FARM_PIPS")),
+		_heading("BOOK_FARM_PESTS"),
+		_icon(Items.Id.SCARECROW, _t("BOOK_FARM_CROWS")),
+		_icon(Items.Id.DIRT, _t("BOOK_FARM_MOLES")),
+		_icon(Items.Id.FLOWER_YELLOW, _t("BOOK_FARM_BUMBLEBEES")),
 	]
 
 
@@ -301,7 +314,7 @@ static func _survival() -> Array:
 static func _animals() -> Array:
 	var entries := [_title("BOOK_CHAPTER_ANIMALS"), _text("BOOK_ANIMALS_INTRO")]
 	for kind: int in Species.BIOMES:
-		if kind == Species.Id.BEE:
+		if kind == Species.Id.BEE or WILD_ICONS.has(kind) or Species.PESTS.has(kind):
 			continue
 		var gifts := PackedStringArray()
 		for drop: Array in Species.DROPS[kind]:
@@ -329,9 +342,22 @@ static func _animals() -> Array:
 				_heading("BOOK_ANIMALS_BEES"),
 				_icon(Items.Id.BEEHIVE, _t("BOOK_ANIMALS_HIVE")),
 				_icon(Items.Id.HONEY_BOTTLE, _t("BOOK_ANIMALS_HONEY")),
+				_heading("BOOK_ANIMALS_WILD"),
+				_text("BOOK_ANIMALS_WILD_INTRO"),
 			]
 		)
 	)
+	for kind: int in WILD_ICONS:
+		var name := String(Species.Id.find_key(kind))
+		var text := (
+			_t("BOOK_ANIMALS_ENTRY")
+			% [
+				_t(Species.NAME_KEYS[kind]),
+				_t(Species.HOME_KEYS[kind]),
+				_t("CREATURE_%s_HOW" % name)
+			]
+		)
+		entries.append(_icon(WILD_ICONS[kind], text))
 	return entries
 
 

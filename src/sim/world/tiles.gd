@@ -326,6 +326,15 @@ enum Block {
 	BEE_NEST_1,
 	BEE_NEST_2,
 	BEE_NEST_3,
+	# Wildlife and pests (Wildlife, Pests): a scarecrow keeps crows off the
+	# fields, a mole leaves molehills, beavers build dams of sticks in the
+	# water, turtles lay their eggs in the sand (they hatch: 1 and 2 later).
+	SCARECROW,
+	MOLEHILL,
+	BEAVER_DAM,
+	TURTLE_EGGS,
+	TURTLE_EGGS_1,
+	TURTLE_EGGS_2,
 }
 
 const FLOWERS: Array[Block] = [
@@ -432,6 +441,10 @@ const CUBE_BLOCKS := {
 
 const NON_SOLID_BLOCKS := {
 	Block.AIR: true,
+	Block.MOLEHILL: true,
+	Block.TURTLE_EGGS: true,
+	Block.TURTLE_EGGS_1: true,
+	Block.TURTLE_EGGS_2: true,
 	Block.BUSH: true,
 	Block.DEAD_BUSH: true,
 	Block.TALL_GRASS: true,
