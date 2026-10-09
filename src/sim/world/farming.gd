@@ -306,6 +306,10 @@ static func till(
 	if not GameModes.creative(server) and Items.durability(bag.items[slot]) > 0:
 		bag.wear_out(slot)
 		session.transport.send(Msg.inventory(bag))
+	if server.rng.randf() < Fishing.worm_chance(server):
+		# A worm turned up (a bait).
+		var up := Vector3(cell.x + 0.5, cell.y - GameConst.SEA_LEVEL + 1.1, cell.z + 0.5)
+		server.spawn_item(Items.Id.WORM, 1, up, Vector3(0.0, 2.0, 0.0))
 
 
 ## What breaking a crop gives: ripe, its harvest and seeds; else its seed

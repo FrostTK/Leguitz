@@ -44,6 +44,7 @@ const COMPOSTABLE := {
 	Items.Id.CACTUS: true,
 	Items.Id.SUGAR_CANE: true,
 	Items.Id.LILY_PAD: true,
+	Items.Id.SEAWEED: true,
 	Items.Id.FERN: true,
 	Items.Id.OAK_SAPLING: true,
 	Items.Id.BIRCH_SAPLING: true,

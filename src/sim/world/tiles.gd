@@ -354,6 +354,10 @@ enum Block {
 	CHEESE_CELLAR,
 	CHEESE_CELLAR_WORKING,
 	CHEESE_CELLAR_READY,
+	# A fish trap set in the water (Machines): empty, baited, with a catch.
+	FISH_TRAP,
+	FISH_TRAP_BAITED,
+	FISH_TRAP_FULL,
 }
 
 const FLOWERS: Array[Block] = [
@@ -586,6 +590,9 @@ const NON_SOLID_BLOCKS := {
 	Block.RASPBERRIES_3: true,
 	Block.WILD_RASPBERRY: true,
 	Block.PEACH_SAPLING: true,
+	Block.FISH_TRAP: true,
+	Block.FISH_TRAP_BAITED: true,
+	Block.FISH_TRAP_FULL: true,
 }
 
 

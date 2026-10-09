@@ -3,18 +3,21 @@ extends RefCounted
 ## The kitchen's machines on the server (static, given the server): the
 ## mill grinds grain into flour, the butter churn milk into butter, the
 ## barrel fruit into juice (apple juice left longer turns into cider), the
-## cheese cellar milk into cheese. Each is a block by stage (STAGES:
+## cheese cellar milk into cheese; a fish trap set in the water catches,
+## for each bait it was given, what lives there (FishTable.trap_pick for
+## the water: Fishing.water_at). Each is a block by stage (STAGES:
 ## empty, working, ready; ObjectShapes.STAGE_OF). Used with what it takes
 ## in hand (Msg.USE_MACHINE: right click or E), an empty one takes up to
 ## CAPACITY of it (a milk's bucket comes back) and works SECONDS (each item
 ## for the mill; paced by WorldClock.scale_duration); ready, using it gives
 ## what it made (juice and cider into glass bottles held in hand, as many
-## as there are) and it empties. What a machine holds (ChunkData.machines:
-## cell -> {"input", "inputs", "made", "count", "left", "ferments"}) is
+## as there are; a trap's catches) and it empties. What a machine holds
+## (ChunkData.machines: cell -> {"input", "inputs", "made", "count",
+## "left", "ferments"}, a ready trap's "catches": item -> count) is
 ## saved with its chunk; GameServer.tick runs `update` every TICKS; broken,
 ## it spills what it held (`spill`).
 
-enum Kind { MILL, CHURN, BARREL, CELLAR }
+enum Kind { MILL, CHURN, BARREL, CELLAR, TRAP }
 enum Stage { EMPTY, WORKING, READY }
 
 const TICKS := 20
@@ -30,6 +33,7 @@ const STAGES := {
 		Tiles.Block.CHEESE_CELLAR_WORKING,
 		Tiles.Block.CHEESE_CELLAR_READY,
 	],
+	Kind.TRAP: [Tiles.Block.FISH_TRAP, Tiles.Block.FISH_TRAP_BAITED, Tiles.Block.FISH_TRAP_FULL],
 }
 ## What each machine makes of what it takes: input -> [made, count each].
 const MAKES := {
@@ -48,11 +52,20 @@ const MAKES := {
 		Items.Id.MELON_SLICE: [Items.Id.FRUIT_JUICE, 1],
 	},
 	Kind.CELLAR: {Items.Id.MILK_BUCKET: [Items.Id.CHEESE, 3]},
+	Kind.TRAP:
+	{
+		Items.Id.WORM: [Items.Id.NONE, 1],
+		Items.Id.BAIT_BALL: [Items.Id.NONE, 1],
+		Items.Id.FISH_BAIT: [Items.Id.NONE, 1],
+	},
 }
 ## How much a machine takes at once, and how long it works (seconds, the
-## default day's; the mill's for each grain).
-const CAPACITY := {Kind.MILL: 16, Kind.CHURN: 1, Kind.BARREL: 8, Kind.CELLAR: 1}
-const SECONDS := {Kind.MILL: 8.0, Kind.CHURN: 45.0, Kind.BARREL: 240.0, Kind.CELLAR: 600.0}
+## default day's; the mill's for each grain, a trap's for each bait).
+const CAPACITY := {Kind.MILL: 16, Kind.CHURN: 1, Kind.BARREL: 8, Kind.CELLAR: 1, Kind.TRAP: 4}
+const SECONDS := {
+	Kind.MILL: 8.0, Kind.CHURN: 45.0, Kind.BARREL: 240.0, Kind.CELLAR: 600.0, Kind.TRAP: 150.0
+}
+const EACH := {Kind.MILL: true, Kind.TRAP: true}
 ## Apple juice left in a barrel this much longer turns into cider.
 const CIDER_SECONDS := 480.0
 ## What comes out into glass bottles held in hand.
@@ -127,7 +140,9 @@ static func update(server: GameServer, seconds: float) -> void:
 			if kind < 0:
 				chunk.machines.erase(cell)
 				continue
-			if held.get("ferments", false):
+			if kind == Kind.TRAP:
+				held["catches"] = _catches(server, cell, held["inputs"])
+			elif held.get("ferments", false):
 				held["made"] = Items.Id.CIDER
 				held["ferments"] = false
 			elif held["made"] == Items.Id.APPLE_JUICE:
@@ -150,6 +165,12 @@ static func spill(server: GameServer, cell: Vector3i) -> void:
 	chunk.machines.erase(cell)
 	var middle := Vector3(cell.x + 0.5, cell.y - GameConst.SEA_LEVEL + 0.5, cell.z + 0.5)
 	var working: bool = held["left"] > 0.0 and not held.get("ferments", false)
+	var catches: Dictionary = held.get("catches", {})
+	if not working and not catches.is_empty():
+		for caught: int in catches:
+			var throw := Vector3(server.rng.randf_range(-1.0, 1.0), 3.0, 0.0)
+			server.spawn_item(caught, catches[caught], middle, throw)
+		return
 	var item: int = held["input"] if working else held["made"]
 	var count: int = held["inputs"] if working else held["count"]
 	if item == Items.Id.MILK_BUCKET or (not working and BOTTLED.has(item)):
@@ -171,7 +192,7 @@ static func _load(
 	var item := bag.items[slot]
 	var count := mini(bag.counts[slot], CAPACITY[kind])
 	var made: Array = MAKES[kind][item]
-	var seconds: float = SECONDS[kind] * (count if kind == Kind.MILL else 1)
+	var seconds: float = SECONDS[kind] * (count if EACH.has(kind) else 1)
 	chunk.machines[cell] = {
 		"input": item,
 		"inputs": count,
@@ -201,6 +222,14 @@ static func _empty(
 		return true
 	var held: Dictionary = chunk.machines[cell]
 	var bag := session.inventory
+	if held.has("catches"):
+		var catches: Dictionary = held["catches"]
+		for caught: int in catches:
+			_give(server, session, slot, caught, catches[caught])
+		chunk.machines.erase(cell)
+		server.world.contents_changed(cell)
+		server.change_voxel(cell, Voxels.of_block(STAGES[kind_of(block)][Stage.EMPTY]))
+		return true
 	var made: int = held["made"]
 	var given: int = held["count"]
 	if BOTTLED.has(made):
@@ -217,6 +246,16 @@ static func _empty(
 	chunk.machines.erase(cell)
 	server.change_voxel(cell, Voxels.of_block(STAGES[kind_of(block)][Stage.EMPTY]))
 	return true
+
+
+## What a trap at `cell` caught for `baits` baits (item -> count).
+static func _catches(server: GameServer, cell: Vector3i, baits: int) -> Dictionary:
+	var water := Fishing.water_at(server.world, cell + Vector3i.DOWN).x
+	var catches := {}
+	for i in baits:
+		var caught := FishTable.trap_pick(server.rng, water)
+		catches[caught] = catches.get(caught, 0) + 1
+	return catches
 
 
 ## Gives a player `count` of an item: into the slot in hand if it is empty,

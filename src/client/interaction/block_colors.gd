@@ -50,6 +50,7 @@ const OBJECT_COLORS := {
 	Tiles.Block.BUTTER_CHURN: Color(0.6, 0.42, 0.25),
 	Tiles.Block.BARREL: Color(0.52, 0.36, 0.2),
 	Tiles.Block.CHEESE_CELLAR: Color(0.58, 0.42, 0.26),
+	Tiles.Block.FISH_TRAP: Color(0.6, 0.45, 0.25),
 }
 const PLANT_COLOR := Color(0.32, 0.58, 0.24)
 

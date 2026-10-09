@@ -102,10 +102,12 @@ var book_in_hand := false
 ## What the player does in the inventory screen and with what it opens.
 var actions := InventoryActions.new()
 var dropped_items := DroppedItemsView.new()
-## The animals and monsters around, the arrows in flight, and the bow.
+## The animals and monsters around, the arrows in flight, the bow, the
+## fishing rod.
 var creatures := CreaturesView.new()
 var arrows := ArrowsView.new()
 var archer := Archer.new()
+var angler := Angler.new()
 var item_icons := ItemIcons.new()
 ## The arm and what is in hand in first person (a child of the camera).
 var held_view := HeldView.new()
@@ -190,6 +192,8 @@ func _ready() -> void:
 	creatures.burst.connect(interaction.burst)
 	held_view.library = items
 	world_viewport.camera.add_child(held_view)
+	angler.client = self
+	add_child(angler)
 	hud_clock.clock = clock
 	pause_menu.clock = clock
 	debug_overlay.client = self
@@ -822,8 +826,8 @@ func _update_held(delta: float) -> void:
 
 
 ## Gives the body's hand and the first-person view what is in hand: tools,
-## swords and the bow by their grip (ToolModels), anything else resting in
-## the hand.
+## swords, the bow and the fishing rod by their grip (ToolModels), anything
+## else resting in the hand.
 func _hold(held: int) -> void:
 	held_view.show_item(held)
 	if held == Items.Id.NONE:
@@ -833,6 +837,11 @@ func _hold(held: int) -> void:
 		for stage in ToolModels.DRAW_STAGES:
 			stages.append(items.held_mesh(held, stage))
 		player_model.hold_bow(stages, ToolModels.grip(held))
+	elif held == Items.Id.FISHING_ROD:
+		var stages: Array[Mesh] = []
+		for stage in ToolModels.ROD_STAGES:
+			stages.append(items.held_mesh(held, stage))
+		player_model.hold_rod(stages, ToolModels.grip(held))
 	elif ToolModels.has(held):
 		var sword := Items.tool_of(held) == Items.Tool.SWORD
 		player_model.hold_tool(items.held_mesh(held), ToolModels.grip(held), sword)

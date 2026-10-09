@@ -350,6 +350,8 @@ const STAGE_OF := {
 	Tiles.Block.BARREL_READY: Tiles.Block.BARREL,
 	Tiles.Block.CHEESE_CELLAR_WORKING: Tiles.Block.CHEESE_CELLAR,
 	Tiles.Block.CHEESE_CELLAR_READY: Tiles.Block.CHEESE_CELLAR,
+	Tiles.Block.FISH_TRAP_BAITED: Tiles.Block.FISH_TRAP,
+	Tiles.Block.FISH_TRAP_FULL: Tiles.Block.FISH_TRAP,
 }
 ## Fences join their neighbors (fences, gates and cubes): their version is
 ## the sides they join (FENCE_SIDES bits, 16 versions), not their tile's.
@@ -359,6 +361,7 @@ const FENCE_SIDES: Array[Vector2i] = [
 const FENCE_VARIANTS := 16
 ## Objects with a single version (no random ones).
 const SINGLE := {
+	Tiles.Block.FISH_TRAP: true,
 	Tiles.Block.MILL: true,
 	Tiles.Block.BUTTER_CHURN: true,
 	Tiles.Block.BARREL: true,
@@ -378,6 +381,9 @@ const SINGLE := {
 	Tiles.Block.BEEHIVE: true,
 	Tiles.Block.BEE_NEST: true,
 }
+## Objects set over the water drawn sunk into it this deep (levels): a fish
+## trap's basket under the surface, its float on it.
+const SUNK := {Tiles.Block.FISH_TRAP: 0.75}
 ## Small things stand anywhere in their tile (whole voxels), not centered.
 const WANDERING := {
 	Tiles.Block.TALL_GRASS: true,

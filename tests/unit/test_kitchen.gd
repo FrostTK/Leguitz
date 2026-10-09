@@ -288,5 +288,5 @@ func test_kitchen_items_are_named_and_modeled() -> void:
 		assert_true(Items.is_food(food), "%s feeds" % Items.name_key(food))
 	for kind: int in Machines.STAGES:
 		for block: int in Machines.STAGES[kind]:
-			assert_true(KitchenModels.build(block) != null, "a model each stage")
+			assert_true(VoxelModels.build(block, 0) != null, "a model each stage")
 			assert_eq(ObjectShapes.base_kind(block), Machines.STAGES[kind][0], "one kind")

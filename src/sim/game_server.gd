@@ -94,6 +94,8 @@ class PlayerSession:
 	## they last shot an arrow (seconds of play).
 	var hurt_carry := 0.0
 	var last_shot := -INF
+	## Their fishing line out (null: none).
+	var line: Fishing.Line = null
 
 	func alive() -> bool:
 		return health > 0
@@ -275,6 +277,7 @@ func tick() -> void:
 	creatures.update(self, GameConst.TICK_DELTA)
 	creatures.sync(sessions)
 	archery.update(self, GameConst.TICK_DELTA)
+	Fishing.update(self, GameConst.TICK_DELTA)
 	fluids.update(self)
 	Survival.update(self, sessions, GameConst.TICK_DELTA)
 	if tick_count % FURNACE_TICKS == 0:
@@ -316,6 +319,10 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 			var aim: Vector3 = message.get("direction", Vector3.ZERO)
 			var slot := int(message.get("slot", -1))
 			archery.shoot(self, session, slot, aim, float(message.get("power", 0.0)))
+		Msg.CAST:
+			Fishing.cast(self, session, message)
+		Msg.REEL:
+			Fishing.reel(self, session)
 		Msg.SET_VIEW_DISTANCE:
 			_on_set_view_distance(session, message)
 		Msg.BLOCK_BREAK:
@@ -570,7 +577,7 @@ func _on_block_place(session: PlayerSession, message: Dictionary) -> void:
 		and Mining.can_place(voxel)
 		and not cells.is_empty()
 		and near <= Mining.REACH + REACH_LEEWAY
-		and (cells.size() > 1 or _against_terrain(cell) or Farming.SOWN.has(Voxels.block_of(voxel)))
+		and (cells.size() > 1 or _against_terrain(cell) or _set_alone(voxel))
 	)
 	# Only what blocks bodies keeps out of anybody's way.
 	for at: Vector3i in cells:
@@ -587,6 +594,13 @@ func _on_block_place(session: PlayerSession, message: Dictionary) -> void:
 	if not GameModes.creative(self):
 		session.inventory.take(slot, 1)
 	session.transport.send(Msg.inventory(session.inventory))
+
+
+## Whether a voxel is placed with nothing beside it: a crop (sown), what is
+## set on the water (a fish trap).
+static func _set_alone(voxel: int) -> bool:
+	var block := Voxels.block_of(voxel)
+	return Farming.SOWN.has(block) or Mining.ON_WATER.has(block)
 
 
 ## A player shared the stack in hand between slots (a left drag): theirs,

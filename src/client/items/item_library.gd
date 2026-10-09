@@ -38,8 +38,9 @@ func fit(item: int) -> float:
 	return _fits[item]
 
 
-## The model held in hand: the tools, swords and bow straight
-## (ToolModels.held, `stage`: how far a bow is drawn), else the item's own.
+## The model held in hand: the tools, swords, bow and fishing rod
+## straight (ToolModels.held, `stage`: how far a bow is drawn, whether the
+## rod's bobber is out), else the item's own.
 func held_mesh(item: int, stage := 0) -> Mesh:
 	if not ToolModels.has(item):
 		return mesh(item)
@@ -48,6 +49,8 @@ func held_mesh(item: int, stage := 0) -> Mesh:
 		var model := VoxelMesher.build(ToolModels.held(item, stage))
 		if item == Items.Id.BOW:
 			_add_lines(model, ToolModels.bow_lines(stage))
+		elif item == Items.Id.FISHING_ROD:
+			_add_lines(model, ToolModels.rod_lines(stage))
 		for surface in model.get_surface_count():
 			model.surface_set_material(surface, voxel_material)
 		_held[key] = model

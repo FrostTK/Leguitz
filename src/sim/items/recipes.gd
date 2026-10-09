@@ -57,6 +57,26 @@ const JAM_FRUITS: Array[int] = [
 	Items.Id.RASPBERRY,
 	Items.Id.STRAWBERRY,
 ]
+## Any raw fish, crayfish or crab (fishing).
+const SEAFOOD: Array[int] = [
+	Items.Id.RAW_FISH,
+	Items.Id.PERCH,
+	Items.Id.TROUT,
+	Items.Id.CARP,
+	Items.Id.PIKE,
+	Items.Id.CATFISH,
+	Items.Id.EEL,
+	Items.Id.SALMON,
+	Items.Id.SARDINE,
+	Items.Id.MACKEREL,
+	Items.Id.COD,
+	Items.Id.SEA_BASS,
+	Items.Id.TUNA,
+	Items.Id.LANTERNFISH,
+	Items.Id.CAVE_FISH,
+	Items.Id.CRAYFISH,
+	Items.Id.CRAB,
+]
 ## Coal or charcoal.
 const COALS: Array[int] = [Items.Id.COAL, Items.Id.CHARCOAL]
 ## Any log.
@@ -119,6 +139,21 @@ const SHAPED := [
 	{"ingredients": [Items.Id.BEETROOT], "result": [Items.Id.SUGAR, 1]},
 	{"ingredients": [Items.Id.FLAX], "result": [Items.Id.STRING, 1]},
 	{"pattern": ["FF", "FF"], "keys": {"F": Items.Id.FLAX}, "result": [Items.Id.LINEN, 1]},
+	# Fishing: the rod (its line hanging from the tip), a trap of sticks
+	# and string, baits, driftwood broken into sticks.
+	{
+		"pattern": ["  S", " ST", "S T"],
+		"keys": {"S": Items.Id.STICK, "T": Items.Id.STRING},
+		"result": [Items.Id.FISHING_ROD, 1],
+	},
+	{
+		"pattern": ["STS", "S S", "SSS"],
+		"keys": {"S": Items.Id.STICK, "T": Items.Id.STRING},
+		"result": [Items.Id.FISH_TRAP, 1],
+	},
+	{"ingredients": [Items.Id.FLOUR, Items.Id.CORN], "result": [Items.Id.BAIT_BALL, 4]},
+	{"ingredients": [SEAFOOD], "result": [Items.Id.FISH_BAIT, 4]},
+	{"ingredients": [Items.Id.DRIFTWOOD], "result": [Items.Id.STICK, 2]},
 	{
 		"pattern": ["S S", "SSS", "S S"],
 		"keys": {"S": Items.Id.STICK},
@@ -336,6 +371,18 @@ const KITCHEN := [
 	{
 		"ingredients": [Items.Id.BREAD, Items.Id.BUTTER, Items.Id.JAM],
 		"result": [Items.Id.TARTINE, 2],
+	},
+	{
+		"ingredients": [SEAFOOD, SEAFOOD, Items.Id.POTATO, Items.Id.TOMATO],
+		"result": [Items.Id.FISH_SOUP, 2],
+	},
+	{
+		"ingredients": [Items.Id.COOKED_RICE, SEAFOOD, Items.Id.SEAWEED],
+		"result": [Items.Id.SUSHI, 3],
+	},
+	{
+		"ingredients": [SEAFOOD, Items.Id.POTATO, Items.Id.FLOUR, Items.Id.BUTTER],
+		"result": [Items.Id.FRIED_FISH, 2],
 	},
 ]
 

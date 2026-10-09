@@ -130,6 +130,7 @@ const BLOCK_SECONDS := {
 	Tiles.Block.BUTTER_CHURN: 1.5,
 	Tiles.Block.BARREL: 2.0,
 	Tiles.Block.CHEESE_CELLAR: 2.0,
+	Tiles.Block.FISH_TRAP: 0.6,
 }
 ## Trees by hand: chopping a trunk takes a while (a young one less).
 const TREE_SECONDS := 3.5
@@ -195,6 +196,7 @@ const AXE_BLOCKS := {
 	Tiles.Block.BUTTER_CHURN: true,
 	Tiles.Block.BARREL: true,
 	Tiles.Block.CHEESE_CELLAR: true,
+	Tiles.Block.FISH_TRAP: true,
 }
 const PICKAXE_BLOCKS := {
 	Tiles.Block.ROCK: true,
@@ -247,6 +249,9 @@ const FLOOR_OBJECTS := {
 	Tiles.Block.CHEESE_CELLAR: true,
 }
 
+## Objects set over still water (a fish trap), not on the ground.
+const ON_WATER := {Tiles.Block.FISH_TRAP: true}
+
 
 static func can_break(voxel: int, row: int) -> bool:
 	return (
@@ -271,6 +276,7 @@ static func can_place(voxel: int) -> bool:
 		or Growth.SAPLINGS.has(block)
 		or Farming.SOWN.has(block)
 		or block == Tiles.Block.TURTLE_EGGS
+		or ON_WATER.has(block)
 	)
 
 
@@ -323,6 +329,10 @@ static func placement(
 		if not _bench_room(cell, voxel_at):
 			return {}
 		return {cell: Voxels.of_block(ObjectShapes.facing(kind, front))}
+	if ON_WATER.has(block):
+		var under: int = voxel_at.call(cell + Vector3i.DOWN)
+		var still := Voxels.is_water(under) and Fluids.level_of(under) == 0
+		return {cell: voxel} if still and voxel_at.call(cell) == Voxels.AIR else {}
 	if FLOOR_OBJECTS.has(block):
 		return {cell: voxel} if _bench_room(cell, voxel_at) else {}
 	if Farming.SOWN.has(block):

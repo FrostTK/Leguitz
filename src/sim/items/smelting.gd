@@ -29,8 +29,25 @@ const FOOD := {
 	Items.Id.RAW_BEEF: Items.Id.COOKED_BEEF,
 	Items.Id.RAW_RABBIT: Items.Id.COOKED_RABBIT,
 	Items.Id.RAW_DUCK: Items.Id.COOKED_DUCK,
+	Items.Id.PERCH: Items.Id.COOKED_PERCH,
+	Items.Id.TROUT: Items.Id.COOKED_TROUT,
+	Items.Id.CARP: Items.Id.COOKED_CARP,
+	Items.Id.PIKE: Items.Id.COOKED_PIKE,
+	Items.Id.CATFISH: Items.Id.COOKED_CATFISH,
+	Items.Id.EEL: Items.Id.COOKED_EEL,
+	Items.Id.SALMON: Items.Id.COOKED_SALMON,
+	Items.Id.SARDINE: Items.Id.COOKED_SARDINE,
+	Items.Id.MACKEREL: Items.Id.COOKED_MACKEREL,
+	Items.Id.COD: Items.Id.COOKED_COD,
+	Items.Id.SEA_BASS: Items.Id.COOKED_SEA_BASS,
+	Items.Id.TUNA: Items.Id.COOKED_TUNA,
+	Items.Id.LANTERNFISH: Items.Id.COOKED_LANTERNFISH,
+	Items.Id.CAVE_FISH: Items.Id.COOKED_CAVE_FISH,
+	Items.Id.CRAYFISH: Items.Id.COOKED_CRAYFISH,
+	Items.Id.CRAB: Items.Id.COOKED_CRAB,
 }
-## Food, raw or cooked: it chars in the factory furnace.
+## Food, raw or cooked: it chars in the factory furnace (so does what the
+## food furnace takes or makes, `chars`).
 const FOODS := {
 	Items.Id.RAW_FISH: true,
 	Items.Id.BERRIES: true,
@@ -117,9 +134,13 @@ const FUEL_SECONDS := {
 	Items.Id.WORKBENCH: 15.0,
 	Items.Id.CHEST: 15.0,
 	Items.Id.STICK: 5.0,
+	Items.Id.DRIFTWOOD: 10.0,
 }
 ## result_of(): ore in a food furnace.
 const BREAKS := -1
+
+## What the food furnace makes (see chars).
+static var _cooked := {}
 
 
 ## What a furnace (its unlit kind, Tiles.Block.FOOD_FURNACE or
@@ -130,9 +151,18 @@ static func result_of(kind: int, item: int) -> int:
 		if ORES.has(item):
 			return BREAKS
 		return FOOD.get(item, Items.Id.NONE)
-	if FOODS.has(item):
+	if chars(item):
 		return Items.Id.CHARRED_FOOD
 	return FACTORY.get(item, Items.Id.NONE)
+
+
+## Whether food chars in the factory furnace: FOODS, and what the food
+## furnace takes or makes.
+static func chars(item: int) -> bool:
+	if _cooked.is_empty():
+		for raw: int in FOOD:
+			_cooked[FOOD[raw]] = true
+	return FOODS.has(item) or FOOD.has(item) or _cooked.has(item)
 
 
 ## Whether an item goes in a furnace to be cooked or smelted.

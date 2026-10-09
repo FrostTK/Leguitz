@@ -10,7 +10,9 @@ extends Node3D
 ## (PlayerModel.stroke): a tool strikes down towards the middle of the
 ## view, a sword slashes across, a block, an item or the bare hand jabs;
 ## food goes to the mouth; a bow comes up in front and bends as it is
-## drawn, an arrow on the string.
+## drawn, an arrow on the string; a fishing rod stands up ahead, cast
+## from over the shoulder, its bobber out once cast (`rod_tip`: where the
+## line leaves it, for Angler).
 
 const VOXEL_SHADER := preload("res://src/client/shaders/voxel_view.gdshader")
 const HELD_BLOCK_SHADER := preload("res://src/client/shaders/held_block.gdshader")
@@ -49,6 +51,13 @@ const HAND_POSES := [
 	[Vector3(0.3, -0.3, -0.5), Vector3(-0.2, 0.9, -0.35), Vector3(-0.4, 0.0, -0.9)],
 	[Vector3(0.32, -0.22, -0.46), Vector3(-0.05, 0.95, -0.1), Vector3(-0.3, 0.3, -0.9)],
 	[Vector3(0.18, -0.24, -0.62), Vector3(-0.35, 0.8, -0.5), Vector3(-0.4, -0.2, -0.9)],
+]
+## The fishing rod: at rest its pole up ahead to the top of the view,
+## raised back over the shoulder, cast out ahead.
+const ROD_POSES := [
+	[Vector3(0.3, -0.33, -0.5), Vector3(0.02, 0.7, -0.72), Vector3(-0.3, 0.68, 0.66)],
+	[Vector3(0.34, -0.2, -0.44), Vector3(0.18, 0.95, 0.25), Vector3(-0.2, -0.3, 0.93)],
+	[Vector3(0.24, -0.34, -0.55), Vector3(0.0, 0.25, -0.97), Vector3(-0.1, 0.97, 0.24)],
 ]
 ## The bow in hand at rest, and drawn in front of the eye (its grip there,
 ## leaning to the right to show its curve, the arrow along the view).
@@ -91,6 +100,7 @@ var _shown := -1
 var _holding := PlayerModel.Holding.NOTHING
 var _grip := Vector3.ZERO
 var _bow_stages: Array[Mesh] = []
+var _rod_stages: Array[Mesh] = []
 var _cube := false
 var _walk := 0.0
 var _lag := Vector2.ZERO
@@ -138,6 +148,11 @@ func show_item(item: int) -> void:
 			_bow_stages.clear()
 			for stage in ToolModels.DRAW_STAGES:
 				_bow_stages.append(library.held_mesh(item, stage))
+		elif item == Items.Id.FISHING_ROD:
+			_holding = PlayerModel.Holding.ROD
+			_rod_stages.clear()
+			for stage in ToolModels.ROD_STAGES:
+				_rod_stages.append(library.held_mesh(item, stage))
 		else:
 			var sword := Items.tool_of(item) == Items.Tool.SWORD
 			_holding = PlayerModel.Holding.SWORD if sword else PlayerModel.Holding.TOOL
@@ -186,6 +201,8 @@ func animate(
 	if _holding == PlayerModel.Holding.BOW:
 		var stage := ToolModels.stage_of(body.draw) if body.aiming > 0.0 else 0
 		_item.mesh = _bow_stages[stage]
+	elif _holding == PlayerModel.Holding.ROD:
+		_item.mesh = _rod_stages[1 if body.cast else 0]
 	if _item.mesh == null:
 		return
 	if _holding == PlayerModel.Holding.ITEM:
@@ -208,6 +225,8 @@ func _pose(body: PlayerModel, eating: bool, eat_time: float) -> Array:
 		poses = TOOL_POSES
 	elif _holding == PlayerModel.Holding.SWORD:
 		poses = SWORD_POSES
+	elif _holding == PlayerModel.Holding.ROD:
+		poses = ROD_POSES
 	var at := body.stroke
 	if _holding == PlayerModel.Holding.BOW:
 		var drawn := smoothstep(0.0, 1.0, body.aiming)
@@ -222,6 +241,18 @@ func _pose(body: PlayerModel, eating: bool, eat_time: float) -> Array:
 		var munch := Vector3(0.0, sin(eat_time * 18.0) * 0.012, 0.0)
 		pose = [EAT_AT + munch, pose[1], pose[2]]
 	return pose
+
+
+## Where the line leaves the rod's tip, in the world (global), for a camera
+## of `fov` degrees seeing it where the view's own field of view shows it
+## (INF: no rod in hand, or hidden).
+func rod_tip(fov: float) -> Vector3:
+	if _holding != PlayerModel.Holding.ROD or not visible or not is_inside_tree():
+		return Vector3.INF
+	var tip := transform * (_item.transform * ToolModels.rod_tip())
+	var squeeze := tan(deg_to_rad(fov) * 0.5) / tan(deg_to_rad(VIEW_FOV) * 0.5)
+	var seen := Vector3(tip.x * squeeze, tip.y * squeeze, tip.z)
+	return get_parent_node_3d().global_transform * seen
 
 
 ## The arm from the fist to the shoulder, off the view; hidden while a bow

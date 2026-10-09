@@ -787,3 +787,84 @@ BOOK_KITCHEN_EFFECT,%s: %s.,%s : %s.
 BOOK_KITCHEN_FOR,%s %d s,%s %d s
 BOOK_KITCHEN_DISH,%s: %s,%s : %s
 KITCHEN_COOK,Cooking,Cuisiner
+ITEM_FISHING_ROD,Fishing rod,Canne à pêche
+ITEM_WORM,Earthworm,Ver de terre
+ITEM_BAIT_BALL,Corn bait,Boulette d'amorce
+ITEM_FISH_BAIT,Fish bait,Appât de poisson
+ITEM_FISH_TRAP,Fish trap,Nasse
+ITEM_PERCH,Perch,Perche
+ITEM_TROUT,Trout,Truite
+ITEM_CARP,Carp,Carpe
+ITEM_PIKE,Pike,Brochet
+ITEM_CATFISH,Catfish,Silure
+ITEM_EEL,Eel,Anguille
+ITEM_SALMON,Salmon,Saumon
+ITEM_SARDINE,Sardine,Sardine
+ITEM_MACKEREL,Mackerel,Maquereau
+ITEM_COD,Cod,Cabillaud
+ITEM_SEA_BASS,Sea bass,Bar
+ITEM_TUNA,Tuna,Thon
+ITEM_LANTERNFISH,Lanternfish,Poisson-lanterne
+ITEM_CAVE_FISH,Cave fish,Poisson des cavernes
+ITEM_CRAYFISH,Crayfish,Écrevisse
+ITEM_CRAB,Crab,Crabe
+ITEM_COOKED_PERCH,Grilled perch,Perche grillée
+ITEM_COOKED_TROUT,Grilled trout,Truite grillée
+ITEM_COOKED_CARP,Grilled carp,Carpe grillée
+ITEM_COOKED_PIKE,Grilled pike,Brochet grillé
+ITEM_COOKED_CATFISH,Grilled catfish,Silure grillé
+ITEM_COOKED_EEL,Grilled eel,Anguille grillée
+ITEM_COOKED_SALMON,Grilled salmon,Saumon grillé
+ITEM_COOKED_SARDINE,Grilled sardine,Sardine grillée
+ITEM_COOKED_MACKEREL,Grilled mackerel,Maquereau grillé
+ITEM_COOKED_COD,Grilled cod,Cabillaud grillé
+ITEM_COOKED_SEA_BASS,Grilled sea bass,Bar grillé
+ITEM_COOKED_TUNA,Grilled tuna,Thon grillé
+ITEM_COOKED_LANTERNFISH,Grilled lanternfish,Poisson-lanterne grillé
+ITEM_COOKED_CAVE_FISH,Grilled cave fish,Poisson des cavernes grillé
+ITEM_COOKED_CRAYFISH,Cooked crayfish,Écrevisse cuite
+ITEM_COOKED_CRAB,Cooked crab,Crabe cuit
+ITEM_SEAWEED,Seaweed,Algue
+ITEM_DRIFTWOOD,Driftwood,Bois flotté
+ITEM_FISH_SOUP,Fish soup,Soupe de poisson
+ITEM_SUSHI,Sushi,Sushis
+ITEM_FRIED_FISH,Fried fish and chips,Poisson frit et frites
+HUD_CAUGHT,Caught: %s (%d cm)!,Prise : %s (%d cm) !
+HUD_FISHED_UP,Fished up: %s,Repêché : %s
+HUD_FISH_TOOK_BAIT,Too late: the fish took the bait.,Trop tard : le poisson a filé avec l'appât.
+HUD_ROD_BAIT,Bait: %s (%d),Appât : %s (%d)
+HUD_ROD_NO_BAIT,No bait: the fish bite slower.,Pas d'appât : les poissons mordent moins vite.
+BOOK_CHAPTER_FISHING,Fishing,Pêche
+BOOK_FISHING_INTRO,"Fish live in lakes, rivers, swamps, the sea and even the water of caves. What bites depends on the water and its climate, the time of day, the weather, how deep it is under your bobber and your bait.","Les poissons vivent dans les lacs, les rivières, les marais, la mer et même l'eau des grottes. Ce qui mord dépend de l'eau et de son climat, de l'heure, du temps qu'il fait, de la profondeur sous ton bouchon et de ton appât."
+BOOK_FISHING_ROD,"Fishing rod (three sticks and two strings): with it in hand, a {place} casts where you aim, up to 14 tiles away; another reels the line in.","Canne à pêche (trois bâtons et deux ficelles) : en main, le {place} lance là où tu vises, jusqu'à 14 cases ; un autre ramène la ligne."
+BOOK_FISHING_BITE,"Wait for the bite: the bobber twitches while a fish nibbles, then it goes under. Reel in right then! Too soon, nothing comes; too late, the fish takes your bait. Rain, dawn and dusk make fish bite sooner, shallow water later.","Attends la touche : le bouchon frétille quand un poisson grignote, puis il s'enfonce. Ferre à ce moment-là ! Trop tôt, rien ne vient ; trop tard, le poisson file avec ton appât. La pluie, l'aube et le crépuscule font mordre plus vite, l'eau peu profonde moins vite."
+BOOK_FISHING_BAITS,Baits,Appâts
+BOOK_FISHING_BAIT_HOW,"The first bait in your slots (the hotbar first) goes on the hook: fish bite sooner, and those who like it far more often. It is used up by a catch, or by the fish that gets away with it.","Le premier appât de tes cases (la barre d'abord) va sur l'hameçon : les poissons mordent plus vite, et ceux qui l'aiment bien plus souvent. Une prise l'utilise, ou le poisson qui file avec."
+BOOK_FISHING_WORM,"Earthworm: dug out of soil now and then, turned up more often by the hoe, twice as often in the rain.","Ver de terre : on en trouve parfois en creusant la terre, plus souvent en labourant, deux fois plus sous la pluie."
+BOOK_FISHING_BAIT_BALL,"Corn bait (flour and corn: 4): carp and sardines love it.","Boulette d'amorce (farine et maïs : 4) : les carpes et les sardines en raffolent."
+BOOK_FISHING_FISH_BAIT,"Fish bait (any raw fish: 4): for the hunters, pike, catfish, salmon, mackerel, sea bass, tuna.","Appât de poisson (n'importe quel poisson cru : 4) : pour les chasseurs, brochet, silure, saumon, maquereau, bar, thon."
+BOOK_FISHING_FISH,The fish,Les poissons
+BOOK_FISHING_WHERE,"Where and when each one bites (its depth: of water under the bobber):","Où et quand chacun mord (sa profondeur : l'eau sous le bouchon) :"
+BOOK_FISH_ENTRY,%s: %s.,%s : %s.
+BOOK_WATER_LAKE,lakes,lacs
+BOOK_WATER_RIVER,rivers,rivières
+BOOK_WATER_SWAMP,swamps,marais
+BOOK_WATER_SEA,the sea,la mer
+BOOK_WATER_CAVE,cave water,eau des grottes
+BOOK_CLIMATE_COLD,cold,froid
+BOOK_CLIMATE_MILD,mild,tempéré
+BOOK_CLIMATE_WARM,warm,chaud
+BOOK_FISH_OR," or "," ou "
+BOOK_TIME_DAY,by day,de jour
+BOOK_TIME_TWILIGHT,at dawn and dusk,à l'aube et au crépuscule
+BOOK_TIME_NIGHT,at night,la nuit
+BOOK_FISH_DEPTH,%d deep at least,au moins %d de fond
+BOOK_FISH_RAIN,rain brings it out,la pluie le fait sortir
+BOOK_FISH_BAIT,bait: %s,appât : %s
+BOOK_FISHING_TRAP,"Fish trap (sticks and string): set it on still water, then {place} with baits in hand to bait it (4 at most). It catches something for each bait, one after the other; a yellow flag on its float tells it has a catch: {place} or {use} empties it.","Nasse (bâtons et ficelle) : pose-la sur de l'eau calme, puis {place} avec des appâts en main pour l'appâter (4 au plus). Elle prend quelque chose pour chaque appât, l'un après l'autre ; un drapeau jaune sur son flotteur annonce une prise : {place} ou {use} pour la vider."
+BOOK_FISHING_CRAYFISH,"Crayfish: in the traps of lakes, rivers, swamps and caves.","Écrevisse : dans les nasses des lacs, des rivières, des marais et des grottes."
+BOOK_FISHING_CRAB,Crab: in the traps set in the sea.,Crabe : dans les nasses posées en mer.
+BOOK_FISHING_MORE,Junk and cooking,Repêchages et cuisine
+BOOK_FISHING_JUNK,"Lines bring up seaweed (compost, sushi) and driftwood (sticks, fuel) now and then.","Les lignes ramènent parfois des algues (compost, sushis) et du bois flotté (bâtons, combustible)."
+BOOK_FISHING_COOK,"Fish and seafood grill in the food furnace and feed far better cooked. At the kitchen counter: fish soup, sushi, fried fish and chips.","Poissons et crustacés grillent au four alimentaire et nourrissent bien mieux cuits. Au plan de cuisine : soupe de poisson, sushis, poisson frit et frites."
+BOOK_FISH_SEP,"; "," ; "

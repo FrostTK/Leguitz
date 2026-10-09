@@ -45,6 +45,8 @@ const SET_GAME_MODE := "set_game_mode"
 const CATALOG_CLICK := "catalog_click"
 const ATTACK := "attack"
 const SHOOT := "shoot"
+const CAST := "cast"
+const REEL := "reel"
 
 ## map_request() row for a map of the surface.
 const MAP_SURFACE := -1
@@ -80,6 +82,8 @@ const LANTERN_OUT := "lantern_out"
 const ARROW_SPAWN := "arrow_spawn"
 const ARROW_REMOVE := "arrow_remove"
 const SWING_GATE := "swing_gate"
+const BOBBER := "bobber"
+const CAUGHT := "caught"
 
 
 ## The player hits the creature `id` with the hotbar slot `slot` in hand
@@ -233,6 +237,31 @@ static func chat_notice(key: String, args: Array, tone: int) -> Dictionary:
 ## slot `slot` (Apiary.harvest: a glass bottle, shears).
 static func harvest_hive(cell: Vector3i, slot: int) -> Dictionary:
 	return {"t": HARVEST_HIVE, "cell": cell, "slot": slot}
+
+
+## The player casts with the rod of hotbar slot `slot` towards `target`
+## (local units; see Fishing).
+static func cast(slot: int, target: Vector3) -> Dictionary:
+	return {"t": CAST, "slot": slot, "target": target}
+
+
+## The player reels their line in.
+static func reel() -> Dictionary:
+	return {"t": REEL}
+
+
+## A player's bobber (Fishing.State) is at `at` (local units), for `left`
+## seconds (its flight, its bite); `missed`: a fish took the bait.
+static func bobber(
+	player: int, state: int, at: Vector3, left: float, missed := false
+) -> Dictionary:
+	return {"t": BOBBER, "player": player, "state": state, "at": at, "left": left, "missed": missed}
+
+
+## The player caught `item`, `size` cm long (0: not a fish); `broke`: their
+## rod with it.
+static func caught(item: int, size: int, broke: bool) -> Dictionary:
+	return {"t": CAUGHT, "item": item, "size": size, "broke": broke}
 
 
 ## The player used a kitchen machine (Machines) with hotbar slot `slot` in

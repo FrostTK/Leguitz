@@ -10,7 +10,10 @@ extends RefCounted
 ## head takes its material's colors (ItemModels.TOOL_HEADS); wood is grained,
 ## the grips wrapped in leather, the edges and points bright where they are
 ## sharpened. The bow bends as it is drawn (`held` stages 0 to DRAW_STAGES -
-## 1), an arrow on the string.
+## 1), an arrow on the string. The fishing rod (a bamboo pole, a cork grip,
+## a reel hanging under it, rings along it for the line) carries its bobber
+## hooked near the grip (stage 0) until it is cast (stage 1: the bobber is
+## out, Angler draws the line to it); its line is thin boxes (rod_lines).
 
 ## What a profile paints (see _colors).
 enum Paint {
@@ -31,10 +34,20 @@ enum Paint {
 	POINT,
 	FLETCH,
 	FLETCH_RED,
+	CORK,
+	CORK_DARK,
+	BAMBOO_DARK,
+	BAMBOO,
+	REEL_DARK,
+	REEL,
+	REEL_LIGHT,
 }
 
-## The bow's kind (the tools': Items.Tool).
+## The bow's kind and the fishing rod's (the tools': Items.Tool).
 const BOW := -1
+const ROD := -2
+## The rod's stages: its bobber hooked near the grip, then cast.
+const ROD_STAGES := 2
 ## In hand, a model voxel is this much of a voxel of the body.
 const SCALE := 0.5
 const DRAW_STAGES := 4
@@ -47,6 +60,10 @@ const STRING := "#ebe4cf"
 const SHAFT := "#c49b5f"
 const POINT := ["#5c5b66", "#9a99a6"]
 const FLETCH := ["#f2efe8", "#d8442e"]
+const CORK := ["#a87a4a", "#c89a62"]
+const BAMBOO := ["#8a6a2e", "#c8a458", "#e0c47a"]
+const REEL := ["#2e2e36", "#6a6a76", "#b4b4c0"]
+const LINE := "#e8e6dc"
 ## Per kind: the length of the profile (u), the thickness of its widest
 ## part (x in hand), what it spans across (v, in hand) and where the hand
 ## holds it (u, v).
@@ -57,6 +74,7 @@ const LENGTH := {
 	Items.Tool.SWORD: 31,
 	Items.Tool.HOE: 28,
 	BOW: 35,
+	ROD: 72,
 }
 const WIDTH := {
 	Items.Tool.PICKAXE: 4,
@@ -65,6 +83,7 @@ const WIDTH := {
 	Items.Tool.SWORD: 4,
 	Items.Tool.HOE: 6,
 	BOW: 2,
+	ROD: 3,
 }
 const SPAN := {
 	Items.Tool.PICKAXE: Vector2i(-12, 12),
@@ -73,6 +92,7 @@ const SPAN := {
 	Items.Tool.SWORD: Vector2i(-7, 7),
 	Items.Tool.HOE: Vector2i(-2, 8),
 	BOW: Vector2i(-15, 9),
+	ROD: Vector2i(-8, 4),
 }
 const GRIP := {
 	Items.Tool.PICKAXE: Vector2(4.5, 0.0),
@@ -81,7 +101,11 @@ const GRIP := {
 	Items.Tool.SWORD: Vector2(5.5, 0.0),
 	Items.Tool.HOE: Vector2(4.5, 0.0),
 	BOW: Vector2(17.5, 2.5),
+	ROD: Vector2(10.0, 0.0),
 }
+## The rod: where its rings are (u), where the bobber hangs hooked.
+const RINGS: Array[float] = [24.0, 36.0, 47.0, 57.0, 66.0]
+const HOOKED := Vector2(18.5, 2.0)
 ## The icon's diagonal (the 16 x 16 grid's) and the margin kept to its
 ## edges.
 const DIAGONAL := 22.627417
@@ -96,6 +120,8 @@ static var _fits: Dictionary[int, Vector3] = {}
 static func kind_of(item: int) -> int:
 	if item == Items.Id.BOW:
 		return BOW
+	if item == Items.Id.FISHING_ROD:
+		return ROD
 	return Items.tool_of(item)
 
 
@@ -142,6 +168,31 @@ static func bow_lines(stage: int) -> Array:
 		lines.append([from, to, flat, vane, color])
 		lines.append([from, to, vane, flat, color])
 	return lines
+
+
+## The rod's line, as thin boxes in the model `held` builds (see
+## bow_lines): from the reel along the rings to the tip, and back from the
+## tip to the bobber hooked near the grip (stage 0).
+static func rod_lines(stage: int) -> Array:
+	var at := func(u: float, v: float) -> Vector3:
+		return Vector3(0.0, u, v - GRIP[ROD].y) * VoxelMesher.VOXEL
+	var thin := 0.15 * VoxelMesher.VOXEL
+	var color := Color(LINE)
+	var points: Array[Vector3] = [at.call(10.0, -2.0)]
+	for ring in RINGS:
+		points.append(at.call(ring, -1.4))
+	points.append(at.call(LENGTH[ROD] - 0.5, -0.4))
+	if stage == 0:
+		points.append(at.call(HOOKED.x + 1.2, HOOKED.y + 0.6))
+	var lines := []
+	for i in points.size() - 1:
+		lines.append([points[i], points[i + 1], thin, thin, color])
+	return lines
+
+
+## The tip of the rod in the model `held` builds (mesh units).
+static func rod_tip() -> Vector3:
+	return Vector3(0.0, (LENGTH[ROD] - 0.5) * VoxelMesher.VOXEL, -0.4 * VoxelMesher.VOXEL)
 
 
 ## Where the hand holds the model `held` builds (local units of its mesh:
@@ -229,7 +280,7 @@ static func _colors(item: int) -> Dictionary:
 	var colors := {}
 	var bow := item == Items.Id.BOW
 	var wood: Array = BOW_WOOD if bow else HANDLE
-	var head: Array = POINT if bow else ItemModels.TOOL_HEADS[Items.tier_of(item)]
+	var head: Array = POINT if bow else ItemModels.TOOL_HEADS[maxi(Items.tier_of(item), 0)]
 	var codes := {
 		Paint.WOOD_DARK: wood[0],
 		Paint.WOOD: wood[1],
@@ -247,6 +298,13 @@ static func _colors(item: int) -> Dictionary:
 		Paint.POINT: POINT[1],
 		Paint.FLETCH: FLETCH[0],
 		Paint.FLETCH_RED: FLETCH[1],
+		Paint.CORK: CORK[1],
+		Paint.CORK_DARK: CORK[0],
+		Paint.BAMBOO_DARK: BAMBOO[0],
+		Paint.BAMBOO: BAMBOO[1],
+		Paint.REEL_DARK: REEL[0],
+		Paint.REEL: REEL[1],
+		Paint.REEL_LIGHT: REEL[2],
 	}
 	for paint: int in codes:
 		colors[paint] = VoxelGrid.voxel(Color(codes[paint]))
@@ -309,6 +367,8 @@ static func _paint(kind: int, u: float, v: float, stage: int, fat: float) -> Vec
 			return _hoe(u, v)
 		BOW:
 			return _bow(u, v, stage, fat)
+		ROD:
+			return _rod(u, v, stage, fat)
 	return Vector2i.ZERO
 
 
@@ -486,3 +546,39 @@ static func _bow(u: float, v: float, stage: int, fat: float) -> Vector2i:
 		if absf(v - line) < 0.5 * sqrt(1.0 + slope * slope) * fat:
 			return Vector2i(Paint.STRING, 1)
 	return Vector2i.ZERO
+
+
+## A fishing rod: a dark butt, a cork grip, a reel hanging under it (its
+## spool, a crank), a bamboo pole tapering to a red tip, darker at its
+## nodes, rings under it for the line; at stage 0 the bobber (red over
+## white) hooked over the pole near the grip.
+static func _rod(u: float, v: float, stage: int, fat: float) -> Vector2i:
+	if u < 0.0 or u >= LENGTH[ROD]:
+		return Vector2i.ZERO
+	var wide := maxf(fat * 0.5, 0.5)
+	if stage == 0 and Vector2(u, v).distance_to(HOOKED) < maxf(1.3, fat * 0.6):
+		return Vector2i(Paint.FLETCH_RED if u > HOOKED.x else Paint.FLETCH, 2)
+	var reel := Vector2(u, v).distance_to(Vector2(10.0, -4.5))
+	if reel < 2.6:
+		return Vector2i(Paint.REEL_LIGHT if reel < 1.0 else Paint.REEL, 3)
+	if absf(u - 10.0) < maxf(0.5, wide) and v > -2.2 and v < -1.0:
+		return Vector2i(Paint.REEL_DARK, 1)
+	if Vector2(u, v).distance_to(Vector2(11.8, -6.6)) < maxf(0.7, wide):
+		return Vector2i(Paint.REEL_DARK, 2)
+	for ring in RINGS:
+		if absf(u - ring) < maxf(0.5, wide) and v > -1.9 and v <= -0.9:
+			return Vector2i(Paint.REEL_LIGHT, 1)
+	var half := 1.1 if u < 15.0 else lerpf(0.9, 0.45, (u - 15.0) / (LENGTH[ROD] - 15.0))
+	if absf(v) > maxf(half, wide):
+		return Vector2i.ZERO
+	if u < 1.0:
+		return Vector2i(Paint.REEL_DARK, 2)
+	if u < 15.0:
+		var speck := HashUtil.unit2(0x0C0, int(u * 2.0), int(v * 2.0 + 8.0)) < 0.3
+		return Vector2i(Paint.CORK_DARK if speck else Paint.CORK, 2)
+	if u >= LENGTH[ROD] - 2.0:
+		return Vector2i(Paint.FLETCH_RED, 1)
+	var thick := 2 if u < 40.0 else 1
+	if fmod(u - 15.0, 11.0) < 1.0:
+		return Vector2i(Paint.BAMBOO_DARK, thick)
+	return Vector2i(Paint.BAMBOO, thick)

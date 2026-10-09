@@ -6,7 +6,7 @@ extends Node3D
 ## support the root's stretch).
 
 ## What the right hand holds.
-enum Holding { NOTHING, ITEM, TOOL, SWORD, BOW }
+enum Holding { NOTHING, ITEM, TOOL, SWORD, BOW, ROD }
 ## A stroke of the right arm: a tool or the hand striking down (breaking,
 ## a blow), a sword slashing across, a quick jab (placing, using).
 enum Stroke { MINE, SLASH, JAB }
@@ -47,6 +47,11 @@ const HAND_POSES: Array[Vector3] = [
 const JAB_POSES: Array[Vector3] = [
 	Vector3(-0.3, 0.0, 0.0), Vector3(-0.3, 0.0, 0.0), Vector3(-1.25, 0.15, -0.35)
 ]
+## The fishing rod: held forward, its tip up; cast from over the shoulder
+## out ahead, low (its pole rises wrist - pitch over the level).
+const ROD_POSES: Array[Vector3] = [
+	Vector3(-0.65, 0.0, 0.0), Vector3(-2.6, 0.0, -0.4), Vector3(-1.2, 0.0, -0.95)
+]
 ## A bow drawn (`aiming`) lies across in front of the chest (its grip
 ## there, body voxels), its back forward, the string pulled to the chest:
 ## seen from above as a bow, tipped BOW_TILT (radians) towards the front
@@ -74,6 +79,8 @@ var stroke := 0.0
 var stroke_kind := Stroke.MINE
 ## How far the bow is drawn (0..1, Archer): it bends.
 var draw := 0.0
+## The fishing rod's bobber is out (Angler): not hooked on the rod.
+var cast := false
 ## Eating: the right hand at the mouth, munching.
 var eating := false
 ## Swimming: arms sweeping, legs kicking.
@@ -93,6 +100,7 @@ var _held_rest := Transform3D()
 ## A tool's or the bow's grip (model units), the bow's stages.
 var _grip := Vector3.ZERO
 var _bow_stages: Array[Mesh] = []
+var _rod_stages: Array[Mesh] = []
 ## The armor worn (its meshes, and the items they show).
 var _armor: Array[MeshInstance3D] = []
 var _armor_items: Array[int] = []
@@ -181,6 +189,8 @@ func animate(feet: Vector3, heading: Vector2, speed: float, airborne: bool, delt
 	if holding in [Holding.TOOL, Holding.SWORD] and not swimming and not airborne:
 		# Held a little forward, swinging less with the walk.
 		pose.x = arm_pose(stroke_kind, holding, 0.0).x + _right.rotation.x * 0.4
+	elif holding == Holding.ROD and not swimming:
+		pose = ROD_POSES[0] + Vector3(_right.rotation.x * 0.2, 0.0, 0.0)
 	if _stroke_time >= 0.0:
 		pose = arm_pose(stroke_kind, holding, stroke)
 	if aiming > 0.0:
@@ -260,6 +270,22 @@ func hold_tool(model: Mesh, grip: Vector3, sword: bool) -> void:
 	holding = Holding.SWORD if sword else Holding.TOOL
 
 
+## Puts the fishing rod in the right hand: its model with the bobber
+## hooked, then cast (ToolModels.ROD_STAGES), held by its grip.
+func hold_rod(stages: Array[Mesh], grip: Vector3) -> void:
+	_rod_stages = stages
+	_held.mesh = stages[0]
+	_grip = grip
+	holding = Holding.ROD
+
+
+## Where the fishing rod's tip is (global; INF: no rod in hand).
+func rod_tip() -> Vector3:
+	if holding != Holding.ROD or not is_inside_tree():
+		return Vector3.INF
+	return _held.global_transform * ToolModels.rod_tip()
+
+
 ## Puts the bow in the right hand: its model at each stage of the draw
 ## (ToolModels.DRAW_STAGES), held by its grip.
 func hold_bow(stages: Array[Mesh], grip: Vector3) -> void:
@@ -282,6 +308,8 @@ static func arm_pose(kind: int, what: int, at: float) -> Vector3:
 		poses = JAB_POSES
 	elif kind == Stroke.SLASH:
 		poses = SLASH_POSES
+	elif what == Holding.ROD:
+		poses = ROD_POSES
 	elif what in [Holding.TOOL, Holding.SWORD]:
 		poses = MINE_POSES
 	if at < 0.0:
@@ -331,7 +359,7 @@ func _advance_stroke(delta: float) -> void:
 ## none (it shoots), anything else jabs.
 func _use_stroke() -> int:
 	match holding:
-		Holding.TOOL:
+		Holding.TOOL, Holding.ROD:
 			return Stroke.MINE
 		Holding.SWORD:
 			return Stroke.SLASH
@@ -348,7 +376,9 @@ func _place_held(wrist: float) -> void:
 	if _held.mesh == null:
 		return
 	match holding:
-		Holding.TOOL, Holding.SWORD:
+		Holding.TOOL, Holding.SWORD, Holding.ROD:
+			if holding == Holding.ROD:
+				_held.mesh = _rod_stages[1 if cast else 0]
 			var handle := Vector3(0.0, sin(wrist), cos(wrist))
 			var front := Vector3(0.0, -cos(wrist), sin(wrist))
 			_held.transform = ItemLibrary.in_hand(handle, front, _grip, ToolModels.SCALE, FIST)

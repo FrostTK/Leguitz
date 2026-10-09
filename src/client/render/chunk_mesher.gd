@@ -944,6 +944,7 @@ static func _add_prop(
 	var height := float(y - SEA)
 	if y > 0 and Voxels.is_liquid(voxels[base + y - 1]):
 		height -= 1.0 - Fluids.surface(voxels[base + y - 1])
+		height -= ObjectShapes.SUNK.get(ObjectShapes.base_kind(block), 0.0)
 	# Where it stands and which version: the same as physics (ObjectShapes).
 	var offset := Vector2(ObjectShapes.offset_at(block, tile)) / 16.0
 	var foot := Vector3(lx + 0.5 + offset.x, height, lz + 0.5 + offset.y)

@@ -245,6 +245,50 @@ enum Id {
 	BUTTER_CHURN,
 	BARREL,
 	CHEESE_CELLAR,
+	# Fishing (FishTable, Fishing): the rod, baits, the trap, the fish and
+	# what traps catch, raw and grilled, junk a line brings up, the dishes.
+	FISHING_ROD,
+	WORM,
+	BAIT_BALL,
+	FISH_BAIT,
+	FISH_TRAP,
+	PERCH,
+	TROUT,
+	CARP,
+	PIKE,
+	CATFISH,
+	EEL,
+	SALMON,
+	SARDINE,
+	MACKEREL,
+	COD,
+	SEA_BASS,
+	TUNA,
+	LANTERNFISH,
+	CAVE_FISH,
+	CRAYFISH,
+	CRAB,
+	COOKED_PERCH,
+	COOKED_TROUT,
+	COOKED_CARP,
+	COOKED_PIKE,
+	COOKED_CATFISH,
+	COOKED_EEL,
+	COOKED_SALMON,
+	COOKED_SARDINE,
+	COOKED_MACKEREL,
+	COOKED_COD,
+	COOKED_SEA_BASS,
+	COOKED_TUNA,
+	COOKED_LANTERNFISH,
+	COOKED_CAVE_FISH,
+	COOKED_CRAYFISH,
+	COOKED_CRAB,
+	SEAWEED,
+	DRIFTWOOD,
+	FISH_SOUP,
+	SUSHI,
+	FRIED_FISH,
 }
 ## What a tool is made for (Mining.tool_for: what it breaks faster).
 enum Tool { NONE, PICKAXE, AXE, SHOVEL, SWORD, HOE }
@@ -285,9 +329,11 @@ const TOOLS := {
 	Id.GOLDEN_HOE: [Tool.HOE, Tier.GOLD],
 	Id.DIAMOND_HOE: [Tool.HOE, Tier.DIAMOND],
 }
-## How many shots a bow lasts (Minecraft's), how many fleeces shears take.
+## How many shots a bow lasts (Minecraft's), how many fleeces shears take,
+## how many catches a fishing rod (Minecraft's).
 const BOW_DURABILITY := 384
 const SHEARS_DURABILITY := 238
+const ROD_DURABILITY := 64
 ## Fewer of these in a stack.
 const SMALL_STACKS := {
 	Id.BUCKET: 16,
@@ -303,6 +349,7 @@ const SMALL_STACKS := {
 	Id.MEAT_STEW: 16,
 	Id.CAKE: 16,
 	Id.GRATIN: 16,
+	Id.FISH_SOUP: 16,
 }
 ## What a food leaves in hand once eaten (milk: its bucket; honey: its
 ## bottle).
@@ -411,6 +458,7 @@ const PLACES_BLOCK := {
 	Id.BUTTER_CHURN: Tiles.Block.BUTTER_CHURN,
 	Id.BARREL: Tiles.Block.BARREL,
 	Id.CHEESE_CELLAR: Tiles.Block.CHEESE_CELLAR,
+	Id.FISH_TRAP: Tiles.Block.FISH_TRAP,
 }
 
 ## What a ground gives (soil gives dirt); grounds left out give nothing.
@@ -585,6 +633,42 @@ const FOOD := {
 	Id.CREPES: 4,
 	Id.GRATIN: 10,
 	Id.TARTINE: 5,
+	Id.PERCH: 1,
+	Id.TROUT: 2,
+	Id.CARP: 2,
+	Id.PIKE: 3,
+	Id.CATFISH: 3,
+	Id.EEL: 2,
+	Id.SALMON: 3,
+	Id.SARDINE: 1,
+	Id.MACKEREL: 2,
+	Id.COD: 3,
+	Id.SEA_BASS: 2,
+	Id.TUNA: 3,
+	Id.LANTERNFISH: 2,
+	Id.CAVE_FISH: 1,
+	Id.CRAYFISH: 1,
+	Id.CRAB: 2,
+	Id.COOKED_PERCH: 4,
+	Id.COOKED_TROUT: 6,
+	Id.COOKED_CARP: 6,
+	Id.COOKED_PIKE: 8,
+	Id.COOKED_CATFISH: 8,
+	Id.COOKED_EEL: 6,
+	Id.COOKED_SALMON: 8,
+	Id.COOKED_SARDINE: 4,
+	Id.COOKED_MACKEREL: 6,
+	Id.COOKED_COD: 8,
+	Id.COOKED_SEA_BASS: 7,
+	Id.COOKED_TUNA: 9,
+	Id.COOKED_LANTERNFISH: 6,
+	Id.COOKED_CAVE_FISH: 4,
+	Id.COOKED_CRAYFISH: 5,
+	Id.COOKED_CRAB: 6,
+	Id.SEAWEED: 1,
+	Id.FISH_SOUP: 9,
+	Id.SUSHI: 5,
+	Id.FRIED_FISH: 10,
 }
 ## The planks each log is sawn into.
 const PLANKS_OF := {
@@ -595,6 +679,8 @@ const PLANKS_OF := {
 	Id.JUNGLE_LOG: Id.JUNGLE_PLANKS,
 	Id.ACACIA_LOG: Id.ACACIA_PLANKS,
 }
+## Digging soil turns up a worm this often.
+const WORM_CHANCE := 0.06
 ## A felled tree gives a log per level of trunk, and a stick or two.
 const TREE_LOGS := {
 	Tiles.Block.OAK: Id.OAK_LOG,
@@ -666,7 +752,7 @@ static func max_stack(item: int) -> int:
 		return 0
 	if TOOLS.has(item) or item == Id.BOW or Armor.is_armor(item):
 		return 1
-	if item in [Id.GUIDE_BOOK, Id.WATERING_CAN, Id.SHEARS, Id.MILK_BUCKET]:
+	if item in [Id.GUIDE_BOOK, Id.WATERING_CAN, Id.SHEARS, Id.MILK_BUCKET, Id.FISHING_ROD]:
 		return 1
 	return SMALL_STACKS.get(item, MAX_STACK)
 
@@ -699,6 +785,8 @@ static func durability(item: int) -> int:
 		return BOW_DURABILITY
 	if item == Id.SHEARS:
 		return SHEARS_DURABILITY
+	if item == Id.FISHING_ROD:
+		return ROD_DURABILITY
 	return Armor.durability(item)
 
 
@@ -737,6 +825,9 @@ static func drops(voxel: int, tile: Vector2i, rng: RandomNumberGenerator) -> Arr
 		var item: int = GROUND_DROPS.get(Voxels.ground_of(voxel), Id.NONE)
 		if item != Id.NONE:
 			result.append(Vector2i(item, 1))
+		# Now and then a worm in the soil (a bait: Fishing).
+		if Growth.is_soil(voxel) and rng.randf() < WORM_CHANCE:
+			result.append(Vector2i(Id.WORM, 1))
 	elif TREE_LOGS.has(block):
 		var variant := ObjectShapes.variant_at(block, tile)
 		result.append(Vector2i(TREE_LOGS[block], ObjectShapes.blocking_levels(block, variant)))

@@ -55,6 +55,9 @@ const OF_FOOD := {
 	Items.Id.CREPES: {Kind.SWIFT: 45.0},
 	Items.Id.GRATIN: {Kind.FED: 180.0},
 	Items.Id.TARTINE: {Kind.HASTE: 45.0},
+	Items.Id.FISH_SOUP: {Kind.REGEN: 40.0},
+	Items.Id.SUSHI: {Kind.SWIFT: 60.0, Kind.HASTE: 45.0},
+	Items.Id.FRIED_FISH: {Kind.FED: 150.0},
 }
 
 

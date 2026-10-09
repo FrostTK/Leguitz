@@ -90,9 +90,9 @@ static func item(item_id: int) -> VoxelGrid:
 		Items.Id.APPLE_JUICE, Items.Id.FRUIT_JUICE, Items.Id.CIDER, Items.Id.JAM:
 			return _jar(item_id)
 		Items.Id.VEGETABLE_SOUP:
-			return _bowl(["#c8601e", "#e07a2a", "#f09a44"], ["#5a9a2a", "#e8c040"])
+			return bowl(["#c8601e", "#e07a2a", "#f09a44"], ["#5a9a2a", "#e8c040"])
 		Items.Id.MEAT_STEW:
-			return _bowl(["#5a2e14", "#7a4220", "#9a5a2c"], ["#c86a3a", "#e89a3a"])
+			return bowl(["#5a2e14", "#7a4220", "#9a5a2c"], ["#c86a3a", "#e89a3a"])
 		Items.Id.FRUIT_PIE:
 			return _pie()
 		Items.Id.OMELETTE:
@@ -382,7 +382,7 @@ static func _jar(item_id: int) -> VoxelGrid:
 
 ## A wooden bowl of soup (`soup`: dark to light) with bits floating
 ## (`bits`).
-static func _bowl(soup: Array, bits: Array) -> VoxelGrid:
+static func bowl(soup: Array, bits: Array) -> VoxelGrid:
 	var grid := VoxelGrid.new(Vector3i(11, 5, 11))
 	var middle := Vector2(5.5, 5.5)
 	for y in 4:

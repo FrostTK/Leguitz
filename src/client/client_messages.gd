@@ -95,6 +95,10 @@ static func _handle_world(client: GameClient, message: Dictionary) -> void:
 			client.arrows.spawn(message["id"], message["from"], message["velocity"])
 		Msg.ARROW_REMOVE:
 			client.arrows.remove(message["id"])
+		Msg.BOBBER:
+			client.angler.on_bobber(message)
+		Msg.CAUGHT:
+			client.angler.on_caught(message)
 		Msg.LANTERN_OUT:
 			client.lighting.lantern_out(message["seconds"])
 		Msg.CHAT_LINE:

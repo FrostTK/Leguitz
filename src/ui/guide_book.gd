@@ -25,6 +25,7 @@ const CHAPTERS: Array[String] = [
 	"BOOK_CHAPTER_FARM",
 	"BOOK_CHAPTER_SURVIVAL",
 	"BOOK_CHAPTER_ANIMALS",
+	"BOOK_CHAPTER_FISHING",
 	"BOOK_CHAPTER_MONSTERS",
 	"BOOK_CHAPTER_COMBAT",
 	"BOOK_CHAPTER_MODES",
@@ -71,6 +72,7 @@ static func chapters() -> Array[Array]:
 		_farm(),
 		_survival(),
 		_animals(),
+		_fishing(),
 		_monsters(),
 		_combat(),
 		_modes(),
@@ -353,6 +355,66 @@ static func _survival() -> Array:
 		entries.append(_icon(item, text))
 	entries.append(_text("BOOK_SURVIVAL_COOK"))
 	return entries
+
+
+## Fishing: the rod and the bite, the baits, each fish (where, when, how
+## deep, its bait), the trap and what it catches, cooking.
+static func _fishing() -> Array:
+	var entries := [
+		_title("BOOK_CHAPTER_FISHING"),
+		_text("BOOK_FISHING_INTRO"),
+		_icon(Items.Id.FISHING_ROD, _t("BOOK_FISHING_ROD")),
+		_text("BOOK_FISHING_BITE"),
+		_heading("BOOK_FISHING_BAITS"),
+		_text("BOOK_FISHING_BAIT_HOW"),
+		_icon(Items.Id.WORM, _t("BOOK_FISHING_WORM")),
+		_icon(Items.Id.BAIT_BALL, _t("BOOK_FISHING_BAIT_BALL")),
+		_icon(Items.Id.FISH_BAIT, _t("BOOK_FISHING_FISH_BAIT")),
+		_heading("BOOK_FISHING_FISH"),
+		_text("BOOK_FISHING_WHERE"),
+	]
+	for fish: int in FishTable.SPECIES:
+		entries.append(_icon(fish, _fish_text(fish)))
+	entries.append(_heading("ITEM_FISH_TRAP"))
+	entries.append(_icon(Items.Id.FISH_TRAP, _t("BOOK_FISHING_TRAP")))
+	entries.append(_icon(Items.Id.CRAYFISH, _t("BOOK_FISHING_CRAYFISH")))
+	entries.append(_icon(Items.Id.CRAB, _t("BOOK_FISHING_CRAB")))
+	entries.append(_heading("BOOK_FISHING_MORE"))
+	entries.append(_icon(Items.Id.SEAWEED, _t("BOOK_FISHING_JUNK")))
+	entries.append(_icon(Items.Id.COOKED_SALMON, _t("BOOK_FISHING_COOK")))
+	return entries
+
+
+## A fish's entry: its name, its waters, the climate and the time it
+## likes, the depth it wants, the rain, its bait.
+static func _fish_text(fish: int) -> String:
+	var row: Array = FishTable.SPECIES[fish]
+	var parts := PackedStringArray()
+	var waters := PackedStringArray()
+	for water: int in FishTable.Water.values():
+		if row[0] & water:
+			waters.append(_t("BOOK_WATER_" + FishTable.Water.find_key(water)))
+	parts.append(", ".join(waters))
+	if row[1] != FishTable.ALL:
+		var climates := PackedStringArray()
+		for climate: int in FishTable.Climate.values():
+			if row[1] & climate:
+				climates.append(_t("BOOK_CLIMATE_" + FishTable.Climate.find_key(climate)))
+		parts.append(_t("BOOK_FISH_OR").join(climates))
+	if row[2] != FishTable.ALL:
+		var times := PackedStringArray()
+		var periods := FishTable.Period
+		for time: int in [periods.DAY, periods.NIGHT, periods.TWILIGHT]:
+			if row[2] & time:
+				times.append(_t("BOOK_TIME_" + periods.find_key(time)))
+		parts.append(", ".join(times))
+	if row[3] > 1:
+		parts.append(_t("BOOK_FISH_DEPTH") % row[3])
+	if row[6]:
+		parts.append(_t("BOOK_FISH_RAIN"))
+	if row[5] != Items.Id.NONE:
+		parts.append(_t("BOOK_FISH_BAIT") % _t(Items.name_key(row[5])).to_lower())
+	return _t("BOOK_FISH_ENTRY") % [_t(Items.name_key(fish)), _t("BOOK_FISH_SEP").join(parts)]
 
 
 ## Where each animal lives and what it gives (its first gift's icon), how

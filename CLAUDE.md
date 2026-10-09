@@ -676,6 +676,51 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   (GuideBook._kitchen: the counter's recipes, the machines, the effects; kitchen recipes are not
   in Crafting). GameServer's furnaces moved to `Furnaces` (src/sim/items/furnaces.gd, static,
   given the server: open, click, opened, changed, update) to make room.
+- Fishing (phase 7, step 9; `src/sim/fishing/`): `FishTable` (shared) holds each fish
+  (SPECIES: PERCH, TROUT, CARP, PIKE, CATFISH, EEL, SALMON, SARDINE, MACKEREL, COD, SEA_BASS, TUNA,
+  LANTERNFISH, CAVE_FISH: its waters, Water bits LAKE/RIVER/SWAMP/SEA/CAVE from the biome,
+  `water_of`; climates, Climate bits from the biome, `climate_of`; Period bits DAY/TWILIGHT/NIGHT,
+  `time_of`, a cave always NIGHT; the depth of water under the bobber; how common; its bait,
+  BAIT_FAVOR; rain bringing it out at any time, RAIN_FAVOR; its size in cm), SHELLFISH (CRAYFISH,
+  CRAB: traps only), JUNK (SEAWEED, DRIFTWOOD: JUNK_CHANCE, less baited, none in caves), TRAPS (a
+  trap's catches per water); `weight_of`, `pick`, `trap_pick`, `size_of`. `Fishing` (static, given
+  the server; real seconds, a player's action): Msg.CAST (the rod's hotbar slot and where the
+  player aims; `within_reach`: CAST_RANGE tiles at most) lands the bobber (`landing`: the first
+  thing under the aim, a liquid's surface; on the ground nothing bites) after `flight_of`; a Line
+  per PlayerSession (`line`: FLYING, FLOATING, NIBBLE, BITE, GROUND; never saved) waits (`_wait`:
+  WAIT, shorter baited, in the rain, at twilight, longer over shallow water), nibbles, then bites
+  BITE_SECONDS (+ BITE_LEEWAY): Msg.REEL then lands the fish (`_bites`: FishTable.pick for
+  `water_at`, Watering.under_sky or a cave, the time, the rain, `depth_at`, the bait), which leaps
+  to the player (a dropped item, LEAP_SECONDS), uses the bait up and wears the rod (Items
+  .ROD_DURABILITY; not in creative), Msg.CAUGHT (item, size, broke); a missed bite eats the bait
+  (Msg.BOBBER `missed`). The bait is the first of BAITS (WORM, BAIT_BALL, FISH_BAIT) in the slots
+  (`bait_slot`). The line goes when the rod leaves the hand, the player passes out or is LINE_SNAP
+  away; a new cast takes back a line still out. Worms: Items.drops of soil (WORM_CHANCE) and
+  tilling (Fishing.worm_chance, twice in the rain). FISH_TRAP (Tiles.Block FISH_TRAP, _BAITED,
+  _FULL: Machines Kind.TRAP, STAGE_OF, SINGLE, NON_SOLID) is set on still water
+  (Mining.ON_WATER: Mining.placement, GameServer._set_alone; BlockInteraction._sow_on_water),
+  takes up to 4 baits and catches one thing per bait (Machines.EACH, 150 s each paced;
+  `_catches` -> held "catches", given or spilled); its model sinks into the water
+  (ObjectShapes.SUNK, ChunkMesher._add_prop). Items: raw and grilled fish (Smelting.FOOD; the
+  factory furnace chars what the food furnace takes or makes, Smelting.chars), Recipes.SEAFOOD
+  (fish bait, the kitchen's FISH_SOUP, SUSHI, FRIED_FISH with Effects), the rod (3 sticks, 2
+  string), the trap (sticks, string), corn bait (flour, corn), driftwood (sticks, fuel), seaweed
+  (compost). Client: `Angler` (src/client/fishing; GameClient.angler; BlockInteraction.place hands
+  it the right click with a rod in hand; `aim_ray`): casts at the water aimed at (predicted, the
+  arm swings first, CAST_DELAY), reels in, shows every player's bobber (FishingModels.bobber:
+  flying in an arc, rocking, nibbling, pulled under with a splash, on the ground, reeled back),
+  the local player's line (an ImmediateMesh line strip in global space, one pixel thin, sagging
+  slack, taut on a bite) from the rod's tip (PlayerModel.rod_tip; first person HeldView.rod_tip,
+  brought from the view's own field of view to the camera's), turns a still player towards the
+  bobber (top-down), announces the bait (HUD_ROD_BAIT) and the catch (HUD_CAUGHT, HUD_FISHED_UP,
+  HUD_FISH_TOOK_BAIT). The rod: ToolModels ROD (a bamboo pole, a cork grip, a reel, rings, a red
+  tip; stage 0 its bobber hooked near the grip, 1 cast: PlayerModel.cast; `rod_lines`,
+  `rod_tip`), PlayerModel Holding.ROD (ROD_POSES: cast from over the shoulder; never through the
+  head, tested), HeldView ROD_POSES. FishingModels: the trap's stages (a wicker basket under
+  SURFACE, a cork float, then red and white, a yellow flag with a catch), each fish from LOOKS
+  lying on its side (patterns, tails, fins; grilled browned with grill marks), crayfish, crabs,
+  baits, seaweed, driftwood, the dishes. The book's Fishing chapter (GuideBook._fishing,
+  `_fish_text` from FishTable).
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made

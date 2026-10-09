@@ -49,6 +49,46 @@ func test_a_tool_never_goes_through_the_head() -> void:
 		assert_eq(inside, 0, "%s stays out of the head" % Items.name_key(item))
 
 
+func test_the_fishing_rod_is_held_by_its_grip_and_cast_beside_the_head() -> void:
+	var rod := Items.Id.FISHING_ROD
+	for stage in ToolModels.ROD_STAGES:
+		assert_false(ToolModels.held(rod, stage).is_empty(), "the rod, stage %d" % stage)
+	var model := ToolModels.held(rod)
+	var grip := ToolModels.grip(rod)
+	var cell := Vector3i(Vector3(model.pivot.x, grip.y * 16.0, model.pivot.y).floor())
+	assert_ne(model.get_voxel(cell), 0, "held by its grip")
+	var tip := ToolModels.rod_tip() * 16.0
+	assert_true(tip.y > model.size.y - 2, "its tip at the end")
+	var shoulder := Vector3(-5.0, 16.0, 0.0) * VOXEL
+	var head := AABB(Vector3(-4.0, 16.0, -4.0) * VOXEL, Vector3(8.0, 8.0, 8.0) * VOXEL)
+	var points := _voxels(model)
+	var inside := 0
+	var lowest := INF
+	for step in 41:
+		var pose := PlayerModel.arm_pose(
+			PlayerModel.Stroke.MINE, PlayerModel.Holding.ROD, -1.0 + step * 0.05
+		)
+		var arm := Transform3D(Basis.from_euler(Vector3(pose.x, 0.0, pose.y)), shoulder)
+		var handle := Vector3(0.0, sin(pose.z), cos(pose.z))
+		var front := Vector3(0.0, -cos(pose.z), sin(pose.z))
+		var whole := (
+			arm * ItemLibrary.in_hand(handle, front, grip, ToolModels.SCALE, PlayerModel.FIST)
+		)
+		for point in points:
+			if head.has_point(whole * point):
+				inside += 1
+		lowest = minf(lowest, (whole * ToolModels.rod_tip()).y)
+	assert_eq(inside, 0, "the rod stays out of the head")
+	var rest := PlayerModel.arm_pose(PlayerModel.Stroke.MINE, PlayerModel.Holding.ROD, 0.0)
+	var arm := Transform3D(Basis.from_euler(Vector3(rest.x, 0.0, rest.y)), shoulder)
+	var handle := Vector3(0.0, sin(rest.z), cos(rest.z))
+	var front := Vector3(0.0, -cos(rest.z), sin(rest.z))
+	var held := arm * ItemLibrary.in_hand(handle, front, grip, ToolModels.SCALE, PlayerModel.FIST)
+	var up := held * ToolModels.rod_tip()
+	assert_true(up.y > shoulder.y and up.z > 0.5, "at rest its tip up ahead")
+	assert_true(lowest > -0.5, "never dug into the ground")
+
+
 ## The middles of a model's voxels (mesh units, see VoxelMesher).
 func _voxels(grid: VoxelGrid) -> Array[Vector3]:
 	var points: Array[Vector3] = []

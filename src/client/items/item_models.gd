@@ -119,6 +119,9 @@ static func build(item: int) -> VoxelGrid:
 	var wild := WildModels.item(item)
 	if wild != null:
 		return wild
+	var fishing := FishingModels.item(item)
+	if fishing != null:
+		return fishing
 	var sapling := SaplingModels.item(item)
 	if sapling != null:
 		return sapling
@@ -171,7 +174,7 @@ static func build(item: int) -> VoxelGrid:
 			return _shade_essence()
 		Items.Id.WISP_EMBER:
 			return _wisp_ember()
-		Items.Id.BOW:
+		Items.Id.BOW, Items.Id.FISHING_ROD:
 			return ToolModels.icon(item)
 		Items.Id.ARROW:
 			return _arrow()
@@ -186,6 +189,7 @@ static func is_flat(item: int) -> bool:
 		Items.TOOLS.has(item)
 		or Armor.is_armor(item)
 		or item in [Items.Id.STICK, Items.Id.FEATHER, Items.Id.BOW, Items.Id.ARROW, Items.Id.SHEARS]
+		or item == Items.Id.FISHING_ROD
 	)
 
 

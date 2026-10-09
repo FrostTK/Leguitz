@@ -154,6 +154,9 @@ func place() -> void:
 	if client.held_item() == Items.Id.GUIDE_BOOK:
 		client.open_book()
 		return
+	if client.held_item() == Items.Id.FISHING_ROD:
+		client.angler.use()
+		return
 	if _tend_animal() or _tend() or _sow_on_water() or target == null:
 		return
 	var player := client.local_player
@@ -211,12 +214,14 @@ func _put(cells: Dictionary, cell: Vector3i, slot: int, front: Vector2i, face: V
 
 
 ## Rice in hand is sown over the water aimed at (still, one deep: Farming
-## .sowing); the aiming ray goes through water. Returns whether rice was in
-## hand.
+## .sowing), a fish trap set on it (still: Mining.ON_WATER); the aiming ray
+## goes through water. Returns whether either was in hand.
 func _sow_on_water() -> bool:
 	var slot := client.inventory.selected
 	var voxel := Items.placed_voxel(client.inventory.items[slot])
-	if client.book_in_hand or Farming.bed_of(Voxels.block_of(voxel)) != Farming.Bed.WATER:
+	var block := Voxels.block_of(voxel)
+	var floats := Mining.ON_WATER.has(block) or Farming.bed_of(block) == Farming.Bed.WATER
+	if client.book_in_hand or not floats:
 		return false
 	var water := _water_aimed()
 	if water == Vector3i.MAX:
@@ -744,6 +749,13 @@ func _face(point: Vector3) -> void:
 	var towards := Vector2(point.x, point.z) * GameConst.TILE_SIZE - player.position
 	if towards.length() > 2.0:
 		player.heading = towards.normalized()
+
+
+## The ray aimed along ([origin, direction], local units: from the camera
+## through the mouse, the crosshair's, or the gamepad's from the eye), past
+## reach (a fishing rod casts along it).
+func aim_ray() -> Array:
+	return [_ray_origin, _ray_direction]
 
 
 ## Where the mouse points in the world (local units), far beyond reach (a
