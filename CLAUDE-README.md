@@ -312,6 +312,62 @@ captures, commit et retour :
    les plats, d'autres boissons (lait de chèvre, thé), des effets plus rares (vision nocturne
    dans les grottes, résistance au froid avec les saisons).
 9. **Pêche** (prochaine étape) : canne, poissons selon le biome, l'heure et la météo, appâts, nasses.
+9A. **Bateau et filet de pêche** (demandé par le propriétaire ; après la 7.9, dont le filet reprend
+   les tables de poissons ; le détail ci-dessous est la proposition de Claude, à confirmer au « go ») :
+   - **Pièces fabriquées à l'établi** : proue, section de coque, poupe (avec la barre et la place
+     du pilote), chaudière (lingots de fer autour d'un four d'usine), hélice (cuivre), moteur à
+     charbon (chaudière + hélice + fer), banc, filet de pêche (ficelle, plombs en fer), pots de
+     peinture.
+   - **Assemblage** : la coque se monte sur une ligne de la grille 5x5 de l'établi (proue, 0 à 3
+     sections, poupe), ce qui donne une coque de **2 à 5 places**. On la pose sur l'eau visée,
+     comme le riz. La place du pilote, à la poupe, s'ajoute à ces places.
+   - **Écran du bateau** (clic droit ou E sur le bateau, E à bord) : le bateau vu de dessus avec
+     ses cases : moteur, combustible (charbon, charbon de bois), filet et, pour chaque place, **un
+     banc ou un coffre** (un coffre ordinaire, ses 27 cases ; retiré seulement vide). Tout se
+     retire à tout moment, le filet compris.
+   - **Naviguer** :
+     - monter : clic droit (place du pilote, sinon un banc libre) ;
+     - commandes : Z/S les gaz, Q/D la barre, Maj le plein régime ;
+     - descendre : Espace (sur la rive la plus proche, sinon dans l'eau) ;
+     - de l'inertie, et un long bateau tourne moins vite ;
+     - le courant des rivières pousse le bateau, la terre et la glace l'arrêtent, la lave le
+       brûle.
+   - **Moteur à charbon** :
+     - le charbon brûle tant que le moteur tourne, plus vite au plein régime ;
+     - une fumée sort de la cheminée, l'hélice tourne, un sillage suit le bateau ;
+     - une jauge de combustible s'affiche quand on pilote ;
+     - sans charbon ou sans moteur, on rame lentement : on n'est jamais coincé.
+   - **Animaux** : en solo, un animal mené à la corde monte sur un banc libre (pour emmener ses
+     bêtes sur une île).
+   - **Filet** :
+     - une touche à bord le met à l'eau ou le relève ;
+     - à l'eau, à l'arrêt ou au ralenti dans au moins 2 d'eau, il prend de temps en temps un
+       poisson (tables de la 7.9 : biome, heure, météo, profondeur) ou un déchet (algues, bois
+       flotté) ;
+     - la prise va dans les coffres du bateau ; sinon le filet en garde 8 (visibles), puis ne
+       prend plus rien.
+   - **Usure du filet** :
+     - un peu par minute passée dans l'eau et à chaque prise ;
+     - trois fois plus vite traîné à pleine vitesse, et il ne prend alors rien ;
+     - relevé, il ne s'use pas ;
+     - une barre d'usure comme celle des outils ;
+     - usé, il se déchire (sa prise est perdue) ;
+     - on le raccommode à l'établi avec de la ficelle.
+   - **Couleur, par la peinture** :
+     - un pot de peinture = un pigment + de l'huile de lin (graines de lin au moulin, dans un
+       bocal) ;
+     - pigments : fleurs rouges, jaunes, bleues, blanches et roses, betterave, cactus (vert),
+       charbon (noir), lapis ; des mélanges pour l'orange et le violet ;
+     - deux couleurs : le clic droit avec un pot peint la coque, Maj + clic droit la bande ;
+     - un pot fait 4 couches, la hache décape ;
+     - la couleur passe par le shader : pas de modèle par couleur.
+   - **Casser le bateau** à la hache (personne à bord) : il rend la coque, le moteur, le filet
+     (avec son usure), les bancs, les coffres et leur contenu, et le combustible. La peinture est
+     perdue : garder le bateau entier dans l'inventaire demanderait des objets portant des données.
+   - **Serveur** : le bateau est une entité sauvegardée, comme les créatures, et le pilote le
+     prédit comme son propre corps. C'est le premier « véhicule », il servira pour le cheval.
+   - **Plus tard** : d'autres énergies (une voile selon le vent de la météo, l'énergie de la
+     phase 8).
 10. **Compagnons** : chien (suit, garde le troupeau, aboie contre les monstres), chat (chasse les
     ravageurs).
 11. **Saisons** (réglage du monde) : cultures de saison, neige en hiver, arbres qui roussissent
