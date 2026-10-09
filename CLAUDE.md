@@ -639,6 +639,43 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   out of sight unless up, a crow flaps unless pecking), CreaturesView (LIGHTS: the wisp's and
   the bumblebees' lights; a digging mole throws up dirt). The book: Animals (Wild animals,
   GuideBook.WILD_ICONS, CREATURE_<KIND>_HOW) and Farm (Pests).
+- Kitchen (phase 7, step 8): the KITCHEN counter (a facing kind, KITCHEN/_WEST/_NORTH/_EAST,
+  ObjectShapes.is_kitchen; Mining.opens; stone over a food furnace and planks at the workbench)
+  opens the inventory with its grid making the dishes only: recipes `"kitchen": true`
+  (Recipes.KITCHEN, shapeless, groups COOKED_MEATS, MUSHROOMS, SOUP_GREENS, PIE_FRUITS,
+  JAM_FRUITS), never anywhere else (Recipes.find/result_of `kitchen`, Inventory.craft /
+  craft_result `kitchen`; PlayerSession.kitchen set by Msg.OPEN_WORKBENCH aimed at a counter,
+  cleared on close or passing out; client InventoryActions.open_kitchen,
+  InventoryScreen.open(width, cooking): titled KITCHEN_TITLE, KITCHEN_COOK over the grid).
+  Crafting leaves what held a liquid in its cell (Inventory._use_grid, Items.LEFT_AFTER: the
+  milk's bucket, the jam's jar; juices, cider and jam leave a glass bottle once eaten too).
+  Dishes: BREAD from flour, VEGETABLE_SOUP, MEAT_STEW, FRUIT_PIE, OMELETTE, CAKE, CREPES, GRATIN,
+  TARTINE, JAM. `Machines` (src/sim/world/machines.gd, static, given the server): MILL (grain ->
+  FLOUR, 16 at once, 8 s each), BUTTER_CHURN (a milk -> 2 BUTTER, 45 s), BARREL (8 fruits ->
+  APPLE_JUICE or FRUIT_JUICE, 240 s; apple juice left CIDER_SECONDS more turns into CIDER;
+  taken into GLASS_BOTTLEs held in hand, as many as there are: BOTTLED), CHEESE_CELLAR (a milk
+  -> 3 CHEESE, 600 s); each a block by Stage (STAGES: empty, working, ready; STAGE_OF, SINGLE,
+  FLOOR_OBJECTS, never turned at random: ChunkMesher checks the base kind). Msg.USE_MACHINE
+  (right click or E, BlockInteraction._use_machine / _machine_usable, predicted when it takes;
+  a ready barrel without bottles in hand says HUD_BARREL_BOTTLES): an empty machine takes up to
+  CAPACITY of what it makes something of (a milk's bucket back at once; not used up in
+  creative), works SECONDS paced (the mill's per grain), a ready one gives what it made and
+  empties. ChunkData.machines (cell -> {input, inputs, made, count, left, ferments}, saved in the
+  region as "machines"); GameServer.tick runs Machines.update every TICKS; broken, `spill`
+  (GameServer.spill_contents) gives back the grain or fruit while working, what it made when
+  ready (not liquids). `Effects` (src/sim/survival/effects.gd, shared): OF_FOOD gives a dish's
+  effects (Kind REGEN, FED, SWIFT, STRONG, HASTE: seconds, paced when eaten), kept in
+  PlayerSession.effects (saved with the player, told in Msg.VITALS `effects`, cleared on
+  passing out); a dish with effects is eaten even full (Survival.eat, VitalsView); REGEN heals a
+  point every REGEN_EVERY whatever the satiety (Survival._mend), FED makes satiety go
+  FED_SLOWER as fast (Survival.spend), STRONG adds STRONG_DAMAGE to blows (Creatures.attack),
+  SWIFT walks SWIFT_SPEED faster (LocalPlayer.speed_bonus), HASTE breaks HASTE_SPEED faster
+  (BlockInteraction). Client: VitalsView.effects (run out locally), Hotbar.effects (EffectsRow:
+  a badge each over the vitality, a sign and a bar running out). KitchenModels: the counter, each
+  machine's stages, the dishes and what the machines make. The book's Kitchen chapter
+  (GuideBook._kitchen: the counter's recipes, the machines, the effects; kitchen recipes are not
+  in Crafting). GameServer's furnaces moved to `Furnaces` (src/sim/items/furnaces.gd, static,
+  given the server: open, click, opened, changed, update) to make room.
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made
@@ -660,7 +697,7 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   ChunkData.furnaces (WorldState.furnace_at / take_furnace, saved with the region); `step(delta,
   clock)` lights fuel (Smelting.FUEL_SECONDS) while something can cook, cooks
   Smelting.COOK_SECONDS, both through `clock.scale_duration()`; progress cools back without fire
-  and restarts when another item goes in. The server steps the loaded chunks' furnaces every
+  and restarts when another item goes in. The server (`Furnaces`) steps the loaded chunks' furnaces every
   FURNACE_TICKS, swaps the voxel lit/unlit (`_show_fire`), sends Msg.FURNACE to who opened one
   (Msg.OPEN_FURNACE, FURNACE_CLICK: Inventory.click_furnace, where items only go where they fit,
   `Furnace.fits`, and the output only gives; shift from the bag: input, else fuel). Client:

@@ -741,3 +741,49 @@ BOOK_FARM_PESTS,Pests,Ravageurs
 BOOK_FARM_CROWS,"By day, crows fly in to fields of 6 crops or more and peck up the seedlings (sown or just sprouted). A scarecrow (a pumpkin over wheat and sticks) keeps them away within 8 tiles; they also fly off when you come close, at night or when hit.","Le jour, les corbeaux viennent sur les champs de 6 cultures ou plus et picorent les semis (semés ou à peine levés). Un épouvantail (une citrouille sur du blé et des bâtons) les tient éloignés à 8 cases ; ils s'envolent aussi quand tu approches, la nuit ou quand on les frappe."
 BOOK_FARM_MOLES,"Now and then a mole digs under a field (earth flies up as it goes) and gnaws crops from below, leaving molehills (dirt). It comes up a moment after each crop: hit it then and it leaves for good.","De temps en temps, une taupe creuse sous un champ (la terre jaillit sur son passage) et ronge les cultures par en dessous, laissant des taupinières (de la terre). Elle remonte un instant après chaque culture : frappe-la à ce moment et elle s'en va pour de bon."
 BOOK_FARM_BUMBLEBEES,"At night, lantern bumblebees come out among the flowers and fields. Their glowing tail lights the crops within 6 tiles, which keep growing in the dark, faster as if pollinated. At dawn they fly home.","La nuit, les bourdons-lanternes sortent parmi les fleurs et les champs. Leur abdomen lumineux éclaire les cultures à 6 cases, qui continuent de pousser dans le noir, plus vite comme pollinisées. À l'aube, ils rentrent."
+ITEM_FLOUR,Flour,Farine
+ITEM_BUTTER,Butter,Beurre
+ITEM_CHEESE,Cheese,Fromage
+ITEM_APPLE_JUICE,Apple juice,Jus de pomme
+ITEM_FRUIT_JUICE,Fruit juice,Jus de fruits
+ITEM_CIDER,Cider,Cidre
+ITEM_JAM,Jar of jam,Pot de confiture
+ITEM_VEGETABLE_SOUP,Vegetable soup,Soupe de légumes
+ITEM_MEAT_STEW,Meat stew,Ragoût de viande
+ITEM_FRUIT_PIE,Fruit pie,Tarte aux fruits
+ITEM_OMELETTE,Omelette,Omelette
+ITEM_CAKE,Cake,Gâteau
+ITEM_CREPES,Crêpes,Crêpes
+ITEM_GRATIN,Potato gratin,Gratin dauphinois
+ITEM_TARTINE,Bread and jam,Tartine
+ITEM_KITCHEN,Kitchen counter,Plan de cuisine
+ITEM_MILL,Mill,Moulin
+ITEM_BUTTER_CHURN,Butter churn,Baratte
+ITEM_BARREL,Barrel,Tonneau
+ITEM_CHEESE_CELLAR,Cheese cellar,Cave à fromage
+KITCHEN_TITLE,Kitchen counter,Plan de cuisine
+HUD_BARREL_BOTTLES,Hold glass bottles to fill them at the barrel.,Prends des bocaux en verre en main pour les remplir au tonneau.
+EFFECT_REGEN,Regeneration,Régénération
+EFFECT_FED,Well fed,Rassasié
+EFFECT_SWIFT,Swiftness,Vivacité
+EFFECT_STRONG,Strength,Vigueur
+EFFECT_HASTE,Deftness,Adresse
+EFFECT_REGEN_HOW,"a point of vitality comes back every 3 seconds, whatever your satiety","un point de vitalité revient toutes les 3 secondes, quelle que soit ta satiété"
+EFFECT_FED_HOW,hunger comes twice as slowly,la faim vient deux fois moins vite
+EFFECT_SWIFT_HOW,you walk a fifth faster,tu marches un cinquième plus vite
+EFFECT_STRONG_HOW,every blow hurts 2 points more,chaque coup fait 2 points de plus
+EFFECT_HASTE_HOW,you break blocks a third faster,tu casses les blocs un tiers plus vite
+BOOK_CHAPTER_KITCHEN,Kitchen,Cuisine
+BOOK_KITCHEN_INTRO,"Dishes feed far better than what goes into them, and give effects for a while: their badges show over your vitality, a bar running out under each. A dish with effects can be eaten even when you are full.","Les plats nourrissent bien mieux que ce qui les compose, et donnent des effets pour un temps : leurs insignes s'affichent au-dessus de ta vitalité, une barre qui se vide sous chacun. Un plat à effets se mange même rassasié."
+BOOK_KITCHEN_HOW,"The kitchen counter (stone over a food furnace and planks, at the workbench): right click or {use} to open it. Its grid only makes dishes, from their ingredients in any order. A bucket of milk leaves its bucket in the grid, a jar of jam its jar.","Le plan de cuisine (de la pierre sur un four alimentaire et des planches, à l'établi) : clic droit ou {use} pour l'ouvrir. Sa grille ne fait que des plats, avec leurs ingrédients dans n'importe quel ordre. Un seau de lait laisse son seau dans la grille, un pot de confiture son bocal."
+BOOK_KITCHEN_MACHINES,Machines,Machines
+BOOK_KITCHEN_MILL,"Mill (three stones over planks): right click with wheat or corn in hand, up to 16 at once; it grinds them into flour, a grain every 8 seconds. When the sack is full, right click to take the flour.","Moulin (trois pierres sur des planches) : clic droit avec du blé ou du maïs en main, jusqu'à 16 d'un coup ; il les moud en farine, un grain toutes les 8 secondes. Quand le sac est plein, clic droit pour prendre la farine."
+BOOK_KITCHEN_CHURN,"Butter churn (planks around a stick): a bucket of milk goes in (the bucket comes back) and turns into 2 butter in 45 seconds.","Baratte (des planches autour d'un bâton) : un seau de lait y va (le seau revient) et donne 2 beurres en 45 secondes."
+BOOK_KITCHEN_BARREL,"Barrel (planks and two iron ingots): up to 8 fruits at once make as many juices in 4 minutes; apple juice left 8 minutes more turns into cider. Hold glass bottles to fill them at the tap.","Tonneau (des planches et deux lingots de fer) : jusqu'à 8 fruits d'un coup donnent autant de jus en 4 minutes ; le jus de pomme laissé 8 minutes de plus devient du cidre. Prends des bocaux en verre en main pour les remplir au robinet."
+BOOK_KITCHEN_CELLAR,"Cheese cellar (planks around linen): a bucket of milk (the bucket comes back) ripens into 3 cheeses in 10 minutes.","Cave à fromage (des planches autour d'une toile de lin) : un seau de lait (le seau revient) s'affine en 3 fromages en 10 minutes."
+BOOK_KITCHEN_EFFECTS,Effects,Effets
+BOOK_KITCHEN_EFFECTS_HOW,"(Times for a 20-minute day; longer days stretch them a little.)","(Durées pour une journée de 20 minutes ; les journées plus longues les allongent un peu.)"
+BOOK_KITCHEN_EFFECT,%s: %s.,%s : %s.
+BOOK_KITCHEN_FOR,%s %d s,%s %d s
+BOOK_KITCHEN_DISH,%s: %s,%s : %s
+KITCHEN_COOK,Cooking,Cuisiner

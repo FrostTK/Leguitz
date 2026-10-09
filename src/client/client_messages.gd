@@ -45,6 +45,7 @@ static func handle(client: GameClient, message: Dictionary) -> void:
 			client.vitals.on_vitals(
 				message["health"], message["food"], message["hurt"], message["air"]
 			)
+			client.vitals.on_effects(message.get("effects", {}))
 		Msg.DIED:
 			client.vitals.on_passed_out(message["cause"])
 		Msg.GAME_MODE:

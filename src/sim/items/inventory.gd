@@ -342,16 +342,16 @@ func grid(width: int) -> PackedInt32Array:
 
 
 ## What the crafting grid `width` cells wide makes: [item, count]
-## (Vector2i.ZERO: nothing).
-func craft_result(width: int) -> Vector2i:
-	return Recipes.result_of(grid(width), width)
+## (Vector2i.ZERO: nothing); `kitchen`: a kitchen counter's (Recipes).
+func craft_result(width: int, kitchen := false) -> Vector2i:
+	return Recipes.result_of(grid(width), width, kitchen)
 
 
 ## Takes what the grid makes into the cursor (onto the same item if there
 ## is room), using one of each ingredient; with shift, makes as many as
 ## the slots can take, straight into them.
-func craft(width: int, shift: bool) -> void:
-	var result := craft_result(width)
+func craft(width: int, shift: bool, kitchen := false) -> void:
+	var result := craft_result(width, kitchen)
 	if result == Vector2i.ZERO:
 		return
 	if shift:
@@ -359,7 +359,7 @@ func craft(width: int, shift: bool) -> void:
 		while result.x == first and room_for(result.x) >= result.y:
 			add(result.x, result.y)
 			_use_grid(width)
-			result = craft_result(width)
+			result = craft_result(width, kitchen)
 		return
 	var held := items[CURSOR]
 	if held != Items.Id.NONE:
@@ -404,11 +404,22 @@ func load_dict(data: Dictionary) -> void:
 	selected = clampi(int(data.get("selected", 0)), 0, HOTBAR - 1)
 
 
-## One of each item in the grid `width` cells wide goes (it was crafted).
+## One of each item in the grid `width` cells wide goes (it was crafted);
+## what held a liquid stays (Items.LEFT_AFTER: in its cell, else in the
+## slots).
 func _use_grid(width: int) -> void:
 	for row in width:
 		for column in width:
-			take(CRAFT + row * GRID + column, 1)
+			var cell := CRAFT + row * GRID + column
+			var item := items[cell]
+			take(cell, 1)
+			if Items.LEFT_AFTER.has(item):
+				var left: int = Items.LEFT_AFTER[item]
+				if items[cell] == Items.Id.NONE:
+					items[cell] = left
+					counts[cell] = 1
+				else:
+					add(left, 1)
 
 
 func _add_to(item: int, count: int, slots: Array, worn := 0) -> int:

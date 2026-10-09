@@ -27,7 +27,7 @@ const MESH_SCALE := VOXEL * 16.0
 const BLOCK_SIZE := 0.15
 const ITEM_SIZE := 0.17
 const ITEM_OVER := Vector3(-0.015, 0.075, -0.03)
-const ITEM_TURN := Vector3(-0.3, -0.75, 0.12)
+const ITEM_TURN := Vector3(0.35, -0.75, 0.12)
 ## The way the arm goes from the fist to the shoulder, off the bottom right
 ## of the view.
 const ARM_WAY := Vector3(0.5, -0.72, 0.48)

@@ -76,6 +76,13 @@ const WAYS: Array[Vector2i] = [Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1),
 ## is broken; gates come closed and open; what hangs on a wall faces away
 ## from it.
 const FACING_KINDS := {
+	Tiles.Block.KITCHEN:
+	[
+		Tiles.Block.KITCHEN,
+		Tiles.Block.KITCHEN_WEST,
+		Tiles.Block.KITCHEN_NORTH,
+		Tiles.Block.KITCHEN_EAST,
+	],
 	Tiles.Block.WORKBENCH:
 	[
 		Tiles.Block.WORKBENCH,
@@ -244,6 +251,11 @@ const TOPS := {
 	Tiles.Block.BEEHIVE: 14,
 	Tiles.Block.BEE_NEST: 14,
 	Tiles.Block.BEAVER_DAM: 16,
+	Tiles.Block.KITCHEN: 15,
+	Tiles.Block.MILL: 12,
+	Tiles.Block.BUTTER_CHURN: 14,
+	Tiles.Block.BARREL: 15,
+	Tiles.Block.CHEESE_CELLAR: 16,
 }
 ## Other solid things players place, by kind: the square they block
 ## (voxels; the others facing them: BOX_SIZE).
@@ -262,6 +274,10 @@ const FOOTPRINTS := {
 	Tiles.Block.BEEHIVE: 12,
 	Tiles.Block.BEE_NEST: 12,
 	Tiles.Block.BEAVER_DAM: 16,
+	Tiles.Block.MILL: 14,
+	Tiles.Block.BUTTER_CHURN: 8,
+	Tiles.Block.BARREL: 12,
+	Tiles.Block.CHEESE_CELLAR: 14,
 }
 ## What keeps bodies out (fences, closed gates): two levels high, nobody
 ## jumps over.
@@ -326,6 +342,14 @@ const STAGE_OF := {
 	Tiles.Block.BEE_NEST_3: Tiles.Block.BEE_NEST,
 	Tiles.Block.TURTLE_EGGS_1: Tiles.Block.TURTLE_EGGS,
 	Tiles.Block.TURTLE_EGGS_2: Tiles.Block.TURTLE_EGGS,
+	Tiles.Block.MILL_WORKING: Tiles.Block.MILL,
+	Tiles.Block.MILL_READY: Tiles.Block.MILL,
+	Tiles.Block.BUTTER_CHURN_WORKING: Tiles.Block.BUTTER_CHURN,
+	Tiles.Block.BUTTER_CHURN_READY: Tiles.Block.BUTTER_CHURN,
+	Tiles.Block.BARREL_WORKING: Tiles.Block.BARREL,
+	Tiles.Block.BARREL_READY: Tiles.Block.BARREL,
+	Tiles.Block.CHEESE_CELLAR_WORKING: Tiles.Block.CHEESE_CELLAR,
+	Tiles.Block.CHEESE_CELLAR_READY: Tiles.Block.CHEESE_CELLAR,
 }
 ## Fences join their neighbors (fences, gates and cubes): their version is
 ## the sides they join (FENCE_SIDES bits, 16 versions), not their tile's.
@@ -335,6 +359,10 @@ const FENCE_SIDES: Array[Vector2i] = [
 const FENCE_VARIANTS := 16
 ## Objects with a single version (no random ones).
 const SINGLE := {
+	Tiles.Block.MILL: true,
+	Tiles.Block.BUTTER_CHURN: true,
+	Tiles.Block.BARREL: true,
+	Tiles.Block.CHEESE_CELLAR: true,
 	Tiles.Block.SCARECROW: true,
 	Tiles.Block.MOLEHILL: true,
 	Tiles.Block.BEAVER_DAM: true,
@@ -441,6 +469,10 @@ static func is_bench_left(block: int) -> bool:
 ## A chest, whichever way it faces.
 static func is_chest(block: int) -> bool:
 	return kind_of(block) == Tiles.Block.CHEST
+
+
+static func is_kitchen(block: int) -> bool:
+	return kind_of(block) == Tiles.Block.KITCHEN
 
 
 ## A furnace that works, lit or not (its unlit kind; -1: not one).

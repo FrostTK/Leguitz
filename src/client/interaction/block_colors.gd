@@ -45,6 +45,11 @@ const OBJECT_COLORS := {
 	Tiles.Block.MOLEHILL: Color(0.37, 0.25, 0.16),
 	Tiles.Block.BEAVER_DAM: Color(0.42, 0.29, 0.16),
 	Tiles.Block.TURTLE_EGGS: Color(0.93, 0.91, 0.85),
+	Tiles.Block.KITCHEN: Color(0.55, 0.38, 0.22),
+	Tiles.Block.MILL: Color(0.55, 0.55, 0.58),
+	Tiles.Block.BUTTER_CHURN: Color(0.6, 0.42, 0.25),
+	Tiles.Block.BARREL: Color(0.52, 0.36, 0.2),
+	Tiles.Block.CHEESE_CELLAR: Color(0.58, 0.42, 0.26),
 }
 const PLANT_COLOR := Color(0.32, 0.58, 0.24)
 
@@ -79,6 +84,10 @@ static func _compute(voxel: int) -> Color:
 		return Color(FarmModels.BIN[2])
 	if ObjectShapes.base_kind(block) == Tiles.Block.NEST_BOX:
 		return OBJECT_COLORS[Tiles.Block.NEST_BOX]
+	if ObjectShapes.is_kitchen(block):
+		return OBJECT_COLORS[Tiles.Block.KITCHEN]
+	if Machines.kind_of(block) >= 0:
+		return OBJECT_COLORS[ObjectShapes.base_kind(block)]
 	if Apiary.is_hive(block) or ObjectShapes.base_kind(block) == Tiles.Block.TURTLE_EGGS:
 		return OBJECT_COLORS[ObjectShapes.base_kind(block)]
 	if DecorModels.build(ObjectShapes.base_kind(block), 0) != null:

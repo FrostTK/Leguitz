@@ -92,23 +92,25 @@ func _process(delta: float) -> void:
 			place()
 
 
-## Uses what is aimed at (InputBindings.USE): opens a workbench, a chest
-## or a furnace, swings a gate, fills or empties a composter, picks what is
-## ripe, takes a full hive's honey. Returns whether there was something to
-## use.
+## Uses what is aimed at (InputBindings.USE): opens a workbench, a kitchen
+## counter, a chest or a furnace, swings a gate, fills or empties a
+## composter, picks what is ripe, takes a full hive's honey, loads or
+## empties a kitchen machine. Returns whether there was something to use.
 func use_target() -> bool:
 	if _tend_animal():
 		return true
 	if target != null and Mining.swings(target.voxel):
 		_swing_gate(target.cell, target.voxel)
 		return true
-	if target != null and (_compost() or _pick() or _harvest_hive()):
+	if target != null and (_compost() or _pick() or _harvest_hive() or _use_machine()):
 		return true
 	if target == null or not Mining.opens(target.voxel):
 		return false
 	var block := Voxels.block_of(target.voxel)
 	if ObjectShapes.is_chest(block):
 		client.actions.open_chest(target.cell)
+	elif ObjectShapes.is_kitchen(block):
+		client.actions.open_kitchen(target.cell)
 	elif ObjectShapes.furnace_kind(block) != -1:
 		client.actions.open_furnace(target.cell)
 	else:
@@ -272,7 +274,7 @@ func _tend() -> bool:
 		return true
 	if target == null:
 		return false
-	if _pick() or _harvest_hive():
+	if _pick() or _harvest_hive() or _use_machine():
 		return true
 	if Items.tool_of(held) == Items.Tool.HOE:
 		_till()
@@ -291,7 +293,11 @@ func tends_here() -> bool:
 		return true
 	return (
 		target != null
-		and (not _composting(target.voxel).is_empty() or _pickable(target.cell, target.voxel))
+		and (
+			not _composting(target.voxel).is_empty()
+			or _pickable(target.cell, target.voxel)
+			or _machine_usable()
+		)
 	)
 
 
@@ -473,6 +479,46 @@ func _spread_compost() -> void:
 	client.player_model.swing()
 
 
+## Whether the kitchen machine aimed at, within reach, takes what is in
+## hand or has something ready (Machines).
+func _machine_usable() -> bool:
+	if target == null:
+		return false
+	var player := client.local_player
+	var held := Items.Id.NONE if client.book_in_hand else client.held_item()
+	return (
+		Machines.usable(Voxels.block_of(target.voxel), held)
+		and Mining.reach_to(player.position, player.height, target.cell) <= Mining.REACH
+	)
+
+
+## The kitchen machine aimed at takes what is in hand (shown at once) or
+## gives what it made (the server says what: Msg.USE_MACHINE; a barrel's
+## juice wants glass bottles in hand). Returns whether it did.
+func _use_machine() -> bool:
+	if not _machine_usable():
+		return false
+	var block := Voxels.block_of(target.voxel)
+	var kind := Machines.kind_of(block)
+	var held := client.held_item()
+	var slot := client.inventory.selected
+	var ready := Machines.stage_of(block) == Machines.Stage.READY
+	if ready and kind == Machines.Kind.BARREL and held != Items.Id.GLASS_BOTTLE:
+		client.hotbar.announce(tr("HUD_BARREL_BOTTLES"))
+		return true
+	if not ready:
+		_predict(target.cell, Voxels.of_block(Machines.STAGES[kind][Machines.Stage.WORKING]))
+		if not client.modes.creative():
+			var count := mini(client.inventory.counts[slot], Machines.CAPACITY[kind])
+			client.inventory.take(slot, count)
+	client.transport.send(Msg.use_machine(target.cell, slot))
+	_debris.throw(
+		_world_point(_cell_middle(target.cell, 0.9)), BlockColors.of(target.voxel), 8, 0.15
+	)
+	client.player_model.swing()
+	return true
+
+
 ## The middle of a cell's tile, `up` levels over its floor (local units).
 static func _cell_middle(cell: Vector3i, up: float) -> Vector3:
 	return Vector3(cell.x + 0.5, cell.y - GameConst.SEA_LEVEL + up, cell.z + 0.5)
@@ -548,6 +594,8 @@ func _update_breaking(delta: float) -> void:
 		return
 	var creative := client.modes.creative()
 	var seconds := Mining.break_seconds(target.voxel, client.held_item())
+	if Effects.has(client.vitals.effects, Effects.Kind.HASTE):
+		seconds /= Effects.HASTE_SPEED
 	_progress = 1.0 if creative else _progress + delta / seconds
 	if Voxels.is_cube(target.voxel):
 		_cracks.show_on(target.box, _progress)

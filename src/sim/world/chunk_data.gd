@@ -37,6 +37,9 @@ var growing: Dictionary[Vector3i, bool] = {}
 ## Server side: the farmland watered (a can, the rain), by cell: the
 ## seconds it stays wet (see Watering), saved with it.
 var watered: Dictionary[Vector3i, float] = {}
+## Server side: what the kitchen's machines hold, by cell (see Machines),
+## saved with it.
+var machines: Dictionary[Vector3i, Dictionary] = {}
 
 
 func _init(chunk_coord := Vector2i.ZERO) -> void:

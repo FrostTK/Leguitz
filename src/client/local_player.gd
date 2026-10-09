@@ -34,6 +34,8 @@ var ghost := false
 var controls_enabled := true
 ## Too hungry to run (Vitals.WEAK, told by VitalsView).
 var can_sprint := true
+## Walking faster (a dish's Effects.Kind.SWIFT).
+var speed_bonus := 1.0
 ## Direction the player looks at, on the ground (world axes): exact, and
 ## rounded to the nearest side.
 var heading := Vector2.DOWN
@@ -99,7 +101,7 @@ func step(delta: float) -> void:
 		heading = input.normalized()
 		_update_facing(input)
 		var ground := client_world.ground_under(current_tile(), body.height)
-		var speed := WALK_SPEED * Tiles.ground_speed(ground)
+		var speed := WALK_SPEED * Tiles.ground_speed(ground) * speed_bonus
 		if flying:
 			speed = WALK_SPEED * FLY_MULTIPLIER
 		elif can_sprint and Input.is_action_pressed(InputBindings.SPRINT):

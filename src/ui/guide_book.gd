@@ -20,6 +20,7 @@ const CHAPTERS: Array[String] = [
 	"BOOK_CHAPTER_TOOLS",
 	"BOOK_CHAPTER_CRAFT",
 	"BOOK_CHAPTER_FURNACES",
+	"BOOK_CHAPTER_KITCHEN",
 	"BOOK_CHAPTER_HOME",
 	"BOOK_CHAPTER_FARM",
 	"BOOK_CHAPTER_SURVIVAL",
@@ -65,6 +66,7 @@ static func chapters() -> Array[Array]:
 		_tools(),
 		_craft(),
 		_furnaces(),
+		_kitchen(),
 		_home(),
 		_farm(),
 		_survival(),
@@ -175,6 +177,8 @@ static func _craft() -> Array:
 	var at_bench := []
 	for recipe: Dictionary in Recipes.all():
 		var item: int = recipe["result"][0]
+		if recipe.get("kitchen", false):
+			continue
 		if not recipe in planks and not Items.TOOLS.has(item) and not Armor.is_armor(item):
 			var result: Array = recipe["result"]
 			var made := _t(Items.name_key(result[0]))
@@ -287,6 +291,48 @@ static func _farm() -> Array:
 		_icon(Items.Id.DIRT, _t("BOOK_FARM_MOLES")),
 		_icon(Items.Id.FLOWER_YELLOW, _t("BOOK_FARM_BUMBLEBEES")),
 	]
+
+
+## The kitchen: the counter and its dishes (drawn like recipes), the
+## machines (what each makes, how long), and what each dish does
+## (Effects).
+static func _kitchen() -> Array:
+	var entries := [
+		_title("BOOK_CHAPTER_KITCHEN"),
+		_text("BOOK_KITCHEN_INTRO"),
+		_heading("ITEM_KITCHEN"),
+		_icon(Items.Id.KITCHEN, _t("BOOK_KITCHEN_HOW")),
+	]
+	for recipe: Dictionary in Recipes.all():
+		if recipe.get("kitchen", false):
+			var result: Array = recipe["result"]
+			var made := _t(Items.name_key(result[0]))
+			if result[1] > 1:
+				made += "  ×%d" % result[1]
+			entries.append({"kind": Kind.RECIPE, "text": made, "recipes": [recipe]})
+	entries.append(_heading("BOOK_KITCHEN_MACHINES"))
+	for machine: Array in [
+		[Items.Id.MILL, "BOOK_KITCHEN_MILL"],
+		[Items.Id.BUTTER_CHURN, "BOOK_KITCHEN_CHURN"],
+		[Items.Id.BARREL, "BOOK_KITCHEN_BARREL"],
+		[Items.Id.CHEESE_CELLAR, "BOOK_KITCHEN_CELLAR"],
+	]:
+		entries.append(_icon(machine[0], _t(machine[1])))
+	entries.append(_heading("BOOK_KITCHEN_EFFECTS"))
+	entries.append(_text("BOOK_KITCHEN_EFFECTS_HOW"))
+	for kind: int in Effects.Kind.values():
+		var text := (
+			_t("BOOK_KITCHEN_EFFECT") % [_t(Effects.NAME_KEYS[kind]), _t(Effects.HOW_KEYS[kind])]
+		)
+		entries.append(_text(text, false))
+	for food: int in Effects.OF_FOOD:
+		var given := PackedStringArray()
+		var effects: Dictionary = Effects.OF_FOOD[food]
+		for kind: int in effects:
+			given.append(_t("BOOK_KITCHEN_FOR") % [_t(Effects.NAME_KEYS[kind]), effects[kind]])
+		var text := _t("BOOK_KITCHEN_DISH") % [_t(Items.name_key(food)), ", ".join(given)]
+		entries.append(_icon(food, text))
+	return entries
 
 
 ## Vitality and satiety: what wears them down, how to eat, what feeds.

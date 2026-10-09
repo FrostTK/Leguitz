@@ -335,6 +335,25 @@ enum Block {
 	TURTLE_EGGS,
 	TURTLE_EGGS_1,
 	TURTLE_EGGS_2,
+	# The kitchen (Kitchen, Machines): a counter cooking dishes of several
+	# ingredients, facing the player; a mill, a butter churn, a barrel and
+	# a cheese cellar, each empty, working, then with what it made ready.
+	KITCHEN,
+	KITCHEN_WEST,
+	KITCHEN_NORTH,
+	KITCHEN_EAST,
+	MILL,
+	MILL_WORKING,
+	MILL_READY,
+	BUTTER_CHURN,
+	BUTTER_CHURN_WORKING,
+	BUTTER_CHURN_READY,
+	BARREL,
+	BARREL_WORKING,
+	BARREL_READY,
+	CHEESE_CELLAR,
+	CHEESE_CELLAR_WORKING,
+	CHEESE_CELLAR_READY,
 }
 
 const FLOWERS: Array[Block] = [

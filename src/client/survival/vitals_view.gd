@@ -43,6 +43,9 @@ var passed_out := false
 ## Eating now, and for how long (the arm and the first-person hand bob).
 var eating := false
 var eat_time := 0.0
+## What the dishes eaten do (Effects: kind -> seconds left, as the server
+## told, running out here too).
+var effects := {}
 
 var _hurt_glow := 0.0
 var _down := 0.0
@@ -78,6 +81,12 @@ func on_vitals(points: int, satiety: int, hurt: bool, air: float) -> void:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
+## The effects as the server tells them (Msg.VITALS).
+func on_effects(told: Dictionary) -> void:
+	effects = Effects.from_dict(told)
+	client.hotbar.effects.set_effects(effects)
+
+
 ## The player passed out from `cause` (Vitals.Cause).
 func on_passed_out(cause: int) -> void:
 	passed_out = true
@@ -111,6 +120,11 @@ func _process(delta: float) -> void:
 	client.player_model.set_down(smoothstep(0.0, 1.0, _down))
 	_update_eating(delta)
 	_update_veil()
+	if not effects.is_empty():
+		Effects.wear(effects, delta)
+		client.hotbar.effects.set_effects(effects)
+	var swift := Effects.has(effects, Effects.Kind.SWIFT)
+	client.local_player.speed_bonus = Effects.SWIFT_SPEED if swift else 1.0
 	client.hotbar.vitals.set_defense(Armor.defense(client.inventory))
 
 
@@ -127,17 +141,18 @@ func _update_veil() -> void:
 
 
 ## Eats while the player holds the button with food in hand (not when
-## full: said over the hotbar once).
+## full, but for dishes with effects: said over the hotbar once).
 func _update_eating(delta: float) -> void:
 	var wants := client.wants_to_eat()
-	if wants and not _wanted and food >= Vitals.MAX_FOOD:
+	var item := client.held_item()
+	var full := food >= Vitals.MAX_FOOD and not Effects.gives(item)
+	if wants and not _wanted and full:
 		client.hotbar.announce(tr("HUD_NOT_HUNGRY"))
 	_wanted = wants
-	var item := client.held_item()
-	if not wants or food >= Vitals.MAX_FOOD or item != _eaten:
+	if not wants or full or item != _eaten:
 		eat_time = 0.0
 	_eaten = item
-	eating = wants and food < Vitals.MAX_FOOD
+	eating = wants and not full
 	client.player_model.eating = eating
 	if not eating:
 		return

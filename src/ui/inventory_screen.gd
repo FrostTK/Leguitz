@@ -54,6 +54,8 @@ var inventory: Inventory
 var library: ItemLibrary
 ## Cells across of the crafting grid shown (see open).
 var craft_width := Inventory.OWN_GRID
+## The crafting grid is a kitchen counter's (its dishes only).
+var kitchen := false
 ## The chest shown instead of the crafting grid (see open_chest; null: none).
 var chest: Inventory
 ## The furnace shown instead of the crafting grid (see open_furnace; null:
@@ -71,6 +73,8 @@ var _book_gap := Control.new()
 ## What the crafting grid makes.
 var _result := ItemSlot.new()
 var _title := Label.new()
+## Over the crafting grid: crafting, or cooking at a kitchen counter.
+var _craft_label := Label.new()
 ## The armor worn, and the protection it gives.
 var _armor_area := HBoxContainer.new()
 var _armor_slots: Array[ItemSlot] = []
@@ -220,12 +224,13 @@ func _ready() -> void:
 
 
 ## Opens with a crafting grid `width` cells across: the inventory's own,
-## or a workbench's (Inventory.GRID). In creative the inventory shows the
-## catalog instead.
-func open(width := Inventory.OWN_GRID) -> void:
+## or a workbench's (Inventory.GRID); `cooking`: a kitchen counter's (its
+## dishes). In creative the inventory shows the catalog instead.
+func open(width := Inventory.OWN_GRID, cooking := false) -> void:
 	chest = null
 	furnace = null
-	var catalog := creative and width == Inventory.OWN_GRID
+	kitchen = cooking
+	var catalog := creative and width == Inventory.OWN_GRID and not cooking
 	_show_factory(false)
 	_furnace_area.visible = false
 	_chest_grid.visible = false
@@ -237,6 +242,9 @@ func open(width := Inventory.OWN_GRID) -> void:
 	_title.text = "WORKBENCH_TITLE" if width > Inventory.OWN_GRID else "INVENTORY_TITLE"
 	if catalog:
 		_title.text = "CATALOG_TITLE"
+	elif cooking:
+		_title.text = "KITCHEN_TITLE"
+	_craft_label.text = "KITCHEN_COOK" if cooking else "CRAFTING_TITLE"
 	_grid.columns = width
 	for cell in _cells.size():
 		_cells[cell].visible = cell % Inventory.GRID < width and cell / Inventory.GRID < width
@@ -321,10 +329,9 @@ func _draw_shield() -> void:
 func _crafting() -> Control:
 	var area := VBoxContainer.new()
 	area.add_theme_constant_override("separation", 2)
-	var label := Label.new()
-	label.text = "CRAFTING_TITLE"
-	label.add_theme_color_override("font_color", UiTheme.WOOD)
-	area.add_child(label)
+	_craft_label.text = "CRAFTING_TITLE"
+	_craft_label.add_theme_color_override("font_color", UiTheme.WOOD)
+	area.add_child(_craft_label)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 3)
 	area.add_child(row)
@@ -543,7 +550,7 @@ func _process(_delta: float) -> void:
 		_flame.queue_redraw()
 		_cooking.queue_redraw()
 	_shield.queue_redraw()
-	var made := inventory.craft_result(craft_width)
+	var made := inventory.craft_result(craft_width, kitchen)
 	_result.show_stack(made.x, made.y)
 	_book.visible = book_shown
 	_book_gap.visible = book_shown

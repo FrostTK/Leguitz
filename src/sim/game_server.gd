@@ -61,6 +61,12 @@ class PlayerSession:
 	var chest := NO_CELL
 	## The furnace the player has open (NO_CELL: none).
 	var furnace := NO_CELL
+	## Their crafting grid is a kitchen counter's (Recipes: the dishes).
+	var kitchen := false
+	## What the dishes they ate do (Effects: kind -> seconds left), and the
+	## time towards the next point REGEN heals.
+	var effects := {}
+	var mending := 0.0
 	## Vitality (Vitals); 0: passed out, until they get up (Msg.RESPAWN).
 	var health := Vitals.MAX_HEALTH
 	## Satiety (Vitals), and the effort spent towards the next point lost.
@@ -200,6 +206,7 @@ static func player_state(session: PlayerSession) -> Dictionary:
 		"inventory": session.inventory.to_dict(),
 		"health": session.health,
 		"food": session.food,
+		"effects": Effects.to_dict(session.effects),
 		"spectator": session.spectator,
 	}
 
@@ -271,7 +278,9 @@ func tick() -> void:
 	fluids.update(self)
 	Survival.update(self, sessions, GameConst.TICK_DELTA)
 	if tick_count % FURNACE_TICKS == 0:
-		_update_furnaces(GameConst.TICK_DELTA * FURNACE_TICKS)
+		Furnaces.update(self, GameConst.TICK_DELTA * FURNACE_TICKS)
+	if tick_count % Machines.TICKS == 0:
+		Machines.update(self, GameConst.TICK_DELTA * Machines.TICKS)
 	Growth.update(self, -1.0, tick_count % Growth.CHECK_TICKS)
 	if tick_count % UNLOAD_CHECK_TICKS == 0:
 		_unload_unused_chunks()
@@ -331,6 +340,8 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 			Husbandry.tend(self, session, message)
 		Msg.HARVEST_HIVE:
 			Apiary.harvest(self, session, message)
+		Msg.USE_MACHINE:
+			Machines.use(self, session, message)
 		Msg.CHAT:
 			Chat.receive(self, session, message)
 		Msg.PICK_BLOCK:
@@ -343,7 +354,7 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 			if session.joined:
 				var slot := int(message.get("slot", -1))
 				var open := _open_chest(session)
-				var oven := _open_furnace(session)
+				var oven := Furnaces.opened(self, session)
 				session.inventory.click(
 					slot, message.get("right", false), message.get("shift", false), open, oven
 				)
@@ -351,7 +362,7 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 				if open != null:
 					_chest_changed(session.chest)
 				if oven != null:
-					_furnace_changed(session.furnace)
+					Furnaces.changed(self, session.furnace)
 		Msg.SLOT_SPREAD:
 			_on_slot_spread(session, message)
 		Msg.SLOT_COLLECT:
@@ -371,15 +382,9 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 				session.transport.send(Msg.inventory(session.inventory))
 				_chest_changed(session.chest)
 		Msg.OPEN_FURNACE:
-			_on_open_furnace(session, message)
+			Furnaces.open(self, session, message)
 		Msg.FURNACE_CLICK:
-			var oven := _open_furnace(session)
-			if oven != null:
-				var slot := int(message.get("slot", -1))
-				var right: bool = message.get("right", false)
-				session.inventory.click_furnace(oven, slot, right, message.get("shift", false))
-				session.transport.send(Msg.inventory(session.inventory))
-				_furnace_changed(session.furnace)
+			Furnaces.click(self, session, message)
 		Msg.ITEM_DROP:
 			_on_item_drop(session, message)
 		Msg.INVENTORY_CLOSE:
@@ -387,6 +392,7 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 				for left in session.inventory.put_back_all():
 					throw_item(session, left.x, left.y, left.z)
 				session.craft_width = Inventory.OWN_GRID
+				session.kitchen = false
 				session.chest = NO_CELL
 				session.furnace = NO_CELL
 				session.transport.send(Msg.inventory(session.inventory))
@@ -394,7 +400,8 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 			_on_open_workbench(session, message)
 		Msg.CRAFT:
 			if session.joined:
-				session.inventory.craft(session.craft_width, message.get("shift", false))
+				var shift: bool = message.get("shift", false)
+				session.inventory.craft(session.craft_width, shift, session.kitchen)
 				session.transport.send(Msg.inventory(session.inventory))
 		Msg.SAVE_REQUEST:
 			if session.joined and Time.get_ticks_msec() - _last_save_msec >= SAVE_REQUEST_MSEC:
@@ -437,6 +444,7 @@ func _place_player(session: PlayerSession) -> void:
 	session.inventory.load_dict(saved.get("inventory", {}))
 	session.health = clampi(int(saved.get("health", Vitals.MAX_HEALTH)), 0, Vitals.MAX_HEALTH)
 	session.food = clampi(int(saved.get("food", Vitals.MAX_FOOD)), 0, Vitals.MAX_FOOD)
+	session.effects = Effects.from_dict(saved.get("effects", {}))
 	session.spectator = saved.get("spectator", false) and GameModes.hardcore(self)
 	if session.spectator:
 		session.health = 0
@@ -489,7 +497,7 @@ func _on_block_break(session: PlayerSession, message: Dictionary) -> void:
 		change_voxel(part, Voxels.AIR)
 	if drops:
 		drop_from(cell, voxel)
-	_spill_contents(cell)
+	spill_contents(cell)
 	Survival.spend(self, session, Vitals.BREAK_EFFORT)
 	for part in cells:
 		Fixtures.drop_hung(self, part, drops)
@@ -502,8 +510,10 @@ func _on_block_break(session: PlayerSession, message: Dictionary) -> void:
 				drop_from(above, standing)
 
 
-## A chest or a furnace broken: what it held falls out where it was.
-func _spill_contents(cell: Vector3i) -> void:
+## A chest, a furnace or a kitchen machine broken: what it held falls out
+## where it was.
+func spill_contents(cell: Vector3i) -> void:
+	Machines.spill(self, cell)
 	var chest := world.take_chest(cell)
 	if chest != null:
 		_spill(cell, chest, Inventory.CHEST)
@@ -586,7 +596,7 @@ func _on_slot_spread(session: PlayerSession, message: Dictionary) -> void:
 	if not session.joined or not targets is Array:
 		return
 	var open := _open_chest(session)
-	var oven := _open_furnace(session)
+	var oven := Furnaces.opened(self, session)
 	session.inventory.spread(
 		(targets as Array).slice(0, Inventory.SIZE + Inventory.CHEST), open, oven
 	)
@@ -594,7 +604,7 @@ func _on_slot_spread(session: PlayerSession, message: Dictionary) -> void:
 	if open != null:
 		_chest_changed(session.chest)
 	if oven != null:
-		_furnace_changed(session.furnace)
+		Furnaces.changed(self, session.furnace)
 
 
 ## A player gathered the same items as their cursor's (a double click):
@@ -603,25 +613,31 @@ func _on_slot_collect(session: PlayerSession) -> void:
 	if not session.joined:
 		return
 	var open := _open_chest(session)
-	var oven := _open_furnace(session)
+	var oven := Furnaces.opened(self, session)
 	session.inventory.collect(open, oven)
 	session.transport.send(Msg.inventory(session.inventory))
 	if open != null:
 		_chest_changed(session.chest)
 	if oven != null:
-		_furnace_changed(session.furnace)
+		Furnaces.changed(self, session.furnace)
 
 
-## A player opened a workbench: crafting uses its whole grid, if there is
-## one within reach.
+## A player opened a workbench (crafting uses its whole grid) or a
+## kitchen counter (its grid makes the dishes), if there is one within
+## reach.
 func _on_open_workbench(session: PlayerSession, message: Dictionary) -> void:
 	if not session.joined:
 		return
 	var cell: Vector3i = message.get("cell", Vector3i.ZERO)
 	var near := Mining.reach_to(session.position, session.height, cell)
 	var there := Voxels.block_of(world.voxel_at(cell))
-	if ObjectShapes.is_bench(there) and near <= Mining.REACH + REACH_LEEWAY:
+	if near > Mining.REACH + REACH_LEEWAY:
+		return
+	if ObjectShapes.is_bench(there):
 		session.craft_width = Inventory.GRID
+	elif ObjectShapes.is_kitchen(there):
+		session.craft_width = Inventory.OWN_GRID
+		session.kitchen = true
 
 
 ## A player opened a chest within reach: they see what it holds, and
@@ -654,85 +670,6 @@ func _chest_changed(cell: Vector3i) -> void:
 	for other in sessions:
 		if other.joined and other.chest == cell:
 			other.transport.send(Msg.chest(cell, world.chest_at(cell)))
-
-
-## A player opened a furnace within reach (not a broken one): they see
-## it, and their clicks go to it until they close it.
-func _on_open_furnace(session: PlayerSession, message: Dictionary) -> void:
-	if not session.joined:
-		return
-	var cell: Vector3i = message.get("cell", Vector3i.ZERO)
-	var near := Mining.reach_to(session.position, session.height, cell)
-	var there := Voxels.block_of(world.voxel_at(cell))
-	if ObjectShapes.furnace_kind(there) == -1 or near > Mining.REACH + REACH_LEEWAY:
-		return
-	session.furnace = cell
-	session.transport.send(Msg.furnace(cell, world.furnace_at(cell)))
-
-
-## The furnace a player has open (null: none, or it is gone).
-func _open_furnace(session: PlayerSession) -> Furnace:
-	if not session.joined or session.furnace == NO_CELL:
-		return null
-	if ObjectShapes.furnace_kind(Voxels.block_of(world.voxel_at(session.furnace))) == -1:
-		return null
-	return world.furnace_at(session.furnace)
-
-
-## A furnace's slots changed: saved with its chunk, lit or put out, shown
-## to every player who has it open.
-func _furnace_changed(cell: Vector3i) -> void:
-	world.contents_changed(cell)
-	_show_fire(cell)
-	_send_furnace(cell)
-
-
-func _send_furnace(cell: Vector3i) -> void:
-	for other in sessions:
-		if other.joined and other.furnace == cell:
-			other.transport.send(Msg.furnace(cell, world.furnace_at(cell)))
-
-
-## A furnace's voxel shows whether it burns (its lit kind, the same way).
-func _show_fire(cell: Vector3i) -> void:
-	var block := Voxels.block_of(world.voxel_at(cell))
-	var kind := ObjectShapes.furnace_kind(block)
-	if kind == -1:
-		return
-	var lit := world.furnace_at(cell).burning()
-	var shown := ObjectShapes.facing(
-		ObjectShapes.LIT[kind] if lit else kind, ObjectShapes.front_of(block)
-	)
-	if shown != block:
-		change_voxel(cell, Voxels.of_block(shown))
-
-
-## The furnaces of the loaded chunks burn and cook (`delta`: real
-## seconds); the players who opened one see it.
-func _update_furnaces(delta: float) -> void:
-	for chunk: ChunkData in world.chunks.values():
-		if chunk.furnaces.is_empty():
-			continue
-		for cell: Vector3i in chunk.furnaces.keys():
-			var furnace: Furnace = chunk.furnaces[cell]
-			var was := [furnace.fire, furnace.progress, furnace.lane_progress.duplicate()]
-			match furnace.step(delta, clock):
-				Furnace.Step.BROKE:
-					_break_furnace(cell)
-				Furnace.Step.CHANGED:
-					_furnace_changed(cell)
-				_:
-					if was != [furnace.fire, furnace.progress, furnace.lane_progress]:
-						_send_furnace(cell)
-
-
-## Ore melted in a food furnace: it breaks (the ore is lost), what it held
-## spills, and it is useless.
-func _break_furnace(cell: Vector3i) -> void:
-	var block := Voxels.block_of(world.voxel_at(cell))
-	_spill_contents(cell)
-	var broken := ObjectShapes.facing(Tiles.Block.BROKEN_FURNACE, ObjectShapes.front_of(block))
-	change_voxel(cell, Voxels.of_block(broken))
 
 
 ## A player throws one item of a slot, or its whole stack.

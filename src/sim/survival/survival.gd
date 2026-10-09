@@ -7,7 +7,8 @@ extends RefCounted
 ## healing when well fed, passing out (what they carry falls where they
 ## are) and getting up at the spawn (in hardcore, never: they only watch
 ## the world, GameModes). Creative players are never hurt nor hungry.
-## Stateless: each call is given the server.
+## Dishes' effects (Effects) wear off with time; REGEN heals, FED slows
+## hunger. Stateless: each call is given the server.
 
 
 ## A player landed after falling `fell` levels: over FALL_SAFE it hurts,
@@ -56,6 +57,8 @@ static func _pass_out(server: GameServer, session: GameServer.PlayerSession, cau
 	session.chest = GameServer.NO_CELL
 	session.furnace = GameServer.NO_CELL
 	session.craft_width = Inventory.OWN_GRID
+	session.kitchen = false
+	session.effects.clear()
 	var bag := session.inventory
 	for left in bag.put_back_all():
 		server.throw_item(session, left.x, left.y, left.z)
@@ -100,7 +103,8 @@ static func spend(server: GameServer, session: GameServer.PlayerSession, effort:
 		or server.settings.game_mode == WorldSettings.GameMode.CREATIVE
 	):
 		return
-	session.effort += effort
+	var slower := Effects.FED_SLOWER if Effects.has(session.effects, Effects.Kind.FED) else 1.0
+	session.effort += effort * slower
 	if session.effort < 1.0:
 		return
 	var spent := floori(session.effort)
@@ -111,12 +115,14 @@ static func spend(server: GameServer, session: GameServer.PlayerSession, effort:
 
 
 ## A player ate one of what a hotbar slot holds: food fills them up (not
-## past full: then nothing is eaten); a raw red mushroom makes them sick.
+## past full: then nothing is eaten, but for dishes with effects, which they
+## take); a raw red mushroom makes them sick.
 static func eat(server: GameServer, session: GameServer.PlayerSession, slot: int) -> void:
 	if not session.joined or not session.alive() or slot < 0 or slot >= Inventory.HOTBAR:
 		return
 	var item := session.inventory.items[slot]
-	if not Items.is_food(item) or session.food >= Vitals.MAX_FOOD:
+	var full := session.food >= Vitals.MAX_FOOD and not Effects.gives(item)
+	if not Items.is_food(item) or full:
 		session.transport.send(Msg.inventory(session.inventory))
 		return
 	session.inventory.take(slot, 1)
@@ -129,6 +135,7 @@ static func eat(server: GameServer, session: GameServer.PlayerSession, slot: int
 		elif session.inventory.add(left, 1) > 0:
 			server.throw_item(session, left, 1)
 	session.food = mini(session.food + Items.FOOD[item], Vitals.MAX_FOOD)
+	Effects.take(session.effects, item, server.clock.scale_duration(1.0))
 	session.transport.send(Msg.inventory(session.inventory))
 	_tell(session)
 	if Vitals.POISONS.has(item):
@@ -156,6 +163,9 @@ static func update(server: GameServer, sessions: Array, delta: float) -> void:
 		spend(server, session, delta / server.clock.scale_duration(Vitals.FOOD_SECONDS))
 		_starve(server, session, delta)
 		_heal(server, session, delta)
+		_mend(server, session, delta)
+		if Effects.wear(session.effects, delta):
+			_tell(session)
 
 
 ## The eye under water uses air; without air, drowning hurts. Out of the
@@ -210,13 +220,29 @@ static func _heal(server: GameServer, session: GameServer.PlayerSession, delta: 
 		spend(server, session, Vitals.HEAL_EFFORT)
 
 
-## Tells a player their vitality and satiety (`hurt`: vitality just went
-## down, from `cause`).
+## A dish's REGEN: a point of vitality every Effects.REGEN_EVERY (paced),
+## whatever the satiety.
+static func _mend(server: GameServer, session: GameServer.PlayerSession, delta: float) -> void:
+	if not Effects.has(session.effects, Effects.Kind.REGEN):
+		session.mending = 0.0
+		return
+	session.mending += delta
+	if session.mending >= server.clock.scale_duration(Effects.REGEN_EVERY):
+		session.mending = 0.0
+		if session.health < Vitals.MAX_HEALTH:
+			session.health += 1
+			_tell(session)
+
+
+## Tells a player their vitality, satiety and effects (`hurt`: vitality
+## just went down, from `cause`).
 static func _tell(
 	session: GameServer.PlayerSession, hurt := false, cause := Vitals.Cause.NONE
 ) -> void:
 	session.air_told = session.air
-	session.transport.send(Msg.vitals(session.health, session.food, hurt, cause, session.air))
+	session.transport.send(
+		Msg.vitals(session.health, session.food, hurt, cause, session.air, session.effects)
+	)
 
 
 ## Whether a player is in water (it breaks falls).

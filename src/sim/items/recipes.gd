@@ -7,7 +7,10 @@ extends RefCounted
 ## a group of items (any planks...). The inventory's 3 x 3 grid makes the
 ## recipes that fit in it, the workbench's grid (WORKBENCH_GRID) all of
 ## them, some only there ("workbench": true: the tools, Minecraft's
-## shapes; the 5 x 5 grid waits for bigger recipes to come).
+## shapes; the 5 x 5 grid waits for bigger recipes to come). The kitchen
+## counter's grid makes the dishes ("kitchen": true, KITCHEN), and only
+## them; what holds a liquid stays in the grid (Items.LEFT_AFTER: the
+## bucket of the milk, the jar of the jam).
 
 const WORKBENCH_GRID := 5
 ## Any planks.
@@ -21,6 +24,39 @@ const PLANKS: Array[int] = [
 ]
 ## Any stone.
 const STONES: Array[int] = [Items.Id.STONE, Items.Id.DEEPSLATE]
+## Kitchen groups: any cooked meat, any mushroom, the greens of a soup,
+## the fruits of a pie and of a jam.
+const COOKED_MEATS: Array[int] = [
+	Items.Id.COOKED_MUTTON,
+	Items.Id.COOKED_PORK,
+	Items.Id.COOKED_CHICKEN,
+	Items.Id.COOKED_VENISON,
+	Items.Id.COOKED_BEEF,
+	Items.Id.COOKED_RABBIT,
+	Items.Id.COOKED_DUCK,
+	Items.Id.COOKED_FISH,
+]
+const MUSHROOMS: Array[int] = [Items.Id.MUSHROOM_BROWN, Items.Id.MUSHROOM_RED]
+const SOUP_GREENS: Array[int] = [Items.Id.CABBAGE, Items.Id.TOMATO, Items.Id.BEETROOT]
+const PIE_FRUITS: Array[int] = [
+	Items.Id.APPLE,
+	Items.Id.CHERRIES,
+	Items.Id.PEACH,
+	Items.Id.BERRIES,
+	Items.Id.RASPBERRY,
+	Items.Id.STRAWBERRY,
+	Items.Id.PUMPKIN,
+]
+const JAM_FRUITS: Array[int] = [
+	Items.Id.APPLE,
+	Items.Id.CHERRIES,
+	Items.Id.PEACH,
+	Items.Id.ORANGE,
+	Items.Id.GRAPES,
+	Items.Id.BERRIES,
+	Items.Id.RASPBERRY,
+	Items.Id.STRAWBERRY,
+]
 ## Coal or charcoal.
 const COALS: Array[int] = [Items.Id.COAL, Items.Id.CHARCOAL]
 ## Any log.
@@ -205,6 +241,32 @@ const SHAPED := [
 		"result": [Items.Id.BIG_GATE, 1],
 		"workbench": true,
 	},
+	{
+		"pattern": ["SSS", "PFP", "PPP"],
+		"keys": {"S": STONES, "F": Items.Id.FOOD_FURNACE, "P": PLANKS},
+		"result": [Items.Id.KITCHEN, 1],
+		"workbench": true,
+	},
+	{
+		"pattern": [" P ", "SSS", "PPP"],
+		"keys": {"P": PLANKS, "S": STONES},
+		"result": [Items.Id.MILL, 1],
+	},
+	{
+		"pattern": [" T ", "P P", "PPP"],
+		"keys": {"T": Items.Id.STICK, "P": PLANKS},
+		"result": [Items.Id.BUTTER_CHURN, 1],
+	},
+	{
+		"pattern": ["PIP", "P P", "PIP"],
+		"keys": {"P": PLANKS, "I": Items.Id.IRON_INGOT},
+		"result": [Items.Id.BARREL, 1],
+	},
+	{
+		"pattern": ["PPP", "PLP", "PPP"],
+		"keys": {"P": PLANKS, "L": Items.Id.LINEN},
+		"result": [Items.Id.CHEESE_CELLAR, 1],
+	},
 ]
 ## The tools, at the workbench: Minecraft's shapes ("M": the material,
 ## "S": a stick), and what each tier's are made of.
@@ -224,11 +286,64 @@ const TOOL_MATERIALS := {
 	Items.Tier.DIAMOND: Items.Id.DIAMOND,
 }
 
+## The kitchen counter's dishes (see the class): their ingredients, in any
+## order.
+const KITCHEN := [
+	{
+		"ingredients": [Items.Id.FLOUR, Items.Id.FLOUR, Items.Id.FLOUR],
+		"result": [Items.Id.BREAD, 2]
+	},
+	{
+		"ingredients": [Items.Id.CARROT, Items.Id.POTATO, SOUP_GREENS],
+		"result": [Items.Id.VEGETABLE_SOUP, 2],
+	},
+	{
+		"ingredients": [COOKED_MEATS, Items.Id.POTATO, Items.Id.CARROT, MUSHROOMS],
+		"result": [Items.Id.MEAT_STEW, 2],
+	},
+	{
+		"ingredients": [Items.Id.FLOUR, Items.Id.BUTTER, Items.Id.EGG, Items.Id.SUGAR, PIE_FRUITS],
+		"result": [Items.Id.FRUIT_PIE, 1],
+	},
+	{
+		"ingredients": [Items.Id.EGG, Items.Id.EGG, Items.Id.BUTTER],
+		"result": [Items.Id.OMELETTE, 1]
+	},
+	{
+		"ingredients":
+		[
+			Items.Id.FLOUR,
+			Items.Id.FLOUR,
+			Items.Id.EGG,
+			Items.Id.SUGAR,
+			Items.Id.BUTTER,
+			Items.Id.MILK_BUCKET,
+		],
+		"result": [Items.Id.CAKE, 1],
+	},
+	{
+		"ingredients": [Items.Id.FLOUR, Items.Id.EGG, Items.Id.MILK_BUCKET],
+		"result": [Items.Id.CREPES, 3],
+	},
+	{
+		"ingredients": [Items.Id.POTATO, Items.Id.POTATO, Items.Id.CHEESE, Items.Id.MILK_BUCKET],
+		"result": [Items.Id.GRATIN, 2],
+	},
+	{
+		"ingredients": [JAM_FRUITS, JAM_FRUITS, Items.Id.SUGAR, Items.Id.GLASS_BOTTLE],
+		"result": [Items.Id.JAM, 1],
+	},
+	{
+		"ingredients": [Items.Id.BREAD, Items.Id.BUTTER, Items.Id.JAM],
+		"result": [Items.Id.TARTINE, 2],
+	},
+]
+
 static var _all: Array[Dictionary] = []
 
 
 ## Every recipe: each log gives 4 planks (shapeless: "ingredients"),
-## SHAPED, then the tools, then the armor.
+## SHAPED, then the tools, the armor, and the kitchen's dishes.
 static func all() -> Array[Dictionary]:
 	if _all.is_empty():
 		for log_item: int in Items.PLANKS_OF:
@@ -243,20 +358,25 @@ static func all() -> Array[Dictionary]:
 			var keys := {"M": Armor.MADE_OF[Armor.material_of(piece)]}
 			var pattern: Array = Armor.PATTERNS[Armor.piece_of(piece)]
 			_all.append({"pattern": pattern, "keys": keys, "result": [piece, 1], "workbench": true})
+		for recipe: Dictionary in KITCHEN:
+			var dish := recipe.duplicate()
+			dish["kitchen"] = true
+			_all.append(dish)
 	return _all
 
 
 ## What a crafting grid makes: [item, count] (Vector2i.ZERO: nothing).
-## `cells` holds width x width items, row by row (Items.Id.NONE: empty).
-static func result_of(cells: PackedInt32Array, width: int) -> Vector2i:
-	var recipe := find(cells, width)
+## `cells` holds width x width items, row by row (Items.Id.NONE: empty);
+## `kitchen`: the kitchen counter's grid (its dishes only).
+static func result_of(cells: PackedInt32Array, width: int, kitchen := false) -> Vector2i:
+	var recipe := find(cells, width, kitchen)
 	if recipe.is_empty():
 		return Vector2i.ZERO
 	return Vector2i(recipe["result"][0], recipe["result"][1])
 
 
 ## The recipe a crafting grid makes ({} if none).
-static func find(cells: PackedInt32Array, width: int) -> Dictionary:
+static func find(cells: PackedInt32Array, width: int, kitchen := false) -> Dictionary:
 	var low := Vector2i(width, width)
 	var high := Vector2i(-1, -1)
 	var used: Array[int] = []
@@ -272,6 +392,8 @@ static func find(cells: PackedInt32Array, width: int) -> Dictionary:
 	var size := high - low + Vector2i.ONE
 	for recipe in all():
 		if recipe.get("workbench", false) and width < WORKBENCH_GRID:
+			continue
+		if recipe.get("kitchen", false) != kitchen:
 			continue
 		if recipe.has("pattern"):
 			if (

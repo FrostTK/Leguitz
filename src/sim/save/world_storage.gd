@@ -140,6 +140,9 @@ func load_chunk(coord: Vector2i) -> ChunkData:
 	var watered: Dictionary = data.get("watered", {})
 	for cell: Vector3i in watered:
 		chunk.watered[cell] = float(watered[cell])
+	var machines: Dictionary = data.get("machines", {})
+	for cell: Vector3i in machines:
+		chunk.machines[cell] = (machines[cell] as Dictionary).duplicate()
 	return chunk
 
 
@@ -154,6 +157,9 @@ func store_chunk(chunk: ChunkData) -> void:
 		furnaces[cell] = chunk.furnaces[cell].to_dict()
 	var watered := {}
 	watered.merge(chunk.watered)
+	var machines := {}
+	for cell: Vector3i in chunk.machines:
+		machines[cell] = chunk.machines[cell].duplicate()
 	_region(key)[chunk.coord] = {
 		"voxels": chunk.voxels.to_byte_array().compress(COMPRESSION),
 		"size": chunk.voxels.size() * 4,
@@ -162,6 +168,7 @@ func store_chunk(chunk: ChunkData) -> void:
 		"furnaces": furnaces,
 		"growing": chunk.growing.keys(),
 		"watered": watered,
+		"machines": machines,
 	}
 	_dirty[key] = true
 

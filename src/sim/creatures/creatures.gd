@@ -207,7 +207,10 @@ func attack(server: GameServer, session: GameServer.PlayerSession, id: int, slot
 	session.last_blow = now
 	var bag := session.inventory
 	var held := bag.items[slot] if slot >= 0 and slot < Inventory.HOTBAR else Items.Id.NONE
-	if not target.hurt_by(session.position, Combat.damage_of(held)):
+	var damage := Combat.damage_of(held)
+	if Effects.has(session.effects, Effects.Kind.STRONG):
+		damage += Effects.STRONG_DAMAGE
+	if not target.hurt_by(session.position, damage):
 		return
 	tell_seers(server, id, Msg.entity_hurt(id))
 	if Items.durability(held) > 0 and not GameModes.creative(server):

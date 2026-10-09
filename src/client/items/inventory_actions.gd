@@ -1,7 +1,7 @@
 class_name InventoryActions
 extends RefCounted
 ## What the player does in the inventory screen and with what it opens (a
-## workbench, a chest, a furnace): opening them, clicks, drags, double
+## workbench, a kitchen counter, a chest, a furnace): opening them, clicks, drags, double
 ## clicks, crafting, throwing what the cursor holds, closing. Each is shown
 ## at once on the client's copies (Inventory's rules, shared) and told to
 ## the server, which has the last word. GameClient owns it.
@@ -9,6 +9,8 @@ extends RefCounted
 var client: GameClient
 ## Cells across of the crafting grid in use (a workbench's is wider).
 var craft_width := Inventory.OWN_GRID
+## The crafting grid is a kitchen counter's (Recipes: its dishes only).
+var kitchen := false
 ## The chest open (what it holds as the server last told; null: none), and
 ## where it stands.
 var chest: Inventory
@@ -42,7 +44,20 @@ func open_inventory() -> void:
 	client.interaction.stop()
 	client.local_player.controls_enabled = false
 	craft_width = Inventory.OWN_GRID
+	kitchen = false
 	client.inventory_screen.open(craft_width)
+
+
+## Opens the kitchen counter standing in `cell`: the inventory with its
+## grid making the dishes (the server is told: the grid makes them until it
+## closes).
+func open_kitchen(cell: Vector3i) -> void:
+	client.interaction.stop()
+	client.local_player.controls_enabled = false
+	craft_width = Inventory.OWN_GRID
+	kitchen = true
+	client.transport.send(Msg.open_workbench(cell))
+	client.inventory_screen.open(craft_width, true)
 
 
 ## Opens the chest standing in `cell`: its slots over the inventory (what
@@ -141,6 +156,7 @@ func _on_cursor_dropped(whole: bool) -> void:
 
 func _on_inventory_closed() -> void:
 	client.local_player.controls_enabled = true
+	kitchen = false
 	chest = null
 	chest_cell = Vector3i.MAX
 	furnace = null
@@ -162,5 +178,5 @@ func close_if_gone(cell: Vector3i) -> void:
 
 
 func _on_craft_clicked(shift: bool) -> void:
-	client.inventory.craft(craft_width, shift)
+	client.inventory.craft(craft_width, shift, kitchen)
 	client.transport.send(Msg.craft(shift))

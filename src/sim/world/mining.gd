@@ -122,6 +122,14 @@ const BLOCK_SECONDS := {
 	Tiles.Block.MOLEHILL: 0.4,
 	Tiles.Block.BEAVER_DAM: 1.2,
 	Tiles.Block.TURTLE_EGGS: 0.1,
+	Tiles.Block.KITCHEN: 2.0,
+	Tiles.Block.KITCHEN_WEST: 2.0,
+	Tiles.Block.KITCHEN_NORTH: 2.0,
+	Tiles.Block.KITCHEN_EAST: 2.0,
+	Tiles.Block.MILL: 2.5,
+	Tiles.Block.BUTTER_CHURN: 1.5,
+	Tiles.Block.BARREL: 2.0,
+	Tiles.Block.CHEESE_CELLAR: 2.0,
 }
 ## Trees by hand: chopping a trunk takes a while (a young one less).
 const TREE_SECONDS := 3.5
@@ -180,6 +188,13 @@ const AXE_BLOCKS := {
 	Tiles.Block.BEE_NEST: true,
 	Tiles.Block.SCARECROW: true,
 	Tiles.Block.BEAVER_DAM: true,
+	Tiles.Block.KITCHEN: true,
+	Tiles.Block.KITCHEN_WEST: true,
+	Tiles.Block.KITCHEN_NORTH: true,
+	Tiles.Block.KITCHEN_EAST: true,
+	Tiles.Block.BUTTER_CHURN: true,
+	Tiles.Block.BARREL: true,
+	Tiles.Block.CHEESE_CELLAR: true,
 }
 const PICKAXE_BLOCKS := {
 	Tiles.Block.ROCK: true,
@@ -211,6 +226,7 @@ const PICKAXE_BLOCKS := {
 	Tiles.Block.LANTERN: true,
 	Tiles.Block.LANTERN_HANGING: true,
 	Tiles.Block.LANTERN_WALL: true,
+	Tiles.Block.MILL: true,
 }
 ## Objects placed as they are (no way to face), standing on a cube.
 const FLOOR_OBJECTS := {
@@ -225,6 +241,10 @@ const FLOOR_OBJECTS := {
 	Tiles.Block.NEST_BOX: true,
 	Tiles.Block.BEEHIVE: true,
 	Tiles.Block.SCARECROW: true,
+	Tiles.Block.MILL: true,
+	Tiles.Block.BUTTER_CHURN: true,
+	Tiles.Block.BARREL: true,
+	Tiles.Block.CHEESE_CELLAR: true,
 }
 
 
@@ -401,13 +421,14 @@ static func hung_on(cell: Vector3i, voxel_at: Callable) -> Array[Vector3i]:
 
 
 ## Whether a voxel opens something when used (right click): a workbench,
-## a chest or a furnace (not a broken one).
+## a chest, a furnace (not a broken one) or a kitchen counter.
 static func opens(voxel: int) -> bool:
 	var block := Voxels.block_of(voxel)
 	return (
 		ObjectShapes.is_bench(block)
 		or ObjectShapes.is_chest(block)
 		or ObjectShapes.furnace_kind(block) != -1
+		or ObjectShapes.is_kitchen(block)
 	)
 
 

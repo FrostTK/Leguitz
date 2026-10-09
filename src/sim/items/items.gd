@@ -223,6 +223,28 @@ enum Id {
 	COOKED_FISH,
 	SCARECROW,
 	TURTLE_EGG,
+	# The kitchen: what the mill, the churn, the barrel and the cheese
+	# cellar make, the dishes cooked at the kitchen counter, and those.
+	FLOUR,
+	BUTTER,
+	CHEESE,
+	APPLE_JUICE,
+	FRUIT_JUICE,
+	CIDER,
+	JAM,
+	VEGETABLE_SOUP,
+	MEAT_STEW,
+	FRUIT_PIE,
+	OMELETTE,
+	CAKE,
+	CREPES,
+	GRATIN,
+	TARTINE,
+	KITCHEN,
+	MILL,
+	BUTTER_CHURN,
+	BARREL,
+	CHEESE_CELLAR,
 }
 ## What a tool is made for (Mining.tool_for: what it breaks faster).
 enum Tool { NONE, PICKAXE, AXE, SHOVEL, SWORD, HOE }
@@ -268,11 +290,30 @@ const BOW_DURABILITY := 384
 const SHEARS_DURABILITY := 238
 ## Fewer of these in a stack.
 const SMALL_STACKS := {
-	Id.BUCKET: 16, Id.EGG: 16, Id.LEAD: 16, Id.GLASS_BOTTLE: 16, Id.HONEY_BOTTLE: 16
+	Id.BUCKET: 16,
+	Id.EGG: 16,
+	Id.LEAD: 16,
+	Id.GLASS_BOTTLE: 16,
+	Id.HONEY_BOTTLE: 16,
+	Id.APPLE_JUICE: 16,
+	Id.FRUIT_JUICE: 16,
+	Id.CIDER: 16,
+	Id.JAM: 16,
+	Id.VEGETABLE_SOUP: 16,
+	Id.MEAT_STEW: 16,
+	Id.CAKE: 16,
+	Id.GRATIN: 16,
 }
 ## What a food leaves in hand once eaten (milk: its bucket; honey: its
 ## bottle).
-const LEFT_AFTER := {Id.MILK_BUCKET: Id.BUCKET, Id.HONEY_BOTTLE: Id.GLASS_BOTTLE}
+const LEFT_AFTER := {
+	Id.MILK_BUCKET: Id.BUCKET,
+	Id.HONEY_BOTTLE: Id.GLASS_BOTTLE,
+	Id.APPLE_JUICE: Id.GLASS_BOTTLE,
+	Id.FRUIT_JUICE: Id.GLASS_BOTTLE,
+	Id.CIDER: Id.GLASS_BOTTLE,
+	Id.JAM: Id.GLASS_BOTTLE,
+}
 ## How many tiles a full watering can waters (Watering). A can keeps the
 ## water it holds in its slot's wear (Inventory.wear: 0, empty, as made).
 const CAN_WATER := 20
@@ -365,6 +406,11 @@ const PLACES_BLOCK := {
 	Id.BEEHIVE: Tiles.Block.BEEHIVE,
 	Id.SCARECROW: Tiles.Block.SCARECROW,
 	Id.TURTLE_EGG: Tiles.Block.TURTLE_EGGS,
+	Id.KITCHEN: Tiles.Block.KITCHEN,
+	Id.MILL: Tiles.Block.MILL,
+	Id.BUTTER_CHURN: Tiles.Block.BUTTER_CHURN,
+	Id.BARREL: Tiles.Block.BARREL,
+	Id.CHEESE_CELLAR: Tiles.Block.CHEESE_CELLAR,
 }
 
 ## What a ground gives (soil gives dirt); grounds left out give nothing.
@@ -526,6 +572,19 @@ const FOOD := {
 	Id.HONEY_BOTTLE: 6,
 	Id.RAW_FISH: 2,
 	Id.COOKED_FISH: 6,
+	Id.CHEESE: 4,
+	Id.APPLE_JUICE: 4,
+	Id.FRUIT_JUICE: 4,
+	Id.CIDER: 5,
+	Id.JAM: 3,
+	Id.VEGETABLE_SOUP: 7,
+	Id.MEAT_STEW: 12,
+	Id.FRUIT_PIE: 9,
+	Id.OMELETTE: 7,
+	Id.CAKE: 14,
+	Id.CREPES: 4,
+	Id.GRATIN: 10,
+	Id.TARTINE: 5,
 }
 ## The planks each log is sawn into.
 const PLANKS_OF := {

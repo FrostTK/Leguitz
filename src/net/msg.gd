@@ -23,6 +23,7 @@ const SPREAD_COMPOST := "spread_compost"
 const PICK := "pick"
 const TEND_ANIMAL := "tend_animal"
 const HARVEST_HIVE := "harvest_hive"
+const USE_MACHINE := "use_machine"
 const CHAT := "chat"
 const PICK_BLOCK := "pick_block"
 const SELECT_SLOT := "select_slot"
@@ -234,6 +235,12 @@ static func harvest_hive(cell: Vector3i, slot: int) -> Dictionary:
 	return {"t": HARVEST_HIVE, "cell": cell, "slot": slot}
 
 
+## The player used a kitchen machine (Machines) with hotbar slot `slot` in
+## hand.
+static func use_machine(cell: Vector3i, slot: int) -> Dictionary:
+	return {"t": USE_MACHINE, "cell": cell, "slot": slot}
+
+
 ## Something to tell the player about an animal of `kind`: a HUD key
 ## taking the species' name and `value` (Husbandry).
 static func animal_notice(key: String, kind: int, value: int) -> Dictionary:
@@ -400,9 +407,22 @@ static func respawn() -> Dictionary:
 ## A player's vitality, satiety and air (Vitals): `hurt` when vitality
 ## just went down, and what hurt them (Vitals.Cause).
 static func vitals(
-	health: int, food: int, hurt := false, cause := Vitals.Cause.NONE, air := Vitals.MAX_AIR
+	health: int,
+	food: int,
+	hurt := false,
+	cause := Vitals.Cause.NONE,
+	air := Vitals.MAX_AIR,
+	effects := {}
 ) -> Dictionary:
-	return {"t": VITALS, "health": health, "food": food, "hurt": hurt, "cause": cause, "air": air}
+	return {
+		"t": VITALS,
+		"health": health,
+		"food": food,
+		"hurt": hurt,
+		"cause": cause,
+		"air": air,
+		"effects": Effects.to_dict(effects),
+	}
 
 
 ## The player ate one of what hotbar slot `slot` holds (after holding the

@@ -15,6 +15,8 @@ var inventory: Inventory
 var library: ItemLibrary
 ## The vitality gauge over the slots.
 var vitals := VitalsBar.new()
+## What the dishes eaten do, over the vitality.
+var effects := EffectsRow.new()
 ## The book's slot shows, and the book is in hand (set by GameClient).
 var book_shown := false
 var book_selected := false
@@ -40,6 +42,7 @@ func _ready() -> void:
 	_name.add_theme_constant_override("shadow_offset_x", 1)
 	_name.add_theme_constant_override("shadow_offset_y", 1)
 	add_child(_name)
+	add_child(effects)
 	add_child(vitals)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 1)
