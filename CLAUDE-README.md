@@ -312,21 +312,34 @@ captures, commit et retour :
    les plats, d'autres boissons (lait de chèvre, thé), des effets plus rares (vision nocturne
    dans les grottes, résistance au froid avec les saisons).
 9. **Pêche** (prochaine étape) : canne, poissons selon le biome, l'heure et la météo, appâts, nasses.
-9A. **Bateau** (demandé par le propriétaire, coupé en deux étapes à sa demande : le bateau ici,
-   le filet et la peinture en 9B ; le détail est la proposition de Claude, à confirmer au « go »,
-   avec trois choix encore ouverts : l'assemblage dans la grille de l'établi ou un **chantier
-   naval** (un bloc au bord de l'eau avec un aperçu du bateau) ; la peinture ou une palette (9B) ;
-   les animaux sur les bancs, oui ou non) :
+9A. **Bateau et chantier naval** (demandé par le propriétaire, coupé en deux étapes à sa demande :
+   le bateau ici, le filet et la peinture en 9B. **Choix du propriétaire** : un **chantier naval**
+   au bord de l'eau pour le jeu de rôle, la couleur **à la peinture** (9B), les **animaux sur les
+   bancs**. Le reste est la proposition de Claude) :
    - **Pièces fabriquées à l'établi** : proue, section de coque, poupe (avec la barre et la place
      du pilote), chaudière (lingots de fer autour d'un four d'usine), hélice (cuivre), moteur à
      charbon (chaudière + hélice + fer), banc.
-   - **Assemblage** : la coque se monte sur une ligne de la grille 5x5 de l'établi (proue, 0 à 3
-     sections, poupe), ce qui donne une coque de **2 à 5 places**. On la pose sur l'eau visée,
-     comme le riz. La place du pilote, à la poupe, s'ajoute à ces places.
+   - **Chantier naval** :
+     - fabriqué à l'établi (rondins, planches, ficelle pour les cordages, fer pour le treuil) ;
+     - posé sur la rive face à l'eau, sa cale (une rampe en bois sur un ber) descend dans l'eau ;
+     - il faut assez d'eau devant pour le plus long bateau.
+   - **Construire au chantier** (clic droit ou E sur le chantier) :
+     - son écran montre le bateau vu de dessus, avec les cases de la coque : proue, 0 à 3
+       sections, poupe, ce qui donne **2 à 5 places** (la place du pilote, à la poupe, s'y
+       ajoute) ;
+     - on y trouve aussi les cases de l'écran du bateau (moteur, combustible, places) ;
+     - le bateau prend forme sur la cale à chaque pièce posée ;
+     - le bouton « Mettre à l'eau » le fait glisser le long de la cale jusqu'à l'eau.
+   - **Remonter au chantier** : un bateau amarré devant le chantier y remonte depuis son écran.
+     - Il garde ses bancs, ses coffres et leur contenu, son moteur et sa peinture (9B).
+     - On peut alors l'allonger, le raccourcir ou changer ses pièces.
+     - Les données du bateau sont gardées dans le chantier (comme les machines), pas dans un
+       objet.
+     - Cassé, le chantier rend le bateau qu'il porte en pièces.
    - **Écran du bateau** (clic droit ou E sur le bateau, E à bord) : le bateau vu de dessus avec
      ses cases : moteur, combustible (charbon, charbon de bois) et, pour chaque place, **un banc
      ou un coffre** (un coffre ordinaire, ses 27 cases ; retiré seulement vide). Tout se retire à
-     tout moment. L'écran garde la place de la case du filet (9B).
+     tout moment, même loin du chantier. L'écran garde la place de la case du filet (9B).
    - **Naviguer** :
      - monter : clic droit (place du pilote, sinon un banc libre) ;
      - commandes : Z/S les gaz, Q/D la barre, Maj le plein régime ;
@@ -339,10 +352,11 @@ captures, commit et retour :
      - une fumée sort de la cheminée, l'hélice tourne, un sillage suit le bateau ;
      - une jauge de combustible s'affiche quand on pilote ;
      - sans charbon ou sans moteur, on rame lentement : on n'est jamais coincé.
-   - **Animaux** : en solo, un animal mené à la corde monte sur un banc libre (pour emmener ses
-     bêtes sur une île).
-   - **Casser le bateau** à la hache (personne à bord) : il rend la coque, le moteur, les bancs,
-     les coffres et leur contenu, et le combustible.
+   - **Animaux** (choix du propriétaire) : un animal mené à la corde monte sur un banc libre
+     (pour emmener ses bêtes sur une île) et descend avec le joueur.
+   - **Casser le bateau** à la hache (personne à bord), quand il est loin d'un chantier : il rend
+     ses pièces (proue, sections, poupe), le moteur, les bancs, les coffres et leur contenu, et le
+     combustible.
    - **Serveur** : le bateau est une entité sauvegardée, comme les créatures, et le pilote le
      prédit comme son propre corps. C'est le premier « véhicule », il servira pour le cheval.
    - **Plus tard** : d'autres énergies (une voile selon le vent de la météo, l'énergie de la
@@ -364,16 +378,18 @@ captures, commit et retour :
      - usé, il se déchire (sa prise est perdue) ;
      - on le raccommode à l'établi avec de la ficelle ;
      - le bateau cassé rend le filet avec son usure.
-   - **Couleur, par la peinture** :
+   - **Couleur, par la peinture** (choix du propriétaire) :
      - un pot de peinture = un pigment + de l'huile de lin (graines de lin au moulin, dans un
        bocal) ;
      - pigments : fleurs rouges, jaunes, bleues, blanches et roses, betterave, cactus (vert),
        charbon (noir), lapis ; des mélanges pour l'orange et le violet ;
-     - deux couleurs : le clic droit avec un pot peint la coque, Maj + clic droit la bande ;
+     - deux couleurs : le clic droit avec un pot peint la coque, Maj + clic droit la bande, sur
+       l'eau comme sur la cale du chantier ;
      - un pot fait 4 couches, la hache décape ;
      - la couleur passe par le shader : pas de modèle par couleur.
-   - **Limite** : le bateau cassé perd sa peinture. Le garder entier dans l'inventaire demanderait
-     des objets portant des données.
+   - **Peinture gardée** : un bateau remonté au chantier garde sa peinture ; seul un bateau cassé à
+     la hache la perd (le garder entier dans l'inventaire demanderait des objets portant des
+     données).
 10. **Compagnons** : chien (suit, garde le troupeau, aboie contre les monstres), chat (chasse les
     ravageurs).
 11. **Saisons** (réglage du monde) : cultures de saison, neige en hiver, arbres qui roussissent
