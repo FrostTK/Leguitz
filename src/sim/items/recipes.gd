@@ -77,6 +77,9 @@ const SEAFOOD: Array[int] = [
 	Items.Id.CRAYFISH,
 	Items.Id.CRAB,
 ]
+## Pigments (a pot of paint: linseed oil and one, or two mixed).
+const REDS: Array[int] = [Items.Id.FLOWER_RED, Items.Id.BEETROOT]
+const BLUES: Array[int] = [Items.Id.FLOWER_BLUE, Items.Id.LAPIS]
 ## Coal or charcoal.
 const COALS: Array[int] = [Items.Id.COAL, Items.Id.CHARCOAL]
 ## Any log.
@@ -205,6 +208,38 @@ const SHAPED := [
 		"result": [Items.Id.BOAT_BENCH, 2],
 		"workbench": true,
 	},
+	# The net (lead weights), mended with string; pots of paint.
+	{
+		"pattern": ["TTT", "TTT", "I I"],
+		"keys": {"T": Items.Id.STRING, "I": Items.Id.IRON_INGOT},
+		"result": [Items.Id.FISHING_NET, 1],
+		"workbench": true,
+	},
+	{
+		"ingredients": [Items.Id.FISHING_NET, Items.Id.STRING, Items.Id.STRING, Items.Id.STRING],
+		"result": [Items.Id.FISHING_NET, 1],
+	},
+	{"ingredients": [Items.Id.LINSEED_OIL, REDS], "result": [Items.Id.PAINT_RED, 1]},
+	{
+		"ingredients": [Items.Id.LINSEED_OIL, Items.Id.FLOWER_YELLOW],
+		"result": [Items.Id.PAINT_YELLOW, 1]
+	},
+	{"ingredients": [Items.Id.LINSEED_OIL, BLUES], "result": [Items.Id.PAINT_BLUE, 1]},
+	{
+		"ingredients": [Items.Id.LINSEED_OIL, Items.Id.FLOWER_WHITE],
+		"result": [Items.Id.PAINT_WHITE, 1]
+	},
+	{
+		"ingredients": [Items.Id.LINSEED_OIL, Items.Id.FLOWER_PINK],
+		"result": [Items.Id.PAINT_PINK, 1]
+	},
+	{"ingredients": [Items.Id.LINSEED_OIL, Items.Id.CACTUS], "result": [Items.Id.PAINT_GREEN, 1]},
+	{"ingredients": [Items.Id.LINSEED_OIL, COALS], "result": [Items.Id.PAINT_BLACK, 1]},
+	{
+		"ingredients": [Items.Id.LINSEED_OIL, REDS, Items.Id.FLOWER_YELLOW],
+		"result": [Items.Id.PAINT_ORANGE, 1],
+	},
+	{"ingredients": [Items.Id.LINSEED_OIL, REDS, BLUES], "result": [Items.Id.PAINT_PURPLE, 1]},
 	{
 		"pattern": ["S S", "SSS", "S S"],
 		"keys": {"S": Items.Id.STICK},

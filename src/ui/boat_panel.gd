@@ -2,7 +2,7 @@ class_name BoatPanel
 extends VBoxContainer
 ## A boat's screen in the inventory (InventoryScreen.open_boat): at a
 ## shipyard its hull's slots (stern, sections, bow), then its engine, its
-## coal and the net's place to come, its deck seen from above (the stern
+## coal and its net (its wear), its deck seen from above in its paint (the stern
 ## on the left, the pilot's thwart there, the bow on the right) holding a
 ## slot for each place (a bench or a chest; a chest's button opens it), a
 ## line saying how many it carries and how it goes, and its buttons:
@@ -53,7 +53,7 @@ func _ready() -> void:
 	_slots[Boat.BOW].hint = Items.Id.BOAT_BOW
 	_slots[Boat.ENGINE].hint = Items.Id.COAL_ENGINE
 	_slots[Boat.FUEL].hint = Items.Id.COAL
-	_slots[Boat.NET].modulate = Color(1, 1, 1, 0.35)
+	_slots[Boat.NET].hint = Items.Id.FISHING_NET
 	_hull_row.add_theme_constant_override("separation", 2)
 	_hull_row.add_child(_label("BOAT_HULL"))
 	for slot: int in [Boat.STERN, Boat.SECTIONS, Boat.BOW]:
@@ -109,7 +109,8 @@ func _process(_delta: float) -> void:
 	for slot in Boat.SLOT_COUNT:
 		var item := boat.slots.items[slot] if boat != null else Items.Id.NONE
 		var count := boat.slots.counts[slot] if boat != null else 0
-		_slots[slot].show_stack(item, count)
+		var worn := boat.slots.wear[slot] if boat != null else 0
+		_slots[slot].show_stack(item, count, false, worn)
 	for place in Boat.MOST_PLACES:
 		var item_slot := _slots[Boat.PLACE + place]
 		item_slot.visible = place < places
@@ -154,12 +155,21 @@ func _draw_deck() -> void:
 		]
 	)
 	var whole := boat != null and boat.complete()
-	_deck.draw_colored_polygon(hull, HULL if whole else HULL.darkened(0.3))
+	var outside := HULL
+	if boat != null and boat.paint[0] >= 0:
+		outside = Color(BoatModels.PAINT_COLORS[boat.paint[0]])
+	_deck.draw_colored_polygon(hull, outside if whole else outside.darkened(0.3))
 	var inside := PackedVector2Array()
 	for point in hull:
 		inside.append(point.lerp(Vector2(left + length * 0.5, middle), 0.08))
 	_deck.draw_colored_polygon(inside, DECK if whole else DECK.darkened(0.3))
 	hull.append(hull[0])
+	if boat != null and boat.paint[1] >= 0:
+		var stripe := Color(BoatModels.PAINT_COLORS[boat.paint[1]])
+		var band := PackedVector2Array()
+		for point in hull:
+			band.append(point.lerp(Vector2(left + length * 0.5, middle), 0.04))
+		_deck.draw_polyline(band, stripe, 2.0)
 	_deck.draw_polyline(hull, OUTLINE, 1.0)
 	# The pilot's thwart and the tiller at the stern.
 	_deck.draw_rect(Rect2(left + 8.0, top + 3.0, 4.0, DECK_HEIGHT - 6.0), HULL.darkened(0.2))
@@ -174,8 +184,13 @@ func _describe(boat: Boat) -> String:
 	if not boat.complete():
 		return text + " " + tr("BOAT_UNFINISHED")
 	if boat.powered():
-		return text + " " + tr("BOAT_ENGINE_RUNS") % boat.fuel()
-	return text + " " + tr("BOAT_ROWED")
+		text += " " + tr("BOAT_ENGINE_RUNS") % boat.fuel()
+	else:
+		text += " " + tr("BOAT_ROWED")
+	if Nets.has_net(boat):
+		var key := " / ".join(InputNames.keys(InputBindings.NET))
+		text += " " + tr("BOAT_NET_HOW") % key
+	return text
 
 
 func _label(key: String) -> Label:

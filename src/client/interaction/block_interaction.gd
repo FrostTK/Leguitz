@@ -214,10 +214,17 @@ func place() -> void:
 
 
 ## What a right click does rather than placing: the book in hand opens, a
-## boat aimed at is boarded, the fishing rod casts. Returns whether it did.
+## boat aimed at is painted (a pot in hand; Shift: its stripe) or scraped
+## (an axe), else boarded, the fishing rod casts. Returns whether it did.
 func _instead_of_placing() -> bool:
-	if client.held_item() == Items.Id.GUIDE_BOOK:
+	var held := client.held_item()
+	if held == Items.Id.GUIDE_BOOK:
 		client.open_book()
+		return true
+	if target_boat >= 0 and (held in Items.PAINTS or Items.tool_of(held) == Items.Tool.AXE):
+		var stripe := Input.is_action_pressed(InputBindings.SPRINT)
+		client.transport.send(Msg.boat_paint(target_boat, client.inventory.selected, stripe))
+		client.player_model.swing()
 		return true
 	if target_boat >= 0:
 		client.transport.send(Msg.board(target_boat))

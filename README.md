@@ -36,7 +36,10 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Cuisine : plan de cuisine (soupe, ragoût, tarte, omelette, gâteau, crêpes, gratin, confiture, tartine, pain de farine ; le seau et le bocal restent dans la grille), moulin (farine), baratte (beurre), tonneau (jus, puis cidre), cave à fromage ; des plats à effets (régénération, rassasié, vivacité, vigueur, adresse) affichés au-dessus de la vitalité | ✅ |
 | Pêche : canne (lancer, touche, ferrer), 14 poissons selon l'eau, le climat, l'heure, la pluie et la profondeur, appâts (vers, boulettes, appât de poisson), nasses (écrevisses, crabes), algues et bois flotté, poissons grillés, soupe de poisson, sushis, poisson frit | ✅ |
 | Bateau et chantier naval : un chantier sur la rive (portique, treuil, cale qui descend dans l'eau), une coque de 2 à 5 places (poupe, sections, proue), bancs et coffres, moteur à charbon (fumée, hélice, jauge) ou avirons, mise à l'eau et retour au chantier, les animaux menés à la corde montent à bord | ✅ |
-| Filet de pêche et peinture du bateau, chien et chat, saisons | à venir |
+| Filet de pêche du bateau (jeté ou relevé à bord, prises dans les coffres, usure, raccommodage) et peinture (huile de lin et pigments, 9 couleurs, coque et bande, la hache décape) | ✅ |
+| Chien et chat, saisons | à venir |
+
+![Leguitz : le filet et la peinture : des bateaux peints (rouge à bande blanche, bleu à bande jaune, noir à bande orange), un filet jeté derrière une poupe avec ses flotteurs et sa prise, un autre plié sur la poupe ; l'écran du bateau avec le filet et son usure, le pont à sa couleur ; le filet, l'huile de lin et les pots de peinture](docs/screenshots/phase7-filet-peinture.png)
 
 ![Leguitz : le bateau : un chantier naval sur la rive avec un bateau incliné sur sa cale, un autre à l'eau ; le joueur pilote un bateau à moteur, la fumée à la cheminée, un mouton à la proue ; l'écran du chantier (coque, moteur, charbon, pont avec bancs et coffre, Mettre à l'eau) ; en 1re personne à la barre](docs/screenshots/phase7-bateau.png)
 

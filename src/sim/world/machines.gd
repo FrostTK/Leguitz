@@ -1,21 +1,22 @@
 class_name Machines
 extends RefCounted
 ## The kitchen's machines on the server (static, given the server): the
-## mill grinds grain into flour, the butter churn milk into butter, the
-## barrel fruit into juice (apple juice left longer turns into cider), the
-## cheese cellar milk into cheese; a fish trap set in the water catches,
-## for each bait it was given, what lives there (FishTable.trap_pick for
-## the water: Fishing.water_at). Each is a block by stage (STAGES:
-## empty, working, ready; ObjectShapes.STAGE_OF). Used with what it takes
-## in hand (Msg.USE_MACHINE: right click or E), an empty one takes up to
-## CAPACITY of it (a milk's bucket comes back) and works SECONDS (each item
-## for the mill; paced by WorldClock.scale_duration); ready, using it gives
-## what it made (juice and cider into glass bottles held in hand, as many
-## as there are; a trap's catches) and it empties. What a machine holds
+## mill grinds grain into flour (flax seeds into linseed oil, bottled), the
+## butter churn milk into butter, the barrel fruit into juice (apple juice
+## left longer turns into cider), the cheese cellar milk into cheese; a
+## fish trap set in the water catches, for each bait it was given, what
+## lives there (FishTable.trap_pick for the water: Fishing.water_at). Each
+## is a block by stage (STAGES: empty, working, ready;
+## ObjectShapes.STAGE_OF). Used with what it takes in hand
+## (Msg.USE_MACHINE: right click or E), an empty one takes up to CAPACITY
+## of it (a milk's bucket comes back) and works SECONDS (each item for the
+## mill; paced by WorldClock.scale_duration); ready, using it gives what it
+## made (juice and cider into glass bottles held in hand, as many as there
+## are; a trap's catches) and it empties. What a machine holds
 ## (ChunkData.machines: cell -> {"input", "inputs", "made", "count",
-## "left", "ferments"}, a ready trap's "catches": item -> count) is
-## saved with its chunk; GameServer.tick runs `update` every TICKS; broken,
-## it spills what it held (`spill`).
+## "left", "ferments"}, a ready trap's "catches": item -> count) is saved
+## with its chunk; GameServer.tick runs `update` every TICKS; broken, it
+## spills what it held (`spill`).
 
 enum Kind { MILL, CHURN, BARREL, CELLAR, TRAP }
 enum Stage { EMPTY, WORKING, READY }
@@ -37,7 +38,12 @@ const STAGES := {
 }
 ## What each machine makes of what it takes: input -> [made, count each].
 const MAKES := {
-	Kind.MILL: {Items.Id.WHEAT: [Items.Id.FLOUR, 1], Items.Id.CORN: [Items.Id.FLOUR, 1]},
+	Kind.MILL:
+	{
+		Items.Id.WHEAT: [Items.Id.FLOUR, 1],
+		Items.Id.CORN: [Items.Id.FLOUR, 1],
+		Items.Id.FLAX_SEEDS: [Items.Id.LINSEED_OIL, 1],
+	},
 	Kind.CHURN: {Items.Id.MILK_BUCKET: [Items.Id.BUTTER, 2]},
 	Kind.BARREL:
 	{
@@ -69,7 +75,12 @@ const EACH := {Kind.MILL: true, Kind.TRAP: true}
 ## Apple juice left in a barrel this much longer turns into cider.
 const CIDER_SECONDS := 480.0
 ## What comes out into glass bottles held in hand.
-const BOTTLED := {Items.Id.APPLE_JUICE: true, Items.Id.FRUIT_JUICE: true, Items.Id.CIDER: true}
+const BOTTLED := {
+	Items.Id.APPLE_JUICE: true,
+	Items.Id.FRUIT_JUICE: true,
+	Items.Id.CIDER: true,
+	Items.Id.LINSEED_OIL: true,
+}
 ## Server: a machine is reached this far at most (local units).
 const REACH_LEEWAY := 1.5
 
@@ -234,6 +245,8 @@ static func _empty(
 	var given: int = held["count"]
 	if BOTTLED.has(made):
 		if bag.items[slot] != Items.Id.GLASS_BOTTLE:
+			# What it made goes into glass bottles held in hand.
+			session.transport.send(Msg.notice("HUD_BOTTLES_NEEDED"))
 			return false
 		given = mini(given, bag.counts[slot])
 		if not GameModes.creative(server):

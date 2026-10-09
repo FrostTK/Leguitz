@@ -108,7 +108,7 @@ static func _handle_world(client: GameClient, message: Dictionary) -> void:
 			client.actions.close_if_boat_gone(message["id"])
 		Msg.BOAT_HURT:
 			client.boats.on_hurt(message["id"])
-		Msg.BOAT_NOTICE:
+		Msg.NOTICE:
 			client.hotbar.announce(TranslationServer.translate(message["key"]))
 		Msg.BOAT_SCREEN:
 			client.actions.show_boat_screen(message["yard"], message["id"])

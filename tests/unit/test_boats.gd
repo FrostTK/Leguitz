@@ -236,3 +236,130 @@ func test_lava_burns_a_boat_and_boats_are_saved() -> void:
 	_server.boats.update(_server, 0.05)
 	assert_false(_server.boats.living.has(boat.id), "burnt")
 	assert_eq(_session.boat, -1, "the pilot thrown off")
+
+
+func test_a_net_fishes_wears_and_tears() -> void:
+	_pond()
+	_send(Msg.open_yard(_yard))
+	_put(Items.Id.BOAT_STERN, Boat.STERN)
+	_put(Items.Id.BOAT_BOW, Boat.BOW)
+	_put(Items.Id.FISHING_NET, Boat.NET)
+	var boat := _server.boats.on_yard(_yard)
+	assert_true(Nets.has_net(boat), "a net in its slot")
+	_send(Msg.boat_act(Boats.Act.LAUNCH))
+	_send(Msg.board(boat.id))
+	_send(Msg.net())
+	assert_true(boat.net_down, "cast")
+	for i in 40:
+		Nets.update(_server, boat, 10.0)
+		if Nets.held(boat) >= Nets.HOLD:
+			break
+	assert_eq(Nets.held(boat), Nets.HOLD, "no chest: the net keeps its catch, up to HOLD")
+	var worn := boat.slots.wear[Boat.NET]
+	assert_true(worn > 0, "it wears")
+	Nets.update(_server, boat, 60.0)
+	assert_eq(Nets.held(boat), Nets.HOLD, "full: it catches no more")
+	var bag := _session.inventory
+	var before := 0
+	for slot in Inventory.SLOTS:
+		before += bag.counts[slot]
+	_send(Msg.net())
+	assert_false(boat.net_down, "hauled in")
+	assert_eq(Nets.held(boat), 0)
+	var after := 0
+	for slot in Inventory.SLOTS:
+		after += bag.counts[slot]
+	assert_eq(after, before + Nets.HOLD, "its catch in the bag")
+	_send(Msg.net())
+	boat.speed = Nets.SLOW + 1.0
+	worn = boat.slots.wear[Boat.NET]
+	Nets.update(_server, boat, 100.0)
+	assert_eq(Nets.held(boat), 0, "dragged fast it catches nothing")
+	var fast := boat.slots.wear[Boat.NET] - worn
+	assert_true(fast >= int(100.0 / Nets.WEAR_SECONDS * Nets.FAST_WEAR), "and wears faster")
+	boat.speed = 0.0
+	Nets.update(_server, boat, Nets.WEAR_SECONDS * Items.NET_DURABILITY)
+	assert_false(Nets.has_net(boat), "worn out: torn")
+	assert_false(boat.net_down)
+
+
+func test_a_net_fills_the_chests_aboard() -> void:
+	_pond()
+	var boat := _build()
+	_put(Items.Id.FISHING_NET, Boat.NET)
+	_send(Msg.boat_act(Boats.Act.LAUNCH))
+	_send(Msg.board(boat.id))
+	_send(Msg.net())
+	for i in 6:
+		boat.net_waiting = 0.0
+		Nets.update(_server, boat, 0.1)
+	var chest: Inventory = boat.chests[1]
+	assert_eq(chest.contents(Inventory.CHEST).size() > 0, true, "the catch in the chest")
+	assert_eq(Nets.held(boat), 0, "none left in the net")
+
+
+func test_a_boat_is_painted_and_scraped() -> void:
+	_pond()
+	var boat := _build()
+	var bag := _session.inventory
+	bag.items[0] = Items.Id.PAINT_RED
+	bag.counts[0] = 1
+	bag.wear[0] = 0
+	_send(Msg.boat_paint(boat.id, 0, false))
+	assert_eq(boat.paint[0], Items.PAINTS.find(Items.Id.PAINT_RED), "its hull red")
+	assert_eq(bag.wear[0], 1, "a coat used")
+	bag.items[1] = Items.Id.PAINT_BLUE
+	bag.counts[1] = 1
+	bag.wear[1] = Items.PAINT_COATS - 1
+	_send(Msg.boat_paint(boat.id, 1, true))
+	assert_eq(boat.paint[1], Items.PAINTS.find(Items.Id.PAINT_BLUE), "its stripe blue")
+	assert_eq(bag.items[1], Items.Id.GLASS_BOTTLE, "the last coat: the bottle left")
+	_send(Msg.boat_act(Boats.Act.LAUNCH))
+	_send(Msg.boat_act(Boats.Act.DOCK))
+	var copy := Boats.new()
+	copy.load_save(_server.boats.to_save())
+	assert_eq(copy.living[boat.id].paint, boat.paint, "kept on the shipyard, saved")
+	bag.items[2] = Items.Id.IRON_AXE
+	bag.counts[2] = 1
+	_send(Msg.boat_paint(boat.id, 2, false))
+	assert_eq(boat.paint[0], -1, "scraped back to wood")
+	assert_eq(boat.paint[1], Items.PAINTS.find(Items.Id.PAINT_BLUE), "its stripe kept")
+	assert_eq(bag.wear[2], 1, "the axe wears")
+
+
+func test_linseed_oil_paint_and_the_net_are_made() -> void:
+	var mill := Tiles.Block.MILL
+	assert_true(Machines.takes(mill, Items.Id.FLAX_SEEDS), "the mill takes flax seeds")
+	var made: Array = Machines.MAKES[Machines.Kind.MILL][Items.Id.FLAX_SEEDS]
+	assert_eq(made[0], Items.Id.LINSEED_OIL)
+	assert_true(Machines.BOTTLED.has(Items.Id.LINSEED_OIL), "into glass bottles")
+	var cases := [
+		[[Items.Id.LINSEED_OIL, Items.Id.BEETROOT], Items.Id.PAINT_RED],
+		[[Items.Id.LINSEED_OIL, Items.Id.LAPIS], Items.Id.PAINT_BLUE],
+		[[Items.Id.LINSEED_OIL, Items.Id.CHARCOAL], Items.Id.PAINT_BLACK],
+		[
+			[Items.Id.LINSEED_OIL, Items.Id.FLOWER_RED, Items.Id.FLOWER_YELLOW],
+			Items.Id.PAINT_ORANGE
+		],
+		[[Items.Id.LINSEED_OIL, Items.Id.FLOWER_RED, Items.Id.FLOWER_BLUE], Items.Id.PAINT_PURPLE],
+		[
+			[Items.Id.FISHING_NET, Items.Id.STRING, Items.Id.STRING, Items.Id.STRING],
+			Items.Id.FISHING_NET
+		],
+	]
+	for case: Array in cases:
+		var grid := Inventory.new()
+		var ingredients: Array = case[0]
+		for i in ingredients.size():
+			var cell := Inventory.CRAFT + (i / Inventory.OWN_GRID) * Inventory.GRID
+			cell += i % Inventory.OWN_GRID
+			grid.items[cell] = ingredients[i]
+			grid.counts[cell] = 1
+		if ingredients[0] == Items.Id.FISHING_NET:
+			grid.wear[Inventory.CRAFT] = 100
+		var result := grid.craft_result(Inventory.OWN_GRID)
+		assert_eq(result.x, case[1], "%s made" % Items.name_key(case[1]))
+	for paint: int in Items.PAINTS:
+		assert_eq(Items.durability(paint), Items.PAINT_COATS)
+		assert_eq(Items.max_stack(paint), 1)
+	assert_eq(Items.durability(Items.Id.FISHING_NET), Items.NET_DURABILITY)

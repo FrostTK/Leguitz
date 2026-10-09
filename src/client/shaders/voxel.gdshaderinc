@@ -33,11 +33,19 @@ uniform float view_model_fov = 70.0;
 #endif
 // How much the voxels' ambient occlusion also dims direct light.
 const float OCCLUSION_LIGHT = 0.55;
+// A boat's paint (sRGB; alpha 0: bare wood) on its PAINT and STRIPE voxels
+// (UV.y 3 and 4), shaded like the planks it covers (their brightness
+// against PAINT_LUMA).
+instance uniform vec4 paint_color = vec4(0.0);
+instance uniform vec4 stripe_color = vec4(0.0);
+const float PAINT_LUMA = 0.36;
 
 global uniform vec2 weather_wind;
 global uniform float weather_wetness;
 
 varying float foliage;
+varying float painted;
+varying float striped;
 varying float glow;
 varying vec3 tint;
 varying float sky;
@@ -47,8 +55,10 @@ vec3 srgb_to_linear(vec3 c) {
 }
 
 void vertex() {
-	glow = step(1.5, UV.y);
-	foliage = UV.y * (1.0 - glow);
+	glow = step(1.5, UV.y) - step(2.5, UV.y);
+	foliage = UV.y * (1.0 - step(1.5, UV.y));
+	painted = step(2.5, UV.y) - step(3.5, UV.y);
+	striped = step(3.5, UV.y);
 	tint = vec3(1.0);
 	float phase = 0.0;
 	sky = sky_light;
@@ -86,7 +96,13 @@ void fragment() {
 			|| hides_player(VERTEX, VIEW_MATRIX, INV_VIEW_MATRIX, cut_size, 0.6, FRAGCOORD.xy))) {
 		discard;
 	}
-	vec3 albedo = srgb_to_linear(COLOR.rgb) * tint;
+	vec3 base = COLOR.rgb;
+	vec4 coat = paint_color * painted + stripe_color * striped;
+	if (coat.a > 0.5) {
+		float luma = dot(COLOR.rgb, vec3(0.299, 0.587, 0.114));
+		base = coat.rgb * clamp(luma / PAINT_LUMA, 0.6, 1.35);
+	}
+	vec3 albedo = srgb_to_linear(base) * tint;
 	albedo = mix(albedo, vec3(0.75, 0.04, 0.03), hurt * 0.6);
 	albedo *= 1.0 - wet_darkening * weather_wetness * (1.0 - foliage * 0.5);
 	// The occlusion dims direct light a little (through the albedo) and the

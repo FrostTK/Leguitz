@@ -7,7 +7,9 @@ extends RefCounted
 ## A voxel value packs an sRGB color (24 bits) with a kind (see Kind);
 ## 0 is empty. Models stand on y = 0, centered on x and z.
 
-enum Kind { SOLID, FOLIAGE, GLOW }
+## PAINT and STRIPE: a boat's planks its paint covers (voxel.gdshader's
+## paint_color, stripe_color).
+enum Kind { SOLID, FOLIAGE, GLOW, PAINT, STRIPE }
 
 var size := Vector3i.ONE
 var voxels := PackedInt32Array()

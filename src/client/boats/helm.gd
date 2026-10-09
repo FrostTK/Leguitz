@@ -7,7 +7,8 @@ extends Node
 ## throttle, left and right the helm, sprint full throttle (the engine
 ## running); the boat moves at once (BoatBody) and the server is told
 ## (Msg.BOAT_STEER every SEND_INTERVAL); without the engine running they row.
-## Jump leaves it (Msg.LEAVE_BOAT: the server finds a bank). A gauge over
+## Jump leaves it (Msg.LEAVE_BOAT: the server finds a bank); the net key
+## casts its net or hauls it in (Msg.NET). A gauge over
 ## the pilot's head (under the crosshair in first person) tells the coal:
 ## the one burning and how many are left, or that they row.
 
@@ -69,6 +70,11 @@ func _process(delta: float) -> void:
 		player.heading = aboard.forward()
 	if free and Input.is_action_just_pressed(InputBindings.JUMP):
 		client.transport.send(Msg.leave_boat())
+	if free and Input.is_action_just_pressed(InputBindings.NET):
+		if Nets.has_net(aboard):
+			client.transport.send(Msg.net())
+		else:
+			client.hotbar.announce(tr("HUD_NO_NET"))
 
 
 ## The pilot's keys move the boat at once; the server is told.

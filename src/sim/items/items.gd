@@ -299,6 +299,19 @@ enum Id {
 	PROPELLER,
 	COAL_ENGINE,
 	BOAT_BENCH,
+	# The boat's net and paint: linseed oil (the mill's, of flax seeds), a
+	# pot of each colour.
+	FISHING_NET,
+	LINSEED_OIL,
+	PAINT_RED,
+	PAINT_YELLOW,
+	PAINT_BLUE,
+	PAINT_WHITE,
+	PAINT_PINK,
+	PAINT_GREEN,
+	PAINT_BLACK,
+	PAINT_ORANGE,
+	PAINT_PURPLE,
 }
 ## What a tool is made for (Mining.tool_for: what it breaks faster).
 enum Tool { NONE, PICKAXE, AXE, SHOVEL, SWORD, HOE }
@@ -344,6 +357,22 @@ const TOOLS := {
 const BOW_DURABILITY := 384
 const SHEARS_DURABILITY := 238
 const ROD_DURABILITY := 64
+## How much a net takes (Nets: wear in the water, catches), how many coats
+## a pot of paint gives.
+const NET_DURABILITY := 120
+const PAINT_COATS := 4
+## The pots of paint, in the order of their colours (Boat.paint).
+const PAINTS: Array[int] = [
+	Id.PAINT_RED,
+	Id.PAINT_YELLOW,
+	Id.PAINT_BLUE,
+	Id.PAINT_WHITE,
+	Id.PAINT_PINK,
+	Id.PAINT_GREEN,
+	Id.PAINT_BLACK,
+	Id.PAINT_ORANGE,
+	Id.PAINT_PURPLE,
+]
 ## Fewer of these in a stack.
 const SMALL_STACKS := {
 	Id.BUCKET: 16,
@@ -360,6 +389,7 @@ const SMALL_STACKS := {
 	Id.CAKE: 16,
 	Id.GRATIN: 16,
 	Id.FISH_SOUP: 16,
+	Id.LINSEED_OIL: 16,
 }
 ## What a food leaves in hand once eaten (milk: its bucket; honey: its
 ## bottle).
@@ -765,7 +795,7 @@ static func max_stack(item: int) -> int:
 		return 1
 	if item in [Id.GUIDE_BOOK, Id.WATERING_CAN, Id.SHEARS, Id.MILK_BUCKET, Id.FISHING_ROD]:
 		return 1
-	if item in [Id.BOAT_BOW, Id.BOAT_STERN, Id.COAL_ENGINE]:
+	if item in [Id.BOAT_BOW, Id.BOAT_STERN, Id.COAL_ENGINE, Id.FISHING_NET] or item in PAINTS:
 		return 1
 	return SMALL_STACKS.get(item, MAX_STACK)
 
@@ -800,6 +830,10 @@ static func durability(item: int) -> int:
 		return SHEARS_DURABILITY
 	if item == Id.FISHING_ROD:
 		return ROD_DURABILITY
+	if item == Id.FISHING_NET:
+		return NET_DURABILITY
+	if item in PAINTS:
+		return PAINT_COATS
 	return Armor.durability(item)
 
 

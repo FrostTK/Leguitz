@@ -8,7 +8,10 @@ extends Node3D
 ## docked). While its engine runs its propeller turns and smoke puffs
 ## from its chimney; its oars row while its pilot rows; a wake follows it.
 ## It shakes when struck (Msg.BOAT_HURT) and bursts into planks (embers)
-## when broken (burnt). `pick` finds a boat along a ray (aiming).
+## when broken (burnt). Its paint (Boat.paint) colours its hull's PAINT and
+## STRIPE voxels through the shader's instance parameters; its net shows
+## folded over its stern, or cast behind it with its catch (BoatModels
+## net_bundle, net_cast). `pick` finds a boat along a ray (aiming).
 
 const SMOOTHING := 12.0
 const SLIDE_SECONDS := 1.2
@@ -36,6 +39,9 @@ var _keys: Dictionary[int, String] = {}
 var _models: Dictionary[String, Mesh] = {}
 var _propeller: Mesh
 var _oar: Mesh
+## The net's models by how much they hold: folded, cast.
+var _bundles: Dictionary[int, Mesh] = {}
+var _casts: Dictionary[int, Mesh] = {}
 ## id -> [at, yaw] the server last told; [from at, from yaw, seconds] of a
 ## slide; seconds left shaking.
 var _goals: Dictionary[int, Array] = {}
@@ -85,6 +91,7 @@ func on_boat(data: Dictionary) -> void:
 	boats[boat.id] = boat
 	_goals[boat.id] = [boat.at, boat.yaw]
 	_build(boat)
+	_dress(boat)
 	if old == null:
 		_place_now(boat)
 
@@ -188,7 +195,7 @@ func _build(boat: Boat) -> void:
 		node = Node3D.new()
 		add_child(node)
 		_nodes[boat.id] = node
-		for part in ["hull", "propeller", "oar_left", "oar_right"]:
+		for part in ["hull", "propeller", "oar_left", "oar_right", "net_bundle", "net_cast"]:
 			var mesh := MeshInstance3D.new()
 			mesh.name = part
 			node.add_child(mesh)
@@ -212,6 +219,41 @@ func _build(boat: Boat) -> void:
 		var x := side * (Boat.WIDTH * 0.5 - 1.0) * Boat.VOXEL
 		oar.position = Vector3(x, gunwale, boat.place_along(-1) + 0.35)
 		oar.visible = boat.complete() and not boat.has_engine()
+
+
+## A boat's paint and net as they are now.
+func _dress(boat: Boat) -> void:
+	var node: Node3D = _nodes.get(boat.id)
+	if node == null:
+		return
+	var hull := node.get_node("hull") as MeshInstance3D
+	hull.set_instance_shader_parameter(&"paint_color", _paint(boat.paint[0]))
+	hull.set_instance_shader_parameter(&"stripe_color", _paint(boat.paint[1]))
+	var caught := Nets.held(boat)
+	var stern := -boat.length() * 0.5
+	var bundle := node.get_node("net_bundle") as MeshInstance3D
+	bundle.visible = Nets.has_net(boat) and not boat.net_down
+	if bundle.visible:
+		if not _bundles.has(caught):
+			_bundles[caught] = _mesh(BoatModels.net_bundle(caught))
+		bundle.mesh = _bundles[caught]
+		var rail := (BoatModels.GUNWALE - BoatModels.WATER_LINE - 2) * Boat.VOXEL
+		bundle.position = Vector3(0.2, rail, stern - 0.12)
+	var cast := node.get_node("net_cast") as MeshInstance3D
+	cast.visible = Nets.has_net(boat) and boat.net_down
+	if cast.visible:
+		if not _casts.has(caught):
+			_casts[caught] = _mesh(BoatModels.net_cast(caught))
+		cast.mesh = _casts[caught]
+		cast.position = Vector3(0.0, -(BoatModels.NET_DEPTH - 0.5) * Boat.VOXEL, stern - 0.05)
+		cast.rotation.y = PI
+
+
+## A paint's colour for the shader (alpha 0: bare wood).
+static func _paint(index: int) -> Color:
+	if index < 0 or index >= BoatModels.PAINT_COLORS.size():
+		return Color(0.0, 0.0, 0.0, 0.0)
+	return Color(BoatModels.PAINT_COLORS[index])
 
 
 func _mesh(grid: VoxelGrid) -> Mesh:

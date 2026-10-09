@@ -17,7 +17,10 @@ extends RefCounted
 ## full throttle), tires a rowing pilot, and burns a boat touching lava.
 ## Struck BREAK_HITS times (an axe twice as hard; Msg.BOAT_HIT) with nobody
 ## aboard, a boat breaks into its parts and what it carries; so does the one
-## on a shipyard broken. Every player is told of every boat (Msg.BOAT,
+## on a shipyard broken. Its net fishes (Nets: Msg.NET casts it or hauls
+## it in). A pot of paint in hand paints its hull, or its stripe (Shift; an
+## axe scrapes it: Msg.BOAT_PAINT; a pot gives Items.PAINT_COATS coats, then
+## its glass bottle is left). Every player is told of every boat (Msg.BOAT,
 ## BOAT_MOVE, BOAT_REMOVE, BOAT_HURT).
 
 enum Act { LAUNCH, DOCK, OPEN_CHEST }
@@ -54,6 +57,8 @@ const MESSAGES: Array[String] = [
 	Msg.LEAVE_BOAT,
 	Msg.BOAT_STEER,
 	Msg.BOAT_HIT,
+	Msg.NET,
+	Msg.BOAT_PAINT,
 ]
 
 var living: Dictionary[int, Boat] = {}
@@ -148,6 +153,10 @@ func handle(server: GameServer, session: GameServer.PlayerSession, message: Dict
 			_steer(session, message)
 		Msg.BOAT_HIT:
 			_hit(server, session, int(message.get("id", -1)), int(message.get("slot", -1)))
+		Msg.NET:
+			Nets.toggle(server, session)
+		Msg.BOAT_PAINT:
+			_paint(server, session, message)
 	return true
 
 
@@ -165,6 +174,7 @@ func update(server: GameServer, delta: float) -> void:
 		_check_riders(server, boat)
 		if boat.yard != Boat.NO_YARD:
 			continue
+		Nets.update(server, boat, delta)
 		_seat_riders(server, boat)
 		if boat.pilot < 0:
 			boat.throttle = 0.0
@@ -188,7 +198,7 @@ func board(server: GameServer, session: GameServer.PlayerSession, id: int) -> vo
 		return
 	var place := -1 if boat.pilot < 0 else boat.free_bench()
 	if place == -1 and boat.pilot >= 0:
-		session.transport.send(Msg.boat_notice("HUD_BOAT_FULL"))
+		session.transport.send(Msg.notice("HUD_BOAT_FULL"))
 		return
 	if place < 0:
 		boat.pilot = session.id
@@ -328,7 +338,11 @@ func _click(server: GameServer, session: GameServer.PlayerSession, message: Dict
 	var shift: bool = message.get("shift", false)
 	var refused := boat.click(session.inventory, slot, right, shift, at_yard)
 	if refused.begins_with("HUD_"):
-		session.transport.send(Msg.boat_notice(refused))
+		session.transport.send(Msg.notice(refused))
+	if not Nets.has_net(boat):
+		# Its net taken out: hauled in.
+		boat.net_down = false
+		Nets.haul(server, session, boat)
 	session.transport.send(Msg.inventory(session.inventory))
 	if at_yard:
 		var front := ObjectShapes.front_of(Voxels.block_of(server.world.voxel_at(boat.yard)))
@@ -373,7 +387,7 @@ func _launch(server: GameServer, session: GameServer.PlayerSession, boat: Boat) 
 	var water := Vector3(middle.x, row - GameConst.SEA_LEVEL + 1.0, middle.y)
 	var yaw := atan2(front.x, front.y)
 	if row == -1 or not BoatBody.fits(boat, water, yaw, row, voxel_at):
-		session.transport.send(Msg.boat_notice("HUD_BOAT_NO_ROOM"))
+		session.transport.send(Msg.notice("HUD_BOAT_NO_ROOM"))
 		return
 	boat.yard = Boat.NO_YARD
 	boat.at = Vector3(water.x, BoatBody.surface_at(water, row, voxel_at), water.z)
@@ -387,7 +401,7 @@ func _launch(server: GameServer, session: GameServer.PlayerSession, boat: Boat) 
 ## Up the slipway of the nearest free shipyard within DOCK_RANGE.
 func _dock(server: GameServer, session: GameServer.PlayerSession, boat: Boat) -> void:
 	if boat.yard != Boat.NO_YARD or not boat.is_empty():
-		session.transport.send(Msg.boat_notice("HUD_BOAT_ABOARD"))
+		session.transport.send(Msg.notice("HUD_BOAT_ABOARD"))
 		return
 	var best := GameServer.NO_CELL
 	var nearest := INF
@@ -405,7 +419,7 @@ func _dock(server: GameServer, session: GameServer.PlayerSession, boat: Boat) ->
 					nearest = away
 					best = cell
 	if best == GameServer.NO_CELL or nearest > DOCK_RANGE + boat.length() * 0.5:
-		session.transport.send(Msg.boat_notice("HUD_BOAT_NO_YARD"))
+		session.transport.send(Msg.notice("HUD_BOAT_NO_YARD"))
 		return
 	boat.yard = best
 	cradle(boat, best, ObjectShapes.front_of(Voxels.block_of(server.world.voxel_at(best))))
@@ -532,6 +546,35 @@ static func _unseat(animal: Animal, spot: Vector3) -> void:
 	animal.seated = -1
 	animal.body.place(Vector2(spot.x, spot.z) * GameConst.TILE_SIZE, spot.y)
 	animal.dirty = true
+
+
+## A player paints a boat's hull or stripe with the pot in hand, or
+## scrapes it with an axe (see the class).
+func _paint(server: GameServer, session: GameServer.PlayerSession, message: Dictionary) -> void:
+	var boat: Boat = living.get(int(message.get("id", -1)))
+	if boat == null or not session.alive():
+		return
+	if session.boat != boat.id and _distance(session, boat) > REACH + boat.length() * 0.5:
+		return
+	var bag := session.inventory
+	var slot := clampi(int(message.get("slot", 0)), 0, Inventory.HOTBAR - 1)
+	var zone := 1 if message.get("stripe", false) else 0
+	var item := bag.items[slot]
+	var creative := GameModes.creative(server)
+	if item in Items.PAINTS:
+		boat.paint[zone] = Items.PAINTS.find(item)
+		if not creative and bag.wear_out(slot):
+			# Its last coat: the glass bottle is left.
+			bag.items[slot] = Items.Id.GLASS_BOTTLE
+			bag.counts[slot] = 1
+	elif Items.tool_of(item) == Items.Tool.AXE and boat.paint[zone] >= 0:
+		boat.paint[zone] = -1
+		if not creative:
+			bag.wear_out(slot)
+	else:
+		return
+	session.transport.send(Msg.inventory(bag))
+	server.broadcast(Msg.boat(boat))
 
 
 ## A player strikes a boat with the hotbar slot `slot` in hand (see the

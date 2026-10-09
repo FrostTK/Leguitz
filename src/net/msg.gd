@@ -55,6 +55,8 @@ const BOARD := "board"
 const LEAVE_BOAT := "leave_boat"
 const BOAT_STEER := "boat_steer"
 const BOAT_HIT := "boat_hit"
+const NET := "net"
+const BOAT_PAINT := "boat_paint"
 
 ## map_request() row for a map of the surface.
 const MAP_SURFACE := -1
@@ -96,7 +98,7 @@ const BOAT := "boat"
 const BOAT_MOVE := "boat_move"
 const BOAT_REMOVE := "boat_remove"
 const BOAT_HURT := "boat_hurt"
-const BOAT_NOTICE := "boat_notice"
+const NOTICE := "notice"
 const BOAT_SCREEN := "boat_screen"
 
 
@@ -293,6 +295,17 @@ static func boat_steer(boat: Boat) -> Dictionary:
 	}
 
 
+## A player aboard casts their boat's net or hauls it in (Nets).
+static func net() -> Dictionary:
+	return {"t": NET}
+
+
+## The player paints a boat with the pot of hotbar slot `slot` (scrapes it
+## with an axe): its hull, or its stripe.
+static func boat_paint(id: int, slot: int, stripe: bool) -> Dictionary:
+	return {"t": BOAT_PAINT, "id": id, "slot": slot, "stripe": stripe}
+
+
 ## The player strikes a boat with the hotbar slot `slot` in hand.
 static func boat_hit(id: int, slot: int) -> Dictionary:
 	return {"t": BOAT_HIT, "id": id, "slot": slot}
@@ -327,9 +340,9 @@ static func boat_hurt(id: int) -> Dictionary:
 	return {"t": BOAT_HURT, "id": id}
 
 
-## Something to tell the player about boats (a HUD key).
-static func boat_notice(key: String) -> Dictionary:
-	return {"t": BOAT_NOTICE, "key": key}
+## Something to tell the player (a HUD key).
+static func notice(key: String) -> Dictionary:
+	return {"t": NOTICE, "key": key}
 
 
 ## The boat screen to show: a shipyard's (`yard`; NO_CELL: a boat's own)

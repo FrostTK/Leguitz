@@ -768,6 +768,29 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   InventoryActions.open_yard/open_boat/show_boat_screen). Items and recipes (at the workbench):
   SHIPYARD, BOAT_BOW, BOAT_SECTION, BOAT_STERN, BOILER, PROPELLER, COAL_ENGINE, BOAT_BENCH. The
   book's Boats chapter (GuideBook._boats).
+- Nets and paint (phase 7, step 9B): the FISHING_NET (string and iron at the workbench; mended
+  with three strings: a new one; Items.NET_DURABILITY) goes in Boat.NET (its wear in the slot's,
+  kept by Boat.click both ways; BoatPanel shows its bar). `Nets` (src/sim/boats, static, run by
+  Boats.update even with nobody aboard): Msg.NET (the NET key, R, InputBindings.NET; Helm) casts it
+  or hauls it in (Boat.net_down; hauled, Boat.net_catch goes to that player); taken out of its slot
+  it is hauled in. Cast it wears a point every WEAR_SECONDS (FAST_WEAR times as fast over SLOW
+  tiles a second, catching nothing then) and CATCH_WEAR a catch; over DEPTH water, slow, a catch
+  every CATCH_SECONDS (FishTable.pick for Fishing.water_at, no bait) goes into the first chest
+  aboard with room (`_put`, the open chest screens told), else the net keeps up to HOLD; worn out
+  it tears (HUD_NET_TORN, its catch lost). Real seconds. Paint: LINSEED_OIL (the mill grinds
+  FLAX_SEEDS into it, Machines.BOTTLED: taken into glass bottles; a ready machine's bottles missing:
+  Msg.NOTICE HUD_BOTTLES_NEEDED, Msg.notice being any HUD key) and a pigment (Recipes.REDS, BLUES,
+  COALS, the flowers, cactus; mixed: orange, purple) make a pot (Items.PAINTS, durability
+  PAINT_COATS: its coats; the last leaves its GLASS_BOTTLE). The right click on a boat with a pot
+  (BlockInteraction._instead_of_placing; Shift: the stripe) sends Msg.BOAT_PAINT: Boat.paint
+  [hull, stripe] (indices of Items.PAINTS, -1 bare; saved, kept on a shipyard, lost broken); an
+  axe scrapes it. The shader paints it: VoxelGrid.Kind PAINT and STRIPE (VoxelMesher UV.y 3 and
+  4; voxel.gdshaderinc `painted`/`striped`, instance uniforms paint_color and stripe_color, sRGB,
+  alpha 0 bare; the plank's brightness kept, PAINT_LUMA): BoatModels marks the strakes over the
+  water line PAINT, the top strake, gunwale and stem STRIPE, PAINT_COLORS; BoatsView._dress sets
+  them per hull (set_instance_shader_parameter), and shows the net folded over the stern
+  (BoatModels.net_bundle) or cast behind it (net_cast, its catch in it, cached by count); the
+  boat screen draws the deck in its paint. The book's Boats chapter (net, paint, linseed oil).
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made

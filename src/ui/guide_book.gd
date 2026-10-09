@@ -397,6 +397,9 @@ static func _boats() -> Array:
 		_icon(Items.Id.BOAT_SECTION, _t("BOOK_BOATS_HULL")),
 		_icon(Items.Id.COAL_ENGINE, _t("BOOK_BOATS_ENGINE")),
 		_icon(Items.Id.BOAT_BENCH, _t("BOOK_BOATS_PLACES")),
+		_icon(Items.Id.FISHING_NET, _t("BOOK_BOATS_NET")),
+		_icon(Items.Id.PAINT_RED, _t("BOOK_BOATS_PAINT")),
+		_icon(Items.Id.LINSEED_OIL, _t("BOOK_BOATS_OIL")),
 		_heading("BOOK_BOATS_SAILING"),
 		_text("BOOK_BOATS_SAIL"),
 		_text("BOOK_BOATS_DOCK"),
@@ -615,5 +618,6 @@ static func _t(key: String) -> String:
 		"sprint": " / ".join(InputNames.keys(InputBindings.SPRINT)),
 		"break": String(TranslationServer.translate("MOUSE_LEFT")).to_lower(),
 		"chat": " / ".join(InputNames.keys(InputBindings.CHAT)),
+		"net": " / ".join(InputNames.keys(InputBindings.NET)),
 	}
 	return text.format(keys)

@@ -9,7 +9,10 @@ extends RefCounted
 ## radians, its bow towards +z at 0; `speed`: tiles a second along it) or
 ## the shipyard holding it (`yard`), its pilot and who sits on its places
 ## (`seats`: place -> a player's id, or -id for an animal), the coal burning
-## (`burn`: seconds left of it). The hull is a bow, its sections and a stern
+## (`burn`: seconds left of it), its net (in NET, its wear in the slot's:
+## cast or not, `net_down`; what it holds, `net_catch`; see Nets), the
+## paint on its hull and on its stripe (`paint`: indices of Items.PAINTS,
+## -1 bare wood). The hull is a bow, its sections and a stern
 ## (lengths in model voxels, 1/16 tile): a place in the stern, one in each
 ## section, one in the bow (2 + sections), the pilot at the stern's end,
 ## the engine behind them. Shared: the pilot's client steps its copy
@@ -56,6 +59,12 @@ var burn := 0.0
 ## What the pilot asks: the throttle (-1 astern to 1), full throttle.
 var throttle := 0.0
 var full := false
+var net_down := false
+var net_catch := {}
+var paint := PackedInt32Array([-1, -1])
+## Seconds towards the net's next wear, before its next catch (server).
+var net_wearing := 0.0
+var net_waiting := 0.0
 
 
 ## Whether `item` goes in a slot.
@@ -72,7 +81,7 @@ static func takes(slot: int, item: int) -> bool:
 		FUEL:
 			return item in COALS
 		NET:
-			return false
+			return item == Items.Id.FISHING_NET
 	return slot >= PLACE and slot < SLOT_COUNT and item in [Items.Id.BOAT_BENCH, Items.Id.CHEST]
 
 
@@ -219,6 +228,8 @@ func click(bag: Inventory, slot: int, right: bool, shift: bool, at_yard: bool) -
 		)
 		if amount <= 0:
 			return "-"
+		if slots.items[slot] == Items.Id.NONE:
+			slots.wear[slot] = bag.wear[Inventory.CURSOR]
 		slots.items[slot] = held
 		slots.counts[slot] += amount
 		bag.take(Inventory.CURSOR, amount)
@@ -228,8 +239,11 @@ func click(bag: Inventory, slot: int, right: bool, shift: bool, at_yard: bool) -
 	if refused != "" or bag.counts[Inventory.CURSOR] != 1:
 		return refused if refused != "" else "-"
 	var swapped := slots.items[slot]
+	var worn := slots.wear[slot]
 	slots.items[slot] = held
+	slots.wear[slot] = bag.wear[Inventory.CURSOR]
 	bag.items[Inventory.CURSOR] = swapped
+	bag.wear[Inventory.CURSOR] = worn
 	_settle(slot)
 	return ""
 
@@ -263,6 +277,9 @@ func to_dict() -> Dictionary:
 		"pilot": pilot,
 		"seats": seats.duplicate(),
 		"burn": burn,
+		"net_down": net_down,
+		"net_catch": net_catch.duplicate(),
+		"paint": paint,
 	}
 
 
@@ -284,6 +301,14 @@ static func from_dict(data: Dictionary) -> Boat:
 	for place: int in seated:
 		boat.seats[place] = int(seated[place])
 	boat.burn = float(data.get("burn", 0.0))
+	boat.net_down = data.get("net_down", false)
+	var caught: Dictionary = data.get("net_catch", {})
+	for item: int in caught:
+		if Items.is_valid(item):
+			boat.net_catch[item] = int(caught[item])
+	var painted: PackedInt32Array = data.get("paint", PackedInt32Array([-1, -1]))
+	for zone in mini(painted.size(), 2):
+		boat.paint[zone] = clampi(painted[zone], -1, Items.PAINTS.size() - 1)
 	return boat
 
 

@@ -10,7 +10,12 @@ extends RefCounted
 ## tiller) through its sections to its bow rising to a stem post; a thwart
 ## for the pilot, a bench or a chest on each place; with an engine, a riveted
 ## iron boiler behind the pilot and its chimney. Its propeller and oars are
-## models of their own (moved by BoatsView). The parts' items.
+## models of their own (moved by BoatsView). Its strakes over the water
+## line are PAINT voxels, its top strake, gunwale and stem STRIPE ones: the
+## shader paints them (PAINT_COLORS, by Items.PAINTS). The net folded on
+## its stern (`net_bundle`) or cast behind it (`net_cast`), floats on the
+## water and its catch in it. The parts' items, the net, linseed oil, pots
+## of paint.
 
 const WOOD := ["#5a3a1e", "#76502c", "#946a3c", "#b08650"]
 const RAIL := "#c89a5e"
@@ -20,6 +25,23 @@ const BRASS := ["#8a6a1e", "#c49a32", "#e8c45a"]
 const COPPER := ["#7a3a1c", "#b9612d", "#e2894a"]
 const ROPE := "#c8b07a"
 const CHEST_WOOD := ["#7a5130", "#9a6a3c", "#b37f4b"]
+## The paints' colours (sRGB), in the order of Items.PAINTS.
+const PAINT_COLORS := [
+	"#b8322a",
+	"#e2b42e",
+	"#2e5aa8",
+	"#ebe6dc",
+	"#e07a9a",
+	"#3e8a3a",
+	"#2a2a2e",
+	"#e0782a",
+	"#7a3a9a"
+]
+const NET := ["#c8b98e", "#a8996e"]
+const FLOATS := ["#e8a020", "#d8402a"]
+const CAUGHT := ["#9aa8b0", "#b8a060", "#7e9eae"]
+const OIL := ["#c89a28", "#e6bc40"]
+const GLASS := ["#8eb4c6", "#c4dce6"]
 ## The water line, the gunwale and the benches (voxels over the keel).
 const WATER_LINE := 3
 const GUNWALE := 9
@@ -29,6 +51,8 @@ const CHIMNEY := 19
 const BANK := 16
 const SLIPWAY := 48
 const YARD_WIDTH := 26
+## A cast net: how deep it hangs, where its floats lie (voxels).
+const NET_DEPTH := 5
 
 
 ## The model of a boat block (null for others).
@@ -57,11 +81,18 @@ static func item(item_id: int) -> VoxelGrid:
 			return _engine_item()
 		Items.Id.BOAT_BENCH:
 			return _bench_item()
+		Items.Id.FISHING_NET:
+			return net_bundle(0)
+		Items.Id.LINSEED_OIL:
+			return _jar(OIL, false)
+	if item_id in Items.PAINTS:
+		var color: String = PAINT_COLORS[Items.PAINTS.find(item_id)]
+		return _jar([Color(color).darkened(0.2).to_html(false), color], true)
 	return null
 
 
-static func _v(hex: String) -> int:
-	return VoxelGrid.voxel(Color(hex))
+static func _v(hex: String, kind := VoxelGrid.Kind.SOLID) -> int:
+	return VoxelGrid.voxel(Color(hex), kind)
 
 
 ## A key for a boat's look (BoatsView builds each once).
@@ -128,7 +159,8 @@ static func _part(stern: int, sections: int, bow: int) -> VoxelGrid:
 				grid.set_voxel(Vector3i(x, y, z), _plank(x, y, z, side))
 		if half < 2.5 and bow == 1 and z >= bow_from:
 			# The stem post, up over the gunwale.
-			grid.box(Vector3i(9, bottom, z), Vector3i(10, GUNWALE + 1, z), _v(WOOD[1]))
+			var stem := _v(WOOD[1], VoxelGrid.Kind.STRIPE)
+			grid.box(Vector3i(9, bottom, z), Vector3i(10, GUNWALE + 1, z), stem)
 	if stern == 1:
 		# The rudder behind the transom, its tiller forward over the stern.
 		grid.box(Vector3i(9, 0, 0), Vector3i(10, 6, 0), _v(WOOD[0]))
@@ -144,10 +176,12 @@ static func _plank(x: int, y: int, z: int, side: bool) -> int:
 	if y < WATER_LINE:
 		return _v(TAR[(z / 3 + y) % 2])
 	if y == GUNWALE:
-		return _v(RAIL)
+		return _v(RAIL, VoxelGrid.Kind.STRIPE)
+	if y == GUNWALE - 1:
+		return _v(WOOD[2], VoxelGrid.Kind.STRIPE)
 	if (z / 6 + y) % 5 == 0:
-		return _v(WOOD[0])
-	return _v(WOOD[2] if y % 3 == 0 else WOOD[1])
+		return _v(WOOD[0], VoxelGrid.Kind.PAINT)
+	return _v(WOOD[2] if y % 3 == 0 else WOOD[1], VoxelGrid.Kind.PAINT)
 
 
 ## A thwart across the hull (a bench) at `z`.
@@ -217,6 +251,72 @@ static func oar() -> VoxelGrid:
 	grid.pivot = Vector2(1.5, 8.0)
 	grid.box(Vector3i(1, 0, 0), Vector3i(1, 0, 19), _v(WOOD[3]))
 	grid.box(Vector3i(0, 0, 20), Vector3i(2, 0, 25), _v(WOOD[2]))
+	return grid
+
+
+## The net folded: a bundle of mesh, a row of floats on it, `caught`
+## things showing (at most Nets.HOLD).
+static func net_bundle(caught: int) -> VoxelGrid:
+	var grid := VoxelGrid.new(Vector3i(12, 6, 8))
+	grid.pivot = Vector2(6.0, 4.0)
+	var mesh := func(p: Vector3i) -> int: return _v(NET[(p.x + p.y + p.z) % 2])
+	grid.ellipsoid(Vector3(6.0, 2.0, 4.0), Vector3(5.6, 2.2, 3.4), mesh)
+	for x in range(1, 11, 2):
+		grid.set_voxel(Vector3i(x, 4, 2), _v(FLOATS[(x / 2) % 2]))
+	for i in mini(caught, 4):
+		grid.box(Vector3i(2 + i * 2, 3, 5), Vector3i(3 + i * 2, 3, 6), _v(CAUGHT[i % 3]))
+	return grid
+
+
+## The net cast behind the stern (its front at z 0, the water's surface at
+## y FLOAT_LINE): a curve of floats on the water, the mesh hanging under
+## it in a bag, `caught` things in it (at most Nets.HOLD).
+static func net_cast(caught: int) -> VoxelGrid:
+	var grid := VoxelGrid.new(Vector3i(28, NET_DEPTH + 2, 22))
+	grid.pivot = Vector2(14.0, 0.0)
+	var middle := 14.0
+	for z in range(2, 22):
+		var t := (z - 2.0) / 19.0
+		var half := 12.5 * sin(t * PI * 0.5 + 0.3) * (1.0 - t * 0.45)
+		for x: int in [roundi(middle - half), roundi(middle + half) - 1]:
+			if z % 2 == 0:
+				grid.set_voxel(Vector3i(x, NET_DEPTH, z), _v(FLOATS[(z / 2) % 2]))
+			for y in range(1, NET_DEPTH):
+				if (y + z) % 2 == 0:
+					grid.set_voxel(Vector3i(x, y, z), _v(NET[1]))
+		if z % 3 == 0:
+			for x in range(roundi(middle - half), roundi(middle + half)):
+				if x % 2 == 0:
+					grid.set_voxel(Vector3i(x, 1 + int(absf(x - middle) / 4.0) % 2, z), _v(NET[0]))
+	# The ropes from the stern to the net's ends.
+	for side: float in [-1.0, 1.0]:
+		grid.line(
+			Vector3(middle + side * 2.0, NET_DEPTH + 1, 0.5),
+			Vector3(middle + side * 10.0, NET_DEPTH, 3.5),
+			0.0,
+			_v(NET[1])
+		)
+	for i in mini(caught, Nets.HOLD):
+		var at := Vector3i(roundi(middle) - 6 + (i % 4) * 3, 2 + i / 4, 12 + (i % 3) * 2)
+		grid.box(at, at + Vector3i(2, 0, 0), _v(CAUGHT[i % 3]))
+	return grid
+
+
+## A glass jar of oil or paint (`colors`: dark, light), corked; paint has
+## a brush in it.
+static func _jar(colors: Array, brush: bool) -> VoxelGrid:
+	var grid := VoxelGrid.new(Vector3i(8, 12, 8))
+	var middle := Vector2(4.0, 4.0)
+	grid.cylinder(middle, 3.2, 0, 6, _v(colors[0]))
+	grid.disc(middle, 3.2, 6, _v(colors[1]))
+	# A glint of the glass down one side.
+	grid.box(Vector3i(6, 1, 5), Vector3i(6, 5, 5), _v(GLASS[1]))
+	grid.cylinder(middle, 1.6, 7, 8, _v(GLASS[0]))
+	if brush:
+		grid.box(Vector3i(4, 7, 4), Vector3i(4, 11, 4), _v(WOOD[2]))
+		grid.box(Vector3i(3, 7, 3), Vector3i(5, 8, 5), _v(colors[1]))
+	else:
+		grid.disc(middle, 1.4, 9, _v(CHEST_WOOD[1]))
 	return grid
 
 
