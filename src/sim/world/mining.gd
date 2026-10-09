@@ -131,6 +131,7 @@ const BLOCK_SECONDS := {
 	Tiles.Block.BARREL: 2.0,
 	Tiles.Block.CHEESE_CELLAR: 2.0,
 	Tiles.Block.FISH_TRAP: 0.6,
+	Tiles.Block.SHIPYARD: 3.0,
 }
 ## Trees by hand: chopping a trunk takes a while (a young one less).
 const TREE_SECONDS := 3.5
@@ -197,6 +198,7 @@ const AXE_BLOCKS := {
 	Tiles.Block.BARREL: true,
 	Tiles.Block.CHEESE_CELLAR: true,
 	Tiles.Block.FISH_TRAP: true,
+	Tiles.Block.SHIPYARD: true,
 }
 const PICKAXE_BLOCKS := {
 	Tiles.Block.ROCK: true,
@@ -325,6 +327,12 @@ static func placement(
 			if _bench_room(start, voxel_at) and _bench_room(start + step, voxel_at):
 				return {start: Voxels.of_block(left), start + step: end}
 		return {}
+	if kind == Tiles.Block.SHIPYARD:
+		# Facing the water (Boats.water_side), not the player.
+		var water := Boats.water_side(cell, voxel_at, -front)
+		if water == Vector2i.ZERO or not _bench_room(cell, voxel_at):
+			return {}
+		return {cell: Voxels.of_block(ObjectShapes.facing(kind, water))}
 	if kind != -1:
 		if not _bench_room(cell, voxel_at):
 			return {}
@@ -439,6 +447,7 @@ static func opens(voxel: int) -> bool:
 		or ObjectShapes.is_chest(block)
 		or ObjectShapes.furnace_kind(block) != -1
 		or ObjectShapes.is_kitchen(block)
+		or ObjectShapes.is_shipyard(block)
 	)
 
 

@@ -26,6 +26,7 @@ const CHAPTERS: Array[String] = [
 	"BOOK_CHAPTER_SURVIVAL",
 	"BOOK_CHAPTER_ANIMALS",
 	"BOOK_CHAPTER_FISHING",
+	"BOOK_CHAPTER_BOATS",
 	"BOOK_CHAPTER_MONSTERS",
 	"BOOK_CHAPTER_COMBAT",
 	"BOOK_CHAPTER_MODES",
@@ -73,6 +74,7 @@ static func chapters() -> Array[Array]:
 		_survival(),
 		_animals(),
 		_fishing(),
+		_boats(),
 		_monsters(),
 		_combat(),
 		_modes(),
@@ -383,6 +385,22 @@ static func _fishing() -> Array:
 	entries.append(_icon(Items.Id.SEAWEED, _t("BOOK_FISHING_JUNK")))
 	entries.append(_icon(Items.Id.COOKED_SALMON, _t("BOOK_FISHING_COOK")))
 	return entries
+
+
+## Boats: the shipyard and the hull, the engine, the places, sailing,
+## docking and breaking.
+static func _boats() -> Array:
+	return [
+		_title("BOOK_CHAPTER_BOATS"),
+		_text("BOOK_BOATS_INTRO"),
+		_icon(Items.Id.SHIPYARD, _t("BOOK_BOATS_YARD")),
+		_icon(Items.Id.BOAT_SECTION, _t("BOOK_BOATS_HULL")),
+		_icon(Items.Id.COAL_ENGINE, _t("BOOK_BOATS_ENGINE")),
+		_icon(Items.Id.BOAT_BENCH, _t("BOOK_BOATS_PLACES")),
+		_heading("BOOK_BOATS_SAILING"),
+		_text("BOOK_BOATS_SAIL"),
+		_text("BOOK_BOATS_DOCK"),
+	]
 
 
 ## A fish's entry: its name, its waters, the climate and the time it

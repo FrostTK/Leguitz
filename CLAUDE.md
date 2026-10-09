@@ -721,6 +721,53 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   lying on its side (patterns, tails, fins; grilled browned with grill marks), crayfish, crabs,
   baits, seaweed, driftwood, the dishes. The book's Fishing chapter (GuideBook._fishing,
   `_fish_text` from FishTable).
+- Boats (phase 7, step 9A; `src/sim/boats/`, `src/client/boats/`): the SHIPYARD (a facing kind,
+  SHIPYARD/_WEST/_NORTH/_EAST, ObjectShapes.is_shipyard, NON_SOLID; Mining.opens; placed on a bank
+  facing the water, not the player: Mining.placement uses Boats.water_side, LAUNCH_ROOM tiles of
+  water ahead a row or two down, `launch_row`; its model sinks a level, ObjectShapes.SUNK, the
+  slipway going down into the water, BoatModels.shipyard). A `Boat` (shared): its parts in `slots`
+  (an Inventory: BOW, SECTIONS 0 to MOST_SECTIONS, STERN, ENGINE, FUEL, NET for 9B, then a place
+  each from PLACE: BOAT_BENCH or CHEST, `chests` by place), `places()` 2 + sections, `length()`
+  from BOW/SECTION/STERN_LENGTH (model voxels), `at` (its middle at the water's surface), `yaw`
+  (bow towards (sin, cos)), `speed`, `yard` (NO_YARD afloat), `pilot` and `seats` (place -> a
+  player's id, -id an animal), `burn` (seconds of the coal burning), `seat(place)` (-1 the
+  pilot's), `click` (Minecraft-like, its rules in `takes`/`holds`/`refusal`: the hull only at a
+  shipyard, a section only with the last place empty, a chest only empty, a bench nobody sits on;
+  no client prediction), to_dict/from_dict. `BoatBody` (shared, static): `step` (throttle -1..1,
+  steer, full: ROW_SPEED, ENGINE_SPEED with Boat.powered, FULL_SPEED; pushes, DRAG, TURN slower
+  the longer, reversed astern; flowing water carries it, `current_at`), `fits` (its `hull_points`
+  over water on its row, nothing solid over them: land and ice stop it), `touches_lava`,
+  `surface_at`, `water_row`. `Boats` (held by GameServer.boats, saved in boats.cfg by
+  WorldStorage.read_boats/save_boats; messages through `handle`, GameServer's fallback):
+  Msg.OPEN_YARD / OPEN_BOAT (PlayerSession.yard_open, boat_open; answered by Msg.BOAT_SCREEN),
+  BOAT_CLICK (a shipyard makes a boat when a part goes on its empty slipway, lets go of an
+  emptied one; `cradle` puts it along the slipway), BOAT_ACT (Act.LAUNCH: onto the water in front
+  if the hull fits; DOCK: up the nearest free shipyard within DOCK_RANGE, nobody aboard;
+  OPEN_CHEST: a boat's chest opened as a chest whose cell is `chest_cell`, row CHEST_ROW and
+  under: GameServer._open_chest/_chest_changed), BOARD (the pilot's place, else a free bench; the
+  animals the player leads, Animal.leader within LEAD_RANGE, take free benches from the bow,
+  Creature.seated, skipped by Creatures.update), LEAVE_BOAT (onto the nearest standable tile
+  within LANDING, else into the water; Msg.PLAYER_TELEPORT; their animals with them; passing out
+  leaves too, Survival._pass_out), BOAT_STEER (the pilot's report of BoatBody's step, refused
+  past 2 tiles: BOAT_MOVE `correct`), BOAT_HIT (BREAK_HITS, an axe twice; nobody aboard; breaks
+  into its parts and what it carries; so does a broken shipyard's, `yard_broken`). `update`:
+  riders checked and kept on their seats (PlayerSession.boat, seat; no walking effort aboard),
+  coal burnt while the pilot pushes (COAL_SECONDS each, FULL_BURN), rowing tires (ROW_EFFORT),
+  lava burns it (its chests' contents spill), BOAT_MOVE every MOVE_TICKS. Client: `BoatsView`
+  (world root; `boats` from Msg.BOAT, `mine()`, a model per look built at runtime,
+  BoatModels.key_of/boat; the pilot's boat where Helm steps it, the others eased; sliding along
+  the slipway, lying on it bow down, SLIPWAY_PITCH; propeller turning, smoke puffs from the
+  chimney in local units drawn outside the root, oars rowing without an engine, a wake, a shake
+  when struck, `pick`/`bounds_of` for aiming), `Helm` (aboard: LocalPlayer.aboard, the body put
+  on its seat, PlayerModel.seated/legs_out/rowing; the pilot's movement keys are the throttle
+  and the helm, sprint full throttle, BoatBody stepped at once, Msg.BOAT_STEER; jump leaves; a
+  coal gauge, or "rowing"), BlockInteraction (`target_boat`: place boards, break strikes, use
+  opens; aboard, use opens its screen; `_instead_of_placing`), BoatPanel (src/ui; in
+  InventoryScreen.open_boat: hull row at a shipyard, engine, coal, the net's dim place, the deck
+  drawn with a slot per place and a chest's Open button, Launch / Back to the shipyard;
+  InventoryActions.open_yard/open_boat/show_boat_screen). Items and recipes (at the workbench):
+  SHIPYARD, BOAT_BOW, BOAT_SECTION, BOAT_STERN, BOILER, PROPELLER, COAL_ENGINE, BOAT_BENCH. The
+  book's Boats chapter (GuideBook._boats).
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made

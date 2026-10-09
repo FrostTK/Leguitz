@@ -20,6 +20,8 @@ const LANTERN_RANGE := 10.0
 const LANTERN_HEIGHT := 4.6
 ## The chest (local units above the feet): what must stay visible.
 const CHEST := Vector3(0, 0.9, 0)
+## Sitting lowers the body this much (body voxels).
+const SIT_DROP := 6.0
 const VOXEL := 1.0 / 16.0
 const TURN_SHARPNESS := 14.0
 ## Strides per tile walked, and how far the limbs swing (radians).
@@ -85,6 +87,12 @@ var cast := false
 var eating := false
 ## Swimming: arms sweeping, legs kicking.
 var swimming := false
+## Sitting aboard a boat (lower, its legs forward unless `legs_out` is
+## off: in first person they would cross the view), rowing (both arms
+## pulling).
+var seated := false
+var legs_out := true
+var rowing := false
 ## Drawing a bow (0..1): both arms raised towards the front.
 var aiming := 0.0
 ## How red a hurt makes the body (0..1, see set_hurt; HeldView follows).
@@ -203,6 +211,8 @@ func animate(feet: Vector3, heading: Vector2, speed: float, airborne: bool, delt
 	_right.rotation.z = pose.y
 	_place_held(pose.z)
 	_body.position.y = absf(sin(_phase)) * _swing * VOXEL * 1.2
+	if seated:
+		_sit()
 	if is_inside_tree():
 		var above := global_position + Vector3(0, LANTERN_HEIGHT, 0)
 		lantern.global_position = above if lantern_override == Vector3.INF else lantern_override
@@ -210,6 +220,18 @@ func animate(feet: Vector3, heading: Vector2, speed: float, airborne: bool, delt
 		var root := get_parent_node_3d().global_transform
 		RenderingServer.global_shader_parameter_set(&"player_position", root * (feet + CHEST))
 		RenderingServer.global_shader_parameter_set(&"player_feet", root * feet)
+
+
+## Sitting: lower, the legs forward; rowing, both arms pull at the oars.
+func _sit() -> void:
+	_body.position.y = -SIT_DROP * VOXEL
+	for leg in _legs:
+		leg.rotation.x = -1.45 if legs_out else 0.0
+	if rowing:
+		var pull := sin(_swim_time * TAU * BoatsView.ROW_STROKES)
+		for arm in _arms:
+			arm.rotation.x = -1.15 + pull * 0.5
+			arm.rotation.z = 0.0
 
 
 ## Puts on the armor `items` (Armor: the four slots, Items.Id.NONE where

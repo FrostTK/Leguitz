@@ -96,6 +96,12 @@ class PlayerSession:
 	var last_shot := -INF
 	## Their fishing line out (null: none).
 	var line: Fishing.Line = null
+	## The boat they are aboard (-1: none) and their place (-1: the pilot's);
+	## the boat and the shipyard whose screen they have open.
+	var boat := -1
+	var seat := -1
+	var boat_open := -1
+	var yard_open := NO_CELL
 
 	func alive() -> bool:
 		return health > 0
@@ -128,6 +134,7 @@ var items: Dictionary[int, DroppedItem] = {}
 ## The animals and monsters, and the arrows in flight.
 var creatures: Creatures
 var archery := Archery.new()
+var boats := Boats.new()
 var fluids := Fluids.new()
 ## Debug commands (moving between caves, world map, weather, tools):
 ## creative players use them where the server allows them (operators once
@@ -166,6 +173,7 @@ func use_storage(world_storage: WorldStorage, saved: Dictionary) -> void:
 		save()
 		return
 	creatures.load_save(world_storage.read_creatures())
+	boats.load_save(world_storage.read_boats())
 	weather.load_dict(saved.get("weather", {}))
 	for data: Dictionary in saved.get("items", []):
 		var dropped := DroppedItem.from_dict(data)
@@ -188,6 +196,7 @@ func save() -> bool:
 		lying.append(dropped.to_dict())
 	var ok := storage.save_world(settings, clock, weather, lying)
 	ok = storage.save_creatures(creatures.to_save()) and ok
+	ok = storage.save_boats(boats.to_save()) and ok
 	for session in sessions:
 		if session.joined:
 			ok = storage.save_player(session.player_name, player_state(session)) and ok
@@ -278,6 +287,7 @@ func tick() -> void:
 	creatures.sync(sessions)
 	archery.update(self, GameConst.TICK_DELTA)
 	Fishing.update(self, GameConst.TICK_DELTA)
+	boats.update(self, GameConst.TICK_DELTA)
 	fluids.update(self)
 	Survival.update(self, sessions, GameConst.TICK_DELTA)
 	if tick_count % FURNACE_TICKS == 0:
@@ -402,6 +412,7 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 				session.kitchen = false
 				session.chest = NO_CELL
 				session.furnace = NO_CELL
+				boats.closed(session)
 				session.transport.send(Msg.inventory(session.inventory))
 		Msg.OPEN_WORKBENCH:
 			_on_open_workbench(session, message)
@@ -413,8 +424,9 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 		Msg.SAVE_REQUEST:
 			if session.joined and Time.get_ticks_msec() - _last_save_msec >= SAVE_REQUEST_MSEC:
 				save()
-		var unknown:
-			push_warning("Server: unknown message type %s" % unknown)
+		var other:
+			if not boats.handle(self, session, message):
+				push_warning("Server: unknown message type %s" % other)
 
 
 func _on_hello(session: PlayerSession, message: Dictionary) -> void:
@@ -439,6 +451,7 @@ func _on_hello(session: PlayerSession, message: Dictionary) -> void:
 	session.transport.send(Msg.game_mode(settings.game_mode, session.spectator))
 	for dropped: DroppedItem in items.values():
 		session.transport.send(Msg.item_spawn(dropped))
+	boats.welcome(session)
 	# Start generating the whole initial view right away.
 	_stream_chunks(session, CHUNKS_SENT_PER_TICK)
 	_collect_generated()
@@ -521,6 +534,7 @@ func _on_block_break(session: PlayerSession, message: Dictionary) -> void:
 ## where it was.
 func spill_contents(cell: Vector3i) -> void:
 	Machines.spill(self, cell)
+	boats.yard_broken(self, cell)
 	var chest := world.take_chest(cell)
 	if chest != null:
 		_spill(cell, chest, Inventory.CHEST)
@@ -668,10 +682,13 @@ func _on_open_chest(session: PlayerSession, message: Dictionary) -> void:
 	session.transport.send(Msg.chest(cell, world.chest_at(cell)))
 
 
-## The chest a player has open (null: none, or it is gone).
+## The chest a player has open (null: none, or it is gone; a boat's: see
+## Boats.chest_cell).
 func _open_chest(session: PlayerSession) -> Inventory:
 	if not session.joined or session.chest == NO_CELL:
 		return null
+	if session.chest.y <= Boats.CHEST_ROW:
+		return boats.chest_at(session.chest)
 	if not ObjectShapes.is_chest(Voxels.block_of(world.voxel_at(session.chest))):
 		return null
 	return world.chest_at(session.chest)
@@ -680,10 +697,13 @@ func _open_chest(session: PlayerSession) -> Inventory:
 ## A chest's items changed: saved with its chunk, shown to every player
 ## who has it open.
 func _chest_changed(cell: Vector3i) -> void:
-	world.contents_changed(cell)
+	var boat_chest := cell.y <= Boats.CHEST_ROW
+	if not boat_chest:
+		world.contents_changed(cell)
+	var chest := boats.chest_at(cell) if boat_chest else world.chest_at(cell)
 	for other in sessions:
-		if other.joined and other.chest == cell:
-			other.transport.send(Msg.chest(cell, world.chest_at(cell)))
+		if other.joined and other.chest == cell and chest != null:
+			other.transport.send(Msg.chest(cell, chest))
 
 
 ## A player throws one item of a slot, or its whole stack.
@@ -827,7 +847,8 @@ func _on_player_move(session: PlayerSession, message: Dictionary) -> void:
 		session.transport.send(Msg.player_correction(session.position, session.height))
 		return
 	var walked := new_pos.distance_to(session.position) / GameConst.TILE_SIZE
-	Survival.spend(self, session, walked * Vitals.WALK_EFFORT)
+	if session.boat < 0:
+		Survival.spend(self, session, walked * Vitals.WALK_EFFORT)
 	session.position = new_pos
 	session.facing = message.get("facing", session.facing)
 	session.height = message.get("h", session.height)
@@ -933,6 +954,14 @@ func _unload_unused_chunks() -> void:
 			for dx in range(-radius, radius + 1):
 				needed[center + Vector2i(dx, dy)] = true
 	world.unload_unused(needed)
+
+
+## A joined player by their id (null: none).
+func session_of(id: int) -> PlayerSession:
+	for session in sessions:
+		if session.id == id and session.joined:
+			return session
+	return null
 
 
 func broadcast(message: Dictionary) -> void:

@@ -54,6 +54,7 @@ static func hurt(
 ## A player's vitality ran out: what they carried falls where they are,
 ## what they had open closes, they wait to get up (Msg.RESPAWN).
 static func _pass_out(server: GameServer, session: GameServer.PlayerSession, cause: int) -> void:
+	server.boats.leave(server, session, false)
 	session.chest = GameServer.NO_CELL
 	session.furnace = GameServer.NO_CELL
 	session.craft_width = Inventory.OWN_GRID

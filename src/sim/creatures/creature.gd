@@ -40,6 +40,8 @@ var heading := Vector2.DOWN
 var state := State.IDLE
 ## Moved, turned or changed what it does since its players were told.
 var dirty := true
+## The boat it sits aboard (-1: none; Boats places it, it does not think).
+var seated := -1
 ## Tiles per second it moved during its last step.
 var speed := 0.0
 

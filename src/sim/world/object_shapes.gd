@@ -76,6 +76,13 @@ const WAYS: Array[Vector2i] = [Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1),
 ## is broken; gates come closed and open; what hangs on a wall faces away
 ## from it.
 const FACING_KINDS := {
+	Tiles.Block.SHIPYARD:
+	[
+		Tiles.Block.SHIPYARD,
+		Tiles.Block.SHIPYARD_WEST,
+		Tiles.Block.SHIPYARD_NORTH,
+		Tiles.Block.SHIPYARD_EAST,
+	],
 	Tiles.Block.KITCHEN:
 	[
 		Tiles.Block.KITCHEN,
@@ -381,9 +388,10 @@ const SINGLE := {
 	Tiles.Block.BEEHIVE: true,
 	Tiles.Block.BEE_NEST: true,
 }
-## Objects set over the water drawn sunk into it this deep (levels): a fish
-## trap's basket under the surface, its float on it.
-const SUNK := {Tiles.Block.FISH_TRAP: 0.75}
+## Objects drawn sunk this deep (levels): a fish trap's basket under the
+## water's surface, its float on it; a shipyard's slipway down into the
+## water (its bank at BoatModels.BANK).
+const SUNK := {Tiles.Block.FISH_TRAP: 0.75, Tiles.Block.SHIPYARD: 1.0}
 ## Small things stand anywhere in their tile (whole voxels), not centered.
 const WANDERING := {
 	Tiles.Block.TALL_GRASS: true,
@@ -475,6 +483,10 @@ static func is_bench_left(block: int) -> bool:
 ## A chest, whichever way it faces.
 static func is_chest(block: int) -> bool:
 	return kind_of(block) == Tiles.Block.CHEST
+
+
+static func is_shipyard(block: int) -> bool:
+	return kind_of(block) == Tiles.Block.SHIPYARD
 
 
 static func is_kitchen(block: int) -> bool:

@@ -47,6 +47,14 @@ const ATTACK := "attack"
 const SHOOT := "shoot"
 const CAST := "cast"
 const REEL := "reel"
+const OPEN_YARD := "open_yard"
+const OPEN_BOAT := "open_boat"
+const BOAT_CLICK := "boat_click"
+const BOAT_ACT := "boat_act"
+const BOARD := "board"
+const LEAVE_BOAT := "leave_boat"
+const BOAT_STEER := "boat_steer"
+const BOAT_HIT := "boat_hit"
 
 ## map_request() row for a map of the surface.
 const MAP_SURFACE := -1
@@ -84,6 +92,12 @@ const ARROW_REMOVE := "arrow_remove"
 const SWING_GATE := "swing_gate"
 const BOBBER := "bobber"
 const CAUGHT := "caught"
+const BOAT := "boat"
+const BOAT_MOVE := "boat_move"
+const BOAT_REMOVE := "boat_remove"
+const BOAT_HURT := "boat_hurt"
+const BOAT_NOTICE := "boat_notice"
+const BOAT_SCREEN := "boat_screen"
 
 
 ## The player hits the creature `id` with the hotbar slot `slot` in hand
@@ -237,6 +251,91 @@ static func chat_notice(key: String, args: Array, tone: int) -> Dictionary:
 ## slot `slot` (Apiary.harvest: a glass bottle, shears).
 static func harvest_hive(cell: Vector3i, slot: int) -> Dictionary:
 	return {"t": HARVEST_HIVE, "cell": cell, "slot": slot}
+
+
+## The player opens the shipyard at `cell` (Boats).
+static func open_yard(cell: Vector3i) -> Dictionary:
+	return {"t": OPEN_YARD, "cell": cell}
+
+
+## The player opens a boat's screen.
+static func open_boat(id: int) -> Dictionary:
+	return {"t": OPEN_BOAT, "id": id}
+
+
+## A click on a slot of the open boat's screen (Boat.click).
+static func boat_click(slot: int, right: bool, shift: bool) -> Dictionary:
+	return {"t": BOAT_CLICK, "slot": slot, "right": right, "shift": shift}
+
+
+## A button of the open boat's screen (Boats.Act; `place`: a chest's).
+static func boat_act(act: int, place := -1) -> Dictionary:
+	return {"t": BOAT_ACT, "act": act, "place": place}
+
+
+static func board(id: int) -> Dictionary:
+	return {"t": BOARD, "id": id}
+
+
+static func leave_boat() -> Dictionary:
+	return {"t": LEAVE_BOAT}
+
+
+## The pilot's boat is where it went (BoatBody), what they ask of it.
+static func boat_steer(boat: Boat) -> Dictionary:
+	return {
+		"t": BOAT_STEER,
+		"at": boat.at,
+		"yaw": boat.yaw,
+		"speed": boat.speed,
+		"throttle": boat.throttle,
+		"full": boat.full,
+	}
+
+
+## The player strikes a boat with the hotbar slot `slot` in hand.
+static func boat_hit(id: int, slot: int) -> Dictionary:
+	return {"t": BOAT_HIT, "id": id, "slot": slot}
+
+
+## A boat as it is now: its parts, chests, place, riders (Boat.to_dict).
+static func boat(of: Boat) -> Dictionary:
+	return {"t": BOAT, "boat": of.to_dict()}
+
+
+## Where a boat is and how its coal burns; `correct`: its pilot's report
+## was refused.
+static func boat_move(of: Boat, correct := false) -> Dictionary:
+	return {
+		"t": BOAT_MOVE,
+		"id": of.id,
+		"at": of.at,
+		"yaw": of.yaw,
+		"speed": of.speed,
+		"throttle": of.throttle,
+		"burn": of.burn,
+		"correct": correct,
+	}
+
+
+## A boat is gone (`burnt`: by lava).
+static func boat_remove(id: int, burnt: bool) -> Dictionary:
+	return {"t": BOAT_REMOVE, "id": id, "burnt": burnt}
+
+
+static func boat_hurt(id: int) -> Dictionary:
+	return {"t": BOAT_HURT, "id": id}
+
+
+## Something to tell the player about boats (a HUD key).
+static func boat_notice(key: String) -> Dictionary:
+	return {"t": BOAT_NOTICE, "key": key}
+
+
+## The boat screen to show: a shipyard's (`yard`; NO_CELL: a boat's own)
+## and the boat it shows (-1: none yet).
+static func boat_screen(yard: Vector3i, id: int) -> Dictionary:
+	return {"t": BOAT_SCREEN, "yard": yard, "id": id}
 
 
 ## The player casts with the rod of hotbar slot `slot` towards `target`

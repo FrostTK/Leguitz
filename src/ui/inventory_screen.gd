@@ -24,7 +24,8 @@ extends Control
 ## its stack lying elsewhere (Inventory.collect). With empty hands, the name of the
 ## item under the mouse shows beside it. In creative, the inventory shows
 ## the catalog of every item over the bag instead of the crafting grid
-## (CreativeCatalog; the wheel scrolls it).
+## (CreativeCatalog; the wheel scrolls it). A boat's screen (a shipyard's)
+## shows its BoatPanel over the bag instead.
 
 signal slot_clicked(slot: int, right: bool, shift: bool)
 signal cursor_dropped(whole: bool)
@@ -44,6 +45,9 @@ signal spread_finished(targets: Array)
 signal collect_requested
 ## An item of the creative catalog was clicked (GameModes.take_from_catalog).
 signal catalog_clicked(item: int, right: bool, shift: bool)
+## A click on a slot of the boat shown, a button of its screen.
+signal boat_clicked(slot: int, right: bool, shift: bool)
+signal boat_acted(act: int, place: int)
 
 ## The flame shown under what a furnace cooks: its rows' widths, from the
 ## bottom; and its colors (embers to tip).
@@ -88,6 +92,7 @@ var _chest_grid := GridContainer.new()
 var _chest_slots: Array[ItemSlot] = []
 var _catalog := CreativeCatalog.new()
 var _furnace_area: Control
+var _boat_area := BoatPanel.new()
 var _furnace_slots: Array[ItemSlot] = []
 var _furnace_hint := Label.new()
 var _flame := Control.new()
@@ -167,6 +172,12 @@ func _ready() -> void:
 	top.add_child(_furnace_area)
 	_factory_area = _factory()
 	top.add_child(_factory_area)
+	_boat_area.library = library
+	_boat_area.clicked.connect(
+		func(at: int, right: bool, shift: bool) -> void: boat_clicked.emit(at, right, shift)
+	)
+	_boat_area.acted.connect(func(act: int, place: int) -> void: boat_acted.emit(act, place))
+	top.add_child(_boat_area)
 	_chest_grid.columns = Inventory.HOTBAR
 	_chest_grid.add_theme_constant_override("h_separation", 1)
 	_chest_grid.add_theme_constant_override("v_separation", 1)
@@ -233,6 +244,7 @@ func open(width := Inventory.OWN_GRID, cooking := false) -> void:
 	var catalog := creative and width == Inventory.OWN_GRID and not cooking
 	_show_factory(false)
 	_furnace_area.visible = false
+	_boat_area.visible = false
 	_chest_grid.visible = false
 	_armor_area.visible = true
 	_catalog.visible = catalog
@@ -258,6 +270,7 @@ func open_chest(view: Inventory) -> void:
 	furnace = null
 	_show_factory(false)
 	_furnace_area.visible = false
+	_boat_area.visible = false
 	_catalog.visible = false
 	_title.text = "CHEST_TITLE"
 	_armor_area.visible = false
@@ -280,7 +293,26 @@ func open_furnace(view: Furnace) -> void:
 	_chest_grid.visible = false
 	_catalog.visible = false
 	_furnace_area.visible = not view.is_factory()
+	_boat_area.visible = false
 	_show_factory(view.is_factory())
+	_bag_label.visible = true
+	visible = true
+
+
+## Opens a boat's screen over the bag (BoatPanel; `boats`: as the client
+## knows them, `id` the one shown, -1 none yet; `yard`: a shipyard's).
+func open_boat(boats: Dictionary, id: int, yard: bool) -> void:
+	chest = null
+	furnace = null
+	_show_factory(false)
+	_furnace_area.visible = false
+	_crafting_area.visible = false
+	_chest_grid.visible = false
+	_catalog.visible = false
+	_armor_area.visible = false
+	_title.text = "ITEM_SHIPYARD" if yard else "BOAT_TITLE"
+	_boat_area.show_boat(boats, id, yard)
+	_boat_area.visible = true
 	_bag_label.visible = true
 	visible = true
 

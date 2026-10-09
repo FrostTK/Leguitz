@@ -154,6 +154,57 @@ const SHAPED := [
 	{"ingredients": [Items.Id.FLOUR, Items.Id.CORN], "result": [Items.Id.BAIT_BALL, 4]},
 	{"ingredients": [SEAFOOD], "result": [Items.Id.FISH_BAIT, 4]},
 	{"ingredients": [Items.Id.DRIFTWOOD], "result": [Items.Id.STICK, 2]},
+	# Boats, at the workbench: the shipyard (string rigging, an iron
+	# winch), the hull's bow, sections and stern (its tiller), the coal
+	# engine (a boiler around a factory furnace, a copper propeller), benches.
+	{
+		"pattern": ["T T", "LIL", "PPP"],
+		"keys": {"T": Items.Id.STRING, "L": LOGS, "I": Items.Id.IRON_INGOT, "P": PLANKS},
+		"result": [Items.Id.SHIPYARD, 1],
+		"workbench": true,
+	},
+	{
+		"pattern": [" P ", "P P", "PPP"],
+		"keys": {"P": PLANKS},
+		"result": [Items.Id.BOAT_BOW, 1],
+		"workbench": true,
+	},
+	{
+		"pattern": ["P P", "PPP"],
+		"keys": {"P": PLANKS},
+		"result": [Items.Id.BOAT_SECTION, 1],
+		"workbench": true,
+	},
+	{
+		"pattern": ["PSP", "P P", "PPP"],
+		"keys": {"P": PLANKS, "S": Items.Id.STICK},
+		"result": [Items.Id.BOAT_STERN, 1],
+		"workbench": true,
+	},
+	{
+		"pattern": ["III", "IFI", "III"],
+		"keys": {"I": Items.Id.IRON_INGOT, "F": Items.Id.FACTORY_FURNACE},
+		"result": [Items.Id.BOILER, 1],
+		"workbench": true,
+	},
+	{
+		"pattern": [" C ", "CIC", " C "],
+		"keys": {"C": Items.Id.COPPER_INGOT, "I": Items.Id.IRON_INGOT},
+		"result": [Items.Id.PROPELLER, 1],
+		"workbench": true,
+	},
+	{
+		"pattern": ["B", "I", "P"],
+		"keys": {"B": Items.Id.BOILER, "I": Items.Id.IRON_INGOT, "P": Items.Id.PROPELLER},
+		"result": [Items.Id.COAL_ENGINE, 1],
+		"workbench": true,
+	},
+	{
+		"pattern": ["PPP", "S S"],
+		"keys": {"P": PLANKS, "S": Items.Id.STICK},
+		"result": [Items.Id.BOAT_BENCH, 2],
+		"workbench": true,
+	},
 	{
 		"pattern": ["S S", "SSS", "S S"],
 		"keys": {"S": Items.Id.STICK},

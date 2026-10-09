@@ -6,6 +6,7 @@ extends RefCounted
 ## - players/<name>.cfg: where each player stands (inventory later),
 ## - creatures.cfg: the animals and the chunks already given theirs
 ##   (Creatures.to_save),
+## - boats.cfg: the boats (Boats.to_save),
 ## - regions/r.<x>.<z>.bin: the chunks players changed, REGION_SIZE x
 ##   REGION_SIZE chunks per file, voxels compressed (the other chunks are
 ##   generated again from the seed).
@@ -21,6 +22,7 @@ const REGION_SIZE := 32
 const COMPRESSION := FileAccess.COMPRESSION_ZSTD
 const WORLD_FILE := "world.cfg"
 const CREATURES_FILE := "creatures.cfg"
+const BOATS_FILE := "boats.cfg"
 
 var folder := ""
 ## Saved chunks of the regions read so far: region -> {chunk coord: data}.
@@ -96,6 +98,18 @@ func save_creatures(state: Dictionary) -> bool:
 	var file := ConfigFile.new()
 	file.set_value("creatures", "state", state)
 	return _save_config(file, CREATURES_FILE)
+
+
+## The saved boats (see Boats.load_save), empty if none.
+func read_boats() -> Dictionary:
+	var file := _load_config(BOATS_FILE)
+	return file.get_value("boats", "state", {}) if file != null else {}
+
+
+func save_boats(state: Dictionary) -> bool:
+	var file := ConfigFile.new()
+	file.set_value("boats", "state", state)
+	return _save_config(file, BOATS_FILE)
 
 
 ## A player's saved state (see GameServer.player_state), empty if none.

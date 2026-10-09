@@ -289,6 +289,16 @@ enum Id {
 	FISH_SOUP,
 	SUSHI,
 	FRIED_FISH,
+	# Boats (Boats): the shipyard, the hull's parts, the engine and its
+	# parts, a bench.
+	SHIPYARD,
+	BOAT_BOW,
+	BOAT_SECTION,
+	BOAT_STERN,
+	BOILER,
+	PROPELLER,
+	COAL_ENGINE,
+	BOAT_BENCH,
 }
 ## What a tool is made for (Mining.tool_for: what it breaks faster).
 enum Tool { NONE, PICKAXE, AXE, SHOVEL, SWORD, HOE }
@@ -459,6 +469,7 @@ const PLACES_BLOCK := {
 	Id.BARREL: Tiles.Block.BARREL,
 	Id.CHEESE_CELLAR: Tiles.Block.CHEESE_CELLAR,
 	Id.FISH_TRAP: Tiles.Block.FISH_TRAP,
+	Id.SHIPYARD: Tiles.Block.SHIPYARD,
 }
 
 ## What a ground gives (soil gives dirt); grounds left out give nothing.
@@ -753,6 +764,8 @@ static func max_stack(item: int) -> int:
 	if TOOLS.has(item) or item == Id.BOW or Armor.is_armor(item):
 		return 1
 	if item in [Id.GUIDE_BOOK, Id.WATERING_CAN, Id.SHEARS, Id.MILK_BUCKET, Id.FISHING_ROD]:
+		return 1
+	if item in [Id.BOAT_BOW, Id.BOAT_STERN, Id.COAL_ENGINE]:
 		return 1
 	return SMALL_STACKS.get(item, MAX_STACK)
 

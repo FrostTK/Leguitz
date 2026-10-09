@@ -141,6 +141,9 @@ func update(server: GameServer, delta: float) -> void:
 	for creature: Creature in living.values():
 		if creature.id % 2 != half or not active.has(Coords.tile_to_chunk(creature.tile())):
 			continue
+		if creature.seated >= 0:
+			# Aboard a boat (Boats seats it).
+			continue
 		var monster := creature as Monster
 		if monster != null:
 			Monsters.sense(server, self, monster, delta * 2.0)

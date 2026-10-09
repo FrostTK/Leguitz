@@ -122,6 +122,9 @@ static func build(item: int) -> VoxelGrid:
 	var fishing := FishingModels.item(item)
 	if fishing != null:
 		return fishing
+	var boat := BoatModels.item(item)
+	if boat != null:
+		return boat
 	var sapling := SaplingModels.item(item)
 	if sapling != null:
 		return sapling

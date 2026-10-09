@@ -358,6 +358,12 @@ enum Block {
 	FISH_TRAP,
 	FISH_TRAP_BAITED,
 	FISH_TRAP_FULL,
+	# A shipyard on a bank, facing the water (Boats): its slipway goes down
+	# into it.
+	SHIPYARD,
+	SHIPYARD_WEST,
+	SHIPYARD_NORTH,
+	SHIPYARD_EAST,
 }
 
 const FLOWERS: Array[Block] = [
@@ -593,6 +599,10 @@ const NON_SOLID_BLOCKS := {
 	Block.FISH_TRAP: true,
 	Block.FISH_TRAP_BAITED: true,
 	Block.FISH_TRAP_FULL: true,
+	Block.SHIPYARD: true,
+	Block.SHIPYARD_WEST: true,
+	Block.SHIPYARD_NORTH: true,
+	Block.SHIPYARD_EAST: true,
 }
 
 

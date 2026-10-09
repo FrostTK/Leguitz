@@ -36,6 +36,8 @@ var controls_enabled := true
 var can_sprint := true
 ## Walking faster (a dish's Effects.Kind.SWIFT).
 var speed_bonus := 1.0
+## Aboard a boat: Helm seats the body, the keys steer the boat.
+var aboard := false
 ## Direction the player looks at, on the ground (world axes): exact, and
 ## rounded to the nearest side.
 var heading := Vector2.DOWN
@@ -84,6 +86,13 @@ func apply_correction(world_position: Vector2, at_height: float) -> void:
 ## Reads the movement input and moves (called every frame).
 func step(delta: float) -> void:
 	if not active:
+		return
+	if aboard:
+		speed = 0.0
+		_send_timer += delta
+		if _send_timer >= SEND_INTERVAL:
+			_send_timer = 0.0
+			_send_state()
 		return
 	var input := Input.get_vector(
 		InputBindings.MOVE_LEFT,

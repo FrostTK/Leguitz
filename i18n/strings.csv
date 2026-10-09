@@ -868,3 +868,41 @@ BOOK_FISHING_MORE,Junk and cooking,Repêchages et cuisine
 BOOK_FISHING_JUNK,"Lines bring up seaweed (compost, sushi) and driftwood (sticks, fuel) now and then.","Les lignes ramènent parfois des algues (compost, sushis) et du bois flotté (bâtons, combustible)."
 BOOK_FISHING_COOK,"Fish and seafood grill in the food furnace and feed far better cooked. At the kitchen counter: fish soup, sushi, fried fish and chips.","Poissons et crustacés grillent au four alimentaire et nourrissent bien mieux cuits. Au plan de cuisine : soupe de poisson, sushis, poisson frit et frites."
 BOOK_FISH_SEP,"; "," ; "
+ITEM_SHIPYARD,Shipyard,Chantier naval
+ITEM_BOAT_BOW,Bow,Proue
+ITEM_BOAT_SECTION,Hull section,Section de coque
+ITEM_BOAT_STERN,Stern,Poupe
+ITEM_BOILER,Boiler,Chaudière
+ITEM_PROPELLER,Propeller,Hélice
+ITEM_COAL_ENGINE,Coal engine,Moteur à charbon
+ITEM_BOAT_BENCH,Boat bench,Banc de bateau
+BOAT_TITLE,Boat,Bateau
+BOAT_HULL,Hull,Coque
+BOAT_ENGINE,Engine,Moteur
+BOAT_OPEN_CHEST,Open,Ouvrir
+BOAT_LAUNCH,Launch,Mettre à l'eau
+BOAT_DOCK,Back to the shipyard,Remonter au chantier
+BOAT_EMPTY_YARD,"Put a stern, sections and a bow on the slipway.","Pose une poupe, des sections et une proue sur la cale."
+BOAT_PLACES,%d places (and the pilot's).,%d places (et celle du pilote).
+BOAT_UNFINISHED,Its hull needs a stern and a bow.,Il manque une poupe ou une proue à sa coque.
+BOAT_ENGINE_RUNS,Its engine runs (coal: %d).,Son moteur tourne (charbon : %d).
+BOAT_ROWED,"No engine running: it is rowed.","Sans moteur qui tourne, on rame."
+HUD_BOAT_HULL_AT_YARD,The hull is changed at a shipyard.,La coque se change au chantier naval.
+HUD_BOAT_LAST_PLACE,Empty the last place first.,Vide d'abord la dernière place.
+HUD_BOAT_SEAT_TAKEN,Someone sits there.,Quelqu'un est assis là.
+HUD_BOAT_CHEST_FULL,Empty the chest first.,Vide d'abord le coffre.
+HUD_BOAT_NO_ROOM,Not enough water in front of the shipyard.,Pas assez d'eau devant le chantier.
+HUD_BOAT_ABOARD,Nobody may be aboard.,Personne ne doit être à bord.
+HUD_BOAT_NO_YARD,No free shipyard near enough.,Aucun chantier libre assez près.
+HUD_BOAT_FULL,No free bench.,Plus de banc libre.
+HUD_BOAT_ABOARD_HOW,"Aboard: forward and back for the throttle, left and right for the helm, sprint for full throttle, jump to get off.","À bord : avancer et reculer pour les gaz, gauche et droite pour la barre, sprint pour le plein régime, saut pour descendre."
+HUD_BOAT_ROWING,Rowing,À la rame
+BOOK_CHAPTER_BOATS,Boats,Bateaux
+BOOK_BOATS_INTRO,"A boat is built at a shipyard from parts made at the workbench: a stern, up to three hull sections and a bow. It has two places, one more for each section, and the pilot's at the stern.","Un bateau se construit au chantier naval avec des pièces faites à l'établi : une poupe, jusqu'à trois sections de coque et une proue. Il a deux places, une de plus par section, et celle du pilote à la poupe."
+BOOK_BOATS_YARD,"Shipyard (string, logs, an iron winch, planks): set it on a bank, it faces the water (five tiles of it ahead). Right click or {use} opens it: put the hull's parts on its slipway, then Launch.","Chantier naval (ficelle, rondins, un treuil en fer, planches) : pose-le sur une rive, il fait face à l'eau (il en faut cinq cases devant). Clic droit ou {use} pour l'ouvrir : pose les pièces de la coque sur sa cale, puis Mettre à l'eau."
+BOOK_BOATS_HULL,"Bow, hull sections and stern (planks; the stern's tiller a stick): each section adds a place and makes the boat longer and slower to turn.","Proue, sections de coque et poupe (des planches ; un bâton pour la barre de la poupe) : chaque section ajoute une place, le bateau s'allonge et tourne moins vite."
+BOOK_BOATS_ENGINE,"Coal engine (a boiler of iron around a factory furnace, iron, a copper propeller): with coal or charcoal in the boat it runs, faster, at full throttle with sprint. A coal lasts a minute of motoring. Without it, or out of coal, you row, slowly.","Moteur à charbon (une chaudière de fer autour d'un four d'usine, du fer, une hélice en cuivre) : avec du charbon ou du charbon de bois dans le bateau, il tourne, plus vite, à plein régime avec le sprint. Un charbon dure une minute de moteur. Sans lui, ou sans charbon, on rame, lentement."
+BOOK_BOATS_PLACES,"On each place a bench (a passenger sits there; the animals you lead come aboard with you onto free benches) or a chest (its 27 slots: Open in the boat's screen). Everything but the hull can be changed anywhere.","Sur chaque place, un banc (un passager s'y assoit ; les animaux que tu mènes à la corde montent avec toi sur les bancs libres) ou un coffre (ses 27 cases : Ouvrir dans l'écran du bateau). Tout se change partout, sauf la coque."
+BOOK_BOATS_SAILING,Sailing,Naviguer
+BOOK_BOATS_SAIL,"Right click a boat to board it (the pilot's place, else a free bench). Forward and back give the throttle, left and right the helm; jump gets you off onto the nearest bank. {use} aboard opens the boat's screen. Land and ice stop it, flowing water carries it.","Clic droit sur un bateau pour monter à bord (la place du pilote, sinon un banc libre). Avancer et reculer donnent les gaz, gauche et droite la barre ; le saut te fait descendre sur la rive la plus proche. {use} à bord ouvre l'écran du bateau. La terre et la glace l'arrêtent, l'eau qui coule l'emporte."
+BOOK_BOATS_DOCK,"Moored near a free shipyard with nobody aboard, Back to the shipyard takes it up the slipway whole, to make it longer or change its parts. Struck a few times (an axe hits harder), a boat breaks into its parts and what it carries; lava burns it.","Amarré près d'un chantier libre et sans personne à bord, Remonter au chantier le hisse entier sur la cale, pour l'allonger ou changer ses pièces. Frappé quelques fois (une hache frappe plus fort), un bateau se casse en ses pièces et ce qu'il transporte ; la lave le brûle."

@@ -16,7 +16,9 @@ extends Node
 ## Combat.REACH) is aimed at instead: the break button hits it, every
 ## Combat.BLOW_SECONDS while held (Msg.ATTACK); the place button (or the
 ## use key) tends an animal (Husbandry: feeds, pets, shears, milks, a
-## lead).
+## lead). A boat aimed at (BoatsView.pick, `target_boat`) is boarded by the
+## place button, struck by the break button (Msg.BOAT_HIT), its screen opened
+## by the use key (aboard, the use key opens the boat's).
 
 ## Seconds between two chips flying off what is being broken.
 const CHIP_INTERVAL := 0.16
@@ -35,8 +37,9 @@ const AIM_FAR := 96.0
 var client: GameClient
 ## What is aimed at (null: nothing within reach).
 var target: VoxelRay.Hit
-## The animal aimed at (-1: none; then `target` is null).
+## The animal aimed at (-1: none; then `target` is null), the boat.
 var target_creature := -1
+var target_boat := -1
 ## The break button is held.
 var breaking := false
 ## Aim at what is in front of the player (gamepad) instead of the mouse.
@@ -79,11 +82,14 @@ func _process(delta: float) -> void:
 		return
 	target = null
 	target_creature = -1
+	target_boat = -1
 	if not client.modes.watching:
 		target = _aim()
 	var box := _whole_box(target)
 	if target_creature >= 0:
 		box = client.creatures.bounds_of(target_creature)
+	elif target_boat >= 0:
+		box = client.boats.bounds_of(target_boat)
 	_highlight.outline(box, _frame_thickness(box))
 	_update_breaking(delta)
 	if place_soon and target != null:
@@ -97,6 +103,13 @@ func _process(delta: float) -> void:
 ## composter, picks what is ripe, takes a full hive's honey, loads or
 ## empties a kitchen machine. Returns whether there was something to use.
 func use_target() -> bool:
+	if target_boat >= 0:
+		client.actions.open_boat(target_boat)
+		return true
+	var aboard := client.helm.boat()
+	if aboard != null and (target == null or not Mining.opens(target.voxel)):
+		client.actions.open_boat(aboard.id)
+		return true
 	if _tend_animal():
 		return true
 	if target != null and Mining.swings(target.voxel):
@@ -111,6 +124,8 @@ func use_target() -> bool:
 		client.actions.open_chest(target.cell)
 	elif ObjectShapes.is_kitchen(block):
 		client.actions.open_kitchen(target.cell)
+	elif ObjectShapes.is_shipyard(block):
+		client.actions.open_yard(target.cell)
 	elif ObjectShapes.furnace_kind(block) != -1:
 		client.actions.open_furnace(target.cell)
 	else:
@@ -151,11 +166,7 @@ func place() -> void:
 	if usable_here():
 		use_target()
 		return
-	if client.held_item() == Items.Id.GUIDE_BOOK:
-		client.open_book()
-		return
-	if client.held_item() == Items.Id.FISHING_ROD:
-		client.angler.use()
+	if _instead_of_placing():
 		return
 	if _tend_animal() or _tend() or _sow_on_water() or target == null:
 		return
@@ -200,6 +211,22 @@ func place() -> void:
 		if Voxels.is_solid(cells[at]) and Mining.overlaps_body(at, player.position, player.height):
 			return
 	_put(cells, cell, slot, front, face)
+
+
+## What a right click does rather than placing: the book in hand opens, a
+## boat aimed at is boarded, the fishing rod casts. Returns whether it did.
+func _instead_of_placing() -> bool:
+	if client.held_item() == Items.Id.GUIDE_BOOK:
+		client.open_book()
+		return true
+	if target_boat >= 0:
+		client.transport.send(Msg.board(target_boat))
+		client.player_model.swing()
+		return true
+	if client.held_item() == Items.Id.FISHING_ROD:
+		client.angler.use()
+		return true
+	return false
 
 
 ## Shows what is placed at once, uses it up (not in creative) and tells
@@ -582,7 +609,7 @@ func stop() -> void:
 func _update_breaking(delta: float) -> void:
 	_pause = maxf(_pause - delta, 0.0)
 	_blow_wait = maxf(_blow_wait - delta, 0.0)
-	if target_creature >= 0:
+	if target_creature >= 0 or target_boat >= 0:
 		_reset_breaking()
 		if breaking:
 			_hit_creature()
@@ -646,11 +673,18 @@ func _break(hit: VoxelRay.Hit) -> void:
 ## (it reddens at once; the server says the rest).
 func _hit_creature() -> void:
 	client.player_model.swinging = true
-	_face(client.creatures.bounds_of(target_creature).get_center())
+	var boat := target_boat >= 0
+	var box := (
+		client.boats.bounds_of(target_boat) if boat else client.creatures.bounds_of(target_creature)
+	)
+	_face(box.get_center())
 	if _blow_wait > 0.0:
 		return
 	_blow_wait = Combat.BLOW_SECONDS
 	var slot := -1 if client.book_in_hand else client.inventory.selected
+	if boat:
+		client.transport.send(Msg.boat_hit(target_boat, slot))
+		return
 	client.transport.send(Msg.attack(target_creature, slot))
 	client.creatures.hurt(target_creature)
 
@@ -821,6 +855,12 @@ func _aim() -> VoxelRay.Hit:
 		var block := INF if hit == null else (hit.point - origin).dot(direction)
 		if animal.x >= 0.0 and reach.x + animal.y < block and _shown(int(animal.x)):
 			target_creature = int(animal.x)
+			return null
+		var aboard := client.helm.boat()
+		var skip := aboard.id if aboard != null else -1
+		var boat := client.boats.pick(start, direction, reach.y - reach.x, skip)
+		if boat.x >= 0.0 and reach.x + boat.y < block:
+			target_boat = int(boat.x)
 			return null
 	return hit
 

@@ -51,6 +51,7 @@ const OBJECT_COLORS := {
 	Tiles.Block.BARREL: Color(0.52, 0.36, 0.2),
 	Tiles.Block.CHEESE_CELLAR: Color(0.58, 0.42, 0.26),
 	Tiles.Block.FISH_TRAP: Color(0.6, 0.45, 0.25),
+	Tiles.Block.SHIPYARD: Color(0.58, 0.42, 0.24),
 }
 const PLANT_COLOR := Color(0.32, 0.58, 0.24)
 
@@ -87,6 +88,8 @@ static func _compute(voxel: int) -> Color:
 		return OBJECT_COLORS[Tiles.Block.NEST_BOX]
 	if ObjectShapes.is_kitchen(block):
 		return OBJECT_COLORS[Tiles.Block.KITCHEN]
+	if ObjectShapes.is_shipyard(block):
+		return OBJECT_COLORS[Tiles.Block.SHIPYARD]
 	if Machines.kind_of(block) >= 0:
 		return OBJECT_COLORS[ObjectShapes.base_kind(block)]
 	if Apiary.is_hive(block) or ObjectShapes.base_kind(block) == Tiles.Block.TURTLE_EGGS:

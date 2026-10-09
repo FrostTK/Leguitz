@@ -108,6 +108,9 @@ var creatures := CreaturesView.new()
 var arrows := ArrowsView.new()
 var archer := Archer.new()
 var angler := Angler.new()
+## The boats, and the one the player is aboard.
+var boats := BoatsView.new()
+var helm := Helm.new()
 var item_icons := ItemIcons.new()
 ## The arm and what is in hand in first person (a child of the camera).
 var held_view := HeldView.new()
@@ -194,6 +197,10 @@ func _ready() -> void:
 	world_viewport.camera.add_child(held_view)
 	angler.client = self
 	add_child(angler)
+	boats.client = self
+	world_root.add_child(boats)
+	helm.client = self
+	add_child(helm)
 	hud_clock.clock = clock
 	pause_menu.clock = clock
 	debug_overlay.client = self
@@ -211,6 +218,7 @@ func _ready() -> void:
 	_ui_root.add_child(vitals.veil)
 	_ui_root.add_child(modes.banner)
 	_ui_root.add_child(archer.meter)
+	_ui_root.add_child(helm.meter)
 	_ui_root.add_child(hotbar)
 	_ui_root.add_child(vitals.screen)
 	_ui_root.add_child(chat)

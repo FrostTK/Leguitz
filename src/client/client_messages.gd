@@ -99,6 +99,19 @@ static func _handle_world(client: GameClient, message: Dictionary) -> void:
 			client.angler.on_bobber(message)
 		Msg.CAUGHT:
 			client.angler.on_caught(message)
+		Msg.BOAT:
+			client.boats.on_boat(message["boat"])
+		Msg.BOAT_MOVE:
+			client.boats.on_move(message)
+		Msg.BOAT_REMOVE:
+			client.boats.remove(message["id"], message["burnt"])
+			client.actions.close_if_boat_gone(message["id"])
+		Msg.BOAT_HURT:
+			client.boats.on_hurt(message["id"])
+		Msg.BOAT_NOTICE:
+			client.hotbar.announce(TranslationServer.translate(message["key"]))
+		Msg.BOAT_SCREEN:
+			client.actions.show_boat_screen(message["yard"], message["id"])
 		Msg.LANTERN_OUT:
 			client.lighting.lantern_out(message["seconds"])
 		Msg.CHAT_LINE:

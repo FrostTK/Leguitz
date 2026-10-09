@@ -35,7 +35,10 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Outils, épées et arc refaits : modèles plus réalistes, l'arc qui se courbe quand on le bande ; en 1re personne le bras droit tient l'objet avec son propre champ de vision (même taille quel que soit le FOV, plus rien ne traverse les murs), coups qui frappent vers le réticule, épée qui tranche ; en 3e personne l'outil dans la vraie main, qui ne passe plus dans la tête | ✅ |
 | Cuisine : plan de cuisine (soupe, ragoût, tarte, omelette, gâteau, crêpes, gratin, confiture, tartine, pain de farine ; le seau et le bocal restent dans la grille), moulin (farine), baratte (beurre), tonneau (jus, puis cidre), cave à fromage ; des plats à effets (régénération, rassasié, vivacité, vigueur, adresse) affichés au-dessus de la vitalité | ✅ |
 | Pêche : canne (lancer, touche, ferrer), 14 poissons selon l'eau, le climat, l'heure, la pluie et la profondeur, appâts (vers, boulettes, appât de poisson), nasses (écrevisses, crabes), algues et bois flotté, poissons grillés, soupe de poisson, sushis, poisson frit | ✅ |
-| Chantier naval et bateau à filet de pêche, chien et chat, saisons | à venir |
+| Bateau et chantier naval : un chantier sur la rive (portique, treuil, cale qui descend dans l'eau), une coque de 2 à 5 places (poupe, sections, proue), bancs et coffres, moteur à charbon (fumée, hélice, jauge) ou avirons, mise à l'eau et retour au chantier, les animaux menés à la corde montent à bord | ✅ |
+| Filet de pêche et peinture du bateau, chien et chat, saisons | à venir |
+
+![Leguitz : le bateau : un chantier naval sur la rive avec un bateau incliné sur sa cale, un autre à l'eau ; le joueur pilote un bateau à moteur, la fumée à la cheminée, un mouton à la proue ; l'écran du chantier (coque, moteur, charbon, pont avec bancs et coffre, Mettre à l'eau) ; en 1re personne à la barre](docs/screenshots/phase7-bateau.png)
 
 ![Leguitz : la pêche : un étang vu de dessus avec trois nasses et le joueur qui ferre, le bouchon tiré sous l'eau ; en 1re personne, la canne en bambou et sa ligne jusqu'au bouchon ; les poissons crus, grillés, les appâts et les plats dans l'inventaire ; le chapitre Pêche du livre](docs/screenshots/phase7-peche.png)
 

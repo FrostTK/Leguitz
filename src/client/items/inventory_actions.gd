@@ -1,8 +1,8 @@
 class_name InventoryActions
 extends RefCounted
 ## What the player does in the inventory screen and with what it opens (a
-## workbench, a kitchen counter, a chest, a furnace): opening them, clicks, drags, double
-## clicks, crafting, throwing what the cursor holds, closing. Each is shown
+## workbench, a kitchen counter, a chest, a furnace, a shipyard, a boat): opening them, clicks,
+## drags, double clicks, crafting, throwing what the cursor holds, closing. Each is shown
 ## at once on the client's copies (Inventory's rules, shared) and told to
 ## the server, which has the last word. GameClient owns it.
 
@@ -19,6 +19,10 @@ var chest_cell := Vector3i.MAX
 ## stands.
 var furnace: Furnace
 var furnace_cell := Vector3i.MAX
+## The boat whose screen is open (-1: none or an empty shipyard's), and
+## the shipyard's (NO_CELL: the boat's own screen).
+var boat_id := -1
+var boat_yard := GameServer.NO_CELL
 
 ## During a left drag: the slots as they were before it (the inventory,
 ## the chest's, the furnace's), each new share shown from there; empty
@@ -38,6 +42,8 @@ func connect_screen(screen: InventoryScreen) -> void:
 	screen.spread_finished.connect(_on_spread_finished)
 	screen.collect_requested.connect(_on_collect_requested)
 	screen.catalog_clicked.connect(_on_catalog_clicked)
+	screen.boat_clicked.connect(_on_boat_clicked)
+	screen.boat_acted.connect(_on_boat_acted)
 
 
 func open_inventory() -> void:
@@ -70,6 +76,44 @@ func open_chest(cell: Vector3i) -> void:
 	chest_cell = cell
 	client.transport.send(Msg.open_chest(cell))
 	client.inventory_screen.open_chest(chest)
+
+
+## Opens the shipyard standing in `cell` (the screen opens when the server
+## says which boat is on it: show_boat_screen).
+func open_yard(cell: Vector3i) -> void:
+	client.interaction.stop()
+	client.transport.send(Msg.open_yard(cell))
+
+
+## Opens a boat's own screen (its shipyard's if it lies on one).
+func open_boat(id: int) -> void:
+	client.interaction.stop()
+	client.transport.send(Msg.open_boat(id))
+
+
+## The server's answer (Msg.BOAT_SCREEN): a boat's or a shipyard's screen.
+func show_boat_screen(yard: Vector3i, id: int) -> void:
+	boat_id = id
+	boat_yard = yard
+	client.local_player.controls_enabled = false
+	craft_width = Inventory.OWN_GRID
+	chest = null
+	chest_cell = Vector3i.MAX
+	client.inventory_screen.open_boat(client.boats.boats, id, yard != GameServer.NO_CELL)
+
+
+func _on_boat_clicked(slot: int, right: bool, shift: bool) -> void:
+	client.transport.send(Msg.boat_click(slot, right, shift))
+
+
+## A button of a boat's screen; a chest's opens it over the bag (its
+## contents come from the server).
+func _on_boat_acted(act: int, place: int) -> void:
+	client.transport.send(Msg.boat_act(act, place))
+	if act == Boats.Act.OPEN_CHEST and boat_id >= 0:
+		chest = Inventory.new()
+		chest_cell = Boats.chest_cell(boat_id, place)
+		client.inventory_screen.open_chest(chest)
 
 
 ## A click on the creative catalog.
@@ -161,6 +205,8 @@ func _on_inventory_closed() -> void:
 	chest_cell = Vector3i.MAX
 	furnace = null
 	furnace_cell = Vector3i.MAX
+	boat_id = -1
+	boat_yard = GameServer.NO_CELL
 	_spread_base = []
 	client.inventory.put_back_all()
 	client.transport.send(Msg.inventory_close())
@@ -173,7 +219,13 @@ func close_if_gone(cell: Vector3i) -> void:
 		(chest != null and cell == chest_cell and not ObjectShapes.is_chest(block))
 		or (furnace != null and cell == furnace_cell and ObjectShapes.furnace_kind(block) == -1)
 	)
-	if gone:
+	if gone or (boat_yard == cell and not ObjectShapes.is_shipyard(block)):
+		client.inventory_screen.close()
+
+
+## A boat went: its screen (or its chest's) closes.
+func close_if_boat_gone(id: int) -> void:
+	if id == boat_id and boat_id >= 0:
 		client.inventory_screen.close()
 
 
