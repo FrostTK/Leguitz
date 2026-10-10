@@ -127,3 +127,47 @@ season_grass={
 "type": "vec3",
 "value": Vector3(1, 1, 1)
 }
+glass_light_on={
+"type": "float",
+"value": 0.0
+}
+glass_cells={
+"type": "sampler3D",
+"value": ""
+}
+glass_art={
+"type": "sampler2D",
+"value": ""
+}
+glass_palette={
+"type": "sampler2D",
+"value": ""
+}
+glass_origin={
+"type": "vec3",
+"value": Vector3(0, 0, 0)
+}
+glass_size={
+"type": "vec3",
+"value": Vector3(0, 0, 0)
+}
+glass_box_min={
+"type": "vec3",
+"value": Vector3(0, 0, 0)
+}
+glass_box_max={
+"type": "vec3",
+"value": Vector3(0, 0, 0)
+}
+glass_to_sun={
+"type": "vec3",
+"value": Vector3(0, 1, 0)
+}
+glass_sun_world={
+"type": "vec3",
+"value": Vector3(0, 1, 0)
+}
+glass_sun_color={
+"type": "vec3",
+"value": Vector3(0, 0, 0)
+}

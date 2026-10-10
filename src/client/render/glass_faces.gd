@@ -13,8 +13,12 @@ extends RefCounted
 ## bottoms x and z), as a cube's sides and tops. Thread-safe.
 
 ## UV2.y of the opaque pass: FRAME_PASS - (edges + 16 if a top or bottom
-## + 32 x (the frame's tint + 1)).
+## + 32 x (the frame's tint + 1) + TINTED_SHADOW if the glass is tinted).
 const FRAME_PASS := -10.0
+## Added to the opaque pass's bits when the glass is tinted: in the shadow
+## pass it keeps its clear pixels too (the sun's white light stays out;
+## glass_light.gdshaderinc brings it in, colored).
+const TINTED_SHADOW := 1024
 ## UV2.y of the glass pass: edges + 16 if a top or bottom + 32 x (the
 ## glass's tint + 1) + 1024 x its style.
 const STYLE_STEP := 1024
@@ -274,9 +278,10 @@ static func _face(
 	var color: Color = context["color"]
 	var normal := Vector3(out)
 	var frames: ChunkMesher.Surface = context["frames"]
-	frames.quad(
-		corners, uvs, normal, tangent, Vector2(kind, FRAME_PASS - bits - 32 * (frame + 1)), color
-	)
+	# Tinted glass: its frame pass casts its whole shadow (TINTED_SHADOW).
+	var shadow := TINTED_SHADOW if glass >= 0 else 0
+	var frame_info := FRAME_PASS - bits - 32 * (frame + 1) - shadow
+	frames.quad(corners, uvs, normal, tangent, Vector2(kind, frame_info), color)
 	var panes: ChunkMesher.Surface = context["glass"]
 	var info := bits + 32 * (glass + 1) + STYLE_STEP * int(context["style"])
 	panes.quad(corners, uvs, normal, tangent, Vector2(kind, info), color)

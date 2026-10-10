@@ -15,6 +15,7 @@ render_mode cull_disabled;
 #include "res://src/client/shaders/terrain3d_common.gdshaderinc"
 #include "res://src/client/shaders/terrain3d_surface.gdshaderinc"
 #include "res://src/client/shaders/see_through.gdshaderinc"
+#include "res://src/client/shaders/glass_light.gdshaderinc"
 #include "res://src/client/shaders/sky_light.gdshaderinc"
 
 uniform sampler2D wall_atlas : source_color, filter_nearest;
@@ -201,6 +202,10 @@ void fragment() {
 	ALBEDO = albedo;
 	NORMAL_MAP = normal * 0.5 + 0.5;
 	EMISSION = emission * emission_strength;
+	if (glass_light_on > 0.5) {
+		// Sunlight through tinted glass, in its color.
+		EMISSION += albedo * glass_light(VERTEX, NORMAL, INV_VIEW_MATRIX);
+	}
 	ROUGHNESS = roughness;
 	SPECULAR = specular;
 	AO = sky_ambient(sky);

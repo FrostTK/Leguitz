@@ -918,11 +918,26 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   (GameServer's fallback after Boats), a coat used, the last leaves its GLASS_BOTTLE; Msg.TINTED
   to players having the chunk (ClientWorld.set_tint, WorldView3D.voxel_changed). The faces and
   glass shaders get the palette (`tint_colors`, linear). Sunlight through tinted glass colors
-  what it falls on (asked by the owner): `GlassLight` (src/client/render, in the world root)
-  puts a Decal per sunlit tinted glass cell near the player (MOST, REACH chunks): the sun's rays
-  taken to local units by the root's inverse, the box the face the light comes in by swept along
-  them to where they land (Decals take sheared boxes), the face's clear pixels as its texture
-  (DECAL_FILTER_NEAREST), colored, fading with the sun. ChunkJob (src/client/render) is
+  what it falls on (asked by the owner, then made natural: decals painted the floor and jumped
+  with the hours): tinted glass keeps the sun's white light out (GlassFaces.TINTED_SHADOW, 1024 in
+  the frame pass's bits: terrain3d_faces keeps its clear pixels in the shadow pass) and
+  `glass_light.gdshaderinc` (terrain tops and faces, voxel.gdshaderinc but VIEW_MODEL) brings it
+  back in its color as emission, albedo x the sun x the glass's light x the angle: each fragment
+  looks towards the sun cell by cell (a DDA, GLASS_STEPS) through `glass_cells`, reading the
+  glass art (`glass_art`, the face atlas) where the glass has faces (into glass, out of it, not
+  between cells of one glass in one tint; a pane where the ray crosses its middle), stopped by
+  OPAQUE cells (LightField: cubes, drawn curtains; not props). `GlassLight` (src/client/render,
+  in the world root) keeps the global uniforms (project.godot shader_globals glass_*): the 3D
+  texture of the cells around the tinted glass within REACH chunks (AROUND, ABOVE, MOST;
+  `cell_code`: 0 clear, 255 opaque, else the face kind; G tint + 1; B `pane_info`), made again
+  only when the tinted glass there, a cell or a chunk under it changes (ClientWorld.take_changes),
+  the tinted glass's box (rays missing it cost nothing), and every frame the sun's way in local
+  units (the root's inverse: the light lands where the shadows do), its linear color and
+  energy; `glass_palette` holds each color's light (`light_through`: raised towards LIGHT_LUMA,
+  at most VIVID times, so stained glass glows and dark glass stays dark). Calibrated: white
+  glass's light matches the sun through clear glass (~0.4 ms of GPU on the owner's card). A 1x1
+  window in a 1-thick wall lets nothing through when the sun comes at 45 degrees (its sides stop
+  it), the real shadows too. ChunkJob (src/client/render) is
   ChunkMesher's old Job. Items.FOOD moved to Food.SATIETY (items.gd's 1000 lines). LightField
   builds its shine table on first use (an init cycle through ObjectShapes). The book: Home and
   garden, Glass and windows.

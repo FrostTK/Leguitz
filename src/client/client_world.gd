@@ -8,24 +8,59 @@ extends RefCounted
 ## under a roof): the view cuts the world above them.
 const COVER_ABOVE := 2.5
 
+## At most this many changes are kept for `take_changes` (more: all).
+const MOST_CHANGES := 256
+
 var chunks: Dictionary[Vector2i, ChunkData] = {}
 ## Bumped by every change (a chunk comes or goes, a voxel changes).
 var revision := 0
+## What changed since `take_changes` (GlassLight): the cells (voxels,
+## tints) and the chunks (stored, removed).
+var _cells: Array[Vector3i] = []
+var _coords: Array[Vector2i] = []
+var _overflow := false
 
 
 func store(chunk: ChunkData) -> void:
 	chunks[chunk.coord] = chunk
 	revision += 1
+	_note_chunk(chunk.coord)
 
 
 func remove(coord: Vector2i) -> void:
 	chunks.erase(coord)
 	revision += 1
+	_note_chunk(coord)
 
 
 func clear() -> void:
 	chunks.clear()
 	revision += 1
+	_overflow = true
+
+
+## What changed since the last call: {"cells", "coords", "all"} ("all":
+## too much to tell, take everything as changed).
+func take_changes() -> Dictionary:
+	var changes := {"cells": _cells, "coords": _coords, "all": _overflow}
+	_cells = []
+	_coords = []
+	_overflow = false
+	return changes
+
+
+func _note_cell(cell: Vector3i) -> void:
+	if _cells.size() < MOST_CHANGES:
+		_cells.append(cell)
+	else:
+		_overflow = true
+
+
+func _note_chunk(coord: Vector2i) -> void:
+	if _coords.size() < MOST_CHANGES:
+		_coords.append(coord)
+	else:
+		_overflow = true
 
 
 func chunk_at(tile: Vector2i) -> ChunkData:
@@ -60,6 +95,7 @@ func set_voxel(cell: Vector3i, voxel: int) -> int:
 	var before := chunk.get_voxel(at)
 	chunk.set_voxel(at, voxel)
 	revision += 1
+	_note_cell(cell)
 	return before
 
 
@@ -73,6 +109,7 @@ func set_tint(cell: Vector3i, packed: int) -> void:
 	else:
 		chunk.tints[cell] = packed
 	revision += 1
+	_note_cell(cell)
 
 
 ## Height (levels) of the terrain surface of a column (-INF if unknown).

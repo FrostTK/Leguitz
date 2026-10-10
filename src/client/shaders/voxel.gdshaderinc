@@ -3,6 +3,9 @@
 // with PAINTED defined: the boats).
 #include "res://src/client/shaders/see_through.gdshaderinc"
 #include "res://src/client/shaders/sky_light.gdshaderinc"
+#ifndef VIEW_MODEL
+#include "res://src/client/shaders/glass_light.gdshaderinc"
+#endif
 #ifdef VIEW_MODEL
 #include "res://src/client/shaders/view_model.gdshaderinc"
 #endif
@@ -225,4 +228,10 @@ void fragment() {
 	// Light shines through leaves (bright edges against the sun).
 	BACKLIGHT = albedo * 0.55 * foliage;
 	EMISSION = srgb_to_linear(COLOR.rgb) * glow * glow_strength;
+#ifndef VIEW_MODEL
+	if (glass_light_on > 0.5) {
+		// Sunlight through tinted glass, in its color.
+		EMISSION += albedo * glass_light(VERTEX, NORMAL, INV_VIEW_MATRIX);
+	}
+#endif
 }

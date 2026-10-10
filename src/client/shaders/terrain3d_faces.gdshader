@@ -13,6 +13,7 @@ render_mode cull_disabled;
 
 #include "res://src/client/shaders/terrain3d_common.gdshaderinc"
 #include "res://src/client/shaders/see_through.gdshaderinc"
+#include "res://src/client/shaders/glass_light.gdshaderinc"
 #include "res://src/client/shaders/sky_light.gdshaderinc"
 
 uniform sampler2D face_atlas : source_color, filter_nearest;
@@ -98,6 +99,9 @@ void fragment() {
 		// (its clear pixels are the glass meshes'); no border where the
 		// same glass goes on; a frame in its paint.
 		int glass_bits = int(-face_data.y - 10.0 + 0.5);
+		// Tinted glass casts its shadow (its colored light: glass_light).
+		bool tinted_glass = glass_bits >= 1024;
+		glass_bits = glass_bits & 1023;
 		int frame = glass_bits / 32 - 1;
 		int edges = glass_bits & 15;
 		bool on_top = (glass_bits & 16) != 0;
@@ -106,7 +110,7 @@ void fragment() {
 				: texelFetch(face_atlas, ivec2(u, kind * 16 + v), 0);
 		bool goes_on = (v == 0 && (edges & 1) != 0) || (v == 15 && (edges & 2) != 0)
 				|| (u == 0 && (edges & 4) != 0) || (u == 15 && (edges & 8) != 0);
-		if (texel.a < 0.5 || goes_on) {
+		if ((texel.a < 0.5 || goes_on) && !(IN_SHADOW_PASS && tinted_glass)) {
 			discard;
 		}
 		albedo = texel.rgb;
@@ -142,6 +146,10 @@ void fragment() {
 	ALBEDO = albedo;
 	NORMAL_MAP = normal * 0.5 + 0.5;
 	EMISSION = emission * emission_strength;
+	if (glass_light_on > 0.5) {
+		// Sunlight through tinted glass, in its color.
+		EMISSION += albedo * glass_light(VERTEX, NORMAL, INV_VIEW_MATRIX);
+	}
 	ROUGHNESS = mix(0.95, 0.4, weather_wetness);
 	AO = sky_ambient(sky);
 	AO_LIGHT_AFFECT = 0.0;

@@ -188,3 +188,39 @@ func test_the_recipes() -> void:
 			assert_true(Glass.is_window(window))
 			assert_true(TileAtlas.CLEAR_WALLS.has(window), "seen through")
 			assert_true(Items.item_placing(window) != N, "an item places it")
+
+
+func test_the_colored_light_reads_the_cells() -> void:
+	assert_eq(GlassLight.cell_code(Voxels.AIR), GlassLight.CLEAR)
+	assert_eq(GlassLight.cell_code(Voxels.of_block(Tiles.Block.STONE)), GlassLight.OPAQUE)
+	var drawn := Voxels.of_block(Tiles.Block.CURTAINS_CLOSED)
+	assert_eq(GlassLight.cell_code(drawn), GlassLight.OPAQUE, "drawn curtains stop it")
+	var window := Voxels.of_block(Tiles.Block.OAK_WINDOW_SASH)
+	assert_eq(GlassLight.cell_code(window), ChunkMesher.face_kind(window), "its art")
+	assert_true(GlassLight.cell_code(window) < GlassLight.OPAQUE)
+	var pane := Voxels.of_block(Tiles.Block.OLD_GLASS_PANE_WEST)
+	var old := Voxels.of_block(Tiles.Block.OLD_GLASS)
+	assert_eq(GlassLight.cell_code(pane), ChunkMesher.face_kind(old), "a pane: its glass's")
+	assert_eq(GlassLight.pane_info(Tiles.Block.GLASS_PANE, 0b1010), 1, "east to west")
+	assert_eq(GlassLight.pane_info(Tiles.Block.GLASS_PANE, 0b0101), 2, "north to south")
+	assert_eq(GlassLight.pane_info(Tiles.Block.IRON_WINDOW, 0), 4, "framed")
+	assert_eq(GlassLight.pane_info(Tiles.Block.GLASS, 0), 0)
+	assert_eq(GlassLight.palette().get_width(), Tints.COLORS.size())
+	# Tinted glass casts its whole shadow (its frame pass says so), clear
+	# glass only its frame's.
+	var tinted := Vector3i(4, SEA, 4)
+	var chunk := ChunkData.new(Vector2i.ZERO)
+	chunk.set_voxel(tinted, Voxels.of_block(Tiles.Block.GLASS))
+	chunk.set_voxel(Vector3i(9, SEA, 4), Voxels.of_block(Tiles.Block.GLASS))
+	chunk.tints[tinted] = Tints.pack(2, -1)
+	chunk.recompute_tops()
+	var built := ChunkMesher.build(
+		ChunkJob.of_chunk(chunk, func(_c: Vector2i) -> ChunkData: return null)
+	)
+	var shadows := 0
+	var faces := built.parts[ChunkMesher.Part.FACES]
+	for i in faces.quad_count():
+		var info := faces.uv2s[i * 4].y
+		if info < GlassFaces.FRAME_PASS - GlassFaces.TINTED_SHADOW + 0.5:
+			shadows += 1
+	assert_eq(shadows, 6, "the tinted cube's six faces")
