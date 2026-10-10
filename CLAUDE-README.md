@@ -43,7 +43,7 @@ Les questions de goût ou les choix lourds de conséquences sont posés avant de
 | Plateformes | PC d'abord (installable, Steam/Epic un jour), puis **iOS et Android**. Graphismes poussés au maximum, en tirant parti de la carte graphique… sans la faire tourner à 100 % pour rien (limite d'images par seconde). |
 | Graphismes | Claude crée tout lui-même, de façon procédurale (aucune ressource externe). |
 | Joueurs | Solo d'abord, avec un code prêt pour le multijoueur (serveur intégré, messages). |
-| Modes de jeu | **Créatif, Survie, Hardcore**, et le nouveau mode **Arcade** (phase 8, section 6). |
+| Modes de jeu | **Créatif, Survie, Hardcore**, et le nouveau mode **Arcade** (en attente, section 6). |
 | Priorités | Explorer, construire, admirer, survivre, combattre. |
 | Langues | Français et anglais, réglables dans le jeu. |
 | Dépôt | Privé, compilation automatique par GitHub (Windows, Linux, macOS). |
@@ -142,10 +142,10 @@ Godot **4.7.2** (GDScript), rendu Forward+. 259 tests unitaires, lint propre.
 | 7.9 Pêche | La **canne à pêche** (trois bâtons et deux ficelles ; en bambou, poignée en liège, moulinet, anneaux, le bouchon accroché près de la poignée) : clic droit pour **lancer** là où l'on vise (14 cases au plus), le bouchon vole en arc et flotte ; il **frétille** quand un poisson grignote puis **s'enfonce** (éclaboussures, ligne tendue) : clic droit à ce moment pour **ferrer**, le poisson saute hors de l'eau jusqu'au joueur ; trop tôt rien, trop tard le poisson **file avec l'appât** ; la canne s'use. **14 poissons** selon l'eau (lac, rivière, marais, mer, grottes), le climat, l'heure (jour, aube et crépuscule, nuit), la pluie et la profondeur : perche, truite, carpe, brochet, silure, anguille, saumon, sardine, maquereau, cabillaud, bar, thon, poisson-lanterne (lumineux), poisson des cavernes (aveugle) ; leur taille est annoncée. **Appâts** (le premier des cases) : ver de terre (en creusant, en labourant, plus sous la pluie), boulette d'amorce (farine et maïs), appât de poisson ; chaque poisson a le sien. **Nasse** posée sur l'eau calme, appâtée (4 appâts au plus), elle prend une prise par appât (écrevisses, crabes, petits poissons) ; un flotteur, puis un drapeau jaune quand il y a une prise. Algues et bois flotté repêchés. Poissons grillés au four ; plats : **soupe de poisson**, **sushis**, **poisson frit et frites** (avec effets). Une ligne d'un pixel de la canne au bouchon, en vue de dessus comme en 1re personne. Le livre : chapitre **Pêche** | `7187031` |
 | 7.9A Bateau et chantier naval | Le **chantier naval** (ficelle, rondins, treuil en fer, planches, à l'établi) se pose sur une rive et **fait face à l'eau** (cinq cases d'eau devant) : un portique avec son treuil sur la berge, une **cale** de deux rails qui descend dans l'eau. Son écran (clic droit ou E) montre le bateau : sa **coque** (poupe avec la barre et la place du pilote, 0 à 3 sections, proue : **2 à 5 places**), son **moteur à charbon** (chaudière autour d'un four d'usine, hélice en cuivre) et son charbon, le pont dessiné avec une case par place (**banc** ou **coffre**, « Ouvrir » pour le coffre), « **Mettre à l'eau** » : le bateau glisse le long de la cale. Un bateau amarré près d'un chantier libre y **remonte entier** (« Remonter au chantier ») ; ailleurs, son écran (E sur lui ou à bord) change moteur, charbon, bancs et coffres. **Clic droit** pour monter (pilote, sinon un banc libre) ; les **animaux menés à la corde** montent sur les bancs libres (depuis la proue) et descendent avec le joueur. Le pilote : avancer/reculer les gaz, gauche/droite la barre, sprint le plein régime, saut pour descendre sur la rive la plus proche ; de l'inertie, un long bateau tourne moins vite, la terre et la glace l'arrêtent, l'eau qui coule l'emporte, la lave le brûle. Moteur : **fumée** à la cheminée, hélice qui tourne, sillage, une **jauge de charbon** (un charbon par minute, plus au plein régime) ; sans charbon ou sans moteur, **on rame** (avirons, « À la rame », ça fatigue). Frappé quelques fois (hache plus fort), personne à bord, il se casse en ses pièces et ce qu'il transporte. Le livre : chapitre **Bateaux** | `598396f` |
 | 7.9B Filet de pêche et peinture | Le **filet de pêche** (ficelle et plombs en fer, à l'établi) va dans sa case de l'écran du bateau (sa barre d'usure) ; à bord, **R le jette ou le relève** (retiré de sa case, il est relevé). Jeté dans au moins deux d'eau, à l'arrêt ou au ralenti, il prend de temps en temps poissons et déchets **dans les coffres du bateau**, sinon il en **garde 8** (visibles dans le filet), puis plus rien ; relevé, sa prise est pour le joueur ; il pêche même sans personne à bord. Il s'use dans l'eau (trois fois plus vite traîné à toute allure, et il ne prend rien), à chaque prise ; usé, il **se déchire** (prise perdue) ; on le **raccommode** avec trois ficelles. **Peinture** : l'**huile de lin** (graines de lin au moulin, prise avec des bocaux) et un pigment (fleurs, betterave, lapis, cactus, charbon ; mélanges orange et violet) font un pot, **9 couleurs** ; clic droit sur un bateau peint la **coque**, Maj + clic droit la **bande** (plat-bord), sur l'eau comme sur la cale ; 4 couches par pot, puis le bocal reste ; la **hache décape**. La couleur passe par le shader (pas de modèle par couleur) ; gardée au chantier, perdue si le bateau est cassé. Le filet se voit plié sur la poupe ou jeté derrière (flotteurs, prise dedans) ; l'écran du bateau dessine le pont à sa couleur | `27371c9` |
-| 7.10 Compagnons | Le **chien** : un **loup** à qui l'on donne de la **viande** (crue ou cuite) sans qu'il s'en prenne à nous la mange et, de temps en temps (une fois sur trois), **s'apprivoise** : il devient notre chien (gris comme un loup, collier rouge). Le **chat** : des **chats sauvages** vivent dans les plaines, forêts fleuries, savanes et jungles ; ils fuient le joueur, sauf s'il tient un **poisson** (ils approchent) ; du poisson les apprivoise de la même façon. **Clic droit** sur le sien avec autre chose que sa nourriture : l'**ordre suivant**, « te suit », « reste ici » (assis, endormi la nuit), « garde » (le troupeau pour un chien, les champs pour un chat) là où il est ; une caresse par jour. Sa nourriture le **soigne** (il guérit aussi tout seul, lentement), sinon lui donne envie d'un compagnon : **chiots et chatons**, à nous aussi, dans d'autres **robes** (chiens : gris, fauve, noir et blanc, chocolat, tacheté ; chats : tigré gris, roux, noir, blanc, tricolore, siamois). Qui suit reste au pied (s'assoit quand on s'arrête), nous **rejoint** si on va trop loin et **monte dans le bateau** avec nous. Le chien **aboie** contre les monstres et les loups ou ours en chasse (petits nuages, message « aboie, quelque chose approche ! ») et, s'il suit ou garde, **leur saute dessus** : un monstre mordu est blessé, un loup ou un ours mordu **s'enfuit** ; aucun prédateur ne chasse près d'un chien. De garde, il **ramène au troupeau** les moutons, vaches, chèvres, cochons, poules et canards qui s'éloignent (il passe derrière et les pousse). Le chat **chasse les taupes** (il attend qu'elles sortent) et **les corbeaux** (posés). Nos coups et nos flèches les épargnent. Corrigé au passage : la peinture des bateaux (7.9B) avait mis des variables par instance dans le shader de tous les objets voxel, ce qui saturait un tampon du moteur en première personne (« Too many instances… ») ; elle a maintenant un shader à part, réservé aux bateaux | « Companions » |
+| 7.10 Compagnons | Le **chien** : un **loup** à qui l'on donne de la **viande** (crue ou cuite) sans qu'il s'en prenne à nous la mange et, de temps en temps (une fois sur trois), **s'apprivoise** : il devient notre chien (gris comme un loup, collier rouge). Le **chat** : des **chats sauvages** vivent dans les plaines, forêts fleuries, savanes et jungles ; ils fuient le joueur, sauf s'il tient un **poisson** (ils approchent) ; du poisson les apprivoise de la même façon. **Clic droit** sur le sien avec autre chose que sa nourriture : l'**ordre suivant**, « te suit », « reste ici » (assis, endormi la nuit), « garde » (le troupeau pour un chien, les champs pour un chat) là où il est ; une caresse par jour. Sa nourriture le **soigne** (il guérit aussi tout seul, lentement), sinon lui donne envie d'un compagnon : **chiots et chatons**, à nous aussi, dans d'autres **robes** (chiens : gris, fauve, noir et blanc, chocolat, tacheté ; chats : tigré gris, roux, noir, blanc, tricolore, siamois). Qui suit reste au pied (s'assoit quand on s'arrête), nous **rejoint** si on va trop loin et **monte dans le bateau** avec nous. Le chien **aboie** contre les monstres et les loups ou ours en chasse (petits nuages, message « aboie, quelque chose approche ! ») et, s'il suit ou garde, **leur saute dessus** : un monstre mordu est blessé, un loup ou un ours mordu **s'enfuit** ; aucun prédateur ne chasse près d'un chien. De garde, il **ramène au troupeau** les moutons, vaches, chèvres, cochons, poules et canards qui s'éloignent (il passe derrière et les pousse). Le chat **chasse les taupes** (il attend qu'elles sortent) et **les corbeaux** (posés). Nos coups et nos flèches les épargnent. Corrigé au passage : la peinture des bateaux (7.9B) avait mis des variables par instance dans le shader de tous les objets voxel, ce qui saturait un tampon du moteur en première personne (« Too many instances… ») ; elle a maintenant un shader à part, réservé aux bateaux | `a9ee9ef` |
 
-**Pas encore fait** (prévu) : structures, menus de départ, sons, mode Arcade,
-mobile.
+**Pas encore fait** (prévu) : escaliers, dalles, toits, portes et décoration (nouvelle phase 8),
+structures, menus de départ, sons, mode Arcade (en attente), mobile.
 
 ---
 
@@ -282,7 +282,7 @@ captures, commit et retour :
    pousses d'arbres de chaque espèce (un arbre abattu en donne), plantées sur de la terre ou de
    l'herbe, qui deviennent de **jeunes arbres** puis des **arbres** à la lumière (les nuits et
    le noir les arrêtent, une torche les fait pousser) s'il y a la place ; l'herbe **repousse**
-   sur la terre nue à côté de l'herbe. Base de la phase 8 (la nature qui repousse).
+   sur la terre nue à côté de l'herbe. Base du mode Arcade (la nature qui repousse).
 2. ✅ **Houe, champs, graines** (voir section 3, ligne 7.2) : labourer l'herbe ou la terre en terre labourée (humide près de
    l'eau, sinon elle sèche), graines (hautes herbes, récoltes), blé, carotte, pomme de terre en
    stades visibles, récolte, pain au four.
@@ -366,8 +366,8 @@ captures, commit et retour :
      combustible.
    - **Serveur** : le bateau est une entité sauvegardée, comme les créatures, et le pilote le
      prédit comme son propre corps. C'est le premier « véhicule », il servira pour le cheval.
-   - **Plus tard** : d'autres énergies (une voile selon le vent de la météo, l'énergie de la
-     phase 8).
+   - **Plus tard** : d'autres énergies (une voile selon le vent de la météo, l'énergie du mode
+     Arcade).
    Fait comme prévu, avec ces écarts : le bateau est une entité (Boats) même sur sa cale ; il y repose
    incliné, proue en bas ; les animaux prennent les bancs depuis la proue (loin du pilote) ; sans
    charbon, ramer fatigue un peu. Pas fait (à proposer) : un ponton d'amarrage, une ancre (le bateau
@@ -414,6 +414,11 @@ captures, commit et retour :
 11. **Saisons** (prochaine étape ; réglage du monde) : cultures de saison, neige en hiver, arbres qui roussissent
     à l'automne.
 
+**Après la phase 7** : la **nouvelle phase 8, Construction et décoration** (escaliers, dalles,
+toitures, portes, verre et vitres refaits et teintables, rideaux fermables, décoration intérieure ;
+voir la section 6), demandée par le propriétaire ; ses propositions sont à valider avant son
+premier « go ». Le **mode Arcade** (ancienne phase 8) est **en attente**.
+
 Plus tard (après la phase 7) : le **cheval** que l'on monte.
 
 ### Chat et commandes : fait
@@ -455,7 +460,7 @@ chacune avec tests, captures, commit et retour :
    magma), des niveaux profonds plus dangereux (monstres des profondeurs, à inventer).
 5. **Ruines et donjons** : salles enfouies générées par graine, coffres avec du butin.
 6. **Mines abandonnées** : galeries étayées de bois, coffres.
-7. **Villages** : maisons, chemins, puits (habitants plus tard).
+7. **Villages abandonnés** : maisons, chemins, puits.
 
 ## 6. Feuille de route détaillée (phases restantes)
 
@@ -480,7 +485,137 @@ chacune avec tests, captures, commit et retour :
 - Élevage (nourrir, enclos, reproduction, produits sans tuer), nouveaux animaux, cuisine,
   pêche, compagnons, saisons. Le cheval plus tard.
 
-### Phase 8 — Mode Arcade (nouvelle idée du propriétaire)
+### Phase 8 — Construction et décoration (nouvelle, demandée par le propriétaire en octobre 2026)
+
+La demande du propriétaire, telle quelle :
+
+> Met la phase 8 actuelle en standby, nouvelle phase 8 : ajouter des blocs de constructions
+> (exemple : escaliers (bois, pierre, pierre lisse, etc...), demi dalles (demi en hauteur et demi
+> en largeur), des toitures, etc...(propose moi d'autres blocs). Il faut aussi ajouter de nouveaux
+> blocs de décoration intérieur, fait moi des propositions. Fait une refonte des textures du verre
+> et des vitres classiques je trouve que ça ressemble un peu trop à minecraft, fait que l'on puisse
+> tinter le verre/les vitres avec des couleurs. Rendre les rideaux fermables et pouvoir également
+> les tinter.
+
+Elle vient **après la 7.11 (Saisons)**, la dernière étape de la phase 7. Les propositions
+ci-dessous sont **à valider avec le propriétaire avant son premier « go »** : ce qu'il garde, ce
+qu'il écarte, et les points marqués « *à décider* ». Le jeu n'a aujourd'hui que des cubes (6
+planches, pierre, deepslate, grès, briques de pierre, pierre lisse, briques, briques de
+deepslate, grès taillé, verre, laine, fenêtre), la vitre fine, les rideaux (toujours ouverts),
+barrières et portails ; **pas encore de portes, d'escaliers ni de dalles**.
+
+**Socle commun** (fait à la première étape, il sert à toutes les autres) :
+- **Blocs partiels** : un bloc peut n'occuper qu'une partie de sa case (une ou quelques boîtes) ;
+  la physique (on marche dessus, on s'y cogne), la visée et son cadre, les ombres et la lumière du
+  ciel suivent sa vraie forme.
+- **Monter une marche sans sauter** : on monte en marchant une marche d'un demi-bloc (escaliers,
+  dalles) ; un bloc plein se saute toujours. Cela change la règle « pas d'escaliers, on saute »
+  pour les escaliers que l'on pose (*à décider*, recommandé).
+- **Rendu** : un bloc partiel est un modèle voxel peint pixel pour pixel avec la texture de son
+  matériau : un escalier en briques a exactement les briques du mur d'à côté.
+- **Pose** : un escalier se tourne vers le joueur ; viser la moitié haute d'une face (ou Maj) le
+  pose **à l'envers** (sous un plafond) ; une dalle se pose en bas ou en haut selon la moitié visée,
+  deux dalles font un bloc plein ; les escaliers voisins se raccordent tout seuls en **coins**
+  (rentrants, sortants).
+- **Teinte par case** (le « pas fait » de la 7.9B : peindre d'autres objets) : clic droit avec un
+  **pot de peinture** sur un bloc teintable le colore (gardé dans le chunk, sauvegardé) ; la
+  **hache décape** le bois, l'**arrosoir lave** le verre et les tissus. Pour le verre, les vitres,
+  les rideaux, les tapis, le plâtre, les draps, puis les barrières, portes, coffres et meubles.
+  Palette (*à décider*) : garder les 9 couleurs des pots, ou passer à environ 16 avec une palette
+  à nous (tons doux : brun, gris, bleu ciel, vert tendre, ocre, bordeaux…), pas les 16 teintures
+  de Minecraft.
+
+**Blocs de construction** :
+1. **Escaliers** (droits, coins, à l'envers) et **dalles** : **demi-hauteur** (en bas, en haut ;
+   deux font un bloc) et **demi-largeur** (dalle verticale contre un côté de la case), dans chaque
+   matériau : les 6 bois, pierre, pierre lisse, briques de pierre, briques, briques de deepslate,
+   grès, grès taillé, et les nouveaux matériaux ci-dessous.
+2. **Autres formes** (*à choisir*) : **murets** (fins, ils se raccordent comme les barrières :
+   clôtures de pierre, parapets), **piliers et colonnes** (pierre ou bois, avec chapiteau),
+   **poutres** équarries (couchées dans les trois sens ou debout : charpentes, colombages),
+   **quarts de bloc** (petites marches, rebords de fenêtre), **arches** (demi-cercle sur deux
+   cases, pour les portes et les ponts).
+3. **Nouveaux matériaux** (*à choisir*), chacun avec ses escaliers et ses dalles : **pavés**
+   (pierre brute assemblée), **pierre de taille** (gros blocs appareillés), **pierre moussue**
+   (vieilles constructions), **plâtre / crépi** (blanc cassé, teintable), **colombages** (plâtre et
+   poutres : droit, en croix, en diagonale), **torchis**, **parquet** (lames et chevrons, pour les 6
+   bois), **carrelage** (damier, tommettes en terre cuite), **terre cuite**, **ardoise**, **briques
+   de grès**.
+4. **Toitures** : pentes à 45° en **tuiles de terre cuite**, **ardoise**, **bardeaux de bois** et
+   **chaume** ; leurs pièces : pente, coin rentrant, coin sortant, **faîtage** (l'arête), **rive**
+   (le bord du pignon), et des **pentes douces** (sur deux cases, pour les grands toits) ; elles se
+   raccordent toutes seules comme les escaliers. Avec une **cheminée** en briques qui fume quand un
+   feu brûle dessous, et des **lucarnes**. La vue en coupe enlève déjà le toit au-dessus du joueur.
+5. **Portes et ouvertures** : **portes** en bois (une case, deux de haut, ouvertes au clic droit
+   ou avec E comme les portails), **portes doubles**, **portes vitrées**, **trappes** (au sol pour
+   descendre à la cave, ou sur le côté), **échelles** (on y grimpe), **volets** (sur les fenêtres,
+   ouvrables), **grilles et barreaux** en fer forgé, **garde-corps** (escaliers, balcons,
+   mezzanines). Le jeu n'a pas encore de portes : sans doute le plus attendu.
+6. **Extérieur** (*à choisir*) : allées (gravier, dalles de jardin, pas japonais), lampadaire,
+   puits, fontaine, boîte aux lettres (multijoueur), banc de jardin, jardinière, pergola, nichoir,
+   girouette.
+
+**Verre et vitres refaits, teintables** :
+- Le verre actuel (bordure pâle et reflets en traits diagonaux) fait trop Minecraft. Trois verres
+  proposés (*à choisir*) :
+  - **verre clair** : presque invisible, juste un reflet doux du ciel en dégradé et quelques
+    éclats, **sans cadre** ; deux blocs de verre côte à côte n'en font qu'un (verre continu : un
+    bord seulement là où le verre s'arrête) ;
+  - **verre ancien** (soufflé) : légèrement verdâtre, ondulé, quelques bulles ;
+  - **vitrail au plomb** : des losanges sertis de plomb (maisons anciennes, chapelles).
+- **Fenêtres** : cadre en bois (les 6 essences) ou en fer forgé, plusieurs dessins (4 carreaux,
+  6 petits carreaux, à guillotine, œil-de-bœuf rond), un rebord ; la **vitre fine** suit les mêmes
+  styles et se raccorde à ses voisines comme les barrières.
+- **Teinte** : un pot de peinture sur le verre ou une vitre donne un **verre coloré
+  translucide** : on voit à travers, en couleur (une passe transparente comme l'eau, plus des
+  pixels découpés) ; le cadre d'une fenêtre se peint à part (Maj + clic droit, comme la bande d'un
+  bateau). Option (*à décider*, plus coûteuse) : le soleil à travers un vitrail colore le sol.
+
+**Rideaux** :
+- **Ouverts ou fermés** au clic droit (ou E) : ouverts, noués sur les côtés (le modèle actuel) ;
+  fermés, tirés devant la fenêtre. Fermés, ils **cachent la vue** et **assombrissent la pièce** :
+  la lumière du jour ne passe plus par cette fenêtre (*à décider*).
+- **Teintables** avec les pots de peinture ; deux longueurs (court, jusqu'au sol) ; tringle en
+  bois ou en fer.
+
+**Décoration intérieure** (*à choisir*) :
+- **Lit** (2 cases, draps teintables) : y dormir passe la nuit (quand tous les joueurs dorment ;
+  pas en temps synchronisé avec l'appareil) et fixe l'endroit où l'on se réveille après avoir perdu
+  connaissance.
+- **Rangements** : armoire (un coffre de deux cases de haut), commode, **étagères où les objets
+  posés se voient**, bibliothèque, vaisselier, placards muraux de cuisine, caisses, paniers.
+- **Assises et tables** : fauteuil, canapé (2 cases), banc, tabouret, rocking-chair (on s'y
+  assoit, comme sur un banc de bateau), table basse, bureau, table de nuit, guéridon, nappe
+  teintable.
+- **Lumières** : **lustre** suspendu, **bougies** et chandeliers posés sur une table, lampe de
+  chevet, applique murale.
+- **Cheminée, âtre** (2 cases) : un vrai feu qui éclaire, fume par le conduit et **réchauffe**
+  (utile avec l'hiver des saisons) ; poêle à bois.
+- **Aux murs** : **tableaux** (paysages et portraits générés, à nous), **horloge** (l'heure du
+  jeu), miroir, **carte encadrée** (la carte des alentours), trophées (tête de cerf, d'ours),
+  tapisserie teintable, étagère à épices, portemanteau.
+- **Textiles** : **tapis** teintables (une case, ou grands, qui se raccordent), coussins.
+- **Plantes** : **pots de fleurs** (on y plante une fleur, une pousse, un champignon),
+  jardinières de fenêtre, plantes vertes.
+- **Salle de bain** : baignoire, douche, lavabo (l'évier et les toilettes existent).
+- **Divers** : berceau, coffre à jouets, piano, horloge comtoise, paravent.
+
+**Découpage proposé** (une étape par « go », à revoir avec le propriétaire) :
+1. Le socle des blocs partiels (physique, visée, rendu, pose) et les **escaliers et dalles** des
+   matériaux existants.
+2. Le **verre et les vitres** refaits, la **teinte par case**, le verre teinté translucide.
+3. Les **rideaux** fermables et teintables, les **tapis**.
+4. **Portes, trappes, échelles, volets**, garde-corps.
+5. **Toitures** (4 matériaux, leurs pièces, la cheminée).
+6. **Nouveaux matériaux** (pavés, plâtre, colombages, parquet, carrelage…) avec leurs escaliers et
+   dalles ; murets, piliers, poutres.
+7. **Chambre et salon** : le lit (dormir), les rangements, les étagères d'exposition, les assises
+   et les tables.
+8. **Ambiance** : lumières (lustre, bougies), cheminée, tableaux, horloge, miroir, plantes en pot,
+   salle de bain.
+9. **Extérieur** (si gardé).
+
+### Mode Arcade — en attente (ancienne phase 8, mise de côté par le propriétaire en octobre 2026)
 
 Le mode **Arcade** propose des parties à objectif, sur des cartes spéciales. **Arcade n°1 :
 « Restauration »**, idée du propriétaire, telle quelle :
@@ -521,7 +656,7 @@ Découpage proposé (à affiner avec le propriétaire avant de commencer) :
    (démontage animé, ressources rendues) et la partie continue **en Survie** sur la carte rétablie.
 
 Dépend des phases 3 (construction), 4 (craft), 5 (créatures, modes de jeu) et 7 (végétation qui
-pousse) : c'est pourquoi elle vient juste après.
+pousse). Elle reprendra quand le propriétaire le dira.
 
 ### Phase 9 — Finitions PC
 - Écran titre, création et chargement de mondes (graine, mode, réglages du temps), sauvegardes

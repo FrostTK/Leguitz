@@ -318,12 +318,16 @@ Pour le multijoueur, il suffira de brancher un transport réseau.
 5. ✅ Survie et combat (vie, faim, nage, modes de jeu, animaux, monstres, combat et armures)
 6. Souterrain et structures (en pause : maison et jardin, torches et lanternes, lumière des grottes, coulées d'eau et de lave faits)
 7. Agriculture et élevage (en cours : végétation qui pousse, champs et cultures, arrosage et compost,
-   nouvelles cultures et arbres fruitiers, élevage)
-8. Mode Arcade : scénario n°1 « Restauration » (restaurer une terre désolée avec éoliennes,
-   irrigateurs et purificateurs, faire revenir forêts, rivières et animaux, puis recycler les
-   bâtiments et continuer en survie)
+   nouvelles cultures et arbres fruitiers, élevage, cuisine, pêche et bateaux, compagnons ; reste
+   les saisons)
+8. Construction et décoration (à venir : escaliers, dalles, toitures, portes et échelles, nouveaux
+   matériaux, verre et vitres refaits et teintables, rideaux fermables, décoration intérieure)
 9. Finitions PC (menus, sauvegardes, sons, options graphiques, Steam)
 10. Mobile (iOS, Android)
+
+En attente : le mode Arcade, scénario n°1 « Restauration » (restaurer une terre désolée avec
+éoliennes, irrigateurs et purificateurs, faire revenir forêts, rivières et animaux, puis recycler
+les bâtiments et continuer en survie).
 
 Le détail de chaque étape restante, les décisions prises et la façon de reprendre le projet dans
 une nouvelle conversation avec Claude sont dans [`CLAUDE-README.md`](CLAUDE-README.md).
