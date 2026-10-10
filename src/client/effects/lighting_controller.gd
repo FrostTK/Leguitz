@@ -288,6 +288,11 @@ func _update_fog(
 	environment.fog_density = -log(1.0 - amount) / distance
 	environment.fog_height = reference_height - VALLEY_HAZE_BELOW
 	environment.fog_height_density = haze
+	# Glass's tint is a blend Godot's fog cannot reach: glass.gdshader hazes it.
+	var fog := Vector3(environment.fog_density, environment.fog_height, haze)
+	if not environment.fog_enabled:
+		fog = Vector3.ZERO
+	RenderingServer.global_shader_parameter_set(&"glass_fog", fog)
 
 
 ## The sky behind the horizon, in first person in the open air.

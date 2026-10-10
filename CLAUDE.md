@@ -905,8 +905,14 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   twice: its opaque pixels (frames, lead, borders, bubbles) in the face meshes, UV2.y under
   FRAME_PASS (-10; terrain3d_faces.gdshader: casts shadows, a frame in its paint), and its clear
   pixels in their own meshes (Part.GLASS, DEEP_GLASS; ChunkView3D.glass, cave_glass, no shadow)
-  drawn by `glass.gdshader` (the screen seen through, tinted, a sheen brighter grazing, the sun's
-  glints; old glass wobbles; stained glass shows some of its own color lit, STAINED); edge bits
+  drawn in two passes blending over what is drawn behind them, never reading the screen (it is
+  copied before the transparent pass: water and glass behind glass did not show; asked by the
+  owner): `glass.gdshader` (blend_mul: what lies behind times the tint, old glass greenish and
+  rippled, leaded a little dimmer; hazed by hand, `glass_fog` from LightingController, Godot's fog
+  would turn the multiply into the fog's color) then its next pass `glass_sheen.gdshader`
+  (blend_mix, ALPHA the sheen, brighter grazing; stained glass shows some of its own color lit,
+  STAINED; the sun's glints from its own light(), undimmed by ALPHA); shared code in
+  glass_common.gdshaderinc; WorldView3D.GLASS_PRIORITY draws them after water. Edge bits
   drop the border where the same glass in the same tint goes on; UV2 packs edges, top, the
   tint and the style. Tints (`src/sim/world/tints.gd`, static, given the server): the palette
   COLORS (16 soft colors of our own, by Items.PAINTS: 7 paints added, PAINT_BROWN .. PAINT_TEAL;

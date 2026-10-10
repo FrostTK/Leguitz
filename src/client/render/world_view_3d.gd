@@ -22,6 +22,10 @@ const TOP_SHADER := preload("res://src/client/shaders/terrain3d_top.gdshader")
 const FACE_SHADER := preload("res://src/client/shaders/terrain3d_faces.gdshader")
 const WATER_SHADER := preload("res://src/client/shaders/water.gdshader")
 const GLASS_SHADER := preload("res://src/client/shaders/glass.gdshader")
+const GLASS_SHEEN_SHADER := preload("res://src/client/shaders/glass_sheen.gdshader")
+## Glass blends over what is drawn behind it (it does not read the screen,
+## copied before the water is drawn): after water, its tint, then its sheen.
+const GLASS_PRIORITY := 1
 const FACE_ATLAS := preload("res://assets/textures/tiles/face_atlas.png")
 const FACE_NORMALS := preload("res://assets/textures/tiles/face_atlas_n.png")
 const FACE_EMISSION := preload("res://assets/textures/tiles/face_atlas_e.png")
@@ -83,8 +87,10 @@ var caps_shown := false
 var top_material := ShaderMaterial.new()
 var face_material := ShaderMaterial.new()
 var water_material := ShaderMaterial.new()
-## The see-through part of glass (GlassFaces), shared by the chunks.
+## The see-through part of glass (GlassFaces), shared by the chunks: its
+## tint, and its sheen in the next pass.
 var glass_material := ShaderMaterial.new()
+var glass_sheen := ShaderMaterial.new()
 var props := PropLibrary.new()
 
 var _views: Dictionary[Vector2i, ChunkView3D] = {}
@@ -127,9 +133,14 @@ func _ready() -> void:
 		palette.append(Vector3(linear.r, linear.g, linear.b))
 	face_material.set_shader_parameter("tint_colors", palette)
 	glass_material.shader = GLASS_SHADER
-	glass_material.set_shader_parameter("face_atlas", FACE_ATLAS)
-	glass_material.set_shader_parameter("wall_atlas", TerrainRenderer.WALL_ATLAS)
-	glass_material.set_shader_parameter("tint_colors", palette)
+	glass_material.render_priority = GLASS_PRIORITY
+	glass_sheen.shader = GLASS_SHEEN_SHADER
+	glass_sheen.render_priority = GLASS_PRIORITY + 1
+	glass_material.next_pass = glass_sheen
+	for material: ShaderMaterial in [glass_material, glass_sheen]:
+		material.set_shader_parameter("face_atlas", FACE_ATLAS)
+		material.set_shader_parameter("wall_atlas", TerrainRenderer.WALL_ATLAS)
+		material.set_shader_parameter("tint_colors", palette)
 	_variants.resize(Tiles.Block.size())
 	for block: int in Tiles.Block.values():
 		_variants[block] = props.variant_count(block)

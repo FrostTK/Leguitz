@@ -171,3 +171,7 @@ glass_sun_color={
 "type": "vec3",
 "value": Vector3(0, 0, 0)
 }
+glass_fog={
+"type": "vec3",
+"value": Vector3(0, 0, 0)
+}
