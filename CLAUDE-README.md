@@ -148,9 +148,10 @@ Godot **4.7.2** (GDScript), rendu Forward+. 259 tests unitaires, lint propre.
 | 8.1 Escaliers et dalles | Pour les 6 bois, la pierre, la pierre lisse, les briques de pierre, les briques, les briques d'ardoise des abîmes, le grès et le grès taillé : des **escaliers** (6 blocs en marches → 4), des **dalles** (3 en ligne → 6) et des **dalles verticales** (3 en colonne → 6) ; deux dalles redonnent le bloc. Un escalier se pose **face au joueur** (la marche basse devant) ; visé sur la moitié haute d'un côté, ou avec Maj, ou sous un plafond, il se pose **à l'envers** ; côte à côte, les escaliers font leurs **coins** tout seuls (rentrants et sortants, comme Minecraft). Une dalle se pose en bas ou en haut de sa case ; une **deuxième dalle** de la même matière la complète en **bloc entier**. Une dalle verticale se pose contre le côté visé. **Les escaliers et les dalles se montent en marchant** (une marche d'un demi-niveau ; un bloc entier se saute toujours), on s'y cogne la tête, les animaux y marchent. Ils portent exactement les textures de leur matière (dessinés avec le terrain : légers, deux triangles par face), se cassent comme elle, et la neige d'hiver se pose dessus. Le livre : chapitre Maison (comment les poser) et Fabrication (une recette par forme, qui fait défiler les matières) | `1d17526` |
 | 8.2 Verre et vitres | Le verre refait, **à nous** : le **verre clair** se voit à peine (un reflet du ciel, plus vif en rasant, l'éclat du soleil) et deux blocs côte à côte font **une seule vitre** (un bord seulement là où le verre s'arrête) ; le **verre ancien** (quatre verres et du sable) est verdâtre, ondulé, avec des bulles ; le **verre au plomb** (huit verres autour d'un lingot de fer) fait des losanges sertis de plomb. Une **vitre fine** de chaque verre (six verres → 16) qui se **raccorde** aux vitres, au verre et aux murs voisins comme une barrière. Les **fenêtres** : 4 dessins (quatre carreaux, petits carreaux, à guillotine, œil-de-bœuf) dans 7 cadres (les 6 bois, le fer forgé), 28 fenêtres en tout (du verre au milieu de planches ou de lingots de fer). **Teinte par case** : un pot de peinture (clic droit) teinte le verre, une vitre ou une fenêtre (une couche à chaque fois, le pot vide laisse sa bouteille) ; avec **Maj**, il peint plutôt le **cadre** d'une fenêtre ; l'**arrosoir lave** le verre, la **hache gratte** le cadre. On voit à travers un verre teinté, en couleur, et il garde un peu de sa couleur au soleil. **Le soleil à travers un verre teinté colore le sol et les murs** (des taches de couleur qui suivent le soleil, au dessin des barreaux des fenêtres). La palette passe à **16 couleurs douces à nous** (7 pots ajoutés : brun, gris, bleu ciel, vert tendre, ocre, bordeaux, bleu canard ; les bateaux en profitent). Le livre : chapitre Maison, « Verre et fenêtres » | `7c506de` |
 | 8.3 Rideaux et tapis | Les **rideaux** se **tirent et se nouent** au clic droit (ou E), comme on ouvre un portillon ; **tirés, ils arrêtent la lumière du jour** : une pièce aux rideaux tous tirés devient sombre (la lanterne du joueur s'allume, et les monstres peuvent y venir comme dans le noir). Quatre sortes : courts ou **longs jusqu'au sol** (la case dessous doit être libre), sur une **tringle en bois ou en fer forgé** (des lingots de fer au lieu des bâtons ; les longs à l'établi). Ils se **teignent** au pot de peinture (ils gardent leur couleur tirés ou noués) et l'arrosoir les lave. Le **tapis** (deux laines ou deux lins en font trois) se pose au sol ; des tapis d'une même couleur côte à côte n'en font **qu'un grand** (la bordure seulement autour), de couleurs différentes ils gardent chacun la leur ; il se teint aussi. **Les meubles se posent sur un tapis** (table, chaises, coffres, fours, et même des blocs) : il reste dessous et revient quand on enlève le meuble ; si son sol casse, il tombe avec. Le livre : chapitre Maison | `cd07559` |
-| Lumière colorée naturelle | Demandé par le propriétaire (la lumière à travers les fenêtres teintées faisait des formes géométriques qui sautaient avec l'heure) : le verre teinté arrête le soleil blanc dans les ombres, et chaque point du sol, des murs, des meubles et des tapis cherche vers le soleil s'il voit le jour à travers du verre teinté : il reçoit alors le soleil filtré par cette couleur. Les taches tombent exactement là où va la lumière (le cadre, les barreaux et le plomb y dessinent leur ombre), suivent le soleil en continu et gardent la texture de ce qu'elles éclairent ; un verre teinté en blanc donne la même tache que le soleil à travers du verre clair. Le soir, elles sont faibles comme le soleil couchant ; une verrière dans un toit donne les plus belles. Environ 0,4 ms de carte graphique | « Natural colored light » |
+| Lumière colorée naturelle | Demandé par le propriétaire (la lumière à travers les fenêtres teintées faisait des formes géométriques qui sautaient avec l'heure) : le verre teinté arrête le soleil blanc dans les ombres, et chaque point du sol, des murs, des meubles et des tapis cherche vers le soleil s'il voit le jour à travers du verre teinté : il reçoit alors le soleil filtré par cette couleur. Les taches tombent exactement là où va la lumière (le cadre, les barreaux et le plomb y dessinent leur ombre), suivent le soleil en continu et gardent la texture de ce qu'elles éclairent ; un verre teinté en blanc donne la même tache que le soleil à travers du verre clair. Le soir, elles sont faibles comme le soleil couchant ; une verrière dans un toit donne les plus belles. Environ 0,4 ms de carte graphique | `292638e` |
+| 8.4 Portes, trappes, échelles, volets | Des **portes** de deux niveaux de haut, une par essence (six planches d'un même bois : chêne à quatre panneaux, bouleau à petite fenêtre, épicéa rustique à écharpe, chêne noir clouté, jungle à lattes, acacia à fenêtre cintrée), une **porte vitrée** (du verre sur du chêne, elle laisse entrer le jour) et une **porte en fer forgé** ; elles se posent face au joueur, au nu du mur, s'ouvrent et se ferment au clic droit (ou E) ; **côte à côte, deux portes font une porte double** (gonds de part et d'autre) qui s'ouvre d'un seul geste. Fermée, une porte ne laisse passer personne ni la lumière du jour. Des **trappes** (bois, fer) se posent contre le bord d'un trou dans le sol : fermées on marche dessus, ouvertes on descend. Des **échelles** au mur : on grimpe en sautant ou en avançant contre elle, Maj tient sur place, on glisse doucement sinon, sans jamais se faire mal ; une échelle sous une trappe mène à la cave et on en ressort sur le plancher. Des **volets** à l'extérieur des fenêtres, à persiennes, qui se ferment au clic droit (fermés ils arrêtent le jour) et **se peignent** au pot. Des **barreaux en fer forgé** et des **garde-corps** (bois, fer forgé) qui se raccordent entre eux et aux murs (et aux vitres pour les barreaux) : personne ne passe par-dessus, on voit au travers. Le livre : chapitre Maison, « Portes, échelles et volets » | « Doors and ladders » |
 
-**Pas encore fait** (prévu) : portes, toits et décoration (phase 8),
+**Pas encore fait** (prévu) : toits, nouveaux matériaux et décoration (phase 8),
 structures, menus de départ, sons, mode Arcade (en attente), mobile.
 
 ---
@@ -275,13 +276,14 @@ xvfb-run -a -s "-screen 0 960x540x24" godot --path . --audio-driver Dummy --reso
 
 ---
 
-## 5. Prochaine étape au « go » : Phase 8, étape 4 (portes, trappes, échelles, volets)
+## 5. Prochaine étape au « go » : Phase 8, étape 5 (toitures)
 
 **La phase 7 est terminée** (étapes 1 à 11 ci-dessous). La **phase 8, Construction et
 décoration**, est en cours : les étapes 1 (escaliers et dalles), 2 (verre et vitres, la teinte
-par case) et 3 (rideaux et tapis) sont faites ; au prochain « go », l'**étape 4** (les portes,
-portes doubles et vitrées, trappes, échelles, volets, grilles et garde-corps : voir la section 6,
-où sont les décisions du propriétaire et tout le découpage).
+par case), 3 (rideaux et tapis) et 4 (portes, trappes, échelles, volets, barreaux, garde-corps)
+sont faites ; au prochain « go », l'**étape 5** (les toitures : tuiles, ardoise, bardeaux et
+chaume, leurs pièces, la cheminée, les lucarnes ; voir la section 6, où sont les décisions du
+propriétaire et tout le découpage).
 
 ### Phase 7 — Agriculture et élevage (terminée)
 
@@ -663,8 +665,19 @@ barrières et portails ; **pas encore de portes, d'escaliers ni de dalles**.
    Pas fait (à proposer) : des rideaux à demi tirés, un peu de jour à travers des rideaux clairs,
    des voilages transparents, des tapis ronds ou à grands dessins (un motif sur plusieurs cases),
    des tapis d'escalier, des franges, un tapis sur une dalle ou un escalier, peindre la tringle.
-4. (prochaine étape) **Portes, trappes, échelles, volets**, garde-corps.
-5. **Toitures** (4 matériaux, leurs pièces, la cheminée).
+4. ✅ **Portes, trappes, échelles, volets**, garde-corps (voir section 3, ligne 8.4). Fait comme
+   prévu, avec ces choix : une porte tient deux cases (la porte et son « haut », sans modèle, qui
+   renvoie à elle), son battant est à l'avant de sa case et elle s'ouvre vers l'intérieur ; une
+   porte double se forme toute seule (deux portes côte à côte, même sens) et s'ouvre d'un geste ;
+   fermée, une porte occupe toute sa case pour la physique ; les trappes se posent contre le bord
+   d'un trou (en haut de leur case) ; les volets se peignent comme les rideaux ; les « grilles »
+   sont des barreaux qui se raccordent comme les vitres ; les garde-corps se posent sur un sol
+   plein (pas encore sur les escaliers). Pas fait (à proposer) : des garde-corps qui suivent les
+   escaliers, des portes coulissantes ou de grange, des portes qui se verrouillent (une clé, ou
+   seulement pour leur propriétaire en multijoueur), des trappes en bas de case ou au mur
+   (hublots), des échelles de corde qui se déroulent, un portail en fer forgé, des volets roulants
+   ou à battants simples, des portes qui grincent (avec les sons).
+5. (prochaine étape) **Toitures** (4 matériaux, leurs pièces, la cheminée).
 6. **Nouveaux matériaux** (pavés, plâtre, colombages, parquet, carrelage…) avec leurs escaliers et
    dalles ; murets, piliers, poutres.
 7. **Chambre et salon** : le lit (dormir), les rangements, les étagères d'exposition, les assises

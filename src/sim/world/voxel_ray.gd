@@ -127,6 +127,8 @@ static func _shaped_in(
 static func object_box(block: int, cell: Vector3i) -> AABB:
 	if ShapedBlocks.is_shaped(block):
 		return ShapedBlocks.bounds(block, cell)
+	if Openings.is_door(block) or Openings.is_trapdoor(block):
+		return Openings.box_of(block, cell)
 	var tile := Vector2i(cell.x, cell.z)
 	var level := float(cell.y - GameConst.SEA_LEVEL)
 	if SMALL_BODIES.has(block):
@@ -178,7 +180,8 @@ static func _object_in(
 	var row := cell.y
 	var below := voxel
 	while row > maxi(0, cell.y - PlayerBody.MAX_OBJECT_LEVELS - 1):
-		if Voxels.is_object(below):
+		# A door's top has no body: its door below rises into it.
+		if Voxels.is_object(below) and not Openings.is_top(Voxels.block_of(below)):
 			var base := Vector3i(cell.x, row, cell.z)
 			var box := object_box(Voxels.block_of(below), base)
 			if box.end.y <= level:

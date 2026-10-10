@@ -98,6 +98,17 @@ static func _add(
 		variant = _fence_sides(voxels, index)
 	elif block == Tiles.Block.RUG:
 		variant = _rug_sides(job, voxels, index, Vector3i(tile.x, y, tile.y), tint)
+	elif ObjectShapes.JOINING.has(block):
+		variant = _joined_sides(block, voxels, index)
+	elif Openings.is_door(block):
+		# Hung on its right when a door stands on its left (a double door).
+		var left := Openings.left_of(block)
+		var there := voxels[index + left.x * STRIDE_X + left.y * STRIDE_Z]
+		var pair := Voxels.block_of(there)
+		var paired := (
+			Openings.is_door(pair) and ObjectShapes.front_of(pair) == ObjectShapes.front_of(block)
+		)
+		variant = 1 if paired else 0
 	var key := Vector2i(ObjectShapes.model_block(block), variant % count)
 	if not result.props.has(key):
 		result.props[key] = []
@@ -111,6 +122,17 @@ static func _fence_sides(voxels: PackedInt32Array, index: int) -> int:
 	for bit in ObjectShapes.FENCE_SIDES.size():
 		var side: Vector2i = ObjectShapes.FENCE_SIDES[bit]
 		if ObjectShapes.fence_joins(voxels[index + side.x * STRIDE_X + side.y * STRIDE_Z]):
+			sides |= 1 << bit
+	return sides
+
+
+## The sides bars or a railing at `index` (padded voxels) join
+## (Openings.joins; FENCE_SIDES bits).
+static func _joined_sides(block: int, voxels: PackedInt32Array, index: int) -> int:
+	var sides := 0
+	for bit in ObjectShapes.FENCE_SIDES.size():
+		var side: Vector2i = ObjectShapes.FENCE_SIDES[bit]
+		if Openings.joins(block, voxels[index + side.x * STRIDE_X + side.y * STRIDE_Z]):
 			sides |= 1 << bit
 	return sides
 

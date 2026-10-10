@@ -354,6 +354,44 @@ const SHAPED := [
 		"keys": {"W": [Items.Id.WOOL, Items.Id.LINEN]},
 		"result": [Items.Id.RUG, 3],
 	},
+	# Doors (a door of each wood and of iron: `all`), trapdoors, ladders,
+	# shutters, bars, railings.
+	{
+		"pattern": ["GG", "GG", "PP"],
+		"keys": {"G": Items.Id.GLASS, "P": Items.Id.OAK_PLANKS},
+		"result": [Items.Id.GLAZED_DOOR, 3],
+	},
+	{"pattern": ["PPP", "PPP"], "keys": {"P": PLANKS}, "result": [Items.Id.OAK_TRAPDOOR, 2]},
+	{
+		"pattern": ["II", "II"],
+		"keys": {"I": Items.Id.IRON_INGOT},
+		"result": [Items.Id.IRON_TRAPDOOR, 1],
+	},
+	{
+		"pattern": ["S S", "SPS", "S S"],
+		"keys": {"S": Items.Id.STICK, "P": PLANKS},
+		"result": [Items.Id.LADDER, 3],
+	},
+	{
+		"pattern": ["PP", "SS", "PP"],
+		"keys": {"P": PLANKS, "S": Items.Id.STICK},
+		"result": [Items.Id.SHUTTERS, 2],
+	},
+	{
+		"pattern": ["III", "III"],
+		"keys": {"I": Items.Id.IRON_INGOT},
+		"result": [Items.Id.IRON_BARS, 16],
+	},
+	{
+		"pattern": ["PPP", "SSS"],
+		"keys": {"P": PLANKS, "S": Items.Id.STICK},
+		"result": [Items.Id.WOOD_RAILING, 4],
+	},
+	{
+		"pattern": ["I I", "III", "I I"],
+		"keys": {"I": Items.Id.IRON_INGOT},
+		"result": [Items.Id.IRON_RAILING, 6],
+	},
 	# Glass: old glass (sand in it), leaded glass, panes of each.
 	{
 		"ingredients":
@@ -551,8 +589,8 @@ static var _all: Array[Dictionary] = []
 
 ## Every recipe: each log gives 4 planks (shapeless: "ingredients"),
 ## SHAPED, stairs and slabs of each material (SHAPED_RECIPES; two slabs
-## give the block back), windows of each frame (WINDOW_RECIPES), then the
-## tools, the armor, and the kitchen's dishes.
+## give the block back), windows and doors of each frame (WINDOW_RECIPES),
+## then the tools, the armor, and the kitchen's dishes.
 static func all() -> Array[Dictionary]:
 	if _all.is_empty():
 		for log_item: int in Items.PLANKS_OF:
@@ -571,6 +609,11 @@ static func all() -> Array[Dictionary]:
 				var keys := {"P": Glass.FRAMES[frame][1], "G": Items.Id.GLASS}
 				var made: Array = WINDOW_RECIPES[design]
 				_all.append({"pattern": made[0], "keys": keys, "result": [window, made[1]]})
+			# A door of each wood, and of iron: six of its material in two
+			# columns.
+			var door: int = Items.Id[Glass.FRAMES[frame][0] + "_DOOR"]
+			var made_of := {"M": Glass.FRAMES[frame][1]}
+			_all.append({"pattern": ["MM", "MM", "MM"], "keys": made_of, "result": [door, 3]})
 		for tool: int in Items.TOOLS:
 			var keys := {"M": TOOL_MATERIALS[Items.tier_of(tool)], "S": Items.Id.STICK}
 			var pattern: Array = TOOL_PATTERNS[Items.tool_of(tool)]

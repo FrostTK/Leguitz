@@ -136,7 +136,7 @@ func step(delta: float) -> void:
 	elif body.flying:
 		body.fly(motion, up, down, minf(delta, 0.1), voxel_at)
 	else:
-		body.step(motion, up, minf(delta, 0.1), voxel_at)
+		body.step(motion, up, minf(delta, 0.1), voxel_at, down)
 	speed = before.distance_to(body.feet) / maxf(delta, 0.001) / GameConst.TILE_SIZE
 	if flying or body.on_ground or body.in_liquid or body.height < view_height:
 		view_height = body.height

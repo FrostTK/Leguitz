@@ -42,6 +42,9 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Saisons (réglage du monde) : cultures de saison et serres, arbres qui roussissent puis se dénudent, neige l'hiver, le calendrier à l'horloge, /saison | ✅ |
 | Verre et vitres refaits : verre clair continu, verre ancien, verre au plomb, vitres fines qui se raccordent, 28 fenêtres (4 dessins, 6 bois et fer forgé), teinte par case au pot de peinture (le cadre à part), lavée à l'arrosoir ; le soleil à travers le verre teinté colore le sol ; palette de 16 couleurs douces | ✅ |
 | Rideaux qui se tirent et se nouent (tirés, la pièce devient sombre), longs jusqu'au sol, tringle en bois ou en fer, teints au pot de peinture ; tapis qui se raccordent en un grand tapis, teints, sous les meubles | ✅ |
+| Portes de chaque bois, vitrée et en fer forgé (portes doubles), trappes, échelles où l'on grimpe, volets peints qui se ferment, barreaux et garde-corps qui se raccordent | ✅ |
+
+![Leguitz : portes, trappes, échelles : un mur aux portes de chaque bois (chêne à panneaux, bouleau à petite fenêtre, chêne noir clouté, jungle à lattes, acacia à fenêtre cintrée, porte en fer forgé), une porte double vitrée ouverte et une porte double en chêne fermée ; une maison vue de dessus avec des volets bleus ouverts et des volets verts fermés, une mezzanine à garde-corps ; à l'intérieur, une fenêtre à barreaux en fer forgé et le garde-corps de la mezzanine ; une trappe ouverte sur la cave et une trappe fermée dans le plancher](docs/screenshots/phase8-portes-echelles.png)
 
 ![Leguitz : rideaux et tapis : une pièce vue de dessus avec des rideaux de chaque sorte (noués, tirés, longs jusqu'au sol, tringle en bois ou en fer forgé, teints en rouge, jaune, bleu ciel, bordeaux), un grand tapis rouge sous une table et ses chaises, un tapis bleu, de petits tapis de couleurs ; la même pièce sous un toit en première personne, rideaux noués (le jour entre) puis tous tirés (la pièce devient sombre, la lanterne s'allume) ; l'inventaire des rideaux, du tapis et des 16 pots de peinture](docs/screenshots/phase8-rideaux-tapis.png)
 
@@ -331,7 +334,7 @@ Pour le multijoueur, il suffira de brancher un transport réseau.
 7. ✅ Agriculture et élevage (végétation qui pousse, champs et cultures, arrosage et compost,
    nouvelles cultures et arbres fruitiers, élevage, cuisine, pêche et bateaux, compagnons, saisons)
 8. Construction et décoration (en cours : escaliers et dalles, verre et vitres teintables,
-   rideaux et tapis faits ; à venir : portes et échelles, toitures, nouveaux matériaux,
+   rideaux et tapis, portes, trappes et échelles faits ; à venir : toitures, nouveaux matériaux,
    décoration intérieure, vitraux)
 9. Finitions PC (menus, sauvegardes, sons, options graphiques, Steam)
 10. Mobile (iOS, Android)

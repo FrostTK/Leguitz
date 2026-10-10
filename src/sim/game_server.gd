@@ -501,6 +501,10 @@ func _on_block_break(session: PlayerSession, message: Dictionary) -> void:
 		return
 	var cell: Vector3i = message.get("cell", Vector3i.ZERO)
 	var voxel := world.voxel_at(cell)
+	if Openings.is_top(Voxels.block_of(voxel)):
+		# A door's top: the door below breaks (and gives itself).
+		cell += Vector3i.DOWN
+		voxel = world.voxel_at(cell)
 	var near := Mining.reach_to(session.position, session.height, cell)
 	if not Mining.can_break(voxel, cell.y) or near > Mining.REACH + REACH_LEEWAY:
 		session.transport.send(Msg.block_changed(cell, voxel))

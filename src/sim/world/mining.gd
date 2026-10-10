@@ -99,6 +99,21 @@ const BLOCK_SECONDS := {
 	Tiles.Block.CURTAINS_IRON: 0.9,
 	Tiles.Block.CURTAINS_LONG_IRON: 1.0,
 	Tiles.Block.RUG: 0.3,
+	Tiles.Block.OAK_DOOR: 1.5,
+	Tiles.Block.BIRCH_DOOR: 1.5,
+	Tiles.Block.SPRUCE_DOOR: 1.5,
+	Tiles.Block.DARK_OAK_DOOR: 1.5,
+	Tiles.Block.JUNGLE_DOOR: 1.5,
+	Tiles.Block.ACACIA_DOOR: 1.5,
+	Tiles.Block.GLAZED_DOOR: 1.5,
+	Tiles.Block.IRON_DOOR: 4.0,
+	Tiles.Block.OAK_TRAPDOOR: 1.2,
+	Tiles.Block.IRON_TRAPDOOR: 4.0,
+	Tiles.Block.LADDER: 0.6,
+	Tiles.Block.SHUTTERS: 0.8,
+	Tiles.Block.IRON_BARS: 3.0,
+	Tiles.Block.WOOD_RAILING: 1.2,
+	Tiles.Block.IRON_RAILING: 3.0,
 	Tiles.Block.CURTAINS_CLOSED: 0.6,
 	Tiles.Block.CURTAINS_LONG_CLOSED: 0.7,
 	Tiles.Block.CURTAINS_IRON_CLOSED: 0.9,
@@ -237,6 +252,17 @@ const AXE_BLOCKS := {
 	Tiles.Block.ACACIA_WINDOW_ROUND: true,
 	Tiles.Block.TABLE: true,
 	Tiles.Block.CHAIR: true,
+	Tiles.Block.OAK_DOOR: true,
+	Tiles.Block.BIRCH_DOOR: true,
+	Tiles.Block.SPRUCE_DOOR: true,
+	Tiles.Block.DARK_OAK_DOOR: true,
+	Tiles.Block.JUNGLE_DOOR: true,
+	Tiles.Block.ACACIA_DOOR: true,
+	Tiles.Block.GLAZED_DOOR: true,
+	Tiles.Block.OAK_TRAPDOOR: true,
+	Tiles.Block.LADDER: true,
+	Tiles.Block.SHUTTERS: true,
+	Tiles.Block.WOOD_RAILING: true,
 	Tiles.Block.FENCE: true,
 	Tiles.Block.GATE: true,
 	Tiles.Block.GATE_OPEN: true,
@@ -297,11 +323,18 @@ const PICKAXE_BLOCKS := {
 	Tiles.Block.IRON_WINDOW_SMALL: true,
 	Tiles.Block.IRON_WINDOW_SASH: true,
 	Tiles.Block.IRON_WINDOW_ROUND: true,
+	Tiles.Block.IRON_DOOR: true,
+	Tiles.Block.IRON_TRAPDOOR: true,
+	Tiles.Block.IRON_BARS: true,
+	Tiles.Block.IRON_RAILING: true,
 }
 ## Objects placed as they are (no way to face), standing on a cube.
 const FLOOR_OBJECTS := {
 	Tiles.Block.TABLE: true,
 	Tiles.Block.RUG: true,
+	Tiles.Block.IRON_BARS: true,
+	Tiles.Block.WOOD_RAILING: true,
+	Tiles.Block.IRON_RAILING: true,
 	Tiles.Block.FENCE: true,
 	Tiles.Block.CAMPFIRE: true,
 	Tiles.Block.TORCH: true,
@@ -322,12 +355,14 @@ const FLOOR_OBJECTS := {
 const ON_WATER := {Tiles.Block.FISH_TRAP: true}
 
 
+## Whether a voxel can be broken (a door's top: through its door).
 static func can_break(voxel: int, row: int) -> bool:
 	return (
 		row >= LOWEST_ROW
 		and voxel != Voxels.AIR
 		and voxel != Voxels.UNKNOWN
 		and not Voxels.is_liquid(voxel)
+		and not Openings.is_top(Voxels.block_of(voxel))
 	)
 
 
@@ -393,6 +428,15 @@ static func placement(
 		return {cell: Voxels.of_block(Tiles.Block.LANTERN_HANGING)}
 	if block == Tiles.Block.LANTERN and face.y == 0:
 		return _hung(cell, Tiles.Block.LANTERN_WALL, front, voxel_at)
+	if Openings.is_door(block):
+		# Two levels: its cell and the one over it, both free.
+		var over: int = voxel_at.call(cell + Vector3i.UP)
+		if not _bench_room(cell, voxel_at) or not is_replaceable(over) or Voxels.is_liquid(over):
+			return {}
+		var door := ObjectShapes.facing(kind, front)
+		return {
+			cell: Voxels.of_block(door), cell + Vector3i.UP: Voxels.of_block(Openings.top_of(door))
+		}
 	if ObjectShapes.WIDE_KINDS.has(kind):
 		var left := ObjectShapes.facing(kind, front)
 		var right := ObjectShapes.wide_right(left)
@@ -496,22 +540,38 @@ static func minds_the_side(voxel: int) -> bool:
 	)
 
 
-## Whether a voxel swings when used: a gate, curtains (drawn or tied
-## back; see swung_cells).
+## Whether a voxel swings when used: a gate, a door, a trapdoor, curtains
+## or shutters (drawn or opened; see swung_cells).
 static func swings(voxel: int) -> bool:
 	if voxel == Voxels.UNKNOWN:
 		return false
 	var block := Voxels.block_of(voxel)
-	return ObjectShapes.is_gate(block) or ObjectShapes.is_curtain(block)
+	return ObjectShapes.is_gate(block) or ObjectShapes.is_curtain(block) or Openings.is_top(block)
 
 
 ## A gate in `cell` swung open or shut (curtains drawn or tied back): its
-## cells and their new voxels.
+## cells and their new voxels. A door's top follows it, and the other half
+## of a double door does the same (Openings.partner).
 static func swung_cells(cell: Vector3i, voxel: int, voxel_at: Callable) -> Dictionary:
 	var cells := {}
-	for part in object_cells(cell, voxel, voxel_at):
-		var block := Voxels.block_of(voxel_at.call(part))
-		cells[part] = Voxels.of_block(ObjectShapes.swung(block))
+	var parts := object_cells(cell, voxel, voxel_at)
+	var door := Voxels.block_of(voxel_at.call(parts[0]))
+	if not Openings.is_door(door):
+		for part in parts:
+			var block := Voxels.block_of(voxel_at.call(part))
+			cells[part] = Voxels.of_block(ObjectShapes.swung(block))
+		return cells
+	var opening := not ObjectShapes.is_open(door)
+	var other := Openings.partner(door, parts[0], voxel_at)
+	for bottom: Vector3i in [parts[0], other]:
+		if bottom == Vector3i.MAX:
+			continue
+		var block := Voxels.block_of(voxel_at.call(bottom))
+		if ObjectShapes.is_open(block) != opening:
+			block = ObjectShapes.swung(block)
+		cells[bottom] = Voxels.of_block(block)
+		if Openings.is_top(Voxels.block_of(voxel_at.call(bottom + Vector3i.UP))):
+			cells[bottom + Vector3i.UP] = Voxels.of_block(Openings.top_of(block))
 	return cells
 
 
@@ -556,6 +616,16 @@ static func front_towards(cell: Vector3i, feet: Vector2) -> Vector2i:
 ## ends of a wide object (a workbench, a big gate), else the cell alone.
 static func object_cells(cell: Vector3i, voxel: int, voxel_at: Callable) -> Array[Vector3i]:
 	var block := Voxels.block_of(voxel)
+	# A door and its top, either aimed at.
+	if Openings.is_top(block):
+		var below := cell + Vector3i.DOWN
+		if Openings.is_door(Voxels.block_of(voxel_at.call(below))):
+			return [below, cell]
+		return [cell]
+	if Openings.is_door(block):
+		if Openings.is_top(Voxels.block_of(voxel_at.call(cell + Vector3i.UP))):
+			return [cell, cell + Vector3i.UP]
+		return [cell]
 	var kind := ObjectShapes.wide_kind(block)
 	if kind == -1:
 		return [cell]
@@ -642,7 +712,7 @@ static func tool_for(voxel: int) -> int:
 		if ground == Tiles.Ground.NONE or Voxels.is_liquid(voxel):
 			return Items.Tool.NONE
 		return Items.Tool.PICKAXE if PICKAXE_GROUNDS.has(ground) else Items.Tool.SHOVEL
-	var kind := ObjectShapes.base_kind(block)
+	var kind := ObjectShapes.pair_of(ObjectShapes.base_kind(block))
 	if ObjectShapes.is_tree(block) or AXE_BLOCKS.has(block) or AXE_BLOCKS.has(kind):
 		return Items.Tool.AXE
 	if Tiles.is_cube(block) or PICKAXE_BLOCKS.has(block) or PICKAXE_BLOCKS.has(kind):
@@ -663,7 +733,8 @@ static func hand_seconds(voxel: int) -> float:
 		return TREE_SECONDS
 	if BLOCK_SECONDS.has(block):
 		return BLOCK_SECONDS[block]
-	var kind := ObjectShapes.base_kind(block)
+	# By kind, open or shut (open gates and doors: their shut kind's).
+	var kind := ObjectShapes.pair_of(ObjectShapes.base_kind(block))
 	if BLOCK_SECONDS.has(kind):
 		return BLOCK_SECONDS[kind]
 	return OTHER_SECONDS if Tiles.is_block_solid(block) else PLANT_SECONDS

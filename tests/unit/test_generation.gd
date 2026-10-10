@@ -232,7 +232,7 @@ func test_every_tile_has_an_atlas_cell() -> void:
 				assert_true(ResourceLoader.exists(path), "%s exists (tools/gen_models.gd)" % path)
 	for part in VoxelModels.PLAYER_PARTS:
 		assert_true(ResourceLoader.exists(VoxelModels.player_path(part)), part)
-	for block: int in Tiles.CUBE_BLOCKS:
+	for block: int in TileSets.CUBE_BLOCKS:
 		assert_true(TileAtlas.WALL_KINDS.has(block), "cube block %d has a wall atlas row" % block)
 	var wall_rows := TerrainRenderer.WALL_ATLAS.get_height() / GameConst.TILE_SIZE
 	assert_eq(wall_rows, TileAtlas.WALL_KINDS.size(), "one wall atlas row per wall kind")

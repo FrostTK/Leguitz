@@ -1064,3 +1064,26 @@ ITEM_CURTAINS_LONG_IRON,Long curtains on an iron rod,Rideaux longs à tringle de
 ITEM_RUG,Rug,Tapis
 BOOK_HOME_CURTAINS_KINDS,"Long curtains hang down to the floor (the cell under them must be free); curtains also come on an iron rod (iron ingots instead of sticks, at the workbench for the long ones).","Les rideaux longs descendent jusqu'au sol (la case dessous doit être libre) ; les rideaux existent aussi à tringle de fer (des lingots de fer au lieu des bâtons, à l'établi pour les longs)."
 BOOK_HOME_RUG,"Rug (two wool or linen make three): on the floor. Rugs of one color side by side make one big rug. Furniture goes on a rug: it stays under it and comes back when the furniture is taken away.","Tapis (deux laines ou deux lins en font trois) : au sol. Des tapis d'une même couleur côte à côte n'en font qu'un grand. Les meubles se posent sur un tapis : il reste dessous et revient quand on enlève le meuble."
+ITEM_OAK_DOOR,Oak door,Porte en chêne
+ITEM_BIRCH_DOOR,Birch door,Porte en bouleau
+ITEM_SPRUCE_DOOR,Spruce door,Porte en épicéa
+ITEM_DARK_OAK_DOOR,Dark oak door,Porte en chêne noir
+ITEM_JUNGLE_DOOR,Jungle door,Porte en bois de jungle
+ITEM_ACACIA_DOOR,Acacia door,Porte en acacia
+ITEM_GLAZED_DOOR,Glazed door,Porte vitrée
+ITEM_IRON_DOOR,Wrought iron door,Porte en fer forgé
+ITEM_OAK_TRAPDOOR,Wooden trapdoor,Trappe en bois
+ITEM_IRON_TRAPDOOR,Iron trapdoor,Trappe en fer
+ITEM_LADDER,Ladder,Échelle
+ITEM_SHUTTERS,Shutters,Volets
+ITEM_IRON_BARS,Iron bars,Barreaux en fer forgé
+ITEM_WOOD_RAILING,Wooden railing,Garde-corps en bois
+ITEM_IRON_RAILING,Wrought iron railing,Garde-corps en fer forgé
+BOOK_HOME_OPENINGS,"Doors, ladders and shutters","Portes, échelles et volets"
+BOOK_HOME_DOOR,"Door (six planks of one wood): two levels tall, facing you. A right click (or {use}) opens and shuts it. Two doors side by side make a double door: they open together.","Porte (six planches d'un même bois) : deux niveaux de haut, tournée vers toi. Un clic droit (ou {use}) l'ouvre et la ferme. Deux portes côte à côte font une porte double : elles s'ouvrent ensemble."
+BOOK_HOME_DOOR_KINDS,"A door of each wood, a glazed door (glass over oak) that lets the daylight in, a wrought iron door (six iron ingots). Shut, a door keeps the daylight out.","Une porte de chaque bois, une porte vitrée (du verre sur du chêne) qui laisse entrer le jour, une porte en fer forgé (six lingots de fer). Fermée, une porte arrête la lumière du jour."
+BOOK_HOME_TRAPDOOR,"Trapdoor: aim at the side of a hole in the floor; it closes it at the top. Shut, you walk on it; open, you go down. A ladder under it leads to the cellar.","Trappe : vise le côté d'un trou dans le sol ; elle le ferme par le haut. Fermée, on marche dessus ; ouverte, on descend. Une échelle dessous mène à la cave."
+BOOK_HOME_LADDER,"Ladder: on a wall. Hold {jump} or walk into it to climb, hold {sprint} to stay where you are, let go to slide down. You never fall from a ladder.","Échelle : au mur. Garde {jump} ou avance contre elle pour grimper, garde {sprint} pour rester sur place, lâche pour redescendre. On ne tombe jamais d'une échelle."
+BOOK_HOME_SHUTTERS,"Shutters: on the outside of a window. A right click closes or opens them; closed, they keep the daylight out. A pot of paint gives them a color.","Volets : à l'extérieur d'une fenêtre. Un clic droit les ferme ou les ouvre ; fermés, ils arrêtent la lumière du jour. Un pot de peinture leur donne une couleur."
+BOOK_HOME_BARS,"Wrought iron bars (sixteen from six iron ingots): they join one another, the walls and the panes, and keep everyone out; you see through them.","Barreaux en fer forgé (seize pour six lingots de fer) : ils se raccordent entre eux, aux murs et aux vitres, et ne laissent passer personne ; on voit au travers."
+BOOK_HOME_RAILING,"Railings, of wood or wrought iron: at the edge of a balcony or a mezzanine, they join one another and the walls, and nobody falls over them.","Garde-corps, en bois ou en fer forgé : au bord d'un balcon ou d'une mezzanine, ils se raccordent entre eux et aux murs, et personne ne passe par-dessus."

@@ -8,8 +8,11 @@ extends RefCounted
 ## boxes of their octants) and on the furniture under it (a workbench, a
 ## chest, a furnace: ObjectShapes.stand_height). In water or lava it swims: it sinks slowly,
 ## rises while jump is held up to float with its head out, leaps out
-## against a bank; falls end there (they never hurt). In creative it flies
-## (fly; a spectator's ghost flies through everything).
+## against a bank; falls end there (they never hurt). On a ladder
+## (Openings.is_ladder, in its cell) it climbs while jump is held or it
+## pushes against it, holds on while `hold` is (Shift), else slides down;
+## a fall ends there too. In creative it flies (fly; a spectator's ghost
+## flies through everything).
 ## Shared by the client (prediction) and the server (validation).
 ##
 ## `voxel_at` is a Callable(cell: Vector3i) -> int giving the voxel at
@@ -42,6 +45,13 @@ const FLOAT_DEPTH := 0.45
 const LEAP_HEIGHT := 1.45
 ## The eye, over the feet (levels): under the surface, the body has no air.
 const EYE_HEIGHT := 1.35
+## Ladders (levels per second): climbing up, sliding down; the body still
+## holds on with its feet this far over the top of the last rung's cell
+## (a ladder stopping under a trapdoor: the feet come within a step of the
+## floor, STEP_UP, and walk out).
+const CLIMB_SPEED := 2.6
+const CLIMB_DOWN := 1.8
+const CLIMB_OVER := 0.5
 ## Flying (levels per second up or down, see fly), how fast the speed eases
 ## towards that (per second), and how far out of the world a ghost goes.
 const FLY_SPEED := 7.0
@@ -85,6 +95,19 @@ static func liquid_at(at: Vector2, at_height: float, voxel_at: Callable) -> int:
 	if not Voxels.is_liquid(voxel):
 		return Voxels.AIR
 	return voxel if at_height < _surface(tile, row, voxel_at) else Voxels.AIR
+
+
+## Whether a body (feet at `at`, `at_height`, its `size`) is on a ladder:
+## one hangs in a cell its feet are in (or were, CLIMB_OVER under them).
+static func ladder_at(at: Vector2, at_height: float, voxel_at: Callable, size := BOX) -> bool:
+	var area := TileCollider.covered_tiles(at, size)
+	for row: int in [floori(at_height + EPSILON), floori(at_height - CLIMB_OVER)]:
+		for ty in range(area.position.y, area.end.y):
+			for tx in range(area.position.x, area.end.x):
+				var voxel: int = voxel_at.call(Vector3i(tx, row + GameConst.SEA_LEVEL, ty))
+				if Openings.is_ladder(Voxels.block_of(voxel)):
+					return true
+	return false
 
 
 ## Whether the eye of a body is under water (it has no air).
@@ -240,8 +263,9 @@ func take_fall() -> float:
 	return fallen
 
 
-## One frame of movement: `motion` on the map (world pixels), `jump` held.
-func step(motion: Vector2, jump: bool, delta: float, voxel_at: Callable) -> void:
+## One frame of movement: `motion` on the map (world pixels), `jump` held,
+## `hold` held (on a ladder: stays where it is).
+func step(motion: Vector2, jump: bool, delta: float, voxel_at: Callable, hold := false) -> void:
 	if needs_landing:
 		var ground := support(feet, height + STEP_UP, voxel_at, box)
 		if ground == -INF:
@@ -267,6 +291,12 @@ func step(motion: Vector2, jump: bool, delta: float, voxel_at: Callable) -> void
 	if in_liquid and not (on_ground and not jump and height <= below + EPSILON):
 		_swim(jump, blocked, below, delta, voxel_at)
 		# A fall ends in the liquid (it never hurts).
+		_fall_peak = height
+		return
+	var standing := on_ground and height <= below + EPSILON
+	if not (standing and not jump and not blocked) and ladder_at(feet, height, voxel_at, box):
+		_climb(jump or blocked, hold, below, delta, voxel_at)
+		# A fall ends on the ladder (it never hurts).
 		_fall_peak = height
 		return
 	if on_ground and jump:
@@ -320,6 +350,24 @@ func _swim(jump: bool, blocked: bool, below: float, delta: float, voxel_at: Call
 	if jump and not leaping and next_height > floating and vertical_speed > 0.0:
 		next_height = maxf(floating, height)
 		vertical_speed = 0.0
+	if vertical_speed > 0.0:
+		var ceiling := _ceiling_above(next_height, voxel_at)
+		if next_height > ceiling:
+			next_height = ceiling
+			vertical_speed = 0.0
+	height = next_height
+	if height <= below:
+		height = below
+		vertical_speed = 0.0
+		on_ground = true
+
+
+## Moves on a ladder: up while `up`, holding on while `hold`, else
+## sliding down; lands on the ground `below`.
+func _climb(up: bool, hold: bool, below: float, delta: float, voxel_at: Callable) -> void:
+	on_ground = false
+	vertical_speed = CLIMB_SPEED if up else (0.0 if hold else -CLIMB_DOWN)
+	var next_height := height + vertical_speed * delta
 	if vertical_speed > 0.0:
 		var ceiling := _ceiling_above(next_height, voxel_at)
 		if next_height > ceiling:

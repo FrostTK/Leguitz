@@ -196,7 +196,7 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   from their highest point (`take_fall`); a fall ends in a liquid (never hurts).
   `eye_in_water`: the eye (EYE_HEIGHT) under water, no air. Client: the swimming body (arms
   sweeping, legs kicking), a splash going in, a veil over the first-person view under water
-  (VitalsView.veil). No stairs: terrain levels rise
+  (VitalsView.veil). Ladders are climbed (Openings, see Doors below). No stairs: terrain levels rise
   one at a time so they can be climbed.
 - World generation (`src/sim/world/generation/`): ClimateSampler (5 Minecraft climate noises,
   sampled every 4 tiles by ClimateGrid) -> TerrainShaper (splines, rivers, terrace levels) ->
@@ -972,6 +972,40 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   (long, iron, drawn: a rod with brackets, finials on iron, pleated cloth and rings drawn, panels
   tied a third of the way up), `rug(sides)` (rows of weave, a lozenge, a border). The book: Home
   and garden (curtains, their kinds, rugs; tinting and washing cloth).
+- Doors, trapdoors, ladders, shutters, bars, railings (phase 8, step 4; rules in `Openings`,
+  src/sim/world/openings.gd, static, shared; models in OpeningModels, src/client/models, which
+  DecorModels hands every such block): doors of each wood, GLAZED (glass over oak) and IRON
+  (`<M>_DOOR`, `<M>_DOOR_OPEN`, facing kinds built by name: ObjectShapes `_named_kinds`, from DRAWN,
+  OPENS and the ladder) stand in two cells, the door (its model 32 tall, the board at the front of
+  its cell, flush with the wall on the side it was placed from) and its top (Openings.TOPS:
+  DOOR_TOP, DOOR_TOP_GLAZED, DOOR_TOP_OPEN; no model, ObjectShapes.model_block -1; never aimed nor
+  broken itself: VoxelRay skips it for the door below, Mining.can_break refuses it,
+  GameServer._on_block_break turns to the door; Mining.object_cells gives both). They swing as
+  gates (ObjectShapes.OPENS; Mining.swings also takes a top; swung_cells sets the top with
+  `top_of`): shut, a barrier over its whole tile (BARRIERS, FOOTPRINTS 16) and OPAQUE
+  (LightField.SHUT_BLOCKS: what is shut, curtains and shutters drawn, doors and trapdoors closed;
+  a glazed door's top lets the day in); open, NON_SOLID. Side by side facing the same way they
+  make a double door: the one with a door on its left (`left_of`, its model's -x) hangs on its
+  right (`hinge_right`; its model's version 1, ObjectShapes.variant_count 2, ChunkProps reads the
+  padded voxels) and using either swings both (`partner`). Trapdoors (OAK, IRON) are WALL_MOUNTED
+  on the side of the hole aimed at, at the top of their cell: shut, furniture stood on (TOPS and
+  FOOTPRINTS 16, OPAQUE), open a board against their cube. The LADDER (wall-mounted, NON_SOLID):
+  PlayerBody.ladder_at (a ladder in a cell the feet are in, or were CLIMB_OVER under them) makes
+  `step` climb (`_climb`: CLIMB_SPEED while jump is held or the body pushes against something,
+  held still with `hold`, LocalPlayer's Shift, else sliding down CLIMB_DOWN; the fall peak follows:
+  no hurt); a ladder ending under a trapdoor lets the feet within STEP_UP of the floor (tested).
+  SHUTTERS hang outside a window and are drawn like curtains (ObjectShapes.DRAWN, is_curtain:
+  Tints.dyed, their leaves PAINT; open, the 32-wide model lays them on the wall either side).
+  IRON_BARS and WOOD_/IRON_RAILING are FLOOR_OBJECTS joining like fences (ObjectShapes.JOINING,
+  16 versions; `Openings.joins`: cubes, the same, bars panes, railings any railing; ChunkProps
+  ._joined_sides) and barriers (seen through). Aiming bodies: `Openings.box_of`. Shut things are
+  lit by the cell in front (wall-mounted: or over it) or the brighter side (ChunkMesher). Items
+  and recipes: doors six of their material (Recipes.all with the windows, Glass.FRAMES), glazed
+  door glass over oak, trapdoors, ladder (sticks and a plank), shutters, bars (16), railings.
+  Mining: seconds and tools by `ObjectShapes.pair_of` (an open thing's shut kind). OpeningModels
+  keep their detail (VoxelGrid.keep_detail). Items.drops is Drops.of (src/sim/items/drops.gd,
+  the tables moved out of items.gd); TileSets (src/sim/world/tile_sets.gd) holds CUBE_BLOCKS and
+  NON_SOLID_BLOCKS (out of tiles.gd). The book: Home and garden (Doors, ladders and shutters).
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made

@@ -6,7 +6,7 @@ extends RefCounted
 ## and down into covered places, a level less per step: a cave far from
 ## any opening stays at 0. Block light: lava, fires, torches and lanterns
 ## shine EMISSION levels, a level less per step. Cubes stop both (not glass
-## or windows), and so do curtains drawn (DRAWN_CURTAINS). ChunkMesher
+## or windows), and so does what is shut (SHUT_BLOCKS). ChunkMesher
 ## bakes the sky light of a chunk into its faces (see sky), the server
 ## measures a cell's light for the monsters (Light).
 
@@ -62,9 +62,10 @@ const CLEAR_BLOCKS := {
 	Tiles.Block.IRON_WINDOW_SASH: true,
 	Tiles.Block.IRON_WINDOW_ROUND: true,
 }
-## Curtains drawn (ObjectShapes.DRAWN, every way they face): they keep
-## the daylight out, as cubes do.
-const DRAWN_CURTAINS := {
+## What is shut (curtains and shutters drawn, doors and trapdoors closed,
+## every way they face; ObjectShapes.DRAWN, OPENS): it keeps the daylight
+## out, as cubes do.
+const SHUT_BLOCKS := {
 	Tiles.Block.CURTAINS_CLOSED: true,
 	Tiles.Block.CURTAINS_CLOSED_WEST: true,
 	Tiles.Block.CURTAINS_CLOSED_NORTH: true,
@@ -81,6 +82,51 @@ const DRAWN_CURTAINS := {
 	Tiles.Block.CURTAINS_LONG_IRON_CLOSED_WEST: true,
 	Tiles.Block.CURTAINS_LONG_IRON_CLOSED_NORTH: true,
 	Tiles.Block.CURTAINS_LONG_IRON_CLOSED_EAST: true,
+	Tiles.Block.SHUTTERS_CLOSED: true,
+	Tiles.Block.SHUTTERS_CLOSED_WEST: true,
+	Tiles.Block.SHUTTERS_CLOSED_NORTH: true,
+	Tiles.Block.SHUTTERS_CLOSED_EAST: true,
+	Tiles.Block.DOOR_TOP: true,
+	Tiles.Block.OAK_DOOR: true,
+	Tiles.Block.OAK_DOOR_WEST: true,
+	Tiles.Block.OAK_DOOR_NORTH: true,
+	Tiles.Block.OAK_DOOR_EAST: true,
+	Tiles.Block.BIRCH_DOOR: true,
+	Tiles.Block.BIRCH_DOOR_WEST: true,
+	Tiles.Block.BIRCH_DOOR_NORTH: true,
+	Tiles.Block.BIRCH_DOOR_EAST: true,
+	Tiles.Block.SPRUCE_DOOR: true,
+	Tiles.Block.SPRUCE_DOOR_WEST: true,
+	Tiles.Block.SPRUCE_DOOR_NORTH: true,
+	Tiles.Block.SPRUCE_DOOR_EAST: true,
+	Tiles.Block.DARK_OAK_DOOR: true,
+	Tiles.Block.DARK_OAK_DOOR_WEST: true,
+	Tiles.Block.DARK_OAK_DOOR_NORTH: true,
+	Tiles.Block.DARK_OAK_DOOR_EAST: true,
+	Tiles.Block.JUNGLE_DOOR: true,
+	Tiles.Block.JUNGLE_DOOR_WEST: true,
+	Tiles.Block.JUNGLE_DOOR_NORTH: true,
+	Tiles.Block.JUNGLE_DOOR_EAST: true,
+	Tiles.Block.ACACIA_DOOR: true,
+	Tiles.Block.ACACIA_DOOR_WEST: true,
+	Tiles.Block.ACACIA_DOOR_NORTH: true,
+	Tiles.Block.ACACIA_DOOR_EAST: true,
+	Tiles.Block.GLAZED_DOOR: true,
+	Tiles.Block.GLAZED_DOOR_WEST: true,
+	Tiles.Block.GLAZED_DOOR_NORTH: true,
+	Tiles.Block.GLAZED_DOOR_EAST: true,
+	Tiles.Block.IRON_DOOR: true,
+	Tiles.Block.IRON_DOOR_WEST: true,
+	Tiles.Block.IRON_DOOR_NORTH: true,
+	Tiles.Block.IRON_DOOR_EAST: true,
+	Tiles.Block.OAK_TRAPDOOR: true,
+	Tiles.Block.OAK_TRAPDOOR_WEST: true,
+	Tiles.Block.OAK_TRAPDOOR_NORTH: true,
+	Tiles.Block.OAK_TRAPDOOR_EAST: true,
+	Tiles.Block.IRON_TRAPDOOR: true,
+	Tiles.Block.IRON_TRAPDOOR_WEST: true,
+	Tiles.Block.IRON_TRAPDOOR_NORTH: true,
+	Tiles.Block.IRON_TRAPDOOR_EAST: true,
 }
 
 ## Per voxel id: how it lets light through, how much it shines.
@@ -247,7 +293,7 @@ static func _build_passing() -> PackedByteArray:
 			table[voxel] = OPAQUE
 		elif Voxels.is_cube(voxel) and not CLEAR_BLOCKS.has(Voxels.block_of(voxel)):
 			table[voxel] = OPAQUE
-		elif DRAWN_CURTAINS.has(Voxels.block_of(voxel)):
+		elif SHUT_BLOCKS.has(Voxels.block_of(voxel)):
 			table[voxel] = OPAQUE
 		elif Voxels.is_liquid(voxel):
 			table[voxel] = WATER

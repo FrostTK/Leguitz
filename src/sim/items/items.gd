@@ -396,6 +396,22 @@ enum Id {
 	CURTAINS_IRON,
 	CURTAINS_LONG_IRON,
 	RUG,
+	# Doors, trapdoors, ladders, shutters, bars, railings.
+	OAK_DOOR,
+	BIRCH_DOOR,
+	SPRUCE_DOOR,
+	DARK_OAK_DOOR,
+	JUNGLE_DOOR,
+	ACACIA_DOOR,
+	GLAZED_DOOR,
+	IRON_DOOR,
+	OAK_TRAPDOOR,
+	IRON_TRAPDOOR,
+	LADDER,
+	SHUTTERS,
+	IRON_BARS,
+	WOOD_RAILING,
+	IRON_RAILING,
 }
 ## What a tool is made for (Mining.tool_for: what it breaks faster).
 enum Tool { NONE, PICKAXE, AXE, SHOVEL, SWORD, HOE }
@@ -626,120 +642,23 @@ const PLACES_BLOCK := {
 	Id.CURTAINS_IRON: Tiles.Block.CURTAINS_IRON,
 	Id.CURTAINS_LONG_IRON: Tiles.Block.CURTAINS_LONG_IRON,
 	Id.RUG: Tiles.Block.RUG,
+	Id.OAK_DOOR: Tiles.Block.OAK_DOOR,
+	Id.BIRCH_DOOR: Tiles.Block.BIRCH_DOOR,
+	Id.SPRUCE_DOOR: Tiles.Block.SPRUCE_DOOR,
+	Id.DARK_OAK_DOOR: Tiles.Block.DARK_OAK_DOOR,
+	Id.JUNGLE_DOOR: Tiles.Block.JUNGLE_DOOR,
+	Id.ACACIA_DOOR: Tiles.Block.ACACIA_DOOR,
+	Id.GLAZED_DOOR: Tiles.Block.GLAZED_DOOR,
+	Id.IRON_DOOR: Tiles.Block.IRON_DOOR,
+	Id.OAK_TRAPDOOR: Tiles.Block.OAK_TRAPDOOR,
+	Id.IRON_TRAPDOOR: Tiles.Block.IRON_TRAPDOOR,
+	Id.LADDER: Tiles.Block.LADDER,
+	Id.SHUTTERS: Tiles.Block.SHUTTERS,
+	Id.IRON_BARS: Tiles.Block.IRON_BARS,
+	Id.WOOD_RAILING: Tiles.Block.WOOD_RAILING,
+	Id.IRON_RAILING: Tiles.Block.IRON_RAILING,
 }
 
-## What a ground gives (soil gives dirt); grounds left out give nothing.
-const GROUND_DROPS := {
-	Tiles.Ground.GRASS: Id.DIRT,
-	Tiles.Ground.FOREST_GRASS: Id.DIRT,
-	Tiles.Ground.MEADOW_GRASS: Id.DIRT,
-	Tiles.Ground.TAIGA_GRASS: Id.DIRT,
-	Tiles.Ground.JUNGLE_GRASS: Id.DIRT,
-	Tiles.Ground.SWAMP_GRASS: Id.DIRT,
-	Tiles.Ground.DRY_GRASS: Id.DIRT,
-	Tiles.Ground.PODZOL: Id.DIRT,
-	Tiles.Ground.MYCELIUM: Id.DIRT,
-	Tiles.Ground.DIRT: Id.DIRT,
-	Tiles.Ground.FARMLAND: Id.DIRT,
-	Tiles.Ground.FARMLAND_WET: Id.DIRT,
-	Tiles.Ground.SAND: Id.SAND,
-	Tiles.Ground.RED_SAND: Id.RED_SAND,
-	Tiles.Ground.GRAVEL: Id.GRAVEL,
-	Tiles.Ground.SNOW: Id.SNOW_BLOCK,
-	Tiles.Ground.MUD: Id.MUD,
-	Tiles.Ground.ICE: Id.ICE,
-	Tiles.Ground.TERRACOTTA: Id.TERRACOTTA,
-	Tiles.Ground.TERRACOTTA_LIGHT: Id.LIGHT_TERRACOTTA,
-	Tiles.Ground.STONE_FLOOR: Id.STONE,
-	Tiles.Ground.DEEPSLATE_FLOOR: Id.DEEPSLATE,
-}
-## What a block gives: [item, fewest, most].
-const BLOCK_DROPS := {
-	Tiles.Block.STONE: [Id.STONE, 1, 1],
-	Tiles.Block.DEEPSLATE: [Id.DEEPSLATE, 1, 1],
-	Tiles.Block.COAL_ORE: [Id.COAL, 1, 2],
-	Tiles.Block.COPPER_ORE: [Id.RAW_COPPER, 1, 3],
-	Tiles.Block.IRON_ORE: [Id.RAW_IRON, 1, 1],
-	Tiles.Block.GOLD_ORE: [Id.RAW_GOLD, 1, 1],
-	Tiles.Block.LAPIS_ORE: [Id.LAPIS, 2, 4],
-	Tiles.Block.RUBY_ORE: [Id.RUBY, 1, 1],
-	Tiles.Block.DIAMOND_ORE: [Id.DIAMOND, 1, 1],
-	Tiles.Block.EMERALD_ORE: [Id.EMERALD, 1, 1],
-	Tiles.Block.SANDSTONE: [Id.SANDSTONE, 1, 1],
-	Tiles.Block.PACKED_ICE: [Id.PACKED_ICE, 1, 1],
-	Tiles.Block.ROCK: [Id.STONE, 2, 3],
-	Tiles.Block.MOSSY_ROCK: [Id.STONE, 2, 3],
-	Tiles.Block.CACTUS: [Id.CACTUS, 1, 2],
-	Tiles.Block.BIG_MUSHROOM: [Id.MUSHROOM_RED, 2, 3],
-	Tiles.Block.TALL_GRASS: [Id.SEEDS, 1, 1],
-	Tiles.Block.FERN: [Id.FERN, 1, 1],
-	Tiles.Block.DEAD_BUSH: [Id.STICK, 1, 2],
-	Tiles.Block.BUSH: [Id.STICK, 1, 2],
-	Tiles.Block.BERRY_BUSH: [Id.BERRIES, 1, 3],
-	Tiles.Block.FLOWER_RED: [Id.FLOWER_RED, 1, 1],
-	Tiles.Block.FLOWER_YELLOW: [Id.FLOWER_YELLOW, 1, 1],
-	Tiles.Block.FLOWER_BLUE: [Id.FLOWER_BLUE, 1, 1],
-	Tiles.Block.FLOWER_WHITE: [Id.FLOWER_WHITE, 1, 1],
-	Tiles.Block.FLOWER_PINK: [Id.FLOWER_PINK, 1, 1],
-	Tiles.Block.MUSHROOM_RED: [Id.MUSHROOM_RED, 1, 1],
-	Tiles.Block.MUSHROOM_BROWN: [Id.MUSHROOM_BROWN, 1, 1],
-	Tiles.Block.SUGAR_CANE: [Id.SUGAR_CANE, 1, 1],
-	Tiles.Block.LILY_PAD: [Id.LILY_PAD, 1, 1],
-	Tiles.Block.OAK_PLANKS: [Id.OAK_PLANKS, 1, 1],
-	Tiles.Block.BIRCH_PLANKS: [Id.BIRCH_PLANKS, 1, 1],
-	Tiles.Block.SPRUCE_PLANKS: [Id.SPRUCE_PLANKS, 1, 1],
-	Tiles.Block.DARK_OAK_PLANKS: [Id.DARK_OAK_PLANKS, 1, 1],
-	Tiles.Block.JUNGLE_PLANKS: [Id.JUNGLE_PLANKS, 1, 1],
-	Tiles.Block.ACACIA_PLANKS: [Id.ACACIA_PLANKS, 1, 1],
-	Tiles.Block.WORKBENCH: [Id.WORKBENCH, 1, 1],
-	Tiles.Block.WORKBENCH_WEST: [Id.WORKBENCH, 1, 1],
-	Tiles.Block.WORKBENCH_NORTH: [Id.WORKBENCH, 1, 1],
-	Tiles.Block.WORKBENCH_EAST: [Id.WORKBENCH, 1, 1],
-	Tiles.Block.WORKBENCH_END_X: [Id.WORKBENCH, 1, 1],
-	Tiles.Block.WORKBENCH_END_Z: [Id.WORKBENCH, 1, 1],
-	Tiles.Block.CHEST: [Id.CHEST, 1, 1],
-	Tiles.Block.CHEST_WEST: [Id.CHEST, 1, 1],
-	Tiles.Block.CHEST_NORTH: [Id.CHEST, 1, 1],
-	Tiles.Block.CHEST_EAST: [Id.CHEST, 1, 1],
-	Tiles.Block.FOOD_FURNACE: [Id.FOOD_FURNACE, 1, 1],
-	Tiles.Block.FOOD_FURNACE_WEST: [Id.FOOD_FURNACE, 1, 1],
-	Tiles.Block.FOOD_FURNACE_NORTH: [Id.FOOD_FURNACE, 1, 1],
-	Tiles.Block.FOOD_FURNACE_EAST: [Id.FOOD_FURNACE, 1, 1],
-	Tiles.Block.FOOD_FURNACE_LIT: [Id.FOOD_FURNACE, 1, 1],
-	Tiles.Block.FOOD_FURNACE_LIT_WEST: [Id.FOOD_FURNACE, 1, 1],
-	Tiles.Block.FOOD_FURNACE_LIT_NORTH: [Id.FOOD_FURNACE, 1, 1],
-	Tiles.Block.FOOD_FURNACE_LIT_EAST: [Id.FOOD_FURNACE, 1, 1],
-	Tiles.Block.FACTORY_FURNACE: [Id.FACTORY_FURNACE, 1, 1],
-	Tiles.Block.FACTORY_FURNACE_WEST: [Id.FACTORY_FURNACE, 1, 1],
-	Tiles.Block.FACTORY_FURNACE_NORTH: [Id.FACTORY_FURNACE, 1, 1],
-	Tiles.Block.FACTORY_FURNACE_EAST: [Id.FACTORY_FURNACE, 1, 1],
-	Tiles.Block.FACTORY_FURNACE_LIT: [Id.FACTORY_FURNACE, 1, 1],
-	Tiles.Block.FACTORY_FURNACE_LIT_WEST: [Id.FACTORY_FURNACE, 1, 1],
-	Tiles.Block.FACTORY_FURNACE_LIT_NORTH: [Id.FACTORY_FURNACE, 1, 1],
-	Tiles.Block.FACTORY_FURNACE_LIT_EAST: [Id.FACTORY_FURNACE, 1, 1],
-	Tiles.Block.BROKEN_FURNACE: [Id.STONE, 2, 4],
-	Tiles.Block.BROKEN_FURNACE_WEST: [Id.STONE, 2, 4],
-	Tiles.Block.BROKEN_FURNACE_NORTH: [Id.STONE, 2, 4],
-	Tiles.Block.BROKEN_FURNACE_EAST: [Id.STONE, 2, 4],
-	Tiles.Block.STONE_BRICKS: [Id.STONE_BRICKS, 1, 1],
-	Tiles.Block.SMOOTH_STONE: [Id.SMOOTH_STONE, 1, 1],
-	Tiles.Block.BRICKS: [Id.BRICKS, 1, 1],
-	Tiles.Block.DEEPSLATE_BRICKS: [Id.DEEPSLATE_BRICKS, 1, 1],
-	Tiles.Block.CUT_SANDSTONE: [Id.CUT_SANDSTONE, 1, 1],
-	Tiles.Block.GLASS: [Id.GLASS, 1, 1],
-	Tiles.Block.WOOL: [Id.WOOL, 1, 1],
-	Tiles.Block.WINDOW: [Id.WINDOW, 1, 1],
-	Tiles.Block.MELON: [Id.MELON_SLICE, 3, 6],
-	Tiles.Block.BEE_NEST: [Id.HONEYCOMB, 1, 2],
-	Tiles.Block.BEE_NEST_1: [Id.HONEYCOMB, 1, 2],
-	Tiles.Block.BEE_NEST_2: [Id.HONEYCOMB, 1, 3],
-	Tiles.Block.BEE_NEST_3: [Id.HONEYCOMB, 2, 3],
-	Tiles.Block.MOLEHILL: [Id.DIRT, 1, 1],
-	Tiles.Block.BEAVER_DAM: [Id.STICK, 2, 4],
-	Tiles.Block.TURTLE_EGGS: [Id.TURTLE_EGG, 1, 1],
-	Tiles.Block.TURTLE_EGGS_1: [Id.TURTLE_EGG, 1, 1],
-	Tiles.Block.TURTLE_EGGS_2: [Id.TURTLE_EGG, 1, 1],
-}
 ## The planks each log is sawn into.
 const PLANKS_OF := {
 	Id.OAK_LOG: Id.OAK_PLANKS,
@@ -749,62 +668,7 @@ const PLANKS_OF := {
 	Id.JUNGLE_LOG: Id.JUNGLE_PLANKS,
 	Id.ACACIA_LOG: Id.ACACIA_PLANKS,
 }
-## Digging soil turns up a worm this often.
-const WORM_CHANCE := 0.06
-## A felled tree gives a log per level of trunk, and a stick or two.
-const TREE_LOGS := {
-	Tiles.Block.OAK: Id.OAK_LOG,
-	Tiles.Block.SWAMP_OAK: Id.OAK_LOG,
-	Tiles.Block.BIRCH: Id.BIRCH_LOG,
-	Tiles.Block.SPRUCE: Id.SPRUCE_LOG,
-	Tiles.Block.SNOWY_SPRUCE: Id.SPRUCE_LOG,
-	Tiles.Block.DARK_OAK: Id.DARK_OAK_LOG,
-	Tiles.Block.JUNGLE_TREE: Id.JUNGLE_LOG,
-	Tiles.Block.ACACIA: Id.ACACIA_LOG,
-	Tiles.Block.APPLE_TREE: Id.OAK_LOG,
-	Tiles.Block.CHERRY_TREE: Id.OAK_LOG,
-	Tiles.Block.ORANGE_TREE: Id.OAK_LOG,
-	Tiles.Block.APPLE_TREE_FRUIT: Id.OAK_LOG,
-	Tiles.Block.CHERRY_TREE_FRUIT: Id.OAK_LOG,
-	Tiles.Block.ORANGE_TREE_FRUIT: Id.OAK_LOG,
-	Tiles.Block.PEACH_TREE: Id.OAK_LOG,
-	Tiles.Block.PEACH_TREE_FRUIT: Id.OAK_LOG,
-}
-## The chance that tall grass broken gives a wild carrot or potato too.
-const WILD_ROOTS := 0.08
-## The sapling a tree (grown or young) gives: a felled tree one or two, a
-## young one its own back (a fruit tree's are its pips).
-const SAPLING_OF := {
-	Tiles.Block.APPLE_TREE: Id.APPLE_SEEDS,
-	Tiles.Block.CHERRY_TREE: Id.CHERRY_PITS,
-	Tiles.Block.ORANGE_TREE: Id.ORANGE_SEEDS,
-	Tiles.Block.APPLE_TREE_FRUIT: Id.APPLE_SEEDS,
-	Tiles.Block.CHERRY_TREE_FRUIT: Id.CHERRY_PITS,
-	Tiles.Block.ORANGE_TREE_FRUIT: Id.ORANGE_SEEDS,
-	Tiles.Block.YOUNG_APPLE_TREE: Id.APPLE_SEEDS,
-	Tiles.Block.YOUNG_CHERRY_TREE: Id.CHERRY_PITS,
-	Tiles.Block.YOUNG_ORANGE_TREE: Id.ORANGE_SEEDS,
-	Tiles.Block.PEACH_TREE: Id.PEACH_PIT,
-	Tiles.Block.PEACH_TREE_FRUIT: Id.PEACH_PIT,
-	Tiles.Block.YOUNG_PEACH_TREE: Id.PEACH_PIT,
-	Tiles.Block.OAK: Id.OAK_SAPLING,
-	Tiles.Block.SWAMP_OAK: Id.SWAMP_OAK_SAPLING,
-	Tiles.Block.BIRCH: Id.BIRCH_SAPLING,
-	Tiles.Block.SPRUCE: Id.SPRUCE_SAPLING,
-	Tiles.Block.SNOWY_SPRUCE: Id.SPRUCE_SAPLING,
-	Tiles.Block.DARK_OAK: Id.DARK_OAK_SAPLING,
-	Tiles.Block.JUNGLE_TREE: Id.JUNGLE_SAPLING,
-	Tiles.Block.ACACIA: Id.ACACIA_SAPLING,
-	Tiles.Block.YOUNG_OAK: Id.OAK_SAPLING,
-	Tiles.Block.YOUNG_SWAMP_OAK: Id.SWAMP_OAK_SAPLING,
-	Tiles.Block.YOUNG_BIRCH: Id.BIRCH_SAPLING,
-	Tiles.Block.YOUNG_SPRUCE: Id.SPRUCE_SAPLING,
-	Tiles.Block.YOUNG_DARK_OAK: Id.DARK_OAK_SAPLING,
-	Tiles.Block.YOUNG_JUNGLE_TREE: Id.JUNGLE_SAPLING,
-	Tiles.Block.YOUNG_ACACIA: Id.ACACIA_SAPLING,
-}
-
-## Block kind -> the item placing it (see drops).
+## Block kind -> the item placing it (see Drops).
 static var _placed_by := _build_placed_by()
 
 
@@ -892,57 +756,9 @@ static func placed_voxel(item: int) -> int:
 	return Voxels.of_block(ShapedBlocks.placed_by(item))
 
 
-## What breaking a voxel gives: [[item, count], ...]. `tile` is where it
-## stood (trees: their size), `rng` draws the counts.
+## What breaking a voxel gives: [[item, count], ...] (see Drops).
 static func drops(voxel: int, tile: Vector2i, rng: RandomNumberGenerator) -> Array[Vector2i]:
-	var result: Array[Vector2i] = []
-	var block := Voxels.block_of(voxel)
-	if block == Tiles.Block.AIR:
-		var item: int = GROUND_DROPS.get(Voxels.ground_of(voxel), Id.NONE)
-		if item != Id.NONE:
-			result.append(Vector2i(item, 1))
-		# Now and then a worm in the soil (a bait: Fishing).
-		if Growth.is_soil(voxel) and rng.randf() < WORM_CHANCE:
-			result.append(Vector2i(Id.WORM, 1))
-	elif TREE_LOGS.has(block):
-		var variant := ObjectShapes.variant_at(block, tile)
-		result.append(Vector2i(TREE_LOGS[block], ObjectShapes.blocking_levels(block, variant)))
-		result.append(Vector2i(Id.STICK, rng.randi_range(1, 2)))
-		result.append(Vector2i(SAPLING_OF[block], rng.randi_range(1, 2)))
-		# A fruit tree felled bearing fruit: the fruit too.
-		if Picking.PICKED.has(block):
-			result.append(Picking.picking(block, rng))
-	elif SAPLING_OF.has(block):
-		# A young tree: its sapling back, and a stick.
-		result.append(Vector2i(SAPLING_OF[block], 1))
-		result.append(Vector2i(Id.STICK, 1))
-	elif Farming.STAGES.has(block) or Farming.RIPE.has(block):
-		result.append_array(Farming.harvest(block, rng))
-	elif Farming.WILD.has(block):
-		result.append_array(Farming.wild_harvest(block, rng))
-	elif block == Tiles.Block.TALL_GRASS:
-		result.append(Vector2i(Id.SEEDS, 1))
-		# Now and then a wild carrot or potato in the grass.
-		if rng.randf() < WILD_ROOTS:
-			result.append(Vector2i(Id.CARROT if rng.randf() < 0.5 else Id.POTATO, 1))
-	elif BLOCK_DROPS.has(block):
-		var drop: Array = BLOCK_DROPS[block]
-		result.append(Vector2i(drop[0], rng.randi_range(drop[1], drop[2])))
-	elif Picking.PICKED.has(block) and ObjectShapes.STAGE_OF.has(block):
-		# A nest box holding eggs: the box and its eggs.
-		result.append(Vector2i(_placed_by[ObjectShapes.base_kind(block)], 1))
-		result.append(Picking.picking(block, rng))
-	elif block == Tiles.Block.COMPOSTER_READY:
-		result.append(Vector2i(Id.COMPOSTER, 1))
-		result.append(Vector2i(Id.COMPOST, 1))
-	elif ObjectShapes.base_kind(block) == Tiles.Block.TORCH_BRACKET_LIT:
-		result.append(Vector2i(Id.TORCH_BRACKET, 1))
-		result.append(Vector2i(Id.TORCH, 1))
-	elif _placed_by.has(ObjectShapes.base_kind(block)):
-		# What players place gives itself back, any way it faces, open or
-		# shut.
-		result.append(Vector2i(_placed_by[ObjectShapes.base_kind(block)], 1))
-	return result
+	return Drops.of(voxel, tile, rng)
 
 
 ## The item placing a block kind (Id.NONE: none; see _build_placed_by).

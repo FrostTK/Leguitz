@@ -268,12 +268,20 @@ static func build(job: ChunkJob) -> Result:
 				else:
 					var block := Voxels.block_of(voxel)
 					var biome := job.biome[lz * SIZE + lx] if not job.biome.is_empty() else 0
-					# Drawn curtains are lit as the room in front of them.
-					var lit := index
-					if ObjectShapes.is_drawn(block):
+					# What is shut keeps the light out of its own cell: what
+					# hangs on a wall (curtains drawn, a trapdoor) is lit as
+					# the room in front of it or over it, a door as the
+					# brighter side.
+					var light := sky_level(tables, index)
+					if LightField.passing(voxel) == LightField.OPAQUE:
 						var front := ObjectShapes.front_of(block)
-						lit += front.x * STRIDE_X + front.y * STRIDE_Z
-					var prop_sky := sky_level(tables, lit) + SeasonLook.prop_bits(block, biome)
+						var ahead := front.x * STRIDE_X + front.y * STRIDE_Z
+						light = sky_level(tables, index + ahead)
+						if ObjectShapes.is_wall_mounted(block):
+							light = maxi(light, sky_level(tables, index + 1))
+						else:
+							light = maxi(light, sky_level(tables, index - ahead))
+					var prop_sky := light + SeasonLook.prop_bits(block, biome)
 					ChunkProps.add(result, job, voxel, voxels, base, lx, y, lz, origin, prop_sky)
 					if ObjectShapes.is_lit(block):
 						_add_flame(result, block, Vector3(lx + 0.5, y - SEA, lz + 0.5))

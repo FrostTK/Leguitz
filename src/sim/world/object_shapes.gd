@@ -255,6 +255,8 @@ const BOX_SIZE := 14
 ## FurnaceModels, DecorModels). It blocks bodies up to there.
 const TOPS := {
 	Tiles.Block.WORKBENCH: 15,
+	Tiles.Block.OAK_TRAPDOOR: 16,
+	Tiles.Block.IRON_TRAPDOOR: 16,
 	Tiles.Block.CHEST: 13,
 	Tiles.Block.FOOD_FURNACE: 14,
 	Tiles.Block.FOOD_FURNACE_LIT: 14,
@@ -282,6 +284,19 @@ const TOPS := {
 ## (voxels; the others facing them: BOX_SIZE).
 const FOOTPRINTS := {
 	Tiles.Block.GLASS_PANE: 16,
+	Tiles.Block.OAK_DOOR: 16,
+	Tiles.Block.BIRCH_DOOR: 16,
+	Tiles.Block.SPRUCE_DOOR: 16,
+	Tiles.Block.DARK_OAK_DOOR: 16,
+	Tiles.Block.JUNGLE_DOOR: 16,
+	Tiles.Block.ACACIA_DOOR: 16,
+	Tiles.Block.GLAZED_DOOR: 16,
+	Tiles.Block.IRON_DOOR: 16,
+	Tiles.Block.OAK_TRAPDOOR: 16,
+	Tiles.Block.IRON_TRAPDOOR: 16,
+	Tiles.Block.IRON_BARS: 16,
+	Tiles.Block.WOOD_RAILING: 16,
+	Tiles.Block.IRON_RAILING: 16,
 	Tiles.Block.OLD_GLASS_PANE: 16,
 	Tiles.Block.LEADED_GLASS_PANE: 16,
 	Tiles.Block.TOILET: 10,
@@ -302,25 +317,51 @@ const FOOTPRINTS := {
 	Tiles.Block.BARREL: 12,
 	Tiles.Block.CHEESE_CELLAR: 14,
 }
-## What keeps bodies out (fences, closed gates): two levels high, nobody
-## jumps over.
-const BARRIERS := {Tiles.Block.FENCE: true, Tiles.Block.GATE: true, Tiles.Block.BIG_GATE: true}
+## What keeps bodies out (fences, closed gates and doors, bars,
+## railings): two levels high, nobody jumps over.
+const BARRIERS := {
+	Tiles.Block.FENCE: true,
+	Tiles.Block.GATE: true,
+	Tiles.Block.BIG_GATE: true,
+	Tiles.Block.OAK_DOOR: true,
+	Tiles.Block.BIRCH_DOOR: true,
+	Tiles.Block.SPRUCE_DOOR: true,
+	Tiles.Block.DARK_OAK_DOOR: true,
+	Tiles.Block.JUNGLE_DOOR: true,
+	Tiles.Block.ACACIA_DOOR: true,
+	Tiles.Block.GLAZED_DOOR: true,
+	Tiles.Block.IRON_DOOR: true,
+	Tiles.Block.IRON_BARS: true,
+	Tiles.Block.WOOD_RAILING: true,
+	Tiles.Block.IRON_RAILING: true,
+}
 ## The furnaces (their unlit kind) and their lit kind.
 const LIT := {
 	Tiles.Block.FOOD_FURNACE: Tiles.Block.FOOD_FURNACE_LIT,
 	Tiles.Block.FACTORY_FURNACE: Tiles.Block.FACTORY_FURNACE_LIT,
 }
-## Gates (their closed kind) and their open kind: they swing open and shut
-## when used (open, bodies go through).
+## Gates, doors and trapdoors (their closed kind) and their open kind:
+## they swing open and shut when used (open, bodies go through; see
+## Openings).
 const OPENS := {
 	Tiles.Block.GATE: Tiles.Block.GATE_OPEN,
 	Tiles.Block.BIG_GATE: Tiles.Block.BIG_GATE_OPEN,
+	Tiles.Block.OAK_DOOR: Tiles.Block.OAK_DOOR_OPEN,
+	Tiles.Block.BIRCH_DOOR: Tiles.Block.BIRCH_DOOR_OPEN,
+	Tiles.Block.SPRUCE_DOOR: Tiles.Block.SPRUCE_DOOR_OPEN,
+	Tiles.Block.DARK_OAK_DOOR: Tiles.Block.DARK_OAK_DOOR_OPEN,
+	Tiles.Block.JUNGLE_DOOR: Tiles.Block.JUNGLE_DOOR_OPEN,
+	Tiles.Block.ACACIA_DOOR: Tiles.Block.ACACIA_DOOR_OPEN,
+	Tiles.Block.GLAZED_DOOR: Tiles.Block.GLAZED_DOOR_OPEN,
+	Tiles.Block.IRON_DOOR: Tiles.Block.IRON_DOOR_OPEN,
+	Tiles.Block.OAK_TRAPDOOR: Tiles.Block.OAK_TRAPDOOR_OPEN,
+	Tiles.Block.IRON_TRAPDOOR: Tiles.Block.IRON_TRAPDOOR_OPEN,
 }
-## Curtains (their kind tied back, as placed) and their kind drawn: they
-## are drawn and tied back when used (Mining.swings); drawn, they keep the
-## daylight out (LightField.DRAWN_CURTAINS). Their facing kinds are built
-## by name (`_curtain_kinds`).
+## Curtains and shutters (their kind open, as placed) and their kind
+## drawn: they are drawn and opened when used (Mining.swings); drawn, they
+## keep the daylight out (LightField.SHUT_BLOCKS).
 const DRAWN := {
+	Tiles.Block.SHUTTERS: Tiles.Block.SHUTTERS_CLOSED,
 	Tiles.Block.CURTAINS: Tiles.Block.CURTAINS_CLOSED,
 	Tiles.Block.CURTAINS_LONG: Tiles.Block.CURTAINS_LONG_CLOSED,
 	Tiles.Block.CURTAINS_IRON: Tiles.Block.CURTAINS_IRON_CLOSED,
@@ -348,6 +389,13 @@ const WALL_MOUNTED := {
 	Tiles.Block.CURTAINS_LONG_IRON: true,
 	Tiles.Block.CURTAINS_LONG_IRON_CLOSED: true,
 	Tiles.Block.LANTERN_WALL: true,
+	Tiles.Block.OAK_TRAPDOOR: true,
+	Tiles.Block.OAK_TRAPDOOR_OPEN: true,
+	Tiles.Block.IRON_TRAPDOOR: true,
+	Tiles.Block.IRON_TRAPDOOR_OPEN: true,
+	Tiles.Block.LADDER: true,
+	Tiles.Block.SHUTTERS: true,
+	Tiles.Block.SHUTTERS_CLOSED: true,
 }
 ## What hangs from the cube above it (it falls with it, not with the
 ## floor).
@@ -407,6 +455,14 @@ const FENCE_SIDES: Array[Vector2i] = [
 	Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)
 ]
 const FENCE_VARIANTS := 16
+## What joins its neighbors that way (fences, rugs, bars, railings).
+const JOINING := {
+	Tiles.Block.FENCE: true,
+	Tiles.Block.RUG: true,
+	Tiles.Block.IRON_BARS: true,
+	Tiles.Block.WOOD_RAILING: true,
+	Tiles.Block.IRON_RAILING: true,
+}
 ## Objects with a single version (no random ones).
 const SINGLE := {
 	Tiles.Block.FISH_TRAP: true,
@@ -468,7 +524,8 @@ const WANDERING := {
 ## block -> (kind, way index), for the facing objects; a wide object's
 ## right end -> [axis it lies along, kind].
 ## Every facing kind's blocks: FACING_KINDS, stairs and side slabs
-## (ShapedBlocks), curtains (`_curtain_kinds`).
+## (ShapedBlocks), curtains, shutters, doors, trapdoors, the ladder
+## (`_named_kinds`).
 static var _facing_kinds := _all_facing_kinds()
 static var _facing := _build_facing()
 static var _wide_ends := _build_wide_ends()
@@ -479,9 +536,12 @@ static func is_tree(block: int) -> bool:
 
 
 static func variant_count(block: int) -> int:
+	if Openings.is_door(block):
+		# Hung on its left or its right (Openings.hinge_right).
+		return 2
 	if _facing.has(block) or _wide_ends.has(block) or SINGLE.has(base_kind(block)):
 		return 1
-	if block == Tiles.Block.FENCE or block == Tiles.Block.RUG:
+	if JOINING.has(block):
 		return FENCE_VARIANTS
 	return TREE_VARIANTS if TREES.has(block) else VARIANTS
 
@@ -576,13 +636,13 @@ static func is_open(block: int) -> bool:
 	return OPENS.values().has(base_kind(block))
 
 
-## Curtains, tied back or drawn, any way they face.
+## Curtains or shutters, open or drawn, any way they face (see DRAWN).
 static func is_curtain(block: int) -> bool:
 	var kind := kind_of(block)
 	return DRAWN.has(kind) or DRAWN.values().has(kind)
 
 
-## Curtains drawn (see DRAWN).
+## Curtains or shutters drawn (see DRAWN).
 static func is_drawn(block: int) -> bool:
 	return DRAWN.values().has(kind_of(block))
 
@@ -590,10 +650,12 @@ static func is_drawn(block: int) -> bool:
 ## Whether two blocks are one thing (a tint stays when one turns into the
 ## other): the same kind, a gate open or shut, curtains tied or drawn.
 static func same_piece(block: int, other: int) -> bool:
-	return _pair_of(base_kind(block)) == _pair_of(base_kind(other))
+	return pair_of(base_kind(block)) == pair_of(base_kind(other))
 
 
-static func _pair_of(kind: int) -> int:
+## The kind of a thing as it is placed: an open gate or door's shut kind,
+## drawn curtains' tied kind, else the kind itself.
+static func pair_of(kind: int) -> int:
 	var shut: Variant = OPENS.find_key(kind)
 	if shut != null:
 		return shut
@@ -626,9 +688,10 @@ static func fence_joins(voxel: int) -> bool:
 
 
 ## The block whose model a block shows: the ways a facing object faces
-## share one; -1 for the blocks showing none (a wide object's right end).
+## share one; -1 for the blocks showing none (a wide object's right end, a
+## door's top).
 static func model_block(block: int) -> int:
-	if _wide_ends.has(block):
+	if _wide_ends.has(block) or Openings.is_top(block):
 		return -1
 	return kind_of(block) if _facing.has(block) else block
 
@@ -759,7 +822,7 @@ static func footprint_rect(block: int, tile: Vector2i) -> Rect2:
 static func _all_facing_kinds() -> Dictionary:
 	var kinds := FACING_KINDS.duplicate()
 	kinds.merge(ShapedBlocks.facing_kinds())
-	kinds.merge(_curtain_kinds())
+	kinds.merge(_named_kinds())
 	return kinds
 
 
@@ -772,19 +835,21 @@ static func _build_facing() -> Dictionary:
 	return lookup
 
 
-## The curtains' facing kinds but the first (FACING_KINDS), by name: each
-## kind of DRAWN, tied back and drawn, and its blocks facing W, N, E.
-static func _curtain_kinds() -> Dictionary:
+## The facing kinds built by name (but those of FACING_KINDS): curtains
+## and shutters (DRAWN), doors and trapdoors (OPENS), open or shut, the
+## ladder; each with its blocks facing W, N, E (<KIND>_WEST...).
+static func _named_kinds() -> Dictionary:
 	var kinds := {}
-	for tied: int in DRAWN:
-		for kind: int in [tied, DRAWN[tied]]:
-			if FACING_KINDS.has(kind):
-				continue
-			var name := String(Tiles.Block.find_key(kind))
-			var blocks := []
-			for way: String in ["", "_WEST", "_NORTH", "_EAST"]:
-				blocks.append(Tiles.Block[name + way])
-			kinds[kind] = blocks
+	var named: Array = DRAWN.keys() + DRAWN.values() + OPENS.keys() + OPENS.values()
+	named.append(Tiles.Block.LADDER)
+	for kind: int in named:
+		var name := String(Tiles.Block.find_key(kind))
+		if FACING_KINDS.has(kind) or not Tiles.Block.has(name + "_WEST"):
+			continue
+		var blocks := []
+		for way: String in ["", "_WEST", "_NORTH", "_EAST"]:
+			blocks.append(Tiles.Block[name + way])
+		kinds[kind] = blocks
 	return kinds
 
 

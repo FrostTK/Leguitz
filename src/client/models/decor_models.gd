@@ -38,6 +38,9 @@ const LANTERN_GLOW := ["#e8902c", "#ffc35a", "#ffe6a4"]
 ## The model of a block (its kind's; a fence's version: the sides it joins,
 ## ObjectShapes.FENCE_SIDES bits). Null: not one of these.
 static func build(block: int, variant: int) -> VoxelGrid:
+	var opening := OpeningModels.build(block, variant)
+	if opening != null:
+		return opening
 	if ObjectShapes.is_curtain(block):
 		var kind := ObjectShapes.kind_of(block)
 		var tied: int = ObjectShapes.DRAWN.find_key(kind) if ObjectShapes.is_drawn(block) else kind
@@ -88,7 +91,7 @@ static func build(block: int, variant: int) -> VoxelGrid:
 
 
 ## The model of an item placing one of these (its icon, in hand, on the
-## ground): a fence joining both sides, gates shut. Null: not one.
+## ground): a fence joining both sides, gates and shutters shut. Null: not one.
 static func item(item_id: int) -> VoxelGrid:
 	match item_id:
 		Items.Id.FENCE:
@@ -97,12 +100,17 @@ static func item(item_id: int) -> VoxelGrid:
 			return gate(false)
 		Items.Id.BIG_GATE:
 			return big_gate(false)
+		Items.Id.SHUTTERS:
+			return OpeningModels.shutters(true)
 	var block: int = Items.PLACES_BLOCK.get(item_id, -1)
 	return build(block, 0) if block != -1 else null
 
 
 ## The color of a block's chips (BlockColors).
 static func color_of(kind: int) -> Color:
+	var opening := OpeningModels.color_of(kind)
+	if opening.a > 0.0:
+		return opening
 	if ObjectShapes.is_curtain(kind):
 		return Color(LINEN[2])
 	match kind:
