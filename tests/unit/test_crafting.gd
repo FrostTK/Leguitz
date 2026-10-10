@@ -16,7 +16,7 @@ func test_logs_make_planks_and_planks_make_sticks_and_a_workbench() -> void:
 	var sticks := Recipes.result_of(PackedInt32Array([N, OAK, N, N, BIRCH, N, N, N, N]), 3)
 	assert_eq(sticks, Vector2i(Items.Id.STICK, 4), "two planks of any wood, one on the other")
 	var lying := Recipes.result_of(PackedInt32Array([OAK, OAK, N, N, N, N, N, N, N]), 3)
-	assert_eq(lying, Vector2i.ZERO, "side by side they make nothing")
+	assert_eq(lying, Vector2i(Items.Id.OAK_PARQUET, 2), "side by side: parquet")
 	var square := PackedInt32Array([N, N, N, N, OAK, BIRCH, N, BIRCH, OAK])
 	assert_eq(Recipes.result_of(square, 3), Vector2i(Items.Id.WORKBENCH, 1), "four planks")
 	square[0] = Items.Id.DIRT

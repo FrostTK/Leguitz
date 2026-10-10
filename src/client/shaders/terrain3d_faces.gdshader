@@ -5,8 +5,9 @@ shader_type spatial;
 //          for undersides: world pixels along x and z)
 //   UV2  = (face kind: 0-3 cliff materials, 4+ wall kinds; lip ground + 1,
 //          or -2 for the tops of stairs and slabs: ShapedFaces, -4 for a
-//          roof's covering: RoofFaces, or under -10 for the opaque pixels
-//          of glass: GlassFaces.FRAME_PASS)
+//          roof's covering: RoofFaces, under -10 for the opaque pixels of
+//          glass: GlassFaces.FRAME_PASS, -3000 - tint for a painted side,
+//          -3100 - tint for a painted top: see painted.gdshaderinc)
 //   COLOR.r = variant (0 or 1), COLOR.g = lip ground variant / 3,
 //   COLOR.b = the sky light in front of the face (see sky_light.gdshaderinc)
 
@@ -16,6 +17,7 @@ render_mode cull_disabled;
 #include "res://src/client/shaders/see_through.gdshaderinc"
 #include "res://src/client/shaders/glass_light.gdshaderinc"
 #include "res://src/client/shaders/sky_light.gdshaderinc"
+#include "res://src/client/shaders/painted.gdshaderinc"
 
 uniform sampler2D face_atlas : source_color, filter_nearest;
 uniform sampler2D face_normals : filter_nearest;
@@ -23,8 +25,6 @@ uniform sampler2D face_emission : source_color, filter_nearest;
 // The tops of the walls (stairs' and slabs' tops wear them).
 uniform sampler2D wall_atlas : source_color, filter_nearest;
 uniform sampler2D wall_normals : filter_nearest;
-// The palette of tints (Tints.COLORS), linear: a window's painted frame.
-uniform vec3 tint_colors[16];
 uniform float emission_strength = 2.2;
 // Per wall kind: 1 for the walls one sees through (glass): their clear
 // pixels are cut out, their backs seen through them are not rock sections.
@@ -93,6 +93,21 @@ void fragment() {
 		float patchy = float(hash2(ivec2(int(floor(UV.x)), down)) & 255u) / 255.0;
 		if (seasonal > 0 && sky > SNOW_SKY && patchy < season_snow * 1.2 - 0.1) {
 			albedo = SNOW_COLOR * (v == 2 ? 0.85 : 1.0);
+			normal = vec3(0.0, 0.0, 1.0);
+		}
+	} else if (face_data.y < -2999.5) {
+		// Painted plaster: a side, or the top of stairs or a slab (in the
+		// wall atlas; snow on it).
+		bool on_top = face_data.y < -3099.5;
+		int tint = int((on_top ? -3100.0 : -3000.0) - face_data.y + 0.5);
+		ivec2 at = ivec2(variant * 16 + u, (on_top ? kind - WALL_KIND_OFFSET : kind) * 16 + v);
+		albedo = (on_top ? texelFetch(wall_atlas, at, 0) : texelFetch(face_atlas, at, 0)).rgb;
+		normal = unpack_normal(
+				on_top ? texelFetch(wall_normals, at, 0) : texelFetch(face_normals, at, 0));
+		albedo = painted(albedo, tint);
+		float patchy = float(hash2(ivec2(int(floor(UV.x)), int(floor(UV.y)))) & 255u) / 255.0;
+		if (on_top && sky > SNOW_SKY && patchy < season_built_snow * 1.2 - 0.1) {
+			albedo = SNOW_COLOR;
 			normal = vec3(0.0, 0.0, 1.0);
 		}
 	} else if (face_data.y < -9.5) {

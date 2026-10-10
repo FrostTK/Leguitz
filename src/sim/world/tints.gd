@@ -5,7 +5,9 @@ extends RefCounted
 ## too), and what a cell is tinted with (ChunkData.tints, saved with the
 ## region and sent with the chunk: `pack`ed, its glass's color and its
 ## frame's). What takes a tint: glass, panes and windows (Glass; a
-## window's frame apart), curtains and rugs (dyed). A player's right click (Msg.TINT, `handle`)
+## window's frame apart), curtains and rugs (dyed), plaster (painted: its
+## cubes, stairs, slabs and quarters, timber frames' infill). A player's
+## right click (Msg.TINT, `handle`)
 ## with a pot tints the glass (`frame`: the frame) and uses a coat (the
 ## last leaves its bottle); the watering can washes the glass, the axe
 ## scrapes the frame (it wears). Players having the chunk are told
@@ -36,6 +38,14 @@ const COLORS: Array[String] = [
 const BITS := 5
 const MASK := 31
 const MESSAGES: Array[String] = [Msg.TINT]
+## What is painted (the light pixels of its faces take the tint; and the
+## shaped blocks of plaster).
+const PAINTED := {
+	Tiles.Block.PLASTER: true,
+	Tiles.Block.TIMBER_FRAME: true,
+	Tiles.Block.TIMBER_FRAME_CROSS: true,
+	Tiles.Block.TIMBER_FRAME_DIAGONAL: true,
+}
 
 
 ## The color of a palette entry (-1: none, white).
@@ -58,9 +68,17 @@ static func frame_of(packed: int) -> int:
 
 
 ## Whether a block takes a tint (and a frame's: windows): glass, curtains,
-## a rug.
+## a rug, plaster.
 static func tintable(block: int) -> bool:
-	return Glass.is_glass(block) or dyed(block)
+	return Glass.is_glass(block) or dyed(block) or painted(block)
+
+
+## Whether a block is painted (plaster, its stairs and slabs, timber
+## frames: the terrain's faces take the tint).
+static func painted(block: int) -> bool:
+	if Tiles.is_shaped(block) and not Tiles.is_roof(block):
+		return ShapedBlocks.material_of(block) == Tiles.Block.PLASTER
+	return PAINTED.has(block)
 
 
 ## Whether a block's cloth takes the tint (dyed: curtains, a rug).

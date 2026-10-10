@@ -34,8 +34,6 @@ const THROW_SPEED := Vector2(6.0, 4.0)
 const MAX_MOVE_PER_UPDATE := 96.0
 ## No chest or furnace open.
 const NO_CELL := Vector3i(0, -1, 0)
-## Chimneys rise on chimneys (see _against_terrain).
-const CHIMNEY := Voxels.BLOCK_BASE + Tiles.Block.CHIMNEY
 ## Furnaces run every FURNACE_TICKS; their players see them as often.
 const FURNACE_TICKS := 2
 const MAP_MIN_SIZE := 64
@@ -830,13 +828,18 @@ func change_voxel(cell: Vector3i, voxel: int) -> void:
 			session.transport.send(Msg.block_changed(cell, now))
 
 
+## What stacks on itself (Mining.STACKING: a chimney, walls, pillars).
+static func _stacks(voxel: int) -> bool:
+	return Mining.STACKING.has(Voxels.block_of(voxel))
+
+
 ## Whether a cell touches the terrain (a block is placed against another).
 func _against_terrain(cell: Vector3i) -> bool:
 	for side: Vector3i in [
 		Vector3i.UP, Vector3i.DOWN, Vector3i.LEFT, Vector3i.RIGHT, Vector3i.FORWARD, Vector3i.BACK
 	]:
 		var there := world.voxel_at(cell + side)
-		if Voxels.is_cube(there) or Voxels.is_shaped(there) or there == CHIMNEY:
+		if Voxels.is_cube(there) or Voxels.is_shaped(there) or _stacks(there):
 			return true
 	return false
 

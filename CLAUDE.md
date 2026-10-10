@@ -1059,6 +1059,34 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   (src/client/effects) puffs over those within SMOKE_REACH of the player, in world space.
   Recipes: Recipes.ROOF_RECIPES, DORMER_PATTERN, the coverings and the chimney in SHAPED. The
   book: Home and garden (Roofs); Crafting groups roof pieces and dormers by shape.
+- New materials (phase 8, step 6): 25 cube blocks (COBBLESTONE, ASHLAR, MOSSY_STONE, PLASTER,
+  TIMBER_FRAME, _CROSS, _DIAGONAL, WATTLE_DAUB, `<WOOD>_PARQUET` and `_HERRINGBONE` for the six
+  woods, CHECKER_TILES, TOMETTES, TERRACOTTA_BLOCK (the factory furnace bakes terracotta),
+  POLISHED_SLATE, SANDSTONE_BRICKS; wall kinds 59-83, gen_art MATERIALS / `parquet`; building
+  walls); the masonry ones (COBBLESTONE, ASHLAR, MOSSY_STONE, PLASTER, WATTLE_DAUB,
+  TERRACOTTA, POLISHED_SLATE, SANDSTONE_BRICK) appended to ShapedBlocks.MATERIALS (stairs and
+  slabs: COBBLESTONE_STAIRS..PLASTER_QUARTER_TOP_EAST is Tiles.is_shaped's second range), and
+  quarter blocks for ShapedBlocks.QUARTERS (Shape.QUARTER, QUARTER_TOP: the low or high quarter
+  at the back of the cell, placed as side slabs, `upper` high; made of two of the material's
+  slabs; GuideBook's BOOK_CRAFT_QUARTERS). Painted plaster (Tints.painted: PLASTER, the timber
+  frames, plaster's shaped blocks; Tints.tintable, the pot, the can washes): ChunkMesher reads
+  the tint of what is painted (`paint_at`, tables[8..10]: the painted table, the build's tints,
+  its origin) into a cube top's material code (+ TINTED_CODE x (tint + 1), caps too), its sides'
+  UV2.y (TINTED_SIDE - tint; side runs keyed by it) and ShapedFaces' (TINTED_TOP - tint for
+  tops); `painted.gdshaderinc` (the palette, TINTED_CODE, `painted`: pixels lighter than
+  PAINT_FROM take the tint, a timber frame's beams keep their wood) in the faces and top shaders.
+  `BuildShapes` (src/sim/world/build_shapes.gd, static, shared): walls (COBBLESTONE_WALL,
+  STONE_BRICK_WALL, BRICK_WALL, MOSSY_STONE_WALL, SANDSTONE_WALL: ObjectShapes.JOINING, BARRIERS,
+  FLOOR_OBJECTS; Openings.joins hands them `wall_joins`: cubes, walls, pillars, gates), pillars
+  (STONE_COLUMN, BRICK_PILLAR, WOOD_POST: furniture stood on; their version `pillar_bits`, its
+  CAPITAL where its stack ends, its BASE where it starts, ChunkProps) and beams (OAK_, SPRUCE_,
+  DARK_OAK_BEAM standing, `_X`, `_Z` lying: `beam_for` the side aimed at, no support needed,
+  ObjectShapes.SINGLE, not turned at random; Items._placed_by maps the lying ones). Walls,
+  pillars and the chimney stack on themselves (Mining.STACKING; GameServer._against_terrain).
+  Mining: walls, pillars, beams break as their material (`BuildShapes.material_of`). Models:
+  BuildModels (DecorModels hands them). tiles.gd is exempt from gdlint's max-file-lines (`#
+  gdlint: disable=max-file-lines`: the id registry, only appended to). Recipes: in SHAPED,
+  Recipes.WALLS, BEAMS, the parquets generated per wood. The book: Home and garden (Materials).
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made

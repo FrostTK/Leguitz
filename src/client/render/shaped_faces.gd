@@ -10,8 +10,11 @@ extends RefCounted
 ## texture as undersides do; a roof's pieces are RoofFaces'. Thread-safe:
 ## only reads what it is given.
 
-## UV2.y of a top (a cube's side has its lip ground + 1, at least 0).
+## UV2.y of a top (a cube's side has its lip ground + 1, at least 0); of
+## a painted one's top, TINTED_TOP - its tint (its sides: as a cube's,
+## ChunkMesher.TINTED_SIDE - its tint).
 const TOP_FACE := -2.0
+const TINTED_TOP := -3100.0
 const SIZE := GameConst.CHUNK_SIZE
 const SPAN := SIZE + 2
 const HEIGHT := GameConst.WORLD_HEIGHT
@@ -57,12 +60,14 @@ static func build(
 	var block := Voxels.block_of(voxels[index])
 	var kind := kinds[Voxels.of_block(ShapedBlocks.material_of(block))]
 	var part := ChunkMesher.Part.DEEP_FACES if deep else ChunkMesher.Part.FACES
-	add(result.parts[part], voxels, flags, kind, lx, y, lz, Color(variant, 0.0, light))
+	var paint := ChunkMesher.paint_at(voxels, tables, index)
+	add(result.parts[part], voxels, flags, kind, lx, y, lz, Color(variant, 0.0, light), paint)
 
 
 ## Adds the faces of the stairs or slab at (lx, y, lz) of a chunk (padded
 ## `voxels`, see ChunkMesher.pad_voxels) to `surface`; `kind` the face kind
-## of its material, `color` (variant, -, sky light) as a cube side's.
+## of its material, `color` (variant, -, sky light) as a cube side's,
+## `paint` its tint (-1: none).
 static func add(
 	surface: ChunkMesher.Surface,
 	voxels: PackedInt32Array,
@@ -71,7 +76,8 @@ static func add(
 	lx: int,
 	y: int,
 	lz: int,
-	color: Color
+	color: Color,
+	paint := -1
 ) -> void:
 	var at := func(cell: Vector3i) -> int: return voxel_at(voxels, cell)
 	var cell := Vector3i(lx, y, lz)
@@ -90,7 +96,7 @@ static func add(
 					continue
 			elif _covered(voxels, flags, cell + out, Vector3i(next.x & 1, next.y & 1, next.z & 1)):
 				continue
-			_face(surface, cell, o, out, kind, color)
+			_face(surface, cell, o, out, kind, color, paint)
 
 
 ## A voxel of the padded chunk at chunk cell (x, row, z) (AIR outside).
@@ -127,7 +133,8 @@ static func _face(
 	o: Vector3i,
 	out: Vector3i,
 	kind: int,
-	color: Color
+	color: Color,
+	paint: int
 ) -> void:
 	var low := Vector3(cell.x, cell.y - SEA, cell.z) + Vector3(o) * 0.5
 	var high := low + Vector3.ONE * 0.5
@@ -151,6 +158,8 @@ static func _face(
 		for corner in corners:
 			texels.append(Vector2(corner.x - cell.x, corner.z - cell.z) * PX)
 		var top := Vector2(kind, TOP_FACE if out.y > 0 else 0.0)
+		if paint >= 0 and out.y > 0:
+			top.y = TINTED_TOP - paint
 		surface.quad(corners, texels, Vector3(out), Vector3.RIGHT, top, color)
 		return
 	# A side: from `a` to `b` as seen from out there (as ChunkMesher's).
@@ -189,4 +198,5 @@ static func _face(
 	var along := b - a
 	var tangent := Vector3(along.x, 0.0, along.y).normalized()
 	var normal := Vector3(-tangent.z, 0.0, tangent.x)
-	surface.quad(corners, uvs, normal, tangent, Vector2(kind, 0.0), color)
+	var side := 0.0 if paint < 0 else ChunkMesher.TINTED_SIDE - paint
+	surface.quad(corners, uvs, normal, tangent, Vector2(kind, side), color)

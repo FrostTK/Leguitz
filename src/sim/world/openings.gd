@@ -90,9 +90,12 @@ static func partner(block: int, cell: Vector3i, voxel_at: Callable) -> Vector3i:
 	return Vector3i.MAX
 
 
-## Whether bars or a railing (`block`) join a neighbor voxel: cubes, the
-## same; bars also panes, railings any railing.
+## Whether bars, a railing or a wall (`block`) join a neighbor voxel:
+## cubes, the same; bars also panes, railings any railing (walls:
+## BuildShapes.wall_joins).
 static func joins(block: int, voxel: int) -> bool:
+	if BuildShapes.is_wall(block):
+		return BuildShapes.wall_joins(voxel)
 	if Voxels.is_cube(voxel):
 		return true
 	var other := Voxels.block_of(voxel)

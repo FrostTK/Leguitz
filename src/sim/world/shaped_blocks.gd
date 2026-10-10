@@ -14,11 +14,13 @@ extends RefCounted
 ## slab fills the low or the high half of its cell (SLAB, SLAB_TOP), a side
 ## slab its back half (SIDE_SLAB: against a wall, facing away from it);
 ## two halves of one material make its cube. Each material gives stairs, a
-## slab and a side slab (items, recipes: Recipes). The roofs' pieces are
-## shaped too (RoofBlocks: a sloping surface instead of octants); this
-## class hands them there.
+## slab and a side slab (items, recipes: Recipes); some (QUARTERS) quarter
+## blocks too: the low or the high quarter at the back of the cell (QUARTER,
+## QUARTER_TOP: a small step, a window's sill), placed as side slabs. The
+## roofs' pieces are shaped too (RoofBlocks: a sloping surface instead of
+## octants); this class hands them there.
 
-enum Shape { STAIRS, STAIRS_TOP, SLAB, SLAB_TOP, SIDE_SLAB }
+enum Shape { STAIRS, STAIRS_TOP, SLAB, SLAB_TOP, SIDE_SLAB, QUARTER, QUARTER_TOP }
 
 ## [block name prefix, the cube block, its item] of each material.
 const MATERIALS := [
@@ -35,7 +37,17 @@ const MATERIALS := [
 	["DEEPSLATE_BRICK", Tiles.Block.DEEPSLATE_BRICKS, Items.Id.DEEPSLATE_BRICKS],
 	["SANDSTONE", Tiles.Block.SANDSTONE, Items.Id.SANDSTONE],
 	["CUT_SANDSTONE", Tiles.Block.CUT_SANDSTONE, Items.Id.CUT_SANDSTONE],
+	["COBBLESTONE", Tiles.Block.COBBLESTONE, Items.Id.COBBLESTONE],
+	["ASHLAR", Tiles.Block.ASHLAR, Items.Id.ASHLAR],
+	["MOSSY_STONE", Tiles.Block.MOSSY_STONE, Items.Id.MOSSY_STONE],
+	["PLASTER", Tiles.Block.PLASTER, Items.Id.PLASTER],
+	["WATTLE_DAUB", Tiles.Block.WATTLE_DAUB, Items.Id.WATTLE_DAUB],
+	["TERRACOTTA", Tiles.Block.TERRACOTTA_BLOCK, Items.Id.TERRACOTTA_BLOCK],
+	["POLISHED_SLATE", Tiles.Block.POLISHED_SLATE, Items.Id.POLISHED_SLATE],
+	["SANDSTONE_BRICK", Tiles.Block.SANDSTONE_BRICKS, Items.Id.SANDSTONE_BRICKS],
 ]
+## The materials (prefixes) with quarter blocks too.
+const QUARTERS := ["OAK", "SPRUCE", "SMOOTH_STONE", "STONE_BRICK", "BRICK", "PLASTER"]
 ## The ways a block faces (ObjectShapes.WAYS: south, west, north, east;
 ## kept here, ObjectShapes' tables are built from this class's).
 const WAYS: Array[Vector2i] = [Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1), Vector2i(1, 0)]
@@ -48,6 +60,8 @@ const ALL := 0xFF
 const STAIRS := ["STAIRS", "STAIRS_WEST", "STAIRS_NORTH", "STAIRS_EAST"]
 const STAIRS_TOP := ["STAIRS_TOP", "STAIRS_TOP_WEST", "STAIRS_TOP_NORTH", "STAIRS_TOP_EAST"]
 const SIDE_SLABS := ["SIDE_SLAB", "SIDE_SLAB_WEST", "SIDE_SLAB_NORTH", "SIDE_SLAB_EAST"]
+const QUARTER := ["QUARTER", "QUARTER_WEST", "QUARTER_NORTH", "QUARTER_EAST"]
+const QUARTER_TOP := ["QUARTER_TOP", "QUARTER_TOP_WEST", "QUARTER_TOP_NORTH", "QUARTER_TOP_EAST"]
 ## The items' shapes (by name suffix).
 const ITEMS := {"STAIRS": Shape.STAIRS, "SLAB": Shape.SLAB, "SIDE_SLAB": Shape.SIDE_SLAB}
 
@@ -128,6 +142,10 @@ static func mask(block: int, cell: Vector3i, voxel_at: Callable) -> int:
 			return HIGH
 		Shape.SIDE_SLAB:
 			return side(-front_of(block))
+		Shape.QUARTER:
+			return side(-front_of(block)) & LOW
+		Shape.QUARTER_TOP:
+			return side(-front_of(block)) & HIGH
 		Shape.STAIRS, Shape.STAIRS_TOP:
 			return _stairs(block, cell, voxel_at)
 	return 0
@@ -183,7 +201,7 @@ static func bounds(block: int, cell: Vector3i) -> AABB:
 static func top_of(block: int) -> float:
 	if Tiles.is_roof(block):
 		return RoofBlocks.top_of(block)
-	return 0.5 if shape_of(block) == Shape.SLAB else 1.0
+	return 0.5 if shape_of(block) in [Shape.SLAB, Shape.QUARTER] else 1.0
 
 
 ## Where an item of stairs or slabs placed in `cell` goes ({} : nowhere):
@@ -218,6 +236,11 @@ static func placement(
 					return {cell: Voxels.of_block(material)}
 				return {}
 			placed = _facings[block][maxi(WAYS.find(facing), 0)]
+		Shape.QUARTER:
+			# As a side slab, its low quarter or its high one.
+			var facing := Vector2i(face.x, face.z) if face.y == 0 else front
+			var kind := _named(block, "QUARTER_TOP" if high else "QUARTER")
+			placed = _facings[kind][maxi(WAYS.find(facing), 0)]
 	if not Mining.is_replaceable(there):
 		return {}
 	return {cell: Voxels.of_block(placed)}
@@ -295,20 +318,33 @@ static func _build() -> bool:
 			[SIDE_SLABS, Shape.SIDE_SLAB, "SIDE_SLAB"],
 		]
 		for group: Array in groups:
-			var blocks: Array[int] = []
-			var item: int = Items.Id[prefix + "_" + group[2]]
-			for way in group[0].size():
-				var block: int = Tiles.Block[prefix + "_" + group[0][way]]
-				blocks.append(block)
-				_shapes[block] = group[1]
-				_materials[block] = material[1]
-				_items[block] = item
-				_prefixes[block] = prefix
-				if group[0].size() > 1:
-					_fronts[block] = WAYS[way]
-			if blocks.size() > 1:
-				_facings[blocks[0]] = blocks
+			_add_group(prefix, material, group)
+		if prefix in QUARTERS:
+			groups = [
+				[QUARTER, Shape.QUARTER, "QUARTER"], [QUARTER_TOP, Shape.QUARTER_TOP, "QUARTER"]
+			]
+			for group: Array in groups:
+				_add_group(prefix, material, group)
+			var quarter: int = Items.Id[prefix + "_QUARTER"]
+			_placing[quarter] = [Tiles.Block[prefix + "_QUARTER"], material[2], Shape.QUARTER]
 		for suffix: String in ITEMS:
 			var item: int = Items.Id[prefix + "_" + suffix]
 			_placing[item] = [Tiles.Block[prefix + "_" + suffix], material[2], ITEMS[suffix]]
 	return true
+
+
+## A group of blocks of a material ([suffixes, shape, item's suffix]).
+static func _add_group(prefix: String, material: Array, group: Array) -> void:
+	var blocks: Array[int] = []
+	var item: int = Items.Id[prefix + "_" + group[2]]
+	for way in group[0].size():
+		var block: int = Tiles.Block[prefix + "_" + group[0][way]]
+		blocks.append(block)
+		_shapes[block] = group[1]
+		_materials[block] = material[1]
+		_items[block] = item
+		_prefixes[block] = prefix
+		if group[0].size() > 1:
+			_fronts[block] = WAYS[way]
+	if blocks.size() > 1:
+		_facings[blocks[0]] = blocks

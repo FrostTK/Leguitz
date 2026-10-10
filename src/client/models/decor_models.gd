@@ -44,6 +44,9 @@ static func build(block: int, variant: int) -> VoxelGrid:
 	var roof := RoofModels.build(block, variant)
 	if roof != null:
 		return roof
+	var built := BuildModels.build(block, variant)
+	if built != null:
+		return built
 	if ObjectShapes.is_curtain(block):
 		var kind := ObjectShapes.kind_of(block)
 		var tied: int = ObjectShapes.DRAWN.find_key(kind) if ObjectShapes.is_drawn(block) else kind
@@ -107,6 +110,13 @@ static func item(item_id: int) -> VoxelGrid:
 			return OpeningModels.shutters(true)
 		Items.Id.CHIMNEY:
 			return RoofModels.chimney(true)
+		Items.Id.COBBLESTONE_WALL, Items.Id.STONE_BRICK_WALL, Items.Id.BRICK_WALL:
+			return BuildModels.wall(Items.PLACES_BLOCK[item_id], 2 | 8)
+		Items.Id.MOSSY_STONE_WALL, Items.Id.SANDSTONE_WALL:
+			return BuildModels.wall(Items.PLACES_BLOCK[item_id], 2 | 8)
+		Items.Id.STONE_COLUMN, Items.Id.BRICK_PILLAR, Items.Id.WOOD_POST:
+			var both := BuildShapes.BASE | BuildShapes.CAPITAL
+			return BuildModels.pillar(Items.PLACES_BLOCK[item_id], both)
 	var block: int = Items.PLACES_BLOCK.get(item_id, -1)
 	return build(block, 0) if block != -1 else null
 
@@ -119,6 +129,9 @@ static func color_of(kind: int) -> Color:
 	var roof := RoofModels.color_of(kind)
 	if roof.a > 0.0:
 		return roof
+	var built := BuildModels.color_of(kind)
+	if built.a > 0.0:
+		return built
 	if ObjectShapes.is_curtain(kind):
 		return Color(LINEN[2])
 	match kind:

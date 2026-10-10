@@ -101,6 +101,31 @@ const BLOCK_SECONDS := {
 	Tiles.Block.SHINGLE_DORMER: 1.5,
 	Tiles.Block.THATCH_DORMER: 1.5,
 	Tiles.Block.CHIMNEY: 4.0,
+	Tiles.Block.COBBLESTONE: 3.5,
+	Tiles.Block.ASHLAR: 4.0,
+	Tiles.Block.MOSSY_STONE: 3.5,
+	Tiles.Block.PLASTER: 2.0,
+	Tiles.Block.TIMBER_FRAME: 2.0,
+	Tiles.Block.TIMBER_FRAME_CROSS: 2.0,
+	Tiles.Block.TIMBER_FRAME_DIAGONAL: 2.0,
+	Tiles.Block.WATTLE_DAUB: 1.2,
+	Tiles.Block.CHECKER_TILES: 3.0,
+	Tiles.Block.TOMETTES: 2.5,
+	Tiles.Block.TERRACOTTA_BLOCK: 2.5,
+	Tiles.Block.POLISHED_SLATE: 3.5,
+	Tiles.Block.SANDSTONE_BRICKS: 3.0,
+	Tiles.Block.OAK_PARQUET: 2.0,
+	Tiles.Block.OAK_HERRINGBONE: 2.0,
+	Tiles.Block.BIRCH_PARQUET: 2.0,
+	Tiles.Block.BIRCH_HERRINGBONE: 2.0,
+	Tiles.Block.SPRUCE_PARQUET: 2.0,
+	Tiles.Block.SPRUCE_HERRINGBONE: 2.0,
+	Tiles.Block.DARK_OAK_PARQUET: 2.0,
+	Tiles.Block.DARK_OAK_HERRINGBONE: 2.0,
+	Tiles.Block.JUNGLE_PARQUET: 2.0,
+	Tiles.Block.JUNGLE_HERRINGBONE: 2.0,
+	Tiles.Block.ACACIA_PARQUET: 2.0,
+	Tiles.Block.ACACIA_HERRINGBONE: 2.0,
 	# What players place, by kind (any way it faces, open or shut).
 	Tiles.Block.TORCH_BRACKET: 1.5,
 	Tiles.Block.CURTAINS: 0.6,
@@ -302,6 +327,21 @@ const AXE_BLOCKS := {
 	Tiles.Block.SLATE_DORMER: true,
 	Tiles.Block.SHINGLE_DORMER: true,
 	Tiles.Block.THATCH_DORMER: true,
+	Tiles.Block.TIMBER_FRAME: true,
+	Tiles.Block.TIMBER_FRAME_CROSS: true,
+	Tiles.Block.TIMBER_FRAME_DIAGONAL: true,
+	Tiles.Block.OAK_PARQUET: true,
+	Tiles.Block.OAK_HERRINGBONE: true,
+	Tiles.Block.BIRCH_PARQUET: true,
+	Tiles.Block.BIRCH_HERRINGBONE: true,
+	Tiles.Block.SPRUCE_PARQUET: true,
+	Tiles.Block.SPRUCE_HERRINGBONE: true,
+	Tiles.Block.DARK_OAK_PARQUET: true,
+	Tiles.Block.DARK_OAK_HERRINGBONE: true,
+	Tiles.Block.JUNGLE_PARQUET: true,
+	Tiles.Block.JUNGLE_HERRINGBONE: true,
+	Tiles.Block.ACACIA_PARQUET: true,
+	Tiles.Block.ACACIA_HERRINGBONE: true,
 }
 const PICKAXE_BLOCKS := {
 	Tiles.Block.ROCK: true,
@@ -366,6 +406,26 @@ const FLOOR_OBJECTS := {
 	Tiles.Block.BARREL: true,
 	Tiles.Block.CHEESE_CELLAR: true,
 	Tiles.Block.CHIMNEY: true,
+	Tiles.Block.COBBLESTONE_WALL: true,
+	Tiles.Block.STONE_BRICK_WALL: true,
+	Tiles.Block.BRICK_WALL: true,
+	Tiles.Block.MOSSY_STONE_WALL: true,
+	Tiles.Block.SANDSTONE_WALL: true,
+	Tiles.Block.STONE_COLUMN: true,
+	Tiles.Block.BRICK_PILLAR: true,
+	Tiles.Block.WOOD_POST: true,
+}
+## What stacks on itself (a chimney, walls, pillars), not only on a cube.
+const STACKING := {
+	Tiles.Block.CHIMNEY: true,
+	Tiles.Block.COBBLESTONE_WALL: true,
+	Tiles.Block.STONE_BRICK_WALL: true,
+	Tiles.Block.BRICK_WALL: true,
+	Tiles.Block.MOSSY_STONE_WALL: true,
+	Tiles.Block.SANDSTONE_WALL: true,
+	Tiles.Block.STONE_COLUMN: true,
+	Tiles.Block.BRICK_PILLAR: true,
+	Tiles.Block.WOOD_POST: true,
 }
 
 ## Objects set over still water (a fish trap), not on the ground.
@@ -399,6 +459,7 @@ static func can_place(voxel: int) -> bool:
 		or Farming.SOWN.has(block)
 		or block == Tiles.Block.TURTLE_EGGS
 		or ON_WATER.has(block)
+		or BuildShapes.is_beam(block)
 	)
 
 
@@ -487,10 +548,16 @@ static func placement(
 		# On a floor, not on another rug.
 		var free: bool = voxel_at.call(cell) != voxel and _bench_room(cell, voxel_at)
 		return {cell: voxel} if free else {}
-	if block == Tiles.Block.CHIMNEY and voxel_at.call(cell + Vector3i.DOWN) == voxel:
-		# A chimney rises on a chimney.
+	if STACKING.has(block) and voxel_at.call(cell + Vector3i.DOWN) == voxel:
+		# A chimney rises on a chimney, a wall on a wall, a pillar on a pillar.
 		var free: int = voxel_at.call(cell)
 		return {cell: voxel} if takes(free) and not Voxels.is_liquid(free) else {}
+	if BuildShapes.is_beam(block):
+		# Along the side aimed at, nothing under it needed.
+		var spot: int = voxel_at.call(cell)
+		if not is_replaceable(spot) or Voxels.is_liquid(spot):
+			return {}
+		return {cell: Voxels.of_block(BuildShapes.beam_for(block, face))}
 	if FLOOR_OBJECTS.has(block):
 		return {cell: voxel} if _bench_room(cell, voxel_at) else {}
 	if Farming.SOWN.has(block):
@@ -715,6 +782,7 @@ static func needs_support(voxel: int) -> bool:
 		and not ObjectShapes.is_wall_mounted(block)
 		and not ObjectShapes.is_hanging(block)
 		and not RoofBlocks.is_dormer(block)
+		and not BuildShapes.is_beam(block)
 	)
 
 
@@ -733,8 +801,11 @@ static func break_seconds(voxel: int, held: int) -> float:
 static func tool_for(voxel: int) -> int:
 	var block := Voxels.block_of(voxel)
 	if ShapedBlocks.is_shaped(block):
-		# Stairs and slabs break as their material does.
+		# Stairs and slabs break as their material does, walls, pillars and
+		# beams too.
 		return tool_for(Voxels.of_block(ShapedBlocks.material_of(block)))
+	if BuildShapes.material_of(block) != Tiles.Block.AIR:
+		return tool_for(Voxels.of_block(BuildShapes.material_of(block)))
 	if block == Tiles.Block.AIR:
 		var ground := Voxels.ground_of(voxel)
 		if ground == Tiles.Ground.NONE or Voxels.is_liquid(voxel):
@@ -753,6 +824,8 @@ static func hand_seconds(voxel: int) -> float:
 	var block := Voxels.block_of(voxel)
 	if ShapedBlocks.is_shaped(block):
 		return hand_seconds(Voxels.of_block(ShapedBlocks.material_of(block)))
+	if BuildShapes.material_of(block) != Tiles.Block.AIR:
+		return hand_seconds(Voxels.of_block(BuildShapes.material_of(block)))
 	if block == Tiles.Block.AIR:
 		return GROUND_SECONDS.get(Voxels.ground_of(voxel), SOIL_SECONDS)
 	if Growth.YOUNG.has(block):

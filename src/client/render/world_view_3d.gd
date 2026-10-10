@@ -136,6 +136,7 @@ func _ready() -> void:
 		var linear := Tints.color(index).srgb_to_linear()
 		palette.append(Vector3(linear.r, linear.g, linear.b))
 	face_material.set_shader_parameter("tint_colors", palette)
+	top_material.set_shader_parameter("tint_colors", palette)
 	glass_material.shader = GLASS_SHADER
 	glass_material.render_priority = GLASS_PRIORITY
 	glass_sheen.shader = GLASS_SHEEN_SHADER

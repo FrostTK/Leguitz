@@ -403,6 +403,59 @@ const SHAPED := [
 		"keys": {"B": Items.Id.BRICK},
 		"result": [Items.Id.CHIMNEY, 2],
 	},
+	# New materials: cobbles, dressed stone, mossy stone, plaster and the
+	# timber frames around it, wattle and daub, floors, slate, sandstone
+	# bricks; walls, pillars, beams.
+	{"ingredients": [Items.Id.STONE, Items.Id.GRAVEL], "result": [Items.Id.COBBLESTONE, 2]},
+	{"pattern": ["SS", "SS"], "keys": {"S": Items.Id.SMOOTH_STONE}, "result": [Items.Id.ASHLAR, 4]},
+	{"ingredients": [Items.Id.COBBLESTONE, Items.Id.FERN], "result": [Items.Id.MOSSY_STONE, 1]},
+	{
+		"ingredients": [Items.Id.STONE, Items.Id.SAND, Items.Id.SAND],
+		"result": [Items.Id.PLASTER, 2],
+	},
+	{
+		"pattern": ["SPS"],
+		"keys": {"S": Items.Id.STICK, "P": Items.Id.PLASTER},
+		"result": [Items.Id.TIMBER_FRAME, 2],
+	},
+	{
+		"pattern": ["S S", " P ", "S S"],
+		"keys": {"S": Items.Id.STICK, "P": Items.Id.PLASTER},
+		"result": [Items.Id.TIMBER_FRAME_CROSS, 2],
+	},
+	{
+		"pattern": ["  S", " P ", "S  "],
+		"keys": {"S": Items.Id.STICK, "P": Items.Id.PLASTER},
+		"result": [Items.Id.TIMBER_FRAME_DIAGONAL, 2],
+	},
+	{"ingredients": [Items.Id.MUD, Items.Id.WHEAT], "result": [Items.Id.WATTLE_DAUB, 2]},
+	{
+		"pattern": ["WD", "DW"],
+		"keys": {"W": Items.Id.SMOOTH_STONE, "D": Items.Id.DEEPSLATE},
+		"result": [Items.Id.CHECKER_TILES, 4],
+	},
+	{
+		"pattern": ["TT", "TT"],
+		"keys": {"T": Items.Id.TERRACOTTA_BLOCK},
+		"result": [Items.Id.TOMETTES, 4],
+	},
+	{
+		"pattern": ["SS", "SS"],
+		"keys": {"S": Items.Id.SLATES},
+		"result": [Items.Id.POLISHED_SLATE, 4],
+	},
+	{
+		"pattern": ["CC", "CC"],
+		"keys": {"C": Items.Id.CUT_SANDSTONE},
+		"result": [Items.Id.SANDSTONE_BRICKS, 4],
+	},
+	{
+		"pattern": ["M", "M"],
+		"keys": {"M": Items.Id.SMOOTH_STONE},
+		"result": [Items.Id.STONE_COLUMN, 2]
+	},
+	{"pattern": ["M", "M"], "keys": {"M": Items.Id.BRICKS}, "result": [Items.Id.BRICK_PILLAR, 2]},
+	{"pattern": ["L", "L"], "keys": {"L": LOGS}, "result": [Items.Id.WOOD_POST, 2]},
 	# Glass: old glass (sand in it), leaded glass, panes of each.
 	{
 		"ingredients":
@@ -596,12 +649,28 @@ const ROOF_RECIPES := {
 }
 const DORMER_PATTERN := ["MMM", "PGP"]
 
+## Walls (six of their material), beams (three logs of their wood).
+const WALLS := {
+	Items.Id.COBBLESTONE_WALL: Items.Id.COBBLESTONE,
+	Items.Id.STONE_BRICK_WALL: Items.Id.STONE_BRICKS,
+	Items.Id.BRICK_WALL: Items.Id.BRICKS,
+	Items.Id.MOSSY_STONE_WALL: Items.Id.MOSSY_STONE,
+	Items.Id.SANDSTONE_WALL: Items.Id.SANDSTONE_BRICKS,
+}
+const BEAMS := {
+	Items.Id.OAK_BEAM: Items.Id.OAK_LOG,
+	Items.Id.SPRUCE_BEAM: Items.Id.SPRUCE_LOG,
+	Items.Id.DARK_OAK_BEAM: Items.Id.DARK_OAK_LOG,
+}
+
 ## Stairs and slabs (ShapedBlocks.Shape): their pattern of the material,
 ## how many it makes.
 const SHAPED_RECIPES := {
 	ShapedBlocks.Shape.STAIRS: [["M  ", "MM ", "MMM"], 4],
 	ShapedBlocks.Shape.SLAB: [["MMM"], 6],
 	ShapedBlocks.Shape.SIDE_SLAB: [["M", "M", "M"], 6],
+	# Of the material's slab.
+	ShapedBlocks.Shape.QUARTER: [["MM"], 4],
 }
 
 static var _all: Array[Dictionary] = []
@@ -621,7 +690,12 @@ static func all() -> Array[Dictionary]:
 		for entry: Array in ShapedBlocks.items():
 			var shape: Array = SHAPED_RECIPES[entry[2]]
 			var keys := {"M": entry[1]}
+			if entry[2] == ShapedBlocks.Shape.QUARTER:
+				var name := String(Items.Id.find_key(entry[0])).trim_suffix("_QUARTER")
+				keys = {"M": Items.Id[name + "_SLAB"]}
 			_all.append({"pattern": shape[0], "keys": keys, "result": [entry[0], shape[1]]})
+			if entry[2] == ShapedBlocks.Shape.QUARTER:
+				continue
 			if entry[2] != ShapedBlocks.Shape.STAIRS:
 				_all.append({"ingredients": [entry[0], entry[0]], "result": [entry[1], 1]})
 		for entry: Array in RoofBlocks.items():
@@ -632,6 +706,21 @@ static func all() -> Array[Dictionary]:
 			var keys := {"M": covering[2], "P": PLANKS, "G": Items.Id.GLASS}
 			var dormer := Items.item_placing(covering[3])
 			_all.append({"pattern": DORMER_PATTERN, "keys": keys, "result": [dormer, 1]})
+		for wall: int in WALLS:
+			var keys := {"M": WALLS[wall]}
+			_all.append({"pattern": ["MMM", "MMM"], "keys": keys, "result": [wall, 6]})
+		for beam: int in BEAMS:
+			var keys := {"L": BEAMS[beam]}
+			_all.append({"pattern": ["L", "L", "L"], "keys": keys, "result": [beam, 3]})
+		# Parquet of each wood: strips of two planks, herringbone across.
+		for log_item: int in Items.PLANKS_OF:
+			var plank: int = Items.PLANKS_OF[log_item]
+			var wood := String(Items.Id.find_key(plank)).trim_suffix("_PLANKS")
+			var keys := {"P": plank}
+			var strips: int = Items.Id[wood + "_PARQUET"]
+			var zigzag: int = Items.Id[wood + "_HERRINGBONE"]
+			_all.append({"pattern": ["PP"], "keys": keys, "result": [strips, 2]})
+			_all.append({"pattern": ["P ", " P"], "keys": keys, "result": [zigzag, 2]})
 		for frame in Glass.FRAMES.size():
 			for design: int in WINDOW_RECIPES:
 				var window := Items.item_placing(Glass.window(design, frame))

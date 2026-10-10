@@ -244,6 +244,8 @@ static func _shaped_label(item: int) -> String:
 			return "BOOK_CRAFT_STAIRS"
 		ShapedBlocks.Shape.SLAB:
 			return "BOOK_CRAFT_SLABS"
+		ShapedBlocks.Shape.QUARTER:
+			return "BOOK_CRAFT_QUARTERS"
 	return "BOOK_CRAFT_SIDE_SLABS"
 
 
@@ -304,6 +306,14 @@ static func _home() -> Array:
 		_icon(Items.Id.SHINGLE_ROOF_GENTLE, _t("BOOK_HOME_GENTLE")),
 		_icon(Items.Id.THATCH_DORMER, _t("BOOK_HOME_DORMER")),
 		_icon(Items.Id.CHIMNEY, _t("BOOK_HOME_CHIMNEY")),
+		_heading("BOOK_HOME_MATERIALS"),
+		_icon(Items.Id.COBBLESTONE, _t("BOOK_HOME_STONES")),
+		_icon(Items.Id.TIMBER_FRAME_CROSS, _t("BOOK_HOME_PLASTER")),
+		_icon(Items.Id.OAK_HERRINGBONE, _t("BOOK_HOME_FLOORS")),
+		_icon(Items.Id.STONE_BRICK_QUARTER, _t("BOOK_HOME_QUARTERS")),
+		_icon(Items.Id.COBBLESTONE_WALL, _t("BOOK_HOME_WALLS")),
+		_icon(Items.Id.STONE_COLUMN, _t("BOOK_HOME_PILLARS")),
+		_icon(Items.Id.OAK_BEAM, _t("BOOK_HOME_BEAMS")),
 		_icon(Items.Id.TABLE, _t("BOOK_HOME_FURNITURE")),
 		_heading("BOOK_HOME_GLASS"),
 		_icon(Items.Id.GLASS, _t("BOOK_HOME_CLEAR_GLASS")),

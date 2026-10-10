@@ -80,6 +80,31 @@ WALLS = [
     "SLATES",
     "SHINGLES",
     "THATCH",
+    "COBBLESTONE",
+    "ASHLAR",
+    "MOSSY_STONE",
+    "PLASTER",
+    "TIMBER_FRAME",
+    "TIMBER_FRAME_CROSS",
+    "TIMBER_FRAME_DIAGONAL",
+    "WATTLE_DAUB",
+    "OAK_PARQUET",
+    "OAK_HERRINGBONE",
+    "BIRCH_PARQUET",
+    "BIRCH_HERRINGBONE",
+    "SPRUCE_PARQUET",
+    "SPRUCE_HERRINGBONE",
+    "DARK_OAK_PARQUET",
+    "DARK_OAK_HERRINGBONE",
+    "JUNGLE_PARQUET",
+    "JUNGLE_HERRINGBONE",
+    "ACACIA_PARQUET",
+    "ACACIA_HERRINGBONE",
+    "CHECKER_TILES",
+    "TOMETTES",
+    "TERRACOTTA_BLOCK",
+    "POLISHED_SLATE",
+    "SANDSTONE_BRICKS",
 ]
 # Walls from this row on draw from random generators of their own, so the
 # textures made before them (and the cliffs after) stay the same.
@@ -845,6 +870,267 @@ def thatch(rng, face):
 ROOFS = {"ROOF_TILES": roof_tiles, "SLATES": slates, "SHINGLES": shingles, "THATCH": thatch}
 
 
+def _wrap_nearest(points, x, y):
+    """The nearest and second nearest of tileable points to a pixel (their
+    distances and the nearest's index)."""
+    best, second, index = 1e9, 1e9, 0
+    for i, (px, py) in enumerate(points):
+        dx = min(abs(x - px), TILE - abs(x - px))
+        dy = min(abs(y - py), TILE - abs(y - py))
+        d = (dx * dx + dy * dy) ** 0.5
+        if d < best:
+            best, second, index = d, best, i
+        elif d < second:
+            second = d
+    return best, second, index
+
+
+def cobblestone(rng, face, moss=False):
+    """Rough stones set in mortar: round-ish, each its own grey, lit from
+    the top left (moss: green creeping over them)."""
+    mortar = "#3f3d45"
+    points = [(float(rng.uniform(0, TILE)), float(rng.uniform(0, TILE))) for _ in range(7)]
+    tones = [shade("#7d7b85", float(rng.uniform(-0.12, 0.1))) for _ in points]
+    c = Canvas(TILE, TILE)
+    height = np.zeros((TILE, TILE), dtype=np.float32)
+    for y in range(TILE):
+        for x in range(TILE):
+            near, second, index = _wrap_nearest(points, x + 0.5, y + 0.5)
+            if second - near < 1.1:
+                c.put(x, y, mortar)
+                height[y, x] = 0.2
+                continue
+            px, py = points[index]
+            lit = ((px - x) + (py - y)) / 6.0
+            c.put(x, y, shade(tones[index], max(-0.15, min(0.15, lit * 0.12))))
+            height[y, x] = 0.5 + min(0.4, (second - near) * 0.08)
+    speckle(rng, c, ["#6a6872", "#9a98a2"], 0.08)
+    if moss:
+        for y in range(TILE):
+            for x in range(TILE):
+                if value_noise_2d(rng_seed=7, x=x, y=y) > 0.55:
+                    c.put(x, y, "#5d7a3a" if (x + y) % 3 else "#738f47")
+    if face:
+        c.fill(0, TILE - 1, TILE, 1, shade(mortar, -0.2))
+    return c, height
+
+
+def value_noise_2d(rng_seed, x, y):
+    """A cheap tileable noise (0..1) on the 16 x 16 tile."""
+    import math
+    v = (math.sin(x * 0.785 + rng_seed) + math.sin(y * 0.785 * 1.7 + rng_seed * 2.1)
+         + math.sin((x + y) * 0.393 + rng_seed * 0.7))
+    return (v + 3.0) / 6.0
+
+
+def ashlar(rng, face, moss=False):
+    """Dressed stone: big blocks in two courses, fine joints, tooled."""
+    base, joint = "#b3ad9f", "#7e786c"
+    c = Canvas(TILE, TILE)
+    c.fill(0, 0, TILE, TILE, base)
+    height = np.full((TILE, TILE), 0.75, dtype=np.float32)
+    for course in range(2):
+        y0 = course * 8
+        tone = shade(base, float(rng.uniform(-0.05, 0.05)))
+        offset = 0 if course == 0 else 6
+        c.fill(0, y0, TILE, 8, tone)
+        speckle(rng, c, [shade(tone, -0.06), shade(tone, 0.05)], 0.3, (0, y0, TILE, 8))
+        c.fill(0, y0, TILE, 1, shade(tone, 0.1))
+        c.fill(0, y0 + 7, TILE, 1, joint)
+        height[y0 + 7, :] = 0.3
+        for x in (offset, offset + 10) if course else (offset,):
+            c.fill(x % TILE, y0, 1, 7, joint)
+            height[y0:y0 + 7, x % TILE] = 0.3
+    if moss:
+        for y in range(TILE):
+            for x in range(TILE):
+                if value_noise_2d(3, x, y) > 0.6 and rng.random() < 0.85:
+                    c.put(x, y, "#5d7a3a" if rng.random() < 0.6 else "#7a9450")
+    return c, height
+
+
+def plaster(rng, face):
+    """Plaster: off-white, troweled in soft patches (it takes a tint)."""
+    base = "#e4ddcd"
+    c = Canvas(TILE, TILE)
+    c.fill(0, 0, TILE, TILE, base)
+    for _ in range(5):
+        x, y = int(rng.integers(0, TILE)), int(rng.integers(0, TILE))
+        c.fill(x, y, int(rng.integers(2, 5)), 1, shade(base, -0.04))
+    speckle(rng, c, [shade(base, -0.06), shade(base, 0.03)], 0.18)
+    height = np.full((TILE, TILE), 0.7, dtype=np.float32)
+    height += luminance(c.img) * 0.15
+    return c, height
+
+
+def timber_frame(rng, face, design=""):
+    """Half-timbering: dark oak beams around plaster (the plaster takes a
+    tint): posts and rails, a cross, or a brace."""
+    c, height = plaster(rng, face)
+    beam, dark = "#5c3c22", "#3e2816"
+
+    def put(x, y):
+        c.put(x, y, beam if (x + y) % 5 else dark)
+        height[y % TILE, x % TILE] = 0.95
+
+    for i in range(TILE):
+        for t in range(2):
+            put(i, t)
+            put(i, TILE - 1 - t)
+            put(t, i)
+            put(TILE - 1 - t, i)
+    if design == "":
+        for i in range(TILE):
+            put(7, i)
+            put(8, i)
+    elif design == "_CROSS":
+        for i in range(TILE):
+            put(i, i)
+            put(i, min(i + 1, TILE - 1))
+            put(TILE - 1 - i, i)
+            put(TILE - 1 - i, min(i + 1, TILE - 1))
+    else:
+        for i in range(TILE):
+            put(TILE - 1 - i, i)
+            put(TILE - 1 - i, min(i + 1, TILE - 1))
+    return c, height
+
+
+def wattle_daub(rng, face):
+    """Wattle and daub: earthy mud with straw in it, a crack or two."""
+    base = "#8c7052"
+    c = Canvas(TILE, TILE)
+    c.fill(0, 0, TILE, TILE, base)
+    speckle(rng, c, [shade(base, -0.08), shade(base, 0.06)], 0.35)
+    for _ in range(9):
+        x, y = int(rng.integers(0, TILE - 2)), int(rng.integers(0, TILE))
+        c.fill(x, y, int(rng.integers(1, 3)), 1, "#c9a85e")
+    for _ in range(2):
+        x, y = int(rng.integers(1, TILE - 1)), int(rng.integers(1, TILE - 4))
+        for k in range(int(rng.integers(2, 5))):
+            c.put(x + (k % 2), y + k, shade(base, -0.3))
+    height = np.full((TILE, TILE), 0.6, dtype=np.float32)
+    height += luminance(c.img) * 0.2
+    return c, height
+
+
+def parquet(rng, wood, herringbone, face):
+    """A wood's parquet: narrow polished strips, butted here and there; or
+    in herringbone, short slats zigzagging."""
+    base, dark, light = PLANKS[wood + "_PLANKS"]
+    c = Canvas(TILE, TILE)
+    height = np.full((TILE, TILE), 0.7, dtype=np.float32)
+    if not herringbone:
+        # A joint on the first row, then five strips three rows wide.
+        c.fill(0, 0, TILE, 1, dark)
+        height[0, :] = 0.4
+        for strip in range(5):
+            y0 = 1 + strip * 3
+            tone = shade(base, float(rng.uniform(-0.08, 0.08)))
+            c.fill(0, y0, TILE, 3, tone)
+            c.fill(0, y0 + 2, TILE, 1, shade(tone, -0.12))
+            joint = int(rng.integers(0, TILE))
+            c.fill(joint, y0, 1, 3, dark)
+            height[y0 + 2, :] = 0.5
+    else:
+        for y in range(TILE):
+            for x in range(TILE):
+                column = x // 4
+                inner = x % 4
+                band = ((y + inner) if column % 2 == 0 else (y - inner + 16)) // 4
+                tone = shade(base, 0.06 if (band + column) % 2 else -0.06)
+                edge = ((y + inner) % 4 == 0) if column % 2 == 0 else ((y - inner + 16) % 4 == 0)
+                c.put(x, y, dark if edge or inner == 3 else tone)
+                height[y, x] = 0.4 if edge else 0.75
+    speckle(rng, c, [shade(base, 0.1)], 0.05)
+    return c, height
+
+
+def checker_tiles(rng, face):
+    """Tiles in a checkerboard, black and white, grout between."""
+    white, black, grout = "#e6e1d6", "#34323a", "#a8a39a"
+    c = Canvas(TILE, TILE)
+    height = np.full((TILE, TILE), 0.8, dtype=np.float32)
+    for y in range(TILE):
+        for x in range(TILE):
+            color = white if ((x // 8) + (y // 8)) % 2 == 0 else black
+            if x % 8 == 7 or y % 8 == 7:
+                color = grout
+                height[y, x] = 0.4
+            elif x % 8 == 0 or y % 8 == 0:
+                color = shade(color, 0.08)
+            c.put(x, y, color)
+    return c, height
+
+
+def tomettes(rng, face):
+    """Tomettes: hexagonal terracotta floor tiles, each its own red."""
+    grout = "#cdb89a"
+    points = [(0.0, 0.0), (8.0, 0.0), (4.0, 8.0), (12.0, 8.0)]
+    tones = [shade("#a8472a", float(rng.uniform(-0.1, 0.08))) for _ in points]
+    c = Canvas(TILE, TILE)
+    height = np.zeros((TILE, TILE), dtype=np.float32)
+    for y in range(TILE):
+        for x in range(TILE):
+            near, second, index = _wrap_nearest(points, x + 0.5, y + 0.5)
+            if second - near < 0.9:
+                c.put(x, y, grout)
+                height[y, x] = 0.3
+            else:
+                c.put(x, y, tones[index])
+                height[y, x] = 0.8
+    speckle(rng, c, ["#93391f", "#b85a3a"], 0.1)
+    return c, height
+
+
+def terracotta_block(rng, face):
+    """Fired terracotta: smooth, warm, in faint bands."""
+    base = "#b6623c"
+    c = Canvas(TILE, TILE)
+    c.fill(0, 0, TILE, TILE, base)
+    for y in (3, 9, 13):
+        c.fill(0, y, TILE, 1, shade(base, -0.05))
+    speckle(rng, c, [shade(base, -0.07), shade(base, 0.06)], 0.2)
+    c.fill(0, 0, TILE, 1, shade(base, 0.1))
+    c.fill(0, TILE - 1, TILE, 1, shade(base, -0.2))
+    height = np.full((TILE, TILE), 0.75, dtype=np.float32)
+    height += luminance(c.img) * 0.1
+    return c, height
+
+
+def polished_slate(rng, face):
+    """Polished slate: dark blue-grey flags, two to a tile, a glint."""
+    base, joint = "#4b5361", "#2c3038"
+    c = Canvas(TILE, TILE)
+    height = np.full((TILE, TILE), 0.8, dtype=np.float32)
+    for flag in range(2):
+        tone = shade(base, float(rng.uniform(-0.06, 0.06)))
+        c.fill(0, flag * 8, TILE, 8, tone)
+        speckle(rng, c, [shade(tone, -0.05), shade(tone, 0.05)], 0.2, (0, flag * 8, TILE, 8))
+        c.fill(0, flag * 8 + 7, TILE, 1, joint)
+        height[flag * 8 + 7, :] = 0.3
+        c.fill(2, flag * 8 + 1, 3, 1, shade(tone, 0.25))
+    return c, height
+
+
+MATERIALS = {
+    "COBBLESTONE": cobblestone,
+    "ASHLAR": ashlar,
+    "MOSSY_STONE": lambda rng, face: cobblestone(rng, face, True),
+    "PLASTER": plaster,
+    "TIMBER_FRAME": timber_frame,
+    "TIMBER_FRAME_CROSS": lambda rng, face: timber_frame(rng, face, "_CROSS"),
+    "TIMBER_FRAME_DIAGONAL": lambda rng, face: timber_frame(rng, face, "_DIAGONAL"),
+    "WATTLE_DAUB": wattle_daub,
+    "CHECKER_TILES": checker_tiles,
+    "TOMETTES": tomettes,
+    "TERRACOTTA_BLOCK": terracotta_block,
+    "POLISHED_SLATE": polished_slate,
+    "SANDSTONE_BRICKS": lambda rng, face: bricks(
+        rng, "#d6b97e", "#b99a5e", "#e8d29e", "#efe2bf", 8, 4, face),
+}
+
+
 def wall_tile(rng, name, is_top, variant):
     """The tile of a wall added after the first ones (own generator)."""
     if name in PLANKS:
@@ -859,6 +1145,11 @@ def wall_tile(rng, name, is_top, variant):
         return wool(rng, not is_top)
     if name in ROOFS:
         return ROOFS[name](rng, not is_top)
+    if name in MATERIALS:
+        return MATERIALS[name](rng, not is_top)
+    if name.endswith("_PARQUET") or name.endswith("_HERRINGBONE"):
+        wood, kind = name.rsplit("_", 1)
+        return parquet(rng, wood, kind == "HERRINGBONE", not is_top)
     if name == "OLD_GLASS":
         return old_glass(rng, variant)
     if name == "LEADED_GLASS":

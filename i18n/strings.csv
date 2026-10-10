@@ -1119,3 +1119,78 @@ BOOK_CRAFT_ROOF_SLOPES,Roof slopes (any covering),Pentes de toit (toute couvertu
 BOOK_CRAFT_ROOF_RIDGES,Ridges,Faîtages
 BOOK_CRAFT_ROOF_GENTLE,Gentle slopes,Pentes douces
 BOOK_CRAFT_DORMERS,Dormers,Lucarnes
+ITEM_COBBLESTONE,Cobblestones,Pavés
+ITEM_ASHLAR,Dressed stone,Pierre de taille
+ITEM_MOSSY_STONE,Mossy stones,Pierres moussues
+ITEM_PLASTER,Plaster,Plâtre
+ITEM_TIMBER_FRAME,Half-timbering,Colombage
+ITEM_TIMBER_FRAME_CROSS,Crossed half-timbering,Colombage en croix
+ITEM_TIMBER_FRAME_DIAGONAL,Braced half-timbering,Colombage en écharpe
+ITEM_WATTLE_DAUB,Wattle and daub,Torchis
+ITEM_OAK_PARQUET,Oak parquet,Parquet de chêne
+ITEM_OAK_HERRINGBONE,Oak herringbone parquet,Parquet de chêne à chevrons
+ITEM_BIRCH_PARQUET,Birch parquet,Parquet de bouleau
+ITEM_BIRCH_HERRINGBONE,Birch herringbone parquet,Parquet de bouleau à chevrons
+ITEM_SPRUCE_PARQUET,Spruce parquet,Parquet d'épicéa
+ITEM_SPRUCE_HERRINGBONE,Spruce herringbone parquet,Parquet d'épicéa à chevrons
+ITEM_DARK_OAK_PARQUET,Dark oak parquet,Parquet de chêne noir
+ITEM_DARK_OAK_HERRINGBONE,Dark oak herringbone parquet,Parquet de chêne noir à chevrons
+ITEM_JUNGLE_PARQUET,Jungle parquet,Parquet d'acajou
+ITEM_JUNGLE_HERRINGBONE,Jungle herringbone parquet,Parquet d'acajou à chevrons
+ITEM_ACACIA_PARQUET,Acacia parquet,Parquet d'acacia
+ITEM_ACACIA_HERRINGBONE,Acacia herringbone parquet,Parquet d'acacia à chevrons
+ITEM_CHECKER_TILES,Checkered tiles,Carrelage en damier
+ITEM_TOMETTES,Terracotta floor tiles,Tomettes
+ITEM_TERRACOTTA_BLOCK,Fired terracotta,Terre cuite
+ITEM_POLISHED_SLATE,Polished slate,Ardoise polie
+ITEM_SANDSTONE_BRICKS,Sandstone bricks,Briques de grès
+ITEM_COBBLESTONE_STAIRS,Cobblestone stairs,Escalier en pavés
+ITEM_COBBLESTONE_SLAB,Cobblestone slab,Dalle en pavés
+ITEM_COBBLESTONE_SIDE_SLAB,Cobblestone side slab,Dalle verticale en pavés
+ITEM_ASHLAR_STAIRS,Dressed stone stairs,Escalier en pierre de taille
+ITEM_ASHLAR_SLAB,Dressed stone slab,Dalle en pierre de taille
+ITEM_ASHLAR_SIDE_SLAB,Dressed stone side slab,Dalle verticale en pierre de taille
+ITEM_MOSSY_STONE_STAIRS,Mossy stone stairs,Escalier en pierres moussues
+ITEM_MOSSY_STONE_SLAB,Mossy stone slab,Dalle en pierres moussues
+ITEM_MOSSY_STONE_SIDE_SLAB,Mossy stone side slab,Dalle verticale en pierres moussues
+ITEM_PLASTER_STAIRS,Plaster stairs,Escalier en plâtre
+ITEM_PLASTER_SLAB,Plaster slab,Dalle en plâtre
+ITEM_PLASTER_SIDE_SLAB,Plaster side slab,Dalle verticale en plâtre
+ITEM_WATTLE_DAUB_STAIRS,Wattle and daub stairs,Escalier en torchis
+ITEM_WATTLE_DAUB_SLAB,Wattle and daub slab,Dalle en torchis
+ITEM_WATTLE_DAUB_SIDE_SLAB,Wattle and daub side slab,Dalle verticale en torchis
+ITEM_TERRACOTTA_STAIRS,Terracotta stairs,Escalier en terre cuite
+ITEM_TERRACOTTA_SLAB,Terracotta slab,Dalle en terre cuite
+ITEM_TERRACOTTA_SIDE_SLAB,Terracotta side slab,Dalle verticale en terre cuite
+ITEM_POLISHED_SLATE_STAIRS,Slate stairs,Escalier en ardoise
+ITEM_POLISHED_SLATE_SLAB,Slate slab,Dalle en ardoise
+ITEM_POLISHED_SLATE_SIDE_SLAB,Slate side slab,Dalle verticale en ardoise
+ITEM_SANDSTONE_BRICK_STAIRS,Sandstone brick stairs,Escalier en briques de grès
+ITEM_SANDSTONE_BRICK_SLAB,Sandstone brick slab,Dalle en briques de grès
+ITEM_SANDSTONE_BRICK_SIDE_SLAB,Sandstone brick side slab,Dalle verticale en briques de grès
+ITEM_OAK_QUARTER,Oak quarter block,Quart de bloc en chêne
+ITEM_SPRUCE_QUARTER,Spruce quarter block,Quart de bloc en épicéa
+ITEM_SMOOTH_STONE_QUARTER,Smooth stone quarter block,Quart de bloc en pierre lisse
+ITEM_STONE_BRICK_QUARTER,Stone brick quarter block,Quart de bloc en briques de pierre
+ITEM_BRICK_QUARTER,Brick quarter block,Quart de bloc en briques
+ITEM_PLASTER_QUARTER,Plaster quarter block,Quart de bloc en plâtre
+ITEM_COBBLESTONE_WALL,Cobblestone wall,Muret en pavés
+ITEM_STONE_BRICK_WALL,Stone brick wall,Muret en briques de pierre
+ITEM_BRICK_WALL,Brick wall,Muret en briques
+ITEM_MOSSY_STONE_WALL,Mossy stone wall,Muret de pierres moussues
+ITEM_SANDSTONE_WALL,Sandstone wall,Muret en grès
+ITEM_STONE_COLUMN,Stone column,Colonne de pierre
+ITEM_BRICK_PILLAR,Brick pillar,Pilier de briques
+ITEM_WOOD_POST,Wooden post,Poteau de bois
+ITEM_OAK_BEAM,Oak beam,Poutre de chêne
+ITEM_SPRUCE_BEAM,Spruce beam,Poutre d'épicéa
+ITEM_DARK_OAK_BEAM,Dark oak beam,Poutre de chêne noir
+BOOK_HOME_MATERIALS,Materials,Matériaux
+BOOK_HOME_STONES,"Cobblestones (stone and gravel), dressed stone (four smooth stone), mossy stones (cobblestones and a fern), sandstone bricks (four cut sandstone), polished slate (four slates): each with its stairs and slabs.","Pavés (une pierre et du gravier), pierre de taille (quatre pierres lisses), pierres moussues (des pavés et une fougère), briques de grès (quatre grès taillés), ardoise polie (quatre ardoises) : chacun avec ses escaliers et ses dalles."
+BOOK_HOME_PLASTER,"Plaster (a stone and two sand): a pot of paint colors it, the watering can washes it. Half-timbering (plaster between sticks: straight, crossed, braced) takes the color on its plaster only. Wattle and daub (mud and wheat), for old houses.","Plâtre (une pierre et deux sables) : un pot de peinture le colore, l'arrosoir le lave. Le colombage (du plâtre entre des bâtons : droit, en croix, en écharpe) ne prend la couleur que sur son plâtre. Le torchis (de la boue et du blé), pour les vieilles maisons."
+BOOK_HOME_FLOORS,"Floors: parquet of each wood (two planks side by side; across, herringbone), checkered tiles (smooth stone and deepslate), tomettes (four fired terracotta). The factory furnace bakes terracotta.","Sols : parquet de chaque bois (deux planches côte à côte ; en travers, à chevrons), carrelage en damier (pierre lisse et ardoise des abîmes), tomettes (quatre terres cuites). Le four d'usine cuit la terre cuite."
+BOOK_HOME_QUARTERS,"Quarter blocks (two slabs make four): the low quarter at the back of a cell, or the high one ({sprint}, or aim high), placed against the side you aim at as a side slab: a small step, a window's sill.","Quarts de bloc (deux dalles en font quatre) : le quart bas au fond d'une case, ou le haut ({sprint}, ou vise haut), posé contre le côté visé comme une dalle verticale : une petite marche, un rebord de fenêtre."
+BOOK_HOME_WALLS,"Walls (six stones make six): they join one another, the walls and the gates, and nobody climbs over them; they stack.","Murets (six pierres en font six) : ils se raccordent entre eux, aux murs et aux portails, et personne ne passe par-dessus ; ils s'empilent."
+BOOK_HOME_PILLARS,"Pillars (two blocks make two): a stone column, a brick pillar, a wooden post (two logs). Stacked, their base is at the foot and their capital at the head.","Piliers (deux blocs en font deux) : une colonne de pierre, un pilier de briques, un poteau de bois (deux bûches). Empilés, leur base est au pied et leur chapiteau en haut."
+BOOK_HOME_BEAMS,"Beams (three logs make three): they lie along the side you aim at, or stand up, and need nothing under them: frameworks, ceilings.","Poutres (trois bûches en font trois) : elles se couchent le long du côté visé, ou se dressent, et n'ont besoin de rien dessous : charpentes, plafonds."
+BOOK_CRAFT_QUARTERS,Quarter blocks,Quarts de bloc

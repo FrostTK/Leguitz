@@ -42,8 +42,11 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Saisons (réglage du monde) : cultures de saison et serres, arbres qui roussissent puis se dénudent, neige l'hiver, le calendrier à l'horloge, /saison | ✅ |
 | Verre et vitres refaits : verre clair continu, verre ancien, verre au plomb, vitres fines qui se raccordent, 28 fenêtres (4 dessins, 6 bois et fer forgé), teinte par case au pot de peinture (le cadre à part), lavée à l'arrosoir ; le soleil à travers le verre teinté colore le sol ; palette de 16 couleurs douces | ✅ |
 | Rideaux qui se tirent et se nouent (tirés, la pièce devient sombre), longs jusqu'au sol, tringle en bois ou en fer, teints au pot de peinture ; tapis qui se raccordent en un grand tapis, teints, sous les meubles | ✅ |
+| Nouveaux matériaux : pavés, pierre de taille, pierres moussues, plâtre qui se peint, colombages, torchis, parquets à lames et à chevrons, carrelage en damier, tomettes, terre cuite, ardoise polie, briques de grès ; leurs escaliers et dalles, quarts de bloc, murets, piliers, poutres | ✅ |
 | Toitures en tuiles, ardoises, bardeaux et chaume : pentes qui font leurs coins, faîtages en croupe et en croix, pentes douces, lucarnes, cheminée qui fume, neige en hiver | ✅ |
 | Portes de chaque bois, vitrée et en fer forgé (portes doubles), trappes, échelles où l'on grimpe, volets peints qui se ferment, barreaux et garde-corps qui se raccordent | ✅ |
+
+![Leguitz : nouveaux matériaux : les vingt-cinq matières en un mur vu de dessus (le plâtre peint en rouge et un colombage en bleu), leurs escaliers, dalles et quarts de bloc devant ; une maison à colombages au plâtre ocre sur un soubassement de pavés, son porche de tomettes sur deux colonnes, son jardin fermé de murets avec un portail et des piliers de briques ; la même maison en première personne ; dedans, un parquet à chevrons, un carrelage en damier, un escalier en plâtre bleu et un plafond à poutres](docs/screenshots/phase8-materiaux.png)
 
 ![Leguitz : toitures : une maison en planches au toit de tuiles à pignon et sa cheminée qui fume, une maison en pierre au toit d'ardoises en pyramide ; vues de dessus, une chaumière en pentes douces et une maison en croix au toit de bardeaux (faîtages croisés, noues) ; une maisonnette au toit d'ardoises avec sa lucarne ; les mêmes toits sous la neige en hiver](docs/screenshots/phase8-toitures.png)
 
@@ -337,8 +340,8 @@ Pour le multijoueur, il suffira de brancher un transport réseau.
 7. ✅ Agriculture et élevage (végétation qui pousse, champs et cultures, arrosage et compost,
    nouvelles cultures et arbres fruitiers, élevage, cuisine, pêche et bateaux, compagnons, saisons)
 8. Construction et décoration (en cours : escaliers et dalles, verre et vitres teintables,
-   rideaux et tapis, portes, trappes et échelles, toitures faits ; à venir : nouveaux matériaux,
-   décoration intérieure, vitraux)
+   rideaux et tapis, portes, trappes et échelles, toitures, nouveaux matériaux faits ; à venir :
+   décoration intérieure, extérieur, vitraux)
 9. Finitions PC (menus, sauvegardes, sons, options graphiques, Steam)
 10. Mobile (iOS, Android)
 

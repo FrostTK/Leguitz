@@ -151,7 +151,8 @@ Godot **4.7.2** (GDScript), rendu Forward+. 259 tests unitaires, lint propre.
 | Lumière colorée naturelle | Demandé par le propriétaire (la lumière à travers les fenêtres teintées faisait des formes géométriques qui sautaient avec l'heure) : le verre teinté arrête le soleil blanc dans les ombres, et chaque point du sol, des murs, des meubles et des tapis cherche vers le soleil s'il voit le jour à travers du verre teinté : il reçoit alors le soleil filtré par cette couleur. Les taches tombent exactement là où va la lumière (le cadre, les barreaux et le plomb y dessinent leur ombre), suivent le soleil en continu et gardent la texture de ce qu'elles éclairent ; un verre teinté en blanc donne la même tache que le soleil à travers du verre clair. Le soir, elles sont faibles comme le soleil couchant ; une verrière dans un toit donne les plus belles. Environ 0,4 ms de carte graphique | `292638e` |
 | 8.4 Portes, trappes, échelles, volets | Des **portes** de deux niveaux de haut, une par essence (six planches d'un même bois : chêne à quatre panneaux, bouleau à petite fenêtre, épicéa rustique à écharpe, chêne noir clouté, jungle à lattes, acacia à fenêtre cintrée), une **porte vitrée** (du verre sur du chêne, elle laisse entrer le jour) et une **porte en fer forgé** ; elles se posent face au joueur, au nu du mur, s'ouvrent et se ferment au clic droit (ou E) ; **côte à côte, deux portes font une porte double** (gonds de part et d'autre) qui s'ouvre d'un seul geste. Fermée, une porte ne laisse passer personne ni la lumière du jour. Des **trappes** (bois, fer) se posent contre le bord d'un trou dans le sol : fermées on marche dessus, ouvertes on descend. Des **échelles** au mur : on grimpe en sautant ou en avançant contre elle, Maj tient sur place, on glisse doucement sinon, sans jamais se faire mal ; une échelle sous une trappe mène à la cave et on en ressort sur le plancher. Des **volets** à l'extérieur des fenêtres, à persiennes, qui se ferment au clic droit (fermés ils arrêtent le jour) et **se peignent** au pot. Des **barreaux en fer forgé** et des **garde-corps** (bois, fer forgé) qui se raccordent entre eux et aux murs (et aux vitres pour les barreaux) : personne ne passe par-dessus, on voit au travers. Le livre : chapitre Maison, « Portes, échelles et volets » | `fb62623` |
 | Le verre montre l'eau | Demandé par le propriétaire (à travers le verre, on voyait le fond de la rivière, pas l'eau) : le verre ne recopie plus l'image de l'écran, faite avant que l'eau soit dessinée ; il se pose maintenant par-dessus ce qui est derrière lui, en deux passes (sa teinte, puis son reflet du ciel et l'éclat du soleil). L'eau se voit à travers le verre, les vitres et les fenêtres, et aussi le verre derrière du verre (deux épaisseurs se teintent l'une l'autre) et la pluie. Le verre ancien ne déforme plus ce qui est derrière lui : il ondule par des reflets en vagues. La brume lointaine efface la teinte comme avant | `5965810` |
-| 8.5 Toitures | Quatre **couvertures** : des **tuiles** en terre cuite (trois briques), des **ardoises** (trois ardoises des abîmes en font deux), des **bardeaux** de bois (deux bûches en font deux) et du **chaume** (quatre blés), en blocs pleins et en pièces de toit : la **pente** à 45° (elle monte en s'éloignant du joueur, Maj dans l'autre sens) qui tourne toute seule ses **coins** comme les escaliers (**arêtiers** dehors, **noues** dedans), le **faîtage** (le haut du toit : ses bouts se font en **croupe** là où le toit continue plus bas, jusqu'à la pyramide, et les faîtages côte à côte se raccordent et **se croisent** pour les toits en T et en croix ; une **faîtière** court dessus), la **pente douce** (un niveau sur deux cases, basse puis haute), la **rive** (des tuiles relevées le long d'un pignon ouvert, dont le triangle prend la texture du mur dessous). On **marche sur les toits**, ils arrêtent le jour et la pluie, la **neige** s'y pose en hiver, la vue en coupe les enlève au-dessus du joueur ; dessous, le grenier est en planches. Des **lucarnes** (une fenêtre dans un petit pignon, à la place d'une pente, qui éclaire le grenier) et une **cheminée** en briques qui s'empile à travers le toit, coiffée de deux pots, et qui **fume** quand un feu de camp ou un four allumé brûle dessous. Le livre : chapitre Maison, « Toitures » | « Roofs » |
+| 8.5 Toitures | Quatre **couvertures** : des **tuiles** en terre cuite (trois briques), des **ardoises** (trois ardoises des abîmes en font deux), des **bardeaux** de bois (deux bûches en font deux) et du **chaume** (quatre blés), en blocs pleins et en pièces de toit : la **pente** à 45° (elle monte en s'éloignant du joueur, Maj dans l'autre sens) qui tourne toute seule ses **coins** comme les escaliers (**arêtiers** dehors, **noues** dedans), le **faîtage** (le haut du toit : ses bouts se font en **croupe** là où le toit continue plus bas, jusqu'à la pyramide, et les faîtages côte à côte se raccordent et **se croisent** pour les toits en T et en croix ; une **faîtière** court dessus), la **pente douce** (un niveau sur deux cases, basse puis haute), la **rive** (des tuiles relevées le long d'un pignon ouvert, dont le triangle prend la texture du mur dessous). On **marche sur les toits**, ils arrêtent le jour et la pluie, la **neige** s'y pose en hiver, la vue en coupe les enlève au-dessus du joueur ; dessous, le grenier est en planches. Des **lucarnes** (une fenêtre dans un petit pignon, à la place d'une pente, qui éclaire le grenier) et une **cheminée** en briques qui s'empile à travers le toit, coiffée de deux pots, et qui **fume** quand un feu de camp ou un four allumé brûle dessous. Le livre : chapitre Maison, « Toitures » | `c483955` |
+| 8.6 Nouveaux matériaux | Vingt-cinq matières : des **pavés** (pierre et gravier), de la **pierre de taille**, des **pierres moussues**, du **plâtre** qui se **peint** au pot (l'arrosoir le lave), trois **colombages** (droit, en croix, en écharpe : seul leur plâtre prend la couleur, les poutres restent en bois), du **torchis**, du **parquet** de chaque bois, à lames ou à **chevrons**, un **carrelage en damier**, des **tomettes**, de la **terre cuite** (le four d'usine la cuit), de l'**ardoise polie** et des **briques de grès**. Les huit matières de maçonnerie ont leurs **escaliers et dalles** (le plâtre aussi peint). Des **quarts de bloc** (petites marches, rebords de fenêtre) en chêne, épicéa, pierre lisse, briques de pierre, briques et plâtre. Des **murets** (pavés, briques de pierre, briques, pierres moussues, grès) qui se raccordent comme les barrières, aux murs et aux portails, et s'empilent ; des **piliers** (colonne de pierre cannelée, pilier de briques, poteau de bois) avec leur base et leur chapiteau ; des **poutres** (chêne, épicéa, chêne noir) couchées dans le sens du côté visé ou debout. Le livre : chapitre Maison, « Matériaux » | « New materials » |
 
 **Pas encore fait** (prévu) : nouveaux matériaux et décoration (phase 8),
 structures, menus de départ, sons, mode Arcade (en attente), mobile.
@@ -278,15 +279,14 @@ xvfb-run -a -s "-screen 0 960x540x24" godot --path . --audio-driver Dummy --reso
 
 ---
 
-## 5. Prochaine étape au « go » : Phase 8, étape 6 (nouveaux matériaux)
+## 5. Prochaine étape au « go » : Phase 8, étape 7 (chambre et salon)
 
 **La phase 7 est terminée** (étapes 1 à 11 ci-dessous). La **phase 8, Construction et
 décoration**, est en cours : les étapes 1 (escaliers et dalles), 2 (verre et vitres, la teinte
-par case), 3 (rideaux et tapis), 4 (portes, trappes, échelles, volets, barreaux, garde-corps)
-et 5 (toitures) sont faites ; au prochain « go », l'**étape 6** (les nouveaux matériaux :
-pavés, pierre de taille, pierre moussue, plâtre teintable, colombages, torchis, parquet,
-carrelage, terre cuite, ardoise, briques de grès, avec leurs escaliers et dalles ; murets,
-piliers, poutres ; voir la section 6, où sont les décisions du propriétaire et tout le
+par case), 3 (rideaux et tapis), 4 (portes, trappes, échelles, volets, barreaux, garde-corps),
+5 (toitures) et 6 (nouveaux matériaux) sont faites ; au prochain « go », l'**étape 7** (chambre
+et salon : le lit où l'on dort, les rangements, les étagères qui montrent les objets posés, les
+assises et les tables ; voir la section 6, où sont les décisions du propriétaire et tout le
 découpage).
 
 ### Phase 7 — Agriculture et élevage (terminée)
@@ -697,18 +697,23 @@ barrières et portails ; **pas encore de portes, d'escaliers ni de dalles**.
    des épis de faîtage et des girouettes, la neige qui glisse du toit, la pluie qui ruisselle
    des gouttières, une cheminée qui réchauffe la pièce (avec l'âtre de l'étape 8), des tuiles
    moussues avec le temps.
-6. **Nouveaux matériaux** (pavés, plâtre, colombages, parquet, carrelage…) avec leurs escaliers et
-   dalles ; murets, piliers, poutres.
+6. ✅ **Nouveaux matériaux** (voir section 3, ligne 8.6). Fait comme prévu, avec ces choix : les
+   escaliers et dalles pour les huit matières de maçonnerie (pas pour les parquets, carrelages et
+   colombages, qui sont des sols et des murs : leurs escaliers seraient ceux des planches) ; les
+   quarts de bloc dans six matières (chêne, épicéa, pierre lisse, briques de pierre, briques,
+   plâtre) ; le plâtre se peint jusque dans ses escaliers, dalles et quarts, et le colombage ne
+   prend la couleur que sur son plâtre ; les murets sont des barrières (on ne saute pas
+   par-dessus) ; une poutre se couche dans le sens du côté visé et bloque toute sa case ;
+   l'« ardoise » est l'ardoise polie (l'ardoise des toits est à l'étape 5). Les arches sont
+   laissées pour plus tard (elles vont avec les ponts de l'extérieur). Pas fait (à proposer) :
+   les arches (demi-cercle sur deux cases), des escaliers et dalles de parquet, des murets en
+   plâtre peints, des colonnes de bois sculptées, des poutres moulurées, des coins de quarts de
+   bloc, un plâtre qui s'écaille avec le temps, de la mousse qui gagne les pierres.
 7. **Chambre et salon** : le lit (dormir), les rangements, les étagères d'exposition, les assises
    et les tables.
 8. **Ambiance** : lumières (lustre, bougies), cheminée, tableaux, horloge, miroir, plantes en pot,
    salle de bain.
 9. **Extérieur**.
-10. **Verre, suite** (retenu par le propriétaire en octobre 2026, parmi les propositions de
-    l'étape 2) : de vrais **vitraux** (un dessin en plusieurs couleurs dans une seule case, à
-    composer à l'établi), du **verre dépoli** (on ne voit pas au travers), la **lumière colorée
-    des lanternes** derrière un verre teinté la nuit, la **teinte gardée** quand on casse et
-    repose un bloc (l'objet garde sa couleur : verre, rideaux, tapis).
 
 ### Mode Arcade — en attente (ancienne phase 8, mise de côté par le propriétaire en octobre 2026)
 
@@ -768,8 +773,10 @@ pousse). Elle reprendra quand le propriétaire le dira.
 
 ## 7. Points en suspens et retours attendus
 
-- **Taille des fichiers** : `src/sim/game_server.gd` fait 970 lignes (limite 1000) : sortir du code
+- **Taille des fichiers** : `src/sim/game_server.gd` fait 992 lignes (limite 1000) : sortir du code
   (par exemple les coffres ou l'envoi des chunks dans une classe à part) avant d'y ajouter.
+  `src/sim/world/tiles.gd` (la liste des numéros de blocs, qu'on ne fait qu'allonger) est exempté
+  de la limite (commentaire `gdlint: disable=max-file-lines` en tête).
 - **Carte graphique** : mesuré sur le monde du propriétaire (ligne « Économies et Extrême ») : le
   jeu est limité par le fil principal du processeur (logique, serveur intégré, appels de dessin),
   la RTX 5050 attend. Pistes suivantes (phase 9) : regrouper les objets de plusieurs chunks pour

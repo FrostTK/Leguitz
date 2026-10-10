@@ -77,6 +77,10 @@ const ANY_CUBE := CUBE | CLEAR_CUBE
 ## Flag of the building blocks (TileAtlas.BUILDING_WALLS): roofs and floors
 ## of these never make what is under them a cave.
 const BUILT := 16
+## A painted cube's tint (Tints.painted) in its top's material code: code +
+## TINTED_CODE x (tint + 1); on its sides' UV2.y: TINTED_SIDE - tint.
+const TINTED_CODE := 1024
+const TINTED_SIDE := -3000.0
 ## Natural cubes in a row over a face that make it a cave's (one is a roof
 ## a player made: caves keep two rows of rock over them, CaveGenerator.ROOF).
 const THICK_COVER := 2
@@ -94,6 +98,8 @@ static var _clear := _build_clear()
 static var _flags := _build_flags()
 ## 1 for the building blocks capped at the view's cut.
 static var _capped := _build_capped()
+## 1 for what is painted (Tints.painted), by voxel id.
+static var _painted := _build_painted()
 
 
 ## What a build produces.
@@ -192,7 +198,7 @@ static func build(job: ChunkJob) -> Result:
 		result.parts.append(Surface.new())
 	if job.map_only:
 		var cap_flats := {}
-		_record_caps(cap_flats, voxels, job.cut_row, job.cut_columns)
+		_record_caps(cap_flats, voxels, job)
 		_add_flats(result, cap_flats)
 		return result
 	var origin := Coords.chunk_origin_tile(job.coord)
@@ -209,6 +215,8 @@ static func build(job: ChunkJob) -> Result:
 	var sky := ChunkSky.field(job)
 	tables.append_array(sky)
 	tables.append_array([LiquidFaces.kinds.duplicate(), LiquidFaces.heights.duplicate()])
+	# What is painted, the build's tints, its origin (see paint_at).
+	tables.append_array([_painted.duplicate(), job.tints, Coords.chunk_origin_tile(job.coord)])
 	ChunkSky.keep(result, sky)
 	# Horizontal faces of the chunk, merged at the end: see _record_flat.
 	var flats := {}
@@ -293,7 +301,7 @@ static func build(job: ChunkJob) -> Result:
 						result.lava_deep.append(
 							rows > 1 and not sky_through(voxels, flags, clear, base + y, rows)
 						)
-	_record_caps(flats, voxels, job.cut_row, job.cut_columns)
+	_record_caps(flats, voxels, job)
 	_add_flats(result, flats)
 	_add_world_bottom(result.parts[Part.DEEP_FACES])
 	for quarter in 8:
@@ -476,14 +484,15 @@ static func _build_flags() -> PackedByteArray:
 
 ## Caps the building blocks just under the cut whose column goes on above
 ## it (they have no top of their own there), where the cut reaches.
-static func _record_caps(
-	flats: Dictionary, voxels: PackedInt32Array, cut_row: int, cut_columns: PackedByteArray
-) -> void:
+static func _record_caps(flats: Dictionary, voxels: PackedInt32Array, job: ChunkJob) -> void:
+	var cut_row := job.cut_row
+	var cut_columns := job.cut_columns
 	var row := cut_row - 1
 	if row < 0 or cut_row >= HEIGHT:
 		return
 	var capped := _capped
 	var flags := _flags
+	var origin := Coords.chunk_origin_tile(job.coord)
 	var every_column := cut_columns.is_empty()
 	for lz in SIZE:
 		for lx in SIZE:
@@ -493,7 +502,34 @@ static func _record_caps(
 			var index := column * HEIGHT + row
 			var voxel := voxels[index]
 			if capped[voxel] != 0 and flags[voxels[index + 1]] & ANY_CUBE != 0:
-				_record_flat(flats, row, _top_codes[voxel], Part.CAPS, 0, lx, lz)
+				var code := _top_codes[voxel]
+				if _painted[voxel] != 0:
+					var cell := Vector3i(origin.x + lx, row, origin.y + lz)
+					code += TINTED_CODE * (Tints.glass_of(job.tints.get(cell, 0)) + 1)
+				_record_flat(flats, row, code, Part.CAPS, 0, lx, lz)
+
+
+static func _build_painted() -> PackedByteArray:
+	var table := PackedByteArray()
+	table.resize(Voxels.used_ids())
+	for block: int in Tiles.Block.values():
+		if Tints.painted(block):
+			table[Voxels.of_block(block)] = 1
+	return table
+
+
+## The tint of what is painted at `index` (padded voxels; -1: none or not
+## painted), from the build's tables (see build).
+static func paint_at(voxels: PackedInt32Array, tables: Array, index: int) -> int:
+	var painted: PackedByteArray = tables[8]
+	if painted[voxels[index]] == 0:
+		return -1
+	var tints: Dictionary = tables[9]
+	var origin: Vector2i = tables[10]
+	var column := index / HEIGHT
+	var x := column % SPAN - 1
+	var z := column / SPAN - 1
+	return Tints.glass_of(tints.get(Vector3i(origin.x + x, index % HEIGHT, origin.y + z), 0))
 
 
 static func _build_capped() -> PackedByteArray:
@@ -591,13 +627,15 @@ static func _add_cube(
 	var clear: PackedByteArray = tables[3]
 	var index := column * HEIGHT + y
 	var voxel := voxels[index]
+	var paint := paint_at(voxels, tables, index)
 	var above := voxels[index + 1] if y + 1 < HEIGHT else Voxels.AIR
 	if _open(flags, clear, above) and above != voxel:
 		var rows := tops[column] - y
 		var sky := rows <= 1 or sky_through(voxels, flags, clear, index, rows)
 		var part := Part.TOPS if sky else Part.DEEP_TOPS
 		var light := sky_level(tables, index + 1) if y + 1 < HEIGHT else LightField.MAX
-		_record_flat(flats, y, codes[voxel], part, 0, lx, lz, light)
+		var code := codes[voxel] + TINTED_CODE * (paint + 1)
+		_record_flat(flats, y, code, part, 0, lx, lz, light)
 	if y > 0 and flags[voxels[index - 1]] & CUBE == 0 and voxels[index - 1] != voxel:
 		var below := sky_level(tables, index - 1)
 		_record_flat(flats, y, kinds[voxel], Part.DEEP_FACES, FLAT_UNDERSIDE, lx, lz, below)
@@ -620,7 +658,7 @@ static func _add_cube(
 		if deep < 0:
 			continue
 		var light := sky_level(tables, index + step)
-		var run := Vector3i(kind, deep, light)
+		var run := Vector3i(kind + TINTED_CODE * (paint + 1), deep, light)
 		# The run below took this voxel already: same material, open too.
 		if y > 0 and _continues_run(voxels, tops, tables, index - 1, step, other, y - 1, run):
 			continue
@@ -647,7 +685,7 @@ static func _add_cube(
 			side,
 			bottom - SEA,
 			top - SEA,
-			Vector2(kind, lip),
+			Vector2(kind, lip if paint < 0 else TINTED_SIDE - paint),
 			Color(variant, ground_variant(tile) / 3.0, light / float(LightField.MAX))
 		)
 
@@ -702,7 +740,9 @@ static func _continues_run(
 	var kinds: PackedInt32Array = tables[1]
 	var clear: PackedByteArray = tables[3]
 	var voxel := voxels[index]
-	if flags[voxel] & CUBE == 0 or kinds[voxel] != run.x:
+	if flags[voxel] & CUBE == 0:
+		return false
+	if kinds[voxel] + TINTED_CODE * (paint_at(voxels, tables, index) + 1) != run.x:
 		return false
 	if _side_deep(voxels, tops, flags, clear, index, step, other, y) != run.y:
 		return false

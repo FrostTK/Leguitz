@@ -3,7 +3,8 @@ shader_type spatial;
 // under clear water (lake beds; the water is drawn by water.gdshader).
 //
 // The chunk mesh UVs are chunk pixels / 256, UV2 = (material code: ground
-// id or WALL_CODE + wall kind, level of the top). Tops at the visible level
+// id or WALL_CODE + wall kind, + TINTED_CODE x (tint + 1) when painted;
+// level of the top). Tops at the visible level
 // of their column blend with their neighbors (see
 // terrain3d_surface.gdshaderinc), and so do beds with the beds around;
 // other tops (ledges under an overhang) are drawn plainly. Everything is
@@ -17,6 +18,7 @@ render_mode cull_disabled;
 #include "res://src/client/shaders/see_through.gdshaderinc"
 #include "res://src/client/shaders/glass_light.gdshaderinc"
 #include "res://src/client/shaders/sky_light.gdshaderinc"
+#include "res://src/client/shaders/painted.gdshaderinc"
 
 uniform sampler2D wall_atlas : source_color, filter_nearest;
 uniform sampler2D wall_normals : filter_nearest;
@@ -66,7 +68,10 @@ void fragment() {
 			discard;
 		}
 	}
-	int face_code = int(top_info.x + 0.5);
+	// A painted top's tint rides on its code (painted.gdshaderinc).
+	int raw_code = int(top_info.x + 0.5);
+	int face_code = raw_code % TINTED_CODE;
+	int paint = raw_code / TINTED_CODE - 1;
 	bool clear_wall = face_code >= WALL_CODE
 			&& see_through_walls[min(face_code - WALL_CODE, 255)] == 1;
 	// Seen from behind (through the view cut): the section of the rock.
@@ -121,7 +126,7 @@ void fragment() {
 		if (texel.a < 0.5) {
 			discard;
 		}
-		albedo = texel.rgb;
+		albedo = painted(texel.rgb, paint);
 		normal = unpack_normal(texelFetch(wall_normals, at, 0));
 		emission = texelFetch(wall_emission, at, 0).rgb;
 		if (n[1].g == 0 && tx.y == 0) {

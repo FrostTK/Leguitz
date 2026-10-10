@@ -78,6 +78,7 @@ static func _add(
 	elif (
 		Mining.FLOOR_OBJECTS.has(ObjectShapes.base_kind(block))
 		or Farming.bed_of(block) == Farming.Bed.TRELLIS
+		or BuildShapes.is_beam(block)
 	):
 		turn = Basis()
 	if ObjectShapes.is_wide_left(block):
@@ -112,6 +113,9 @@ static func _add(
 	elif block == Tiles.Block.CHIMNEY:
 		# Its top (its coping and pots) where no chimney goes on over it.
 		variant = 0 if voxels[index + 1] == voxels[index] else 1
+	elif BuildShapes.is_pillar(block):
+		# Its capital at the stack's head, its base at its foot.
+		variant = BuildShapes.pillar_bits(voxel, voxels[index + 1], voxels[index - 1])
 	var key := Vector2i(ObjectShapes.model_block(block), variant % count)
 	if not result.props.has(key):
 		result.props[key] = []

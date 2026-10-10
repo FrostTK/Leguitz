@@ -284,6 +284,18 @@ const TOPS := {
 	Tiles.Block.SHINGLE_DORMER: 16,
 	Tiles.Block.THATCH_DORMER: 16,
 	Tiles.Block.CHIMNEY: 16,
+	Tiles.Block.STONE_COLUMN: 16,
+	Tiles.Block.BRICK_PILLAR: 16,
+	Tiles.Block.WOOD_POST: 16,
+	Tiles.Block.OAK_BEAM: 16,
+	Tiles.Block.SPRUCE_BEAM: 16,
+	Tiles.Block.DARK_OAK_BEAM: 16,
+	Tiles.Block.OAK_BEAM_X: 13,
+	Tiles.Block.OAK_BEAM_Z: 13,
+	Tiles.Block.SPRUCE_BEAM_X: 13,
+	Tiles.Block.SPRUCE_BEAM_Z: 13,
+	Tiles.Block.DARK_OAK_BEAM_X: 13,
+	Tiles.Block.DARK_OAK_BEAM_Z: 13,
 }
 ## Other solid things players place, by kind: the square they block
 ## (voxels; the others facing them: BOX_SIZE).
@@ -326,6 +338,23 @@ const FOOTPRINTS := {
 	Tiles.Block.SHINGLE_DORMER: 16,
 	Tiles.Block.THATCH_DORMER: 16,
 	Tiles.Block.CHIMNEY: 16,
+	Tiles.Block.COBBLESTONE_WALL: 16,
+	Tiles.Block.STONE_BRICK_WALL: 16,
+	Tiles.Block.BRICK_WALL: 16,
+	Tiles.Block.MOSSY_STONE_WALL: 16,
+	Tiles.Block.SANDSTONE_WALL: 16,
+	Tiles.Block.OAK_BEAM_X: 16,
+	Tiles.Block.OAK_BEAM_Z: 16,
+	Tiles.Block.SPRUCE_BEAM_X: 16,
+	Tiles.Block.SPRUCE_BEAM_Z: 16,
+	Tiles.Block.DARK_OAK_BEAM_X: 16,
+	Tiles.Block.DARK_OAK_BEAM_Z: 16,
+	Tiles.Block.STONE_COLUMN: 12,
+	Tiles.Block.BRICK_PILLAR: 12,
+	Tiles.Block.WOOD_POST: 10,
+	Tiles.Block.OAK_BEAM: 10,
+	Tiles.Block.SPRUCE_BEAM: 10,
+	Tiles.Block.DARK_OAK_BEAM: 10,
 }
 ## What keeps bodies out (fences, closed gates and doors, bars,
 ## railings): two levels high, nobody jumps over.
@@ -344,6 +373,11 @@ const BARRIERS := {
 	Tiles.Block.IRON_BARS: true,
 	Tiles.Block.WOOD_RAILING: true,
 	Tiles.Block.IRON_RAILING: true,
+	Tiles.Block.COBBLESTONE_WALL: true,
+	Tiles.Block.STONE_BRICK_WALL: true,
+	Tiles.Block.BRICK_WALL: true,
+	Tiles.Block.MOSSY_STONE_WALL: true,
+	Tiles.Block.SANDSTONE_WALL: true,
 }
 ## The furnaces (their unlit kind) and their lit kind.
 const LIT := {
@@ -465,13 +499,18 @@ const FENCE_SIDES: Array[Vector2i] = [
 	Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)
 ]
 const FENCE_VARIANTS := 16
-## What joins its neighbors that way (fences, rugs, bars, railings).
+## What joins its neighbors that way (fences, rugs, bars, railings, walls).
 const JOINING := {
 	Tiles.Block.FENCE: true,
 	Tiles.Block.RUG: true,
 	Tiles.Block.IRON_BARS: true,
 	Tiles.Block.WOOD_RAILING: true,
 	Tiles.Block.IRON_RAILING: true,
+	Tiles.Block.COBBLESTONE_WALL: true,
+	Tiles.Block.STONE_BRICK_WALL: true,
+	Tiles.Block.BRICK_WALL: true,
+	Tiles.Block.MOSSY_STONE_WALL: true,
+	Tiles.Block.SANDSTONE_WALL: true,
 }
 ## Objects with a single version (no random ones).
 const SINGLE := {
@@ -494,6 +533,15 @@ const SINGLE := {
 	Tiles.Block.NEST_BOX: true,
 	Tiles.Block.BEEHIVE: true,
 	Tiles.Block.BEE_NEST: true,
+	Tiles.Block.OAK_BEAM: true,
+	Tiles.Block.SPRUCE_BEAM: true,
+	Tiles.Block.DARK_OAK_BEAM: true,
+	Tiles.Block.OAK_BEAM_X: true,
+	Tiles.Block.OAK_BEAM_Z: true,
+	Tiles.Block.SPRUCE_BEAM_X: true,
+	Tiles.Block.SPRUCE_BEAM_Z: true,
+	Tiles.Block.DARK_OAK_BEAM_X: true,
+	Tiles.Block.DARK_OAK_BEAM_Z: true,
 }
 ## Objects drawn sunk this deep (levels): a fish trap's basket under the
 ## water's surface, its float on it; a shipyard's slipway down into the
@@ -550,6 +598,8 @@ static func variant_count(block: int) -> int:
 		# Hung on its left or its right (Openings.hinge_right); a chimney's
 		# shaft or its top (ChunkProps).
 		return 2
+	if BuildShapes.is_pillar(block):
+		return BuildShapes.PILLAR_VARIANTS
 	if _facing.has(block) or _wide_ends.has(block) or SINGLE.has(base_kind(block)):
 		return 1
 	if JOINING.has(block):

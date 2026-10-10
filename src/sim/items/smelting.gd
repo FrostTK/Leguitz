@@ -107,6 +107,8 @@ const FACTORY := {
 	Items.Id.RED_SAND: Items.Id.GLASS,
 	Items.Id.STONE: Items.Id.SMOOTH_STONE,
 	Items.Id.MUD: Items.Id.BRICK,
+	Items.Id.TERRACOTTA: Items.Id.TERRACOTTA_BLOCK,
+	Items.Id.LIGHT_TERRACOTTA: Items.Id.TERRACOTTA_BLOCK,
 }
 ## Ores: melted in a food furnace, they break it.
 const ORES := {
