@@ -13,7 +13,9 @@ extends RefCounted
 ## the night and the dark stop them, a torch or a lantern near makes them
 ## grow) and with room: a tree wants the rows over it free and no solid
 ## object on the tiles around (bodies always pass between trees, as
-## WorldGenerator._spaced keeps them).
+## WorldGenerator._spaced keeps them), and in season (Seasons.allows: crops
+## in their seasons or under glass, fruit in summer and autumn, nothing
+## else in winter, where winters are not mild).
 
 const CHECK_TICKS := GameConst.TICKS_PER_SECOND * 5
 const LIGHT := 9
@@ -191,6 +193,8 @@ static func _grow(
 		var rot := seconds / server.clock.scale_duration(Composting.ROT_SECONDS)
 		if server.rng.randf() < (chance if chance >= 0.0 else rot):
 			server.change_voxel(cell, Voxels.of_block(Tiles.Block.COMPOSTER_READY))
+		return
+	if not Seasons.allows(server, chunk, cell, block):
 		return
 	var mean := GRASS_SECONDS
 	if SAPLINGS.has(block):

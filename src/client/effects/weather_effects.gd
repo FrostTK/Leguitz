@@ -1,8 +1,10 @@
 class_name WeatherEffects
 extends Node3D
 ## Client-side weather and ambience in the 3D world: rain or snow
-## (depending on the biome under the player), lightning, wet ground,
-## falling leaves, fireflies at night and dust motes in caves.
+## (depending on the biome under the player; snow in winter where winters
+## bite: Seasons.snows_in), lightning, wet ground, falling leaves (more and
+## turned in autumn, none in winter), fireflies at night and dust motes in
+## caves. It runs the seasons' look too (SeasonLook).
 ## Particles run on the GPU around the camera target, in world space (rain
 ## and snow move along with the player: nobody notices, and they stay
 ## put when the camera turns). Raindrops and snowflakes end on the first
@@ -56,7 +58,17 @@ const FIREFLY_BIOMES := {
 	Biomes.Id.TAIGA: true,
 	Biomes.Id.RIVER: true,
 }
-const AMOUNTS := {&"rain": 2000, &"snow": 1100, &"leaves": 24, &"fireflies": 60, &"dust": 90}
+const AMOUNTS := {&"rain": 2000, &"snow": 1100, &"leaves": 48, &"fireflies": 60, &"dust": 90}
+## The share of the falling leaves each season (autumn's all; summer's
+## when there are no seasons), and their colors.
+const LEAF_SHARE := {
+	WorldClock.Season.SPRING: 0.4,
+	WorldClock.Season.SUMMER: 0.5,
+	WorldClock.Season.AUTUMN: 1.0,
+	WorldClock.Season.WINTER: 0.0,
+}
+const GREEN_LEAVES: Array[Color] = [Color("5e9a3e"), Color("7cc255"), Color("a4c860")]
+const AUTUMN_LEAVES: Array[Color] = [Color("e0a830"), Color("d06a20"), Color("a8341c")]
 ## Seen from a low camera the particles spread over much more ground: the
 ## buffers hold up to this many times the amounts above, so the density on
 ## screen stays the same.
@@ -70,6 +82,9 @@ const FIRST_PERSON_REACH := 24.0
 const NEAR_FADE := Vector2(0.4, 1.6)
 
 var weather := Weather.new()
+## The world's clock (its season).
+var clock: WorldClock
+var seasons := SeasonLook.new()
 var client_world: ClientWorld
 var local_player: LocalPlayer
 ## Deep under the rock: no rain, no leaves, dust motes instead.
@@ -108,6 +123,8 @@ var _roof_redraws := 0
 var _roof_wait := 0.0
 var _roof_nudge := 0.0
 var _fine := false
+## The season the falling leaves are colored for (-1: not yet).
+var _leaf_season := -1
 
 
 func _ready() -> void:
@@ -159,7 +176,8 @@ func _process(delta: float) -> void:
 	if underground or DRY_BIOMES.has(biome):
 		goal = 0.0
 	rain_intensity = move_toward(rain_intensity, goal, FADE_PER_SECOND * delta)
-	snowing = Biomes.is_cold(biome)
+	snowing = Biomes.is_cold(biome) or (clock != null and Seasons.snows_in(clock, biome))
+	seasons.update(clock, biome, delta)
 	if rain_intensity > 0.2 and not snowing:
 		wetness = move_toward(wetness, 1.0, WETTING_PER_SECOND * delta)
 	else:
@@ -195,7 +213,11 @@ func _process(delta: float) -> void:
 	)
 	_particles[&"snow"].amount_ratio = rain_intensity * _share if snowing else 0.0
 	var leafy := not underground and LEAFY_BIOMES.has(biome)
-	var leaves := minf(0.4 + wind.length(), 1.0) * _share
+	var season := WorldClock.Season.SUMMER
+	if clock != null and Seasons.on(clock):
+		season = Seasons.season(clock)
+	_color_leaves(season)
+	var leaves := minf(0.4 + wind.length(), 1.0) * _share * float(LEAF_SHARE[season])
 	_particles[&"leaves"].amount_ratio = leaves if leafy else 0.0
 	var fireflies := not underground and FIREFLY_BIOMES.has(biome)
 	_particles[&"fireflies"].amount_ratio = (
@@ -357,6 +379,21 @@ func _make_leaves() -> GPUParticles3D:
 	ramp.gradient = colors
 	process.color_initial_ramp = ramp
 	return particles
+
+
+## The falling leaves green, or turned in autumn.
+func _color_leaves(season: int) -> void:
+	if season == _leaf_season:
+		return
+	_leaf_season = season
+	var colors := Gradient.new()
+	var autumn := season == WorldClock.Season.AUTUMN
+	colors.colors = PackedColorArray(AUTUMN_LEAVES if autumn else GREEN_LEAVES)
+	colors.offsets = PackedFloat32Array([0.0, 0.5, 1.0])
+	var ramp := GradientTexture1D.new()
+	ramp.gradient = colors
+	var process := _particles[&"leaves"].process_material as ParticleProcessMaterial
+	process.color_initial_ramp = ramp
 
 
 func _make_fireflies() -> GPUParticles3D:

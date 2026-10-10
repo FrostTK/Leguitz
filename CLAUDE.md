@@ -825,6 +825,38 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   puffs, BARK_SECONDS), CreatureBody (`_animate_companion`: sitting on its haunches, the tail
   wagging or swaying, a dog's muzzle up barking, lunge and a cat's leap, a stalking crouch). The
   book's Companions chapter (GuideBook._companions).
+- Seasons (phase 7, step 11): a world setting kept in WorldClock (`season_days`, 0 none, default
+  DEFAULT_SEASON_DAYS 7, SEASON_DAYS_PRESETS; `season_start`, the day the first spring began;
+  saved and sent with the clock, Msg.TIME_STATE; a world saved before starts spring the day it
+  is loaded), the calendar's rules in `Seasons` (src/sim/time, static, given the clock: `on`,
+  `season`, `day`, `progress`, `year`, `set_length`, `set_season`; a SYNCED world follows the
+  device's date, northern seasons, WorldClock.SEASON_MONTHS). WorldClock is at the lint's 20
+  public methods: calendar code goes in Seasons. Growth asks `Seasons.allows` (after the
+  farmland, hives, eggs and composters): where winters are mild (MILD_WINTERS, `mild`) nothing
+  waits; else a crop grows in its seasons (CROPS by sown stage, Bit flags) or not under the sky
+  (Watering.under_sky: a greenhouse), fruit trees bear fruit in FRUIT (summer, autumn), and in
+  winter saplings, young trees and grass spreading wait. Set by the pause menu's Seasons row
+  (Msg.set_seasons: a SET_TIME with "seasons", GameServer._on_set_time) and `/season` (alias
+  saison, admins: a season and its day, a length, off; WorldCommands.season). HudClock shows
+  the season and its day (HUD_SEASON_TIME, the year after the first). The look (client):
+  `SeasonLook` (src/client/effects, run by WeatherEffects with its `clock`; `goals(season,
+  progress)` -> [autumn, bare, snow, grass], eased by EASE) sets the global shader uniforms
+  season_autumn, season_bare, season_snow, season_built_snow (snow on built tops where the
+  player's biome is not mild) and season_grass (a linear tint, GRASS per season; project.godot
+  shader_globals). Winter thaws from THAW: spring starts green (LAST_BARE). ChunkMesher gives each
+  prop `SeasonLook.prop_bits` (Job.biome) in INSTANCE_CUSTOM.a's integer part: sky light 0..15 +
+  16 DECIDUOUS + 32 where winters bite + 64 WITHERING small plants. voxel.gdshaderinc: a voxel's
+  own number (`voxel_hash` of its cell in local units through world_to_local, steady when the
+  camera turns or the wind bends it) staggers deciduous leaves turning (gold, orange, red, by the
+  prop's own number) and falling (discarded, shadows too), small plants buried, snow on faces
+  looking up under the open sky (SNOW_SKY), and the foliage's tint. Terrain: TerrainRenderer
+  .SEASONAL (`seasonal_table`: 1 grasses, tint and snow; 2 bare grounds, snow) as
+  `ground_season` in the top, faces (the lip) and water (shore ground) shaders, patchy snow
+  (`snowed`) where the sky is open, on wall tops season_built_snow (not caps, not glass).
+  WeatherEffects: snow instead of rain where Seasons.snows_in, leaves falling by LEAF_SHARE
+  (autumn all, turned colors; none in winter). The book's Farm chapter (Seasons: the rules, each
+  crop's seasons, GuideBook._crop_item). Tests without seasons turn them off
+  (Seasons.set_length(clock, 0)); a new world starts on spring's first day.
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made

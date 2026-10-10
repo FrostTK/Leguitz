@@ -864,6 +864,10 @@ func hurt(session: PlayerSession, points: int, cause: int) -> void:
 
 func _on_set_time(message: Dictionary) -> void:
 	var value: float = message.get("value", WorldClock.DEFAULT_DAY_MINUTES)
+	if message.has("seasons"):
+		Seasons.set_length(clock, int(message["seasons"]))
+		broadcast(Msg.time_state(clock))
+		return
 	match int(message.get("mode", WorldClock.Mode.NORMAL)):
 		WorldClock.Mode.NORMAL:
 			clock.set_normal(value)

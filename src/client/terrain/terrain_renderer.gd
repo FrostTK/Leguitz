@@ -88,6 +88,24 @@ const SAND_GROUNDS := {
 }
 const SNOW_GROUNDS := {Tiles.Ground.SNOW: true, Tiles.Ground.ICE: true}
 const MAX_GROUNDS := Voxels.BLOCK_BASE
+## The seasons on the grounds (terrain3d_top.gdshader ground_season): 1 the
+## grasses (the season's tint, snow), 2 the bare grounds snow covers; the
+## grounds of mild winters (sand, dry and jungle grass...) none.
+const SEASONAL := {
+	Tiles.Ground.GRASS: 1,
+	Tiles.Ground.FOREST_GRASS: 1,
+	Tiles.Ground.MEADOW_GRASS: 1,
+	Tiles.Ground.TAIGA_GRASS: 1,
+	Tiles.Ground.SWAMP_GRASS: 1,
+	Tiles.Ground.DIRT: 2,
+	Tiles.Ground.PODZOL: 2,
+	Tiles.Ground.STONE_FLOOR: 2,
+	Tiles.Ground.GRAVEL: 2,
+	Tiles.Ground.MUD: 2,
+	Tiles.Ground.MYCELIUM: 2,
+	Tiles.Ground.FARMLAND: 2,
+	Tiles.Ground.FARMLAND_WET: 2,
+}
 
 
 static func cliff_material(ground: int) -> int:
@@ -100,9 +118,18 @@ static func cliff_material(ground: int) -> int:
 	return CliffMaterial.DIRT
 
 
+## The seasons on each ground (SEASONAL), for the shaders.
+static func seasonal_table() -> PackedInt32Array:
+	var seasonal := PackedInt32Array()
+	for ground in MAX_GROUNDS:
+		seasonal.append(SEASONAL.get(ground, 0))
+	return seasonal
+
+
 ## Sets the atlases and ground tables of a terrain top material.
 static func configure_top(material: ShaderMaterial) -> void:
 	_configure_grounds(material)
+	material.set_shader_parameter("ground_season", seasonal_table())
 	material.set_shader_parameter("wall_atlas", WALL_ATLAS)
 	material.set_shader_parameter("wall_normals", WALL_NORMALS)
 	material.set_shader_parameter("wall_emission", WALL_EMISSION)
@@ -112,6 +139,7 @@ static func configure_top(material: ShaderMaterial) -> void:
 ## Sets the ground and water tables of a water material.
 static func configure_water(material: ShaderMaterial) -> void:
 	_configure_grounds(material)
+	material.set_shader_parameter("ground_season", seasonal_table())
 	var colors := PackedColorArray()
 	var tints := PackedColorArray()
 	var clarity := PackedFloat32Array()

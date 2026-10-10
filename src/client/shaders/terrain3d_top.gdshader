@@ -27,9 +27,31 @@ uniform int see_through_walls[256];
 // Caps: the tops of building blocks cut by the view (ChunkMesher), a
 // little darker and outlined where they drop, so cut walls read as walls.
 uniform bool cap = false;
+// Per ground: 1 a grass that takes the season's tint and snow, 2 a bare
+// ground that takes snow (TerrainRenderer.SEASONAL; none where winters are
+// mild: their grounds).
+uniform int ground_season[64];
+
+// The seasons (SeasonLook): snow on grounds and on what is built (where
+// the player is, winters bite), the grass's tint (linear).
+global uniform float season_snow;
+global uniform float season_built_snow;
+global uniform vec3 season_grass;
+// Snow lies where the sky is open over the face; its color (linear).
+const float SNOW_SKY = 0.9;
+const vec3 SNOW_COLOR = vec3(0.8, 0.84, 0.9);
 
 varying flat vec2 top_info;
 varying flat float sky;
+
+// Whether snow covers an art pixel (patches first, then all).
+bool snowed(vec2 wp, float amount, float open_sky) {
+	if (amount <= 0.0 || open_sky < SNOW_SKY) {
+		return false;
+	}
+	float patchy = value_noise(wp / 20.0) * 0.55 + float(hash2(ivec2(wp)) & 255u) / 255.0 * 0.45;
+	return patchy < amount * 1.2 - 0.1;
+}
 
 void vertex() {
 	top_info = UV2;
@@ -113,6 +135,10 @@ void fragment() {
 		if (n[5].g == 0 && tx.x == 15) {
 			albedo *= 0.8;
 		}
+		if (!cap && !clear_wall && snowed(wp, season_built_snow, sky)) {
+			albedo = SNOW_COLOR * (0.96 + 0.04 * float(hash2(ivec2(wp) + ivec2(5, 9)) & 1u));
+			normal = vec3(0.0, 0.0, 1.0);
+		}
 	} else {
 		vec3 blend = blend_ground(n, tx, wp);
 		int best = int(blend.x + 0.5);
@@ -148,6 +174,15 @@ void fragment() {
 			}
 			if (best != c.r && blend.y < 0.075) {
 				albedo *= 0.8;
+			}
+			int seasonal = ground_season[best];
+			if (seasonal == 1) {
+				albedo *= season_grass;
+			}
+			if (seasonal > 0 && !bed && snowed(wp, season_snow, sky)) {
+				albedo = SNOW_COLOR * (0.96 + 0.04 * float(hash2(ivec2(wp) + ivec2(5, 9)) & 1u));
+				normal = vec3(0.0, 0.0, 1.0);
+				roughness = 0.85;
 			}
 		}
 	}

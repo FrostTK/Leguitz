@@ -38,6 +38,13 @@ uniform float refraction_pixels = 1.2;
 // Light dancing on what lies under shallow water (fades out this deep).
 uniform float caustics_strength = 0.7;
 uniform float caustics_depth = 5.0;
+// The seasons on a shore's ground spreading over the water (see
+// terrain3d_top.gdshader): its grass's tint, the snow on it.
+uniform int ground_season[64];
+global uniform float season_snow;
+global uniform vec3 season_grass;
+const float SNOW_SKY = 0.9;
+const vec3 SNOW_COLOR = vec3(0.8, 0.84, 0.9);
 
 varying vec3 local_vertex;
 varying flat vec2 top_info;
@@ -156,6 +163,16 @@ void fragment() {
 			roughness = mix(0.9, 0.35, weather_wetness);
 			if (blend.y < 0.075) {
 				albedo *= 0.8;
+			}
+			int seasonal = ground_season[best];
+			if (seasonal == 1) {
+				albedo *= season_grass;
+			}
+			float patchy = value_noise(wp / 20.0) * 0.55
+					+ float(hash2(ivec2(wp)) & 255u) / 255.0 * 0.45;
+			if (seasonal > 0 && sky > SNOW_SKY && patchy < season_snow * 1.2 - 0.1) {
+				albedo = SNOW_COLOR;
+				normal = vec3(0.0, 0.0, 1.0);
 			}
 		} else {
 			// The surface: ripples, sparkles, foam along the shores. `cover`:

@@ -46,6 +46,22 @@ const float PAINT_LUMA = 0.36;
 
 global uniform vec2 weather_wind;
 global uniform float weather_wetness;
+// The seasons (SeasonLook): deciduous leaves turn (season_autumn, 0 to 1)
+// and fall (season_bare); snow lies on what faces the open sky where
+// winters are not mild (season_snow); there the foliage takes the
+// season's tint (season_grass, linear). Only props carry the bits saying
+// whether they are deciduous and where winters bite (ChunkMesher).
+global uniform float season_autumn;
+global uniform float season_bare;
+global uniform float season_snow;
+global uniform vec3 season_grass;
+// Autumn's leaves, from gold to red (sRGB), and snow.
+const vec3 AUTUMN_GOLD = vec3(0.87, 0.66, 0.19);
+const vec3 AUTUMN_ORANGE = vec3(0.82, 0.40, 0.11);
+const vec3 AUTUMN_RED = vec3(0.62, 0.17, 0.09);
+const vec3 SNOW = vec3(0.93, 0.95, 0.99);
+// The open sky (sky light over a whole voxel) where snow lies.
+const float SNOW_SKY = 0.9;
 
 varying float foliage;
 #ifdef PAINTED
@@ -55,6 +71,22 @@ varying float striped;
 varying float glow;
 varying vec3 tint;
 varying float sky;
+// Props: deciduous, where winters bite, a small plant the snow buries, a
+// number of their own (0 to 1);
+// the voxel a point lies in (local units x 16) and whether its face looks
+// up.
+varying float deciduous;
+varying float wintry;
+varying float buried;
+varying float own;
+varying vec3 voxel_at;
+varying float upward;
+
+// A number (0 to 1) of a voxel's own.
+float voxel_hash(vec3 cell) {
+	vec3 p = mod(cell, 251.0);
+	return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453);
+}
 
 vec3 srgb_to_linear(vec3 c) {
 	return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c));
@@ -70,11 +102,27 @@ void vertex() {
 	tint = vec3(1.0);
 	float phase = 0.0;
 	sky = sky_light;
+	deciduous = 0.0;
+	wintry = 0.0;
+	buried = 0.0;
+	own = 0.0;
 	if (use_instance_data) {
+		// Its alpha: the sky light (0 to 15) + 16 if deciduous + 32 where
+		// winters bite + 64 a small plant the snow buries, and its wind phase
+		// as the fraction.
 		tint = INSTANCE_CUSTOM.rgb;
-		phase = fract(INSTANCE_CUSTOM.a) * 6.2832;
-		sky = floor(INSTANCE_CUSTOM.a) / 15.0;
+		float bits = floor(INSTANCE_CUSTOM.a);
+		own = fract(INSTANCE_CUSTOM.a);
+		phase = own * 6.2832;
+		sky = mod(bits, 16.0) / 15.0;
+		deciduous = mod(floor(bits / 16.0), 2.0);
+		wintry = mod(floor(bits / 32.0), 2.0);
+		buried = floor(bits / 64.0);
 	}
+	// Before the wind bends it: in the world's local units, steady.
+	vec3 local_normal = normalize((world_to_local * vec4(NORMAL, 0.0)).xyz);
+	voxel_at = (world_to_local * vec4(VERTEX, 1.0)).xyz * 16.0 - local_normal * 0.5;
+	upward = local_normal.y;
 	float weight = UV.x;
 	if (weight > 0.0) {
 		vec3 origin = MODEL_MATRIX[3].xyz;
@@ -96,6 +144,14 @@ void vertex() {
 }
 
 void fragment() {
+	float grain = voxel_hash(floor(voxel_at));
+	bool leaf = foliage > 0.5 && deciduous > 0.5;
+	// Fallen leaves are gone, small plants under the snow too (and their
+	// shadows).
+	if ((leaf && grain < season_bare) || (buried > 0.5 && sky > SNOW_SKY
+			&& grain < season_snow * 1.3 - 0.2)) {
+		discard;
+	}
 	if (fade > 0.0 && !IN_SHADOW_PASS && see_through_dither(FRAGCOORD.xy) < fade) {
 		discard;
 	}
@@ -112,7 +168,25 @@ void fragment() {
 		base = coat.rgb * clamp(luma / PAINT_LUMA, 0.6, 1.35);
 	}
 #endif
+	if (leaf && season_autumn > 0.0) {
+		// Each tree its hue, each leaf its moment, its shade kept.
+		float turn = smoothstep(grain * 0.5, grain * 0.5 + 0.5, season_autumn);
+		float pick = fract(own * 3.7 + grain * 0.3);
+		vec3 hue = pick < 0.45
+				? mix(AUTUMN_GOLD, AUTUMN_ORANGE, pick / 0.45)
+				: mix(AUTUMN_ORANGE, AUTUMN_RED, (pick - 0.45) / 0.55);
+		float luma = dot(base, vec3(0.299, 0.587, 0.114));
+		base = mix(base, hue * clamp(luma / 0.42, 0.55, 1.35), turn);
+	}
+	bool snowed = wintry > 0.5 && upward > 0.5 && sky > SNOW_SKY
+			&& grain < season_snow * 1.15 - 0.1;
+	if (snowed) {
+		base = SNOW * (0.92 + 0.08 * grain);
+	}
 	vec3 albedo = srgb_to_linear(base) * tint;
+	if (foliage > 0.5 && !snowed) {
+		albedo *= mix(vec3(1.0), season_grass, wintry);
+	}
 	albedo = mix(albedo, vec3(0.75, 0.04, 0.03), hurt * 0.6);
 	albedo *= 1.0 - wet_darkening * weather_wetness * (1.0 - foliage * 0.5);
 	// The occlusion dims direct light a little (through the albedo) and the

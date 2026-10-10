@@ -231,6 +231,9 @@ func _ready() -> void:
 	pause_menu.resume_requested.connect(resume)
 	pause_menu.quit_requested.connect(quit_requested.emit)
 	pause_menu.time_settings_requested.connect(_on_time_settings_requested)
+	pause_menu.seasons_requested.connect(
+		func(days: int) -> void: transport.send(Msg.set_seasons(days))
+	)
 	pause_menu.game_mode_requested.connect(
 		func(mode: int) -> void: transport.send(Msg.set_game_mode(mode))
 	)
@@ -258,6 +261,7 @@ func _setup_world() -> void:
 	world_root.add_child(player_model)
 	weather_effects.client_world = world
 	weather_effects.local_player = local_player
+	weather_effects.clock = clock
 	root.add_child(weather_effects)
 
 	lighting.process_mode = Node.PROCESS_MODE_PAUSABLE

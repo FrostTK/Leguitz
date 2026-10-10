@@ -12,6 +12,8 @@ signal time_settings_requested(mode: int, value: float)
 ## Another game mode for the world (survival and creative swap; a hardcore
 ## world stays hardcore).
 signal game_mode_requested(mode: int)
+## The world's seasons: `days` each (0: none).
+signal seasons_requested(days: int)
 
 const FROZEN_CHOICES := [
 	["FROZEN_SUNRISE", WorldClock.FROZEN_SUNRISE],
@@ -33,6 +35,7 @@ var _game_mode := OptionButton.new()
 var _time_mode := OptionButton.new()
 var _day_length := OptionButton.new()
 var _frozen_at := OptionButton.new()
+var _seasons := OptionButton.new()
 var _day_length_row: Control
 var _frozen_row: Control
 var _pace_info := Label.new()
@@ -97,6 +100,11 @@ func _ready() -> void:
 	_frozen_row = _row("SETTING_FROZEN_AT", _frozen_at)
 	box.add_child(_frozen_row)
 
+	for days in WorldClock.SEASON_DAYS_PRESETS:
+		_seasons.add_item("")
+	_seasons.item_selected.connect(_on_seasons_selected)
+	box.add_child(_row("SETTING_SEASONS", _seasons))
+
 	_pace_info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_pace_info.add_theme_font_size_override("font_size", 6)
 	box.add_child(_pace_info)
@@ -142,6 +150,7 @@ func refresh_from_state() -> void:
 	_time_mode.select(clock.mode)
 	_day_length.select(_closest_preset(clock.day_minutes))
 	_frozen_at.select(_closest_frozen_choice(clock.time_of_day()))
+	_seasons.select(_closest_seasons(clock.season_days))
 	_settings.refresh()
 	_updating = false
 	_refresh_dynamic_texts()
@@ -177,9 +186,17 @@ func _on_game_mode_selected(index: int) -> void:
 		game_mode_requested.emit(index)
 
 
+func _on_seasons_selected(index: int) -> void:
+	if not _updating:
+		seasons_requested.emit(WorldClock.SEASON_DAYS_PRESETS[index])
+
+
 func _refresh_dynamic_texts() -> void:
 	for i in WorldClock.DAY_MINUTES_PRESETS.size():
 		_day_length.set_item_text(i, tr("DAY_LENGTH_VALUE") % WorldClock.DAY_MINUTES_PRESETS[i])
+	for i in WorldClock.SEASON_DAYS_PRESETS.size():
+		var days := WorldClock.SEASON_DAYS_PRESETS[i]
+		_seasons.set_item_text(i, tr("SEASONS_DAYS") % days if days > 0 else tr("SEASONS_OFF"))
 	var mode := _time_mode.selected
 	_day_length_row.visible = mode == WorldClock.Mode.NORMAL
 	_frozen_row.visible = mode == WorldClock.Mode.FROZEN
@@ -193,6 +210,8 @@ func _refresh_dynamic_texts() -> void:
 	var info := tr("TIME_PACE_INFO") % ("%.2f" % pace)
 	if mode == WorldClock.Mode.SYNCED:
 		info = tr("TIME_SYNCED_INFO") + "\n" + info
+		if _seasons.selected > 0:
+			info += "\n" + tr("SEASONS_SYNCED_INFO")
 	_pace_info.text = info
 	_fit_height.call_deferred()
 
@@ -202,6 +221,17 @@ func _closest_preset(minutes: float) -> int:
 	for i in WorldClock.DAY_MINUTES_PRESETS.size():
 		var diff := absf(WorldClock.DAY_MINUTES_PRESETS[i] - minutes)
 		if diff < absf(WorldClock.DAY_MINUTES_PRESETS[best] - minutes):
+			best = i
+	return best
+
+
+func _closest_seasons(days: int) -> int:
+	var best := 0
+	for i in WorldClock.SEASON_DAYS_PRESETS.size():
+		if (
+			absi(WorldClock.SEASON_DAYS_PRESETS[i] - days)
+			< absi(WorldClock.SEASON_DAYS_PRESETS[best] - days)
+		):
 			best = i
 	return best
 

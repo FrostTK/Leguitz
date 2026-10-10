@@ -5,7 +5,8 @@ shader_type spatial;
 // they light themselves). Instances may carry
 // INSTANCE_CUSTOM = (tint r, g, b, sky light level + wind phase): props
 // (ChunkMesher) carry the sky light they stand in (0..15, the integer
-// part; see sky_light.gdshaderinc), bodies are given theirs (sky_light).
+// part, + 16 if deciduous, + 32 where winters bite: the seasons; see
+// sky_light.gdshaderinc), bodies are given theirs (sky_light).
 
 render_mode world_vertex_coords;
 

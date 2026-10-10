@@ -260,7 +260,7 @@ static func _home() -> Array:
 ## What grows: saplings into trees, grass back on bare dirt, fields and
 ## crops, watering and compost (animals later in phase 7).
 static func _farm() -> Array:
-	return [
+	var entries := [
 		_title("BOOK_CHAPTER_FARM"),
 		_text("BOOK_FARM_INTRO"),
 		_heading("BOOK_FARM_TREES"),
@@ -296,7 +296,29 @@ static func _farm() -> Array:
 		_icon(Items.Id.SCARECROW, _t("BOOK_FARM_CROWS")),
 		_icon(Items.Id.DIRT, _t("BOOK_FARM_MOLES")),
 		_icon(Items.Id.FLOWER_YELLOW, _t("BOOK_FARM_BUMBLEBEES")),
+		_heading("BOOK_FARM_SEASONS"),
+		_text("BOOK_FARM_SEASONS_INTRO"),
 	]
+	# Each crop's seasons (Seasons.CROPS).
+	for sown: int in Seasons.CROPS:
+		var named := PackedStringArray()
+		for season in WorldClock.Season.size():
+			if Seasons.CROPS[sown] & Seasons.bit(season):
+				named.append(_t(WorldClock.SEASON_KEYS[season]).to_lower())
+		var item := _crop_item(sown)
+		var text := _t("BOOK_FARM_SEASON_CROP") % [_t(Items.name_key(item)), ", ".join(named)]
+		entries.append(_icon(item, text))
+	return entries
+
+
+## What a crop gives when ripe (its seed when that is all it gives).
+static func _crop_item(sown: int) -> int:
+	var ripe := sown
+	while Farming.STAGES.has(ripe):
+		ripe = Farming.STAGES[ripe]
+	if Farming.HARVEST.has(ripe):
+		return Farming.HARVEST[ripe][0]
+	return Farming.SEED_OF.get(sown, Items.Id.SEEDS)
 
 
 ## The kitchen: the counter and its dishes (drawn like recipes), the

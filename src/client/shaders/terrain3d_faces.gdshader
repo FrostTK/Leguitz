@@ -22,6 +22,13 @@ uniform float emission_strength = 2.2;
 uniform int see_through_walls[256];
 // Face kinds: the cliff materials, then the wall kinds.
 const int WALL_KIND_OFFSET = 4;
+// The seasons on the ground hanging over a cliff's top (see
+// terrain3d_top.gdshader): its grass's tint, the snow on it.
+uniform int ground_season[64];
+global uniform float season_snow;
+global uniform vec3 season_grass;
+const float SNOW_SKY = 0.9;
+const vec3 SNOW_COLOR = vec3(0.8, 0.84, 0.9);
 
 varying flat vec4 face_data;
 // 1 for undersides (they face down).
@@ -68,6 +75,15 @@ void fragment() {
 		normal = unpack_normal(texelFetch(ground_normals, at, 0));
 		if (v == 2) {
 			albedo *= 0.8;
+		}
+		int seasonal = ground_season[lip_ground];
+		if (seasonal == 1) {
+			albedo *= season_grass;
+		}
+		float patchy = float(hash2(ivec2(int(floor(UV.x)), down)) & 255u) / 255.0;
+		if (seasonal > 0 && sky > SNOW_SKY && patchy < season_snow * 1.2 - 0.1) {
+			albedo = SNOW_COLOR * (v == 2 ? 0.85 : 1.0);
+			normal = vec3(0.0, 0.0, 1.0);
 		}
 	} else {
 		ivec2 at = ivec2(variant * 16 + u, kind * 16 + v);

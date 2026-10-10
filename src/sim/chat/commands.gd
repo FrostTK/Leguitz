@@ -18,6 +18,7 @@ const LIST: Array[Dictionary] = [
 	{"name": "clear", "alias": "vide", "admin": false},
 	{"name": "tp", "alias": "tp", "admin": true},
 	{"name": "time", "alias": "heure", "admin": true},
+	{"name": "season", "alias": "saison", "admin": true},
 	{"name": "weather", "alias": "meteo", "admin": true},
 	{"name": "gamemode", "alias": "mode", "admin": true},
 	{"name": "give", "alias": "donne", "admin": true},
@@ -60,6 +61,8 @@ static func run(server: GameServer, session: GameServer.PlayerSession, line: Str
 			done = WorldCommands.teleport(server, session, args)
 		"time":
 			done = WorldCommands.time(server, session, args)
+		"season":
+			done = WorldCommands.season(server, session, args)
 		"weather":
 			done = WorldCommands.weather(server, session, args)
 		"gamemode":

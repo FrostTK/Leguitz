@@ -23,7 +23,8 @@ conventions de code ; ce fichier-ci raconte le projet.
    > Lis `CLAUDE.md` et `CLAUDE-README.md`, vérifie que le projet compile et que les tests
    > passent, puis résume-moi où on en est. Attends mon « go » avant de commencer la suite.
 
-4. Dire **« go »** : Claude reprend à la **section 5** (phase 7 ; la phase 6 est en pause). Les phases suivantes se lancent
+4. Dire **« go »** : Claude reprend à la **section 5** (la phase 7 est terminée : la nouvelle phase 8 commence ; la
+   phase 6 est en pause). Les phases suivantes se lancent
    de la même façon, une par une, chacune avec son « go ».
 
 **Manière de travailler convenue** : phase par phase ; Claude explique son plan, attend le
@@ -143,6 +144,7 @@ Godot **4.7.2** (GDScript), rendu Forward+. 259 tests unitaires, lint propre.
 | 7.9A Bateau et chantier naval | Le **chantier naval** (ficelle, rondins, treuil en fer, planches, à l'établi) se pose sur une rive et **fait face à l'eau** (cinq cases d'eau devant) : un portique avec son treuil sur la berge, une **cale** de deux rails qui descend dans l'eau. Son écran (clic droit ou E) montre le bateau : sa **coque** (poupe avec la barre et la place du pilote, 0 à 3 sections, proue : **2 à 5 places**), son **moteur à charbon** (chaudière autour d'un four d'usine, hélice en cuivre) et son charbon, le pont dessiné avec une case par place (**banc** ou **coffre**, « Ouvrir » pour le coffre), « **Mettre à l'eau** » : le bateau glisse le long de la cale. Un bateau amarré près d'un chantier libre y **remonte entier** (« Remonter au chantier ») ; ailleurs, son écran (E sur lui ou à bord) change moteur, charbon, bancs et coffres. **Clic droit** pour monter (pilote, sinon un banc libre) ; les **animaux menés à la corde** montent sur les bancs libres (depuis la proue) et descendent avec le joueur. Le pilote : avancer/reculer les gaz, gauche/droite la barre, sprint le plein régime, saut pour descendre sur la rive la plus proche ; de l'inertie, un long bateau tourne moins vite, la terre et la glace l'arrêtent, l'eau qui coule l'emporte, la lave le brûle. Moteur : **fumée** à la cheminée, hélice qui tourne, sillage, une **jauge de charbon** (un charbon par minute, plus au plein régime) ; sans charbon ou sans moteur, **on rame** (avirons, « À la rame », ça fatigue). Frappé quelques fois (hache plus fort), personne à bord, il se casse en ses pièces et ce qu'il transporte. Le livre : chapitre **Bateaux** | `598396f` |
 | 7.9B Filet de pêche et peinture | Le **filet de pêche** (ficelle et plombs en fer, à l'établi) va dans sa case de l'écran du bateau (sa barre d'usure) ; à bord, **R le jette ou le relève** (retiré de sa case, il est relevé). Jeté dans au moins deux d'eau, à l'arrêt ou au ralenti, il prend de temps en temps poissons et déchets **dans les coffres du bateau**, sinon il en **garde 8** (visibles dans le filet), puis plus rien ; relevé, sa prise est pour le joueur ; il pêche même sans personne à bord. Il s'use dans l'eau (trois fois plus vite traîné à toute allure, et il ne prend rien), à chaque prise ; usé, il **se déchire** (prise perdue) ; on le **raccommode** avec trois ficelles. **Peinture** : l'**huile de lin** (graines de lin au moulin, prise avec des bocaux) et un pigment (fleurs, betterave, lapis, cactus, charbon ; mélanges orange et violet) font un pot, **9 couleurs** ; clic droit sur un bateau peint la **coque**, Maj + clic droit la **bande** (plat-bord), sur l'eau comme sur la cale ; 4 couches par pot, puis le bocal reste ; la **hache décape**. La couleur passe par le shader (pas de modèle par couleur) ; gardée au chantier, perdue si le bateau est cassé. Le filet se voit plié sur la poupe ou jeté derrière (flotteurs, prise dedans) ; l'écran du bateau dessine le pont à sa couleur | `27371c9` |
 | 7.10 Compagnons | Le **chien** : un **loup** à qui l'on donne de la **viande** (crue ou cuite) sans qu'il s'en prenne à nous la mange et, de temps en temps (une fois sur trois), **s'apprivoise** : il devient notre chien (gris comme un loup, collier rouge). Le **chat** : des **chats sauvages** vivent dans les plaines, forêts fleuries, savanes et jungles ; ils fuient le joueur, sauf s'il tient un **poisson** (ils approchent) ; du poisson les apprivoise de la même façon. **Clic droit** sur le sien avec autre chose que sa nourriture : l'**ordre suivant**, « te suit », « reste ici » (assis, endormi la nuit), « garde » (le troupeau pour un chien, les champs pour un chat) là où il est ; une caresse par jour. Sa nourriture le **soigne** (il guérit aussi tout seul, lentement), sinon lui donne envie d'un compagnon : **chiots et chatons**, à nous aussi, dans d'autres **robes** (chiens : gris, fauve, noir et blanc, chocolat, tacheté ; chats : tigré gris, roux, noir, blanc, tricolore, siamois). Qui suit reste au pied (s'assoit quand on s'arrête), nous **rejoint** si on va trop loin et **monte dans le bateau** avec nous. Le chien **aboie** contre les monstres et les loups ou ours en chasse (petits nuages, message « aboie, quelque chose approche ! ») et, s'il suit ou garde, **leur saute dessus** : un monstre mordu est blessé, un loup ou un ours mordu **s'enfuit** ; aucun prédateur ne chasse près d'un chien. De garde, il **ramène au troupeau** les moutons, vaches, chèvres, cochons, poules et canards qui s'éloignent (il passe derrière et les pousse). Le chat **chasse les taupes** (il attend qu'elles sortent) et **les corbeaux** (posés). Nos coups et nos flèches les épargnent. Corrigé au passage : la peinture des bateaux (7.9B) avait mis des variables par instance dans le shader de tous les objets voxel, ce qui saturait un tampon du moteur en première personne (« Too many instances… ») ; elle a maintenant un shader à part, réservé aux bateaux | `a9ee9ef` |
+| 7.11 Saisons | Un **calendrier** par monde : printemps, été, automne, hiver, **7 jours chacune** par défaut (menu pause : « Saisons », 3 à 28 jours, ou aucune ; commande **/saison** pour les admins : une saison et son jour, une durée, aucune) ; l'horloge affiche « Printemps, jour 3 » (et l'année à partir de la deuxième). Un monde réglé sur l'heure de l'appareil suit **la vraie date** (saisons du nord). Un monde d'avant les saisons commence au printemps le jour où il est chargé. **Cultures** : chacune pousse en ses saisons (tomates et melons l'été, blé, carottes et canne à sucre du printemps à l'automne, choux et betteraves aussi l'hiver…), sauf **sous un toit ou du verre** (une serre) ; les arbres fruitiers ne donnent des fruits qu'en été et en automne ; l'hiver, les pousses et les jeunes arbres attendent le printemps et l'herbe ne s'étend plus. Là où l'hiver est doux (déserts, savanes, jungles, badlands), rien n'attend. **Visuel** : au printemps un vert tendre, en été un vert profond ; en automne les chênes, bouleaux et arbres fruitiers **roussissent** (or, orange, rouge, chaque arbre et chaque feuille à son heure) puis **perdent leurs feuilles** (les feuilles qui tombent sont rousses) ; l'hiver, arbres **nus** et **neige** sur le sol, les berges, les toits, le haut des objets et des sapins, les fleurs et les touffes d'herbe enfouies, et **il neige au lieu de pleuvoir** ; à la fin de l'hiver la neige fond et les bourgeons s'ouvrent. Le livre (chapitre Ferme) donne les saisons de chaque culture | « Seasons » |
 
 **Pas encore fait** (prévu) : escaliers, dalles, toits, portes et décoration (nouvelle phase 8),
 structures, menus de départ, sons, mode Arcade (en attente), mobile.
@@ -269,7 +271,13 @@ xvfb-run -a -s "-screen 0 960x540x24" godot --path . --audio-driver Dummy --reso
 
 ---
 
-## 5. Prochaine étape au « go » : Phase 7 — Agriculture et élevage (en cours)
+## 5. Prochaine étape au « go » : Phase 8, étape 1 (la phase 7 est terminée)
+
+**La phase 7 est terminée** (étapes 1 à 11 ci-dessous). Au prochain « go » : la **nouvelle
+phase 8, Construction et décoration**, étape 1 (les blocs partiels, les escaliers et les dalles :
+voir la section 6, où sont les décisions du propriétaire et tout le découpage).
+
+### Phase 7 — Agriculture et élevage (terminée)
 
 **Décision du propriétaire (octobre 2026)** : on passe tout de suite à la phase 7 ; la phase 6
 est **en pause après son étape 3** (coulées d'eau et de lave) et reprendra plus tard à son
@@ -411,10 +419,17 @@ captures, commit et retour :
     une gamelle ou un panier où il dort, le chat qui rapporte des cadeaux le matin, le chien qui rapporte (bâton,
     gibier tué à l'arc), des sons (aboiements, miaulements : le jeu n'a pas encore de sons), des chiens et chats
     errants dans les futurs villages.
-11. **Saisons** (prochaine étape ; réglage du monde) : cultures de saison, neige en hiver, arbres qui roussissent
-    à l'automne.
+11. ✅ **Saisons** (voir section 3, ligne 7.11 ; réglage du monde) : cultures de saison, neige en hiver, arbres qui
+    roussissent à l'automne. Fait comme prévu, avec ces choix : 7 jours par saison par défaut (le monde du propriétaire
+    commence au printemps le jour où il le charge), un monde synchronisé suit la vraie date ; les cultures attendent
+    hors saison (elles ne meurent pas) et poussent en serre ; l'hiver est doux dans les déserts, savanes et jungles.
+    Pas fait (à proposer) : des journées plus longues l'été et plus courtes l'hiver, les lacs et rivières qui gèlent
+    (glace où l'on marche), le froid pour le joueur (vêtements chauds, cheminée, plats qui réchauffent), les ours qui
+    hibernent et les oiseaux qui migrent, des fêtes de saison, des cultures qui gèlent si on les laisse dehors, la neige
+    qui s'accumule en couches, des fleurs de saison. Remarque : sur la neige, les ombres des nuages (tramées en points)
+    se voient davantage qu'avant.
 
-**Après la phase 7** : la **nouvelle phase 8, Construction et décoration** (escaliers, dalles,
+**Ensuite** : la **nouvelle phase 8, Construction et décoration** (escaliers, dalles,
 toitures, portes, verre et vitres refaits et teintables, rideaux fermables, décoration intérieure ;
 voir la section 6), demandée par le propriétaire, qui a gardé toutes les propositions et tranché
 les choix (octobre 2026). Le **mode Arcade** (ancienne phase 8) est **en attente**.
@@ -480,7 +495,7 @@ chacune avec tests, captures, commit et retour :
 - Structures générées : villages, ruines, donjons, mines abandonnées, avec coffres.
 - Niveaux profonds plus dangereux, biomes souterrains.
 
-### Phase 7 — Agriculture et élevage (en cours : voir la section 5)
+### Phase 7 — Agriculture et élevage ✅ (lignes 7.1 à 7.11 de la section 3)
 - Labourer, semer, arroser, cultures qui poussent (durées adaptées au rythme), récoltes.
 - Élevage (nourrir, enclos, reproduction, produits sans tuer), nouveaux animaux, cuisine,
   pêche, compagnons, saisons. Le cheval plus tard.
@@ -497,7 +512,8 @@ La demande du propriétaire, telle quelle :
 > tinter le verre/les vitres avec des couleurs. Rendre les rideaux fermables et pouvoir également
 > les tinter.
 
-Elle vient **après la 7.11 (Saisons)**, la dernière étape de la phase 7.
+Elle vient **après la 7.11 (Saisons)**, la dernière étape de la phase 7 : c'est la **prochaine
+phase**.
 
 **Décisions du propriétaire (octobre 2026)** : il **garde toutes les propositions** ci-dessous
 (verres, matériaux, formes, extérieur, meubles : tout) et tranche les choix :

@@ -38,7 +38,9 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Bateau et chantier naval : un chantier sur la rive (portique, treuil, cale qui descend dans l'eau), une coque de 2 à 5 places (poupe, sections, proue), bancs et coffres, moteur à charbon (fumée, hélice, jauge) ou avirons, mise à l'eau et retour au chantier, les animaux menés à la corde montent à bord | ✅ |
 | Filet de pêche du bateau (jeté ou relevé à bord, prises dans les coffres, usure, raccommodage) et peinture (huile de lin et pigments, 9 couleurs, coque et bande, la hache décape) | ✅ |
 | Chien (un loup apprivoisé avec de la viande) et chat (sauvage, apprivoisé avec du poisson) : suivent, restent ou gardent ; le chien aboie contre les monstres, les mord et chasse les loups, ramène le troupeau ; le chat chasse taupes et corbeaux ; chiots et chatons de plusieurs robes | ✅ |
-| Saisons | à venir |
+| Saisons (réglage du monde) : cultures de saison et serres, arbres qui roussissent puis se dénudent, neige l'hiver, le calendrier à l'horloge, /saison | ✅ |
+
+![Leguitz : les saisons, le même endroit au printemps (vert tendre, un pommier en fleurs), en été (vert profond), en automne (chênes et bouleaux dorés, orange et rouges) et en hiver (arbres nus aux branches enneigées, neige sur le sol, les berges et le toit de la cabane)](docs/screenshots/phase7-saisons.png)
 
 ![Leguitz : les compagnons : les cinq robes des chiens et les six des chats, assis, avec un chiot et un chaton ; un chien de garde qui ramène un mouton vers le troupeau ; un chien qui aboie et mord une roche-mimique, avec son message ; en première personne, un chien, un chat et un chiot](docs/screenshots/phase7-compagnons.png)
 
@@ -317,9 +319,8 @@ Pour le multijoueur, il suffira de brancher un transport réseau.
 4. ✅ Craft (recettes, établi, usure, coffres, fours, blocs de construction)
 5. ✅ Survie et combat (vie, faim, nage, modes de jeu, animaux, monstres, combat et armures)
 6. Souterrain et structures (en pause : maison et jardin, torches et lanternes, lumière des grottes, coulées d'eau et de lave faits)
-7. Agriculture et élevage (en cours : végétation qui pousse, champs et cultures, arrosage et compost,
-   nouvelles cultures et arbres fruitiers, élevage, cuisine, pêche et bateaux, compagnons ; reste
-   les saisons)
+7. ✅ Agriculture et élevage (végétation qui pousse, champs et cultures, arrosage et compost,
+   nouvelles cultures et arbres fruitiers, élevage, cuisine, pêche et bateaux, compagnons, saisons)
 8. Construction et décoration (à venir, propositions validées : escaliers, dalles, toitures,
    portes et échelles, nouveaux matériaux, verre et vitres refaits et teintables, rideaux
    fermables, décoration intérieure)

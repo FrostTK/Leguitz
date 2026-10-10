@@ -16,11 +16,13 @@ func _grass_at(cell: Vector3i) -> int:
 	return Voxels.of_ground(Tiles.Ground.GRASS) if cell.y == SEA - 1 else Voxels.AIR
 
 
-## A grass field around the origin at noon (see test_farming).
+## A grass field around the origin at noon (see test_farming), without
+## seasons (test_seasons).
 func _field() -> GameServer:
 	var settings := WorldSettings.create("Test", "42", WorldSettings.GameMode.SURVIVAL)
 	_server = GameServer.new(settings, null, false)
 	_server.clock.set_frozen(WorldClock.FROZEN_NOON)
+	Seasons.set_length(_server.clock, 0)
 	for x in range(-12, 13):
 		for z in range(-12, 13):
 			for y in range(SEA - 3, SEA + 6):
@@ -59,6 +61,7 @@ func _player() -> Array:
 	transports[0].send(Msg.hello("Alex", 2))
 	server.process_messages()
 	var session := server.first_session()
+	Seasons.set_length(server.clock, 0)
 	var tile := Coords.world_to_tile(session.position)
 	for dx in range(-3, 4):
 		for dz in range(-3, 4):

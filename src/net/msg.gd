@@ -585,6 +585,11 @@ static func set_time(mode: int, value: float) -> Dictionary:
 	return {"t": SET_TIME, "mode": mode, "value": value}
 
 
+## The world's seasons: `days` each (0: none; WorldClock.set_seasons).
+static func set_seasons(days: int) -> Dictionary:
+	return {"t": SET_TIME, "seasons": days}
+
+
 ## Debug: the pickaxe, axe and shovel of a tier (Items.Tier), until tools
 ## can be crafted.
 static func debug_give_tools(tier: int) -> Dictionary:

@@ -2,7 +2,7 @@ class_name WorldCommands
 extends RefCounted
 ## The commands about travel and the world (Commands; static, given the
 ## server): tp (random: a safe spot far away, spawn, a player, a tile, a
-## place), time, weather and the game mode. Each returns false when its
+## place), time, the season, weather and the game mode. Each returns false when its
 ## words do not fit (Commands then shows its usage).
 
 ## tp random: how far it goes (tiles, fewest and most) and how many spots
@@ -28,6 +28,19 @@ const TIMES := {
 	"minuit": 0.0,
 }
 const FREEZE := ["freeze", "stop", "fige", "arrete"]
+## The words of the seasons (plain), and no seasons.
+const SEASONS := {
+	"spring": WorldClock.Season.SPRING,
+	"printemps": WorldClock.Season.SPRING,
+	"summer": WorldClock.Season.SUMMER,
+	"ete": WorldClock.Season.SUMMER,
+	"autumn": WorldClock.Season.AUTUMN,
+	"fall": WorldClock.Season.AUTUMN,
+	"automne": WorldClock.Season.AUTUMN,
+	"winter": WorldClock.Season.WINTER,
+	"hiver": WorldClock.Season.WINTER,
+}
+const NO_SEASONS := ["off", "none", "aucune", "sans"]
 const RUN := ["run", "go", "reprend", "repars"]
 const WEATHERS := {
 	"clear": Weather.Kind.CLEAR,
@@ -129,6 +142,36 @@ static func time(server: GameServer, session: GameServer.PlayerSession, args: Ar
 			clock.set_normal(minutes)
 	server.broadcast(Msg.time_state(clock))
 	Chat.tell(session, "CMD_TIME_DONE", [clock.formatted_time()], Chat.Tone.DONE)
+	return true
+
+
+## season spring | summer | autumn | winter [day] | <days a season> | off.
+static func season(server: GameServer, session: GameServer.PlayerSession, args: Array) -> bool:
+	if args.is_empty() or args.size() > 2:
+		return false
+	var clock := server.clock
+	var typed := Chat.plain(args[0])
+	if args.size() == 1 and (typed.is_valid_int() or typed in NO_SEASONS):
+		Seasons.set_length(clock, typed.to_int() if typed.is_valid_int() else 0)
+		server.broadcast(Msg.time_state(clock))
+		if Seasons.on(clock):
+			Chat.tell(session, "CMD_SEASON_LENGTH", [clock.season_days], Chat.Tone.DONE)
+		else:
+			Chat.tell(session, "CMD_SEASON_OFF", [], Chat.Tone.DONE)
+		return true
+	var which: int = SEASONS.get(typed, -1)
+	var day := String(args[1]).to_int() if args.size() == 2 else 1
+	if which < 0 or (args.size() == 2 and not String(args[1]).is_valid_int()):
+		return false
+	if clock.mode == WorldClock.Mode.SYNCED:
+		Chat.tell(session, "CMD_SEASON_SYNCED", [], Chat.Tone.ERROR)
+		return true
+	if not Seasons.on(clock):
+		Seasons.set_length(clock, WorldClock.DEFAULT_SEASON_DAYS)
+	Seasons.set_season(clock, which, day - 1)
+	server.broadcast(Msg.time_state(clock))
+	var name := Chat.word(WorldClock.SEASON_KEYS[Seasons.season(clock)])
+	Chat.tell(session, "CMD_SEASON_DONE", [name, Seasons.day(clock) + 1], Chat.Tone.DONE)
 	return true
 
 

@@ -107,3 +107,23 @@ weather_wind={
 "type": "vec2",
 "value": Vector2(1, 0.25)
 }
+season_autumn={
+"type": "float",
+"value": 0.0
+}
+season_bare={
+"type": "float",
+"value": 0.0
+}
+season_snow={
+"type": "float",
+"value": 0.0
+}
+season_built_snow={
+"type": "float",
+"value": 0.0
+}
+season_grass={
+"type": "vec3",
+"value": Vector3(1, 1, 1)
+}

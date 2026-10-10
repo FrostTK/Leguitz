@@ -117,11 +117,14 @@ class Job:
 	var map_only := false
 	## Bumped by every new build of the chunk: older results are dropped.
 	var serial := 0
+	## The chunk's columns' biomes (the seasons: SeasonLook.prop_bits).
+	var biome := PackedByteArray()
 
 	static func of_chunk(chunk: ChunkData, neighbor: Callable) -> Job:
 		var job := Job.new()
 		job.coord = chunk.coord
 		job.raised = chunk.raised.duplicate()
+		job.biome = chunk.biome.duplicate()
 		for dz in range(-1, 2):
 			for dx in range(-1, 2):
 				var other: ChunkData = (
@@ -295,11 +298,12 @@ static func build(job: Job) -> Result:
 						lava_sums[quarter] += Vector3(lx + 0.5, y + 2 - SEA, lz + 0.5)
 						lava_counts[quarter] += 1
 				else:
-					var prop_sky := _sky(tables, index)
+					var block := Voxels.block_of(voxel)
+					var biome := job.biome[lz * SIZE + lx] if not job.biome.is_empty() else 0
+					var prop_sky := _sky(tables, index) + SeasonLook.prop_bits(block, biome)
 					_add_prop(
 						result, job.variants, voxel, voxels, base, lx, y, lz, origin, prop_sky
 					)
-					var block := Voxels.block_of(voxel)
 					if ObjectShapes.is_lit(block):
 						_add_flame(result, block, Vector3(lx + 0.5, y - SEA, lz + 0.5))
 						var rows := tops[column] - y

@@ -950,3 +950,22 @@ BOOK_COMPANIONS_CAT,"Wild cats live in plains, flower forests, savannas and jung
 BOOK_COMPANIONS_HUNT,"Following you or watching the fields, a cat hunts the moles around (it waits for them to come up) and the crows (once they land on a crop).","S'il te suit ou s'il surveille les champs, un chat chasse les taupes autour (il attend qu'elles sortent) et les corbeaux (dès qu'ils se posent sur une culture)."
 BOOK_COMPANIONS_CARE_TITLE,Their care,Les soigner
 BOOK_COMPANIONS_CARE,"Their food heals them (a dog meat, a cat fish); in good health, it makes them look for a mate, as farm animals do: the puppies and kittens are yours too. Hurt, they heal slowly by themselves. Following you, they come along when you go far, and take a bench in your boat.","Leur nourriture les soigne (de la viande pour un chien, du poisson pour un chat) ; en bonne santé, elle leur donne envie d'un compagnon, comme aux animaux de la ferme : les chiots et les chatons sont à toi aussi. Blessés, ils guérissent lentement tout seuls. S'ils te suivent, ils te rejoignent quand tu vas loin et prennent un banc dans ton bateau."
+SEASON_SPRING,Spring,Printemps
+SEASON_SUMMER,Summer,Été
+SEASON_AUTUMN,Autumn,Automne
+SEASON_WINTER,Winter,Hiver
+SETTING_SEASONS,Seasons,Saisons
+SEASONS_OFF,None,Aucune
+SEASONS_DAYS,%d days each,%d jours chacune
+SEASONS_SYNCED_INFO,Seasons follow the device's date.,Les saisons suivent la date de l'appareil.
+HUD_SEASON_TIME,"%s, day %d - %s","%s, jour %d - %s"
+HUD_YEAR,(year %d),(an %d)
+CMD_SEASON_USAGE,/season spring | summer | autumn | winter [day] | <days a season> | off,/saison printemps | été | automne | hiver [jour] | <jours par saison> | aucune
+CMD_SEASON_HELP,"Sets the season (and its day), how many days a season lasts, or takes the seasons away.","Change la saison (et son jour), le nombre de jours d'une saison, ou enlève les saisons."
+CMD_SEASON_DONE,"%s, day %d.","%s, jour %d."
+CMD_SEASON_LENGTH,Seasons of %d days.,Saisons de %d jours.
+CMD_SEASON_OFF,No more seasons in this world.,Plus de saisons dans ce monde.
+CMD_SEASON_SYNCED,This world follows your computer's date: its season is the real one.,Ce monde suit la date de ton ordinateur : sa saison est la vraie.
+BOOK_FARM_SEASONS,Seasons,Saisons
+BOOK_FARM_SEASONS_INTRO,"Each season lasts a few days (pause menu: Seasons). A crop grows only in its seasons, unless it is under a roof or glass (a greenhouse). In winter saplings and young trees wait for spring, grass no longer spreads, snow falls instead of rain; fruit trees bear fruit only in summer and autumn. Where winters are mild (deserts, savannas, jungles, badlands) nothing waits.","Chaque saison dure quelques jours (menu pause : Saisons). Une culture ne pousse qu'en ses saisons, sauf sous un toit ou du verre (une serre). L'hiver, les pousses et les jeunes arbres attendent le printemps, l'herbe ne s'étend plus, il neige au lieu de pleuvoir ; les arbres fruitiers ne donnent des fruits qu'en été et en automne. Là où l'hiver est doux (déserts, savanes, jungles, badlands), rien n'attend."
+BOOK_FARM_SEASON_CROP,%s: %s,%s : %s

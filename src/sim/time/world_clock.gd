@@ -14,8 +14,14 @@ extends RefCounted
 ## Timed gameplay (hunger, smelting, crop growth...) is defined in real
 ## seconds for the default 20-minute day and scaled "slightly" by
 ## `pace_factor()` so that longer days feel slower without becoming tedious.
+##
+## Seasons (a world setting kept here, `season_days` days each, 0: none;
+## the calendar's rules are Seasons'): the year starts with spring on day
+## `season_start`. Worlds saved before seasons start them with spring on
+## the day they are loaded.
 
 enum Mode { NORMAL, SYNCED, FROZEN }
+enum Season { SPRING, SUMMER, AUTUMN, WINTER }
 
 const GAME_SECONDS_PER_DAY := 86400.0
 const DEFAULT_DAY_MINUTES := 20.0
@@ -52,10 +58,29 @@ const REFERENCE_NEW_MOON_UNIX := 947182440.0
 ## If the device clock goes back by more than this, re-anchor forward.
 const SYNC_BACKWARD_TOLERANCE := 60.0
 
+## Days a season lasts (0: no seasons), the choices offered, and the
+## seasons' names (i18n).
+const DEFAULT_SEASON_DAYS := 7
+const SEASON_DAYS_PRESETS: Array[int] = [0, 3, 5, 7, 10, 14, 28]
+const MOST_SEASON_DAYS := 28
+const SEASON_KEYS := {
+	Season.SPRING: "SEASON_SPRING",
+	Season.SUMMER: "SEASON_SUMMER",
+	Season.AUTUMN: "SEASON_AUTUMN",
+	Season.WINTER: "SEASON_WINTER",
+}
+## Synced: the month each season starts in.
+const SEASON_MONTHS := {Season.SPRING: 3, Season.SUMMER: 6, Season.AUTUMN: 9, Season.WINTER: 12}
+
 var mode: Mode = Mode.NORMAL
 var day_minutes: float = DEFAULT_DAY_MINUTES
 ## Game seconds elapsed since the world's day 0 at 00:00.
 var total_game_seconds: float = NEW_WORLD_TIME
+
+## Days each season lasts (0: no seasons) and the day index the first
+## spring started on.
+var season_days := DEFAULT_SEASON_DAYS
+var season_start := 0
 
 var _sync_anchor_game := 0.0
 var _sync_anchor_local := 0.0
@@ -203,6 +228,8 @@ func to_dict() -> Dictionary:
 		"total_game_seconds": total_game_seconds,
 		"sync_anchor_game": _sync_anchor_game,
 		"sync_anchor_local": _sync_anchor_local,
+		"season_days": season_days,
+		"season_start": season_start,
 	}
 
 
@@ -214,6 +241,9 @@ func load_dict(data: Dictionary) -> void:
 	total_game_seconds = data.get("total_game_seconds", NEW_WORLD_TIME)
 	_sync_anchor_game = data.get("sync_anchor_game", 0.0)
 	_sync_anchor_local = data.get("sync_anchor_local", 0.0)
+	# Saved before seasons: they start today, with spring.
+	season_days = clampi(int(data.get("season_days", DEFAULT_SEASON_DAYS)), 0, MOST_SEASON_DAYS)
+	season_start = int(data.get("season_start", day_index()))
 
 
 func _anchor_sync(local_unix: float) -> void:
