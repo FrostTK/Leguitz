@@ -106,14 +106,14 @@ static func cast(
 	return null
 
 
-## Where the ray meets stairs or a slab in `cell` (its nearest octant box),
+## Where the ray meets stairs, a slab or a roof in `cell` (its nearest box),
 ## null if it misses them.
 static func _shaped_in(
 	cell: Vector3i, voxel: int, origin: Vector3, dir: Vector3, voxel_at: Callable
 ) -> Hit:
 	var block := Voxels.block_of(voxel)
 	var best: Hit = null
-	for box in ShapedBlocks.boxes(ShapedBlocks.mask(block, cell, voxel_at), cell):
+	for box in ShapedBlocks.solid_boxes(block, cell, voxel_at):
 		var hit := _hit_box(box, cell, voxel, origin, dir)
 		if hit != null and (best == null or hit.distance < best.distance):
 			best = hit

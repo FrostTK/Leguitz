@@ -279,6 +279,11 @@ const TOPS := {
 	Tiles.Block.BUTTER_CHURN: 14,
 	Tiles.Block.BARREL: 15,
 	Tiles.Block.CHEESE_CELLAR: 16,
+	Tiles.Block.TILE_DORMER: 16,
+	Tiles.Block.SLATE_DORMER: 16,
+	Tiles.Block.SHINGLE_DORMER: 16,
+	Tiles.Block.THATCH_DORMER: 16,
+	Tiles.Block.CHIMNEY: 16,
 }
 ## Other solid things players place, by kind: the square they block
 ## (voxels; the others facing them: BOX_SIZE).
@@ -316,6 +321,11 @@ const FOOTPRINTS := {
 	Tiles.Block.BUTTER_CHURN: 8,
 	Tiles.Block.BARREL: 12,
 	Tiles.Block.CHEESE_CELLAR: 14,
+	Tiles.Block.TILE_DORMER: 16,
+	Tiles.Block.SLATE_DORMER: 16,
+	Tiles.Block.SHINGLE_DORMER: 16,
+	Tiles.Block.THATCH_DORMER: 16,
+	Tiles.Block.CHIMNEY: 16,
 }
 ## What keeps bodies out (fences, closed gates and doors, bars,
 ## railings): two levels high, nobody jumps over.
@@ -524,8 +534,8 @@ const WANDERING := {
 ## block -> (kind, way index), for the facing objects; a wide object's
 ## right end -> [axis it lies along, kind].
 ## Every facing kind's blocks: FACING_KINDS, stairs and side slabs
-## (ShapedBlocks), curtains, shutters, doors, trapdoors, the ladder
-## (`_named_kinds`).
+## (ShapedBlocks), roof slopes (RoofBlocks), curtains, shutters, doors,
+## trapdoors, the ladder, dormers (`_named_kinds`).
 static var _facing_kinds := _all_facing_kinds()
 static var _facing := _build_facing()
 static var _wide_ends := _build_wide_ends()
@@ -536,8 +546,9 @@ static func is_tree(block: int) -> bool:
 
 
 static func variant_count(block: int) -> int:
-	if Openings.is_door(block):
-		# Hung on its left or its right (Openings.hinge_right).
+	if Openings.is_door(block) or block == Tiles.Block.CHIMNEY:
+		# Hung on its left or its right (Openings.hinge_right); a chimney's
+		# shaft or its top (ChunkProps).
 		return 2
 	if _facing.has(block) or _wide_ends.has(block) or SINGLE.has(base_kind(block)):
 		return 1
@@ -822,6 +833,7 @@ static func footprint_rect(block: int, tile: Vector2i) -> Rect2:
 static func _all_facing_kinds() -> Dictionary:
 	var kinds := FACING_KINDS.duplicate()
 	kinds.merge(ShapedBlocks.facing_kinds())
+	kinds.merge(RoofBlocks.facing_kinds())
 	kinds.merge(_named_kinds())
 	return kinds
 
@@ -837,11 +849,13 @@ static func _build_facing() -> Dictionary:
 
 ## The facing kinds built by name (but those of FACING_KINDS): curtains
 ## and shutters (DRAWN), doors and trapdoors (OPENS), open or shut, the
-## ladder; each with its blocks facing W, N, E (<KIND>_WEST...).
+## ladder, the dormers; each with its blocks facing W, N, E (<KIND>_WEST...).
 static func _named_kinds() -> Dictionary:
 	var kinds := {}
 	var named: Array = DRAWN.keys() + DRAWN.values() + OPENS.keys() + OPENS.values()
 	named.append(Tiles.Block.LADDER)
+	for covering: Array in RoofBlocks.COVERINGS:
+		named.append(covering[3])
 	for kind: int in named:
 		var name := String(Tiles.Block.find_key(kind))
 		if FACING_KINDS.has(kind) or not Tiles.Block.has(name + "_WEST"):

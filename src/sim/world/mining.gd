@@ -92,6 +92,15 @@ const BLOCK_SECONDS := {
 	Tiles.Block.GLASS: 0.5,
 	Tiles.Block.WOOL: 0.8,
 	Tiles.Block.WINDOW: 0.8,
+	Tiles.Block.ROOF_TILES: 3.0,
+	Tiles.Block.SLATES: 3.5,
+	Tiles.Block.SHINGLES: 1.5,
+	Tiles.Block.THATCH: 0.6,
+	Tiles.Block.TILE_DORMER: 1.5,
+	Tiles.Block.SLATE_DORMER: 1.5,
+	Tiles.Block.SHINGLE_DORMER: 1.5,
+	Tiles.Block.THATCH_DORMER: 1.5,
+	Tiles.Block.CHIMNEY: 4.0,
 	# What players place, by kind (any way it faces, open or shut).
 	Tiles.Block.TORCH_BRACKET: 1.5,
 	Tiles.Block.CURTAINS: 0.6,
@@ -287,6 +296,12 @@ const AXE_BLOCKS := {
 	Tiles.Block.CHEESE_CELLAR: true,
 	Tiles.Block.FISH_TRAP: true,
 	Tiles.Block.SHIPYARD: true,
+	Tiles.Block.SHINGLES: true,
+	Tiles.Block.THATCH: true,
+	Tiles.Block.TILE_DORMER: true,
+	Tiles.Block.SLATE_DORMER: true,
+	Tiles.Block.SHINGLE_DORMER: true,
+	Tiles.Block.THATCH_DORMER: true,
 }
 const PICKAXE_BLOCKS := {
 	Tiles.Block.ROCK: true,
@@ -327,6 +342,7 @@ const PICKAXE_BLOCKS := {
 	Tiles.Block.IRON_TRAPDOOR: true,
 	Tiles.Block.IRON_BARS: true,
 	Tiles.Block.IRON_RAILING: true,
+	Tiles.Block.CHIMNEY: true,
 }
 ## Objects placed as they are (no way to face), standing on a cube.
 const FLOOR_OBJECTS := {
@@ -349,6 +365,7 @@ const FLOOR_OBJECTS := {
 	Tiles.Block.BUTTER_CHURN: true,
 	Tiles.Block.BARREL: true,
 	Tiles.Block.CHEESE_CELLAR: true,
+	Tiles.Block.CHIMNEY: true,
 }
 
 ## Objects set over still water (a fish trap), not on the ground.
@@ -452,6 +469,12 @@ static func placement(
 		if water == Vector2i.ZERO or not _bench_room(cell, voxel_at):
 			return {}
 		return {cell: Voxels.of_block(ObjectShapes.facing(kind, water))}
+	if RoofBlocks.is_dormer(block):
+		# In a roof, as its pieces: nothing under it needed.
+		var spot: int = voxel_at.call(cell)
+		if not is_replaceable(spot) or Voxels.is_liquid(spot):
+			return {}
+		return {cell: Voxels.of_block(ObjectShapes.facing(kind, front))}
 	if kind != -1:
 		if not _bench_room(cell, voxel_at):
 			return {}
@@ -464,6 +487,10 @@ static func placement(
 		# On a floor, not on another rug.
 		var free: bool = voxel_at.call(cell) != voxel and _bench_room(cell, voxel_at)
 		return {cell: voxel} if free else {}
+	if block == Tiles.Block.CHIMNEY and voxel_at.call(cell + Vector3i.DOWN) == voxel:
+		# A chimney rises on a chimney.
+		var free: int = voxel_at.call(cell)
+		return {cell: voxel} if takes(free) and not Voxels.is_liquid(free) else {}
 	if FLOOR_OBJECTS.has(block):
 		return {cell: voxel} if _bench_room(cell, voxel_at) else {}
 	if Farming.SOWN.has(block):
@@ -687,6 +714,7 @@ static func needs_support(voxel: int) -> bool:
 		and not Voxels.is_shaped(voxel)
 		and not ObjectShapes.is_wall_mounted(block)
 		and not ObjectShapes.is_hanging(block)
+		and not RoofBlocks.is_dormer(block)
 	)
 
 

@@ -67,11 +67,14 @@ static func around(world: ClientWorld, tile: Vector2i, height: float) -> CutRegi
 
 
 ## Whether what covers a body at `height` on `tile` is a building's (the
-## first cube over its head is a building block: TileAtlas.BUILDING_WALLS).
+## first cube over its head is a building block: TileAtlas.BUILDING_WALLS;
+## or it is a roof).
 static func under_building(world: ClientWorld, tile: Vector2i, height: float) -> bool:
 	var row := floori(height + 0.01) + GameConst.SEA_LEVEL + 1
 	while row < GameConst.WORLD_HEIGHT:
 		var voxel := world.voxel_at(Vector3i(tile.x, row, tile.y))
+		if Voxels.is_roof(voxel):
+			return true
 		if Voxels.is_cube(voxel):
 			return TileAtlas.BUILDING_WALLS.has(Voxels.block_of(voxel))
 		row += 1

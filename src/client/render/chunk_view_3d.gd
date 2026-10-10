@@ -37,6 +37,8 @@ var props_lod := 0
 ## (hidden: see WorldView3D.set_far_reach).
 var built := false
 var far := false
+## Where its chimneys smoke (local positions in the chunk).
+var smokes: Array[Vector3] = []
 
 var _data_image := Image.create(
 	TerrainRenderer.DATA_SIZE, TerrainRenderer.DATA_SIZE, false, Image.FORMAT_RGBAF
@@ -111,6 +113,7 @@ func apply(result: ChunkMesher.Result, library: PropLibrary, lod: int) -> void:
 	_flickers = _lava_flicker.any(func(amount: float) -> bool: return amount > 0.0)
 	_sky_open = result.sky_open
 	_sky_levels = result.sky_levels
+	smokes = result.smokes
 	for i in _lava_spots.size():
 		var light := _lava_light(i)
 		light.light_energy = result.lava_strength[i]

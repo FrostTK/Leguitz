@@ -7,7 +7,8 @@ extends RefCounted
 ## sides wear the material's face texture as a cube's sides would (the
 ## same pixels where the octant lies), their tops its top texture (UV2.y
 ## TOP_FACE: the shader reads the wall atlas), their bottoms its face
-## texture as undersides do. Thread-safe: only reads what it is given.
+## texture as undersides do; a roof's pieces are RoofFaces'. Thread-safe:
+## only reads what it is given.
 
 ## UV2.y of a top (a cube's side has its lip ground + 1, at least 0).
 const TOP_FACE := -2.0
@@ -42,6 +43,9 @@ static func build(
 	lz: int,
 	origin: Vector2i
 ) -> void:
+	if Voxels.is_roof(voxels[column * HEIGHT + y]):
+		RoofFaces.build(result, voxels, tops, tables, column, lx, y, lz, origin)
+		return
 	var flags: PackedByteArray = tables[0]
 	var kinds: PackedInt32Array = tables[1]
 	var index := column * HEIGHT + y

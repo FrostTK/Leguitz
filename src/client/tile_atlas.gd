@@ -63,6 +63,10 @@ const WALL_KINDS := {
 	Tiles.Block.IRON_WINDOW_SMALL: 52,
 	Tiles.Block.IRON_WINDOW_SASH: 53,
 	Tiles.Block.IRON_WINDOW_ROUND: 54,
+	Tiles.Block.ROOF_TILES: 55,
+	Tiles.Block.SLATES: 56,
+	Tiles.Block.SHINGLES: 57,
+	Tiles.Block.THATCH: 58,
 }
 ## Walls one sees through (glass): their textures' clear pixels are cut
 ## out, and what lies behind them is drawn (ChunkMesher).
@@ -146,6 +150,10 @@ const BUILDING_WALLS := {
 	Tiles.Block.IRON_WINDOW_SMALL: true,
 	Tiles.Block.IRON_WINDOW_SASH: true,
 	Tiles.Block.IRON_WINDOW_ROUND: true,
+	Tiles.Block.ROOF_TILES: true,
+	Tiles.Block.SLATES: true,
+	Tiles.Block.SHINGLES: true,
+	Tiles.Block.THATCH: true,
 }
 const GLOWING_WALLS := {
 	Tiles.Block.GOLD_ORE: true,

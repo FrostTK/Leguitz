@@ -219,12 +219,26 @@ static func _craft() -> Array:
 	return entries
 
 
+## Stairs, slabs, a roof's pieces and dormers (their recipes grouped by
+## shape, going through the materials).
 static func _is_shaped(item: Variant) -> bool:
-	return item is int and ShapedBlocks.item_shape(item) >= 0
+	if not item is int:
+		return false
+	var dormer := RoofBlocks.is_dormer(Items.PLACES_BLOCK.get(item, Tiles.Block.AIR))
+	return ShapedBlocks.item_shape(item) >= 0 or RoofBlocks.item_shape(item) >= 0 or dormer
 
 
-## The book's name of a stairs' or slabs' recipe group.
+## The book's name of a stairs', slabs' or roof pieces' recipe group.
 static func _shaped_label(item: int) -> String:
+	match RoofBlocks.item_shape(item):
+		RoofBlocks.Shape.SLOPE:
+			return "BOOK_CRAFT_ROOF_SLOPES"
+		RoofBlocks.Shape.RIDGE:
+			return "BOOK_CRAFT_ROOF_RIDGES"
+		RoofBlocks.Shape.GENTLE:
+			return "BOOK_CRAFT_ROOF_GENTLE"
+	if RoofBlocks.is_dormer(Items.PLACES_BLOCK.get(item, Tiles.Block.AIR)):
+		return "BOOK_CRAFT_DORMERS"
 	match ShapedBlocks.item_shape(item):
 		ShapedBlocks.Shape.STAIRS:
 			return "BOOK_CRAFT_STAIRS"
@@ -283,6 +297,13 @@ static func _home() -> Array:
 		_icon(Items.Id.SHUTTERS, _t("BOOK_HOME_SHUTTERS")),
 		_icon(Items.Id.IRON_BARS, _t("BOOK_HOME_BARS")),
 		_icon(Items.Id.WOOD_RAILING, _t("BOOK_HOME_RAILING")),
+		_heading("BOOK_HOME_ROOFS"),
+		_icon(Items.Id.TILE_ROOF, _t("BOOK_HOME_ROOF")),
+		_icon(Items.Id.SLATES, _t("BOOK_HOME_ROOF_COVERINGS")),
+		_icon(Items.Id.TILE_ROOF_RIDGE, _t("BOOK_HOME_RIDGE")),
+		_icon(Items.Id.SHINGLE_ROOF_GENTLE, _t("BOOK_HOME_GENTLE")),
+		_icon(Items.Id.THATCH_DORMER, _t("BOOK_HOME_DORMER")),
+		_icon(Items.Id.CHIMNEY, _t("BOOK_HOME_CHIMNEY")),
 		_icon(Items.Id.TABLE, _t("BOOK_HOME_FURNITURE")),
 		_heading("BOOK_HOME_GLASS"),
 		_icon(Items.Id.GLASS, _t("BOOK_HOME_CLEAR_GLASS")),

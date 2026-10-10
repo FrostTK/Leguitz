@@ -20,7 +20,7 @@ const RUG := Voxels.BLOCK_BASE + Tiles.Block.RUG
 var coord := Vector2i.ZERO
 var voxels := PackedInt32Array()
 var biome := PackedByteArray()
-## Per column: 1 + row of the highest cube or liquid voxel (0 = none).
+## Per column: 1 + row of the highest cube, liquid or roof voxel (0 = none).
 var tops := PackedByteArray()
 ## The columns (z * 16 + x) where something rises higher than a row over
 ## their terrain (hung on a wall up there): 1 + its row. Few have any.
@@ -76,7 +76,7 @@ func set_voxel(local: Vector3i, voxel: int) -> void:
 		voxel = _keeps(local, before, voxel)
 	voxels[index] = voxel
 	var column := local.z * SIZE + local.x
-	if Voxels.is_cube(voxel) or Voxels.is_liquid(voxel):
+	if _tops(voxel):
 		tops[column] = maxi(tops[column], local.y + 1)
 	elif local.y + 1 == tops[column]:
 		tops[column] = _scan_top(local.x, local.z, local.y)
@@ -150,7 +150,7 @@ func get_biome(local: Vector2i) -> int:
 ## what rises over them (raised).
 func recompute_tops() -> void:
 	var flags := Voxels.flag_table()
-	var terrain := Voxels.FLAG_CUBE | Voxels.FLAG_LIQUID
+	var terrain := Voxels.FLAG_CUBE | Voxels.FLAG_LIQUID | Voxels.FLAG_ROOF
 	raised.clear()
 	for column in GameConst.CHUNK_AREA:
 		var base := column * HEIGHT
@@ -233,11 +233,16 @@ static func ids_from_bytes(bytes: PackedByteArray) -> PackedInt32Array:
 	return ids
 
 
-## 1 + the highest cube or liquid row below `below` in a column (0 = none).
+## 1 + the highest cube, liquid or roof row below `below` in a column (0 =
+## none).
 func _scan_top(lx: int, lz: int, below: int) -> int:
 	var base := (lz * SIZE + lx) * HEIGHT
 	for y in range(below - 1, -1, -1):
-		var voxel := voxels[base + y]
-		if Voxels.is_cube(voxel) or Voxels.is_liquid(voxel):
+		if _tops(voxels[base + y]):
 			return y + 1
 	return 0
+
+
+## Whether a voxel tops its column: a cube, a liquid, a roof's piece.
+static func _tops(voxel: int) -> bool:
+	return Voxels.is_cube(voxel) or Voxels.is_liquid(voxel) or Voxels.is_roof(voxel)

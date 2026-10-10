@@ -109,6 +109,9 @@ static func _add(
 			Openings.is_door(pair) and ObjectShapes.front_of(pair) == ObjectShapes.front_of(block)
 		)
 		variant = 1 if paired else 0
+	elif block == Tiles.Block.CHIMNEY:
+		# Its top (its coping and pots) where no chimney goes on over it.
+		variant = 0 if voxels[index + 1] == voxels[index] else 1
 	var key := Vector2i(ObjectShapes.model_block(block), variant % count)
 	if not result.props.has(key):
 		result.props[key] = []

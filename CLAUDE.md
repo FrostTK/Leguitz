@@ -1012,6 +1012,53 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   keep their detail (VoxelGrid.keep_detail). Items.drops is Drops.of (src/sim/items/drops.gd,
   the tables moved out of items.gd); TileSets (src/sim/world/tile_sets.gd) holds CUBE_BLOCKS and
   NON_SOLID_BLOCKS (out of tiles.gd). The book: Home and garden (Doors, ladders and shutters).
+- Roofs (phase 8, step 5; rules in `RoofBlocks`, src/sim/world/roof_blocks.gd, static, shared;
+  ShapedBlocks hands roof pieces there: material_of, item_of, placed_by, front_of, mask (the
+  octants a piece fills whole, for stairs beside it), `solid_boxes` (what PlayerBody and
+  VoxelRay call for any shaped block now), bounds, top_of, placement): four coverings
+  (RoofBlocks.COVERINGS: ROOF_TILES of brick, SLATES of deepslate, SHINGLES of logs, THATCH of
+  wheat; cube blocks, wall kinds 55-58, gen_art `roof_tiles`/`slates`/`shingles`/`thatch`;
+  regenerating the atlases changed the old last row's normals at the seam: copy the old rows'
+  normal pixels back), each with 14 shaped blocks appended to Tiles.Block (`<P>` slopes and
+  facings, `<P>_RIDGE` east-west, `_RIDGE_NS`, `_GENTLE` and `_GENTLE_HIGH` and facings;
+  TILE_ROOF..THATCH_ROOF_GENTLE_HIGH_EAST is Tiles.is_roof, inside Tiles.is_shaped; Voxels
+  FLAG_ROOF 64, `is_roof`) and 3 items (slope, ridge, gentle), a dormer (TILE_DORMER...,
+  facing kinds by name in ObjectShapes `_named_kinds`, furniture TOPS and FOOTPRINTS 16, no
+  support needed: Mining.placement, needs_support) and the CHIMNEY. A piece is solid under its
+  surface (`surface`: the most of branches, each the least of planes c + gx x + gz z over the
+  cell, so creases fall on its halves and diagonals; `height_at`): a 45 degree slope faces the
+  player (low side towards them; `upper`/Shift the other way) and turns its corners as stairs
+  (`_slope_surface`: a slope behind facing across makes an outer corner, a hip, the least of
+  both; one in front an inner corner, a valley, the most); a ridge peaks half a level along its
+  axis (placed along a ridge beside it, else across the player's view), its ends hipped where
+  no ridge goes on and a roof does a row lower (pyramids too), the ridges across it running off
+  it (half branches, cut to their half by a STEEP plane: T and cross roofs; `peaks`: its cap's
+  lines); a gentle slope rises a level over two cells (placed behind a low one facing the same
+  way, the high one). Physics: `boxes`, BOX_STEPS x BOX_STEPS columns as high as the surface at
+  their middles, the same heights joined (a sixteenth of a level off at most: one walks up a
+  roof). Roofs are OPAQUE (LightField) and top their column (ChunkData.tops / top_row: `_tops`,
+  recompute_tops; so the sky light, ClientWorld.is_covered and the rain, Watering.under_sky,
+  see them), and CutRegion.under_building counts them (the view cuts the roof over the player).
+  Drawn with the terrain: ShapedFaces.build hands roof voxels to `RoofFaces`
+  (src/client/render): the top along the cell's 2 x 2 grid (one quad where it is one plane,
+  else each quarter split on the diagonal its surface creases on), wearing the covering's face
+  texture down the slope (v by height, a gentle slope's over a cell; UV2.y ROOF_FACE -4:
+  terrain3d_faces.gdshader's roof branch, snow on it in winter, some covering showing), the
+  sides where they rise over what covers them (`_cover`: cubes and dormers whole, roofs by
+  their profile, stairs by their octants; a gable's end in the face texture of the cube under
+  it, a back in boards, BOARDS spruce planks, as is the underside), a verge of raised tiles
+  along an open gable, a ridge's cap; lit by the sky light over and beside it (its own cell is
+  dark). Item icons: ItemLibrary._roof (RoofFaces.piece alone). Dormers and the chimney:
+  RoofModels (src/client/models, DecorModels hands them): a dormer, a framed window in a gabled
+  box clad in its covering, open behind and under (the attic looks out of it); the chimney a
+  brick shaft, version 1 its top (a coping and two pots: ChunkProps picks it where no chimney is
+  over it; ObjectShapes.variant_count 2). A chimney is a FLOOR_OBJECT that also stands on a
+  chimney (Mining.placement, GameServer._against_terrain); it smokes (`RoofBlocks.smokes`: a
+  campfire or a lit furnace in its column within CHIMNEY_REACH rows under its foot): ChunkMesher
+  notes its pots (Result.smokes, ChunkView3D.smokes) and WorldView3D's `ChimneySmoke`
+  (src/client/effects) puffs over those within SMOKE_REACH of the player, in world space.
+  Recipes: Recipes.ROOF_RECIPES, DORMER_PATTERN, the coverings and the chimney in SHAPED. The
+  book: Home and garden (Roofs); Crafting groups roof pieces and dormers by shape.
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made

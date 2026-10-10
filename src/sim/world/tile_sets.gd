@@ -8,6 +8,10 @@ extends RefCounted
 ## are obstacles nobody stands on.
 const CUBE_BLOCKS := {
 	Tiles.Block.STONE: true,
+	Tiles.Block.ROOF_TILES: true,
+	Tiles.Block.SLATES: true,
+	Tiles.Block.SHINGLES: true,
+	Tiles.Block.THATCH: true,
 	Tiles.Block.DEEPSLATE: true,
 	Tiles.Block.COAL_ORE: true,
 	Tiles.Block.COPPER_ORE: true,

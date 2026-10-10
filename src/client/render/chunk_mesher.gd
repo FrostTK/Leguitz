@@ -113,6 +113,8 @@ class Result:
 	var lava_strength: Array[float] = []
 	var lava_colors: Array[Color] = []
 	var lava_flicker: Array[float] = []
+	## Where chimneys smoke (local positions; RoofBlocks.smokes).
+	var smokes: Array[Vector3] = []
 	var surface_map := PackedFloat32Array()
 	## The chunk's sky light (see LightField.sky): per column, the row from
 	## which the sky is fully seen, and below it each cell's level.
@@ -283,6 +285,8 @@ static func build(job: ChunkJob) -> Result:
 							light = maxi(light, sky_level(tables, index - ahead))
 					var prop_sky := light + SeasonLook.prop_bits(block, biome)
 					ChunkProps.add(result, job, voxel, voxels, base, lx, y, lz, origin, prop_sky)
+					if block == Tiles.Block.CHIMNEY and voxels[index + 1] != voxel:
+						_add_smoke(result, voxels, Vector3i(lx, y, lz))
 					if ObjectShapes.is_lit(block):
 						_add_flame(result, block, Vector3(lx + 0.5, y - SEA, lz + 0.5))
 						var rows := tops[column] - y
@@ -300,6 +304,13 @@ static func build(job: ChunkJob) -> Result:
 			result.lava_colors.append(LAVA_COLOR)
 			result.lava_flicker.append(0.0)
 	return result
+
+
+## A chimney's top (`cell` of the chunk) smokes over a fire.
+static func _add_smoke(result: Result, voxels: PackedInt32Array, cell: Vector3i) -> void:
+	var at := func(other: Vector3i) -> int: return ShapedFaces.voxel_at(voxels, other)
+	if RoofBlocks.smokes(cell, at):
+		result.smokes.append(Vector3(cell.x + 0.5, cell.y - SEA, cell.z + 0.5) + RoofModels.SMOKE)
 
 
 ## The light of something burning in a tile (`floor`: the middle of its

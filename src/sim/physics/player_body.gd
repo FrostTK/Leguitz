@@ -164,7 +164,7 @@ static func obstacle(
 			# Its boxes higher than a step and lower than the head.
 			var cell := Vector3i(tile.x, row, tile.y)
 			var block := Voxels.block_of(voxel)
-			for box in ShapedBlocks.boxes(ShapedBlocks.mask(block, cell, voxel_at), cell):
+			for box in ShapedBlocks.solid_boxes(block, cell, voxel_at):
 				var low_enough := box.position.y < height + body_height - EPSILON
 				if box.end.y > height + STEP_UP + EPSILON and low_enough:
 					var rect := _rect_of(box)
@@ -220,7 +220,7 @@ static func _shaped_top(
 	var cell := Vector3i(tile.x, row, tile.y)
 	var best := -INF
 	var block := Voxels.block_of(voxel)
-	for box in ShapedBlocks.boxes(ShapedBlocks.mask(block, cell, voxel_at), cell):
+	for box in ShapedBlocks.solid_boxes(block, cell, voxel_at):
 		if box.end.y <= limit + EPSILON and _rect_of(box).intersects(body):
 			best = maxf(best, box.end.y)
 	return best
@@ -450,8 +450,7 @@ func _ceiling_above(next_height: float, voxel_at: Callable) -> float:
 				var voxel: int = voxel_at.call(cell)
 				if not Voxels.is_shaped(voxel):
 					continue
-				var mask := ShapedBlocks.mask(Voxels.block_of(voxel), cell, voxel_at)
-				for part in ShapedBlocks.boxes(mask, cell):
+				for part in ShapedBlocks.solid_boxes(Voxels.block_of(voxel), cell, voxel_at):
 					var above := part.position.y >= height + tall - EPSILON
 					if above and _rect_of(part).intersects(body):
 						ceiling = minf(ceiling, part.position.y - tall)

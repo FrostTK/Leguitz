@@ -1087,3 +1087,35 @@ BOOK_HOME_LADDER,"Ladder: on a wall. Hold {jump} or walk into it to climb, hold 
 BOOK_HOME_SHUTTERS,"Shutters: on the outside of a window. A right click closes or opens them; closed, they keep the daylight out. A pot of paint gives them a color.","Volets : à l'extérieur d'une fenêtre. Un clic droit les ferme ou les ouvre ; fermés, ils arrêtent la lumière du jour. Un pot de peinture leur donne une couleur."
 BOOK_HOME_BARS,"Wrought iron bars (sixteen from six iron ingots): they join one another, the walls and the panes, and keep everyone out; you see through them.","Barreaux en fer forgé (seize pour six lingots de fer) : ils se raccordent entre eux, aux murs et aux vitres, et ne laissent passer personne ; on voit au travers."
 BOOK_HOME_RAILING,"Railings, of wood or wrought iron: at the edge of a balcony or a mezzanine, they join one another and the walls, and nobody falls over them.","Garde-corps, en bois ou en fer forgé : au bord d'un balcon ou d'une mezzanine, ils se raccordent entre eux et aux murs, et personne ne passe par-dessus."
+ITEM_ROOF_TILES,Roof tiles,Tuiles
+ITEM_SLATES,Slates,Ardoises
+ITEM_SHINGLES,Wood shingles,Bardeaux
+ITEM_THATCH,Thatch,Chaume
+ITEM_TILE_ROOF,Tiled roof slope,Pente de tuiles
+ITEM_TILE_ROOF_RIDGE,Tiled ridge,Faîtage de tuiles
+ITEM_TILE_ROOF_GENTLE,Gentle tiled slope,Pente douce de tuiles
+ITEM_TILE_DORMER,Tiled dormer,Lucarne de tuiles
+ITEM_SLATE_ROOF,Slate roof slope,Pente d'ardoises
+ITEM_SLATE_ROOF_RIDGE,Slate ridge,Faîtage d'ardoises
+ITEM_SLATE_ROOF_GENTLE,Gentle slate slope,Pente douce d'ardoises
+ITEM_SLATE_DORMER,Slate dormer,Lucarne d'ardoises
+ITEM_SHINGLE_ROOF,Shingle roof slope,Pente de bardeaux
+ITEM_SHINGLE_ROOF_RIDGE,Shingle ridge,Faîtage de bardeaux
+ITEM_SHINGLE_ROOF_GENTLE,Gentle shingle slope,Pente douce de bardeaux
+ITEM_SHINGLE_DORMER,Shingle dormer,Lucarne de bardeaux
+ITEM_THATCH_ROOF,Thatched roof slope,Pente de chaume
+ITEM_THATCH_ROOF_RIDGE,Thatched ridge,Faîtage de chaume
+ITEM_THATCH_ROOF_GENTLE,Gentle thatched slope,Pente douce de chaume
+ITEM_THATCH_DORMER,Thatched dormer,Lucarne de chaume
+ITEM_CHIMNEY,Chimney,Cheminée
+BOOK_HOME_ROOFS,Roofs,Toitures
+BOOK_HOME_ROOF,"Roof slope (three of a covering make four): it rises away from you, a level a tile ({sprint}: the other way). Slopes side by side turn their corners by themselves: hips outside, valleys inside. You can walk up a roof.","Pente de toit (trois d'une couverture en font quatre) : elle monte en s'éloignant de toi, d'un niveau par case ({sprint} : dans l'autre sens). Les pentes côte à côte tournent leurs coins toutes seules : arêtiers dehors, noues dedans. On peut marcher sur un toit."
+BOOK_HOME_ROOF_COVERINGS,"Four coverings: terracotta tiles (three bricks), slates (three deepslate make two), wood shingles (two logs make two), thatch (four wheat). A roof keeps the daylight and the rain out; snow lies on it in winter.","Quatre couvertures : les tuiles en terre cuite (trois briques), les ardoises (trois ardoises des abîmes en font deux), les bardeaux de bois (deux bûches en font deux), le chaume (quatre blés). Un toit arrête le jour et la pluie ; la neige s'y pose en hiver."
+BOOK_HOME_RIDGE,"Ridge: the top of the roof, between its two slopes. Its ends hip themselves where the roof goes on lower down; ridges side by side join, and cross.","Faîtage : le haut du toit, entre ses deux pentes. Ses bouts se font en croupe là où le toit continue plus bas ; les faîtages côte à côte se raccordent, et se croisent."
+BOOK_HOME_GENTLE,"Gentle slope: a level over two tiles, for wide roofs. Place one, then the next one behind it: it is the high one.","Pente douce : un niveau sur deux cases, pour les grands toits. Pose-en une, puis la suivante derrière : c'est la haute."
+BOOK_HOME_DORMER,"Dormer (a covering over planks and glass): in a roof, in a slope's place, facing you; its window lets the day into the attic.","Lucarne (une couverture sur des planches et du verre) : dans un toit, à la place d'une pente, tournée vers toi ; sa fenêtre laisse entrer le jour dans le grenier."
+BOOK_HOME_CHIMNEY,"Chimney (seven bricks make two): stack it up through the roof. It smokes while a fire burns under it: a campfire or a lit furnace, up to eight levels below.","Cheminée (sept briques en font deux) : empile-la à travers le toit. Elle fume quand un feu brûle dessous : un feu de camp ou un four allumé, jusqu'à huit niveaux plus bas."
+BOOK_CRAFT_ROOF_SLOPES,Roof slopes (any covering),Pentes de toit (toute couverture)
+BOOK_CRAFT_ROOF_RIDGES,Ridges,Faîtages
+BOOK_CRAFT_ROOF_GENTLE,Gentle slopes,Pentes douces
+BOOK_CRAFT_DORMERS,Dormers,Lucarnes

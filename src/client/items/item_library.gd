@@ -121,6 +121,8 @@ func _build(item: int) -> void:
 		model.surface_set_material(0, voxel_material)
 	elif ShapedBlocks.item_shape(item) >= 0:
 		model = _shaped(Items.placed_voxel(item))
+	elif RoofBlocks.item_shape(item) >= 0:
+		model = _roof(Items.placed_voxel(item))
 	else:
 		model = _cube(Items.placed_voxel(item))
 	_meshes[item] = model
@@ -170,6 +172,30 @@ static func _shaped(voxel: int) -> Mesh:
 			_octant_face(ends if out.y != 0 else sides, o, Vector3(out))
 	_commit(mesh, ends, block_texture(material))
 	_commit(mesh, sides, face_texture(material))
+	return mesh
+
+
+## A roof's piece alone (standing on y = 0, centered) wearing its
+## covering's face texture, as RoofFaces draws it on the terrain.
+static func _roof(voxel: int) -> Mesh:
+	var block := Voxels.block_of(voxel)
+	var cell := Vector3i(0, GameConst.SEA_LEVEL, 0)
+	var faces := ChunkMesher.Surface.new()
+	var open := RoofFaces.OPEN
+	var lights := PackedFloat32Array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+	var branches := RoofBlocks.surface(block, cell, Callable())
+	var peaks := RoofBlocks.peaks(block, cell, Callable())
+	RoofFaces.piece(
+		faces, branches, cell, [0, 0, 0.0, 0], lights, [open, open, open, open], true, peaks
+	)
+	var tool := SurfaceTool.new()
+	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for index in faces.indices:
+		tool.set_normal(faces.normals[index])
+		tool.set_uv(faces.uvs[index] / 16.0)
+		tool.add_vertex(faces.vertices[index] - Vector3(0.5, 0.0, 0.5))
+	var mesh := ArrayMesh.new()
+	_commit(mesh, tool, face_texture(Voxels.of_block(RoofBlocks.material_of(block))))
 	return mesh
 
 

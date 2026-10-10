@@ -412,6 +412,28 @@ enum Id {
 	IRON_BARS,
 	WOOD_RAILING,
 	IRON_RAILING,
+	# Roofs: the coverings, their pieces, dormers, the chimney.
+	ROOF_TILES,
+	SLATES,
+	SHINGLES,
+	THATCH,
+	TILE_ROOF,
+	TILE_ROOF_RIDGE,
+	TILE_ROOF_GENTLE,
+	TILE_DORMER,
+	SLATE_ROOF,
+	SLATE_ROOF_RIDGE,
+	SLATE_ROOF_GENTLE,
+	SLATE_DORMER,
+	SHINGLE_ROOF,
+	SHINGLE_ROOF_RIDGE,
+	SHINGLE_ROOF_GENTLE,
+	SHINGLE_DORMER,
+	THATCH_ROOF,
+	THATCH_ROOF_RIDGE,
+	THATCH_ROOF_GENTLE,
+	THATCH_DORMER,
+	CHIMNEY,
 }
 ## What a tool is made for (Mining.tool_for: what it breaks faster).
 enum Tool { NONE, PICKAXE, AXE, SHOVEL, SWORD, HOE }
@@ -657,6 +679,15 @@ const PLACES_BLOCK := {
 	Id.IRON_BARS: Tiles.Block.IRON_BARS,
 	Id.WOOD_RAILING: Tiles.Block.WOOD_RAILING,
 	Id.IRON_RAILING: Tiles.Block.IRON_RAILING,
+	Id.ROOF_TILES: Tiles.Block.ROOF_TILES,
+	Id.SLATES: Tiles.Block.SLATES,
+	Id.SHINGLES: Tiles.Block.SHINGLES,
+	Id.THATCH: Tiles.Block.THATCH,
+	Id.TILE_DORMER: Tiles.Block.TILE_DORMER,
+	Id.SLATE_DORMER: Tiles.Block.SLATE_DORMER,
+	Id.SHINGLE_DORMER: Tiles.Block.SHINGLE_DORMER,
+	Id.THATCH_DORMER: Tiles.Block.THATCH_DORMER,
+	Id.CHIMNEY: Tiles.Block.CHIMNEY,
 }
 
 ## The planks each log is sawn into.
@@ -777,8 +808,12 @@ static func _build_placed_by() -> Dictionary:
 	for tied: int in ObjectShapes.DRAWN:
 		lookup[ObjectShapes.DRAWN[tied]] = lookup[tied]
 	# Stairs and slabs, any way they face, up or down: the item of their
-	# name (OAK_STAIRS_TOP_WEST: OAK_STAIRS; no other table, built after).
+	# name (OAK_STAIRS_TOP_WEST: OAK_STAIRS; no other table, built after);
+	# a roof's pieces: RoofBlocks'.
 	for block: int in Tiles.Block.values():
+		if Tiles.is_roof(block):
+			lookup[block] = RoofBlocks.item_of(block)
+			continue
 		if not Tiles.is_shaped(block):
 			continue
 		var name := String(Tiles.Block.find_key(block))

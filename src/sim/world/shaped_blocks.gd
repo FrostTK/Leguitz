@@ -14,7 +14,9 @@ extends RefCounted
 ## slab fills the low or the high half of its cell (SLAB, SLAB_TOP), a side
 ## slab its back half (SIDE_SLAB: against a wall, facing away from it);
 ## two halves of one material make its cube. Each material gives stairs, a
-## slab and a side slab (items, recipes: Recipes).
+## slab and a side slab (items, recipes: Recipes). The roofs' pieces are
+## shaped too (RoofBlocks: a sloping surface instead of octants); this
+## class hands them there.
 
 enum Shape { STAIRS, STAIRS_TOP, SLAB, SLAB_TOP, SIDE_SLAB }
 
@@ -71,19 +73,23 @@ static func shape_of(block: int) -> int:
 	return _shapes.get(block, -1)
 
 
-## The cube a shaped block is made of.
+## The cube a shaped block is made of (a roof's: its covering's).
 static func material_of(block: int) -> int:
+	if Tiles.is_roof(block):
+		return RoofBlocks.material_of(block)
 	return _materials.get(block, Tiles.Block.AIR)
 
 
 ## The item a shaped block gives back.
 static func item_of(block: int) -> int:
+	if Tiles.is_roof(block):
+		return RoofBlocks.item_of(block)
 	return _items.get(block, Items.Id.NONE)
 
 
-## The block an item of stairs or slabs places (AIR: none).
+## The block an item of stairs, slabs or roof pieces places (AIR: none).
 static func placed_by(item: int) -> int:
-	return _placing[item][0] if _placing.has(item) else Tiles.Block.AIR
+	return _placing[item][0] if _placing.has(item) else RoofBlocks.placed_by(item)
 
 
 ## An item's shape (Shape.STAIRS, SLAB or SIDE_SLAB; -1: none).
@@ -102,8 +108,10 @@ static func facing_kinds() -> Dictionary[int, Array]:
 	return _facings
 
 
-## Which way a shaped block faces (ZERO: a slab).
+## Which way a shaped block faces (ZERO: a slab, a ridge).
 static func front_of(block: int) -> Vector2i:
+	if Tiles.is_roof(block):
+		return RoofBlocks.front_of(block)
 	return _fronts.get(block, Vector2i.ZERO)
 
 
@@ -111,6 +119,8 @@ static func front_of(block: int) -> Vector2i:
 ## after the stairs around (`voxel_at`: Callable(cell) -> int; an invalid
 ## one: straight).
 static func mask(block: int, cell: Vector3i, voxel_at: Callable) -> int:
+	if Tiles.is_roof(block):
+		return RoofBlocks.octants(block, cell, voxel_at)
 	match shape_of(block):
 		Shape.SLAB:
 			return LOW
@@ -149,8 +159,18 @@ static func boxes(filled: int, cell: Vector3i) -> Array[AABB]:
 	return result
 
 
+## The boxes (local units) a shaped block fills in `cell`, joined with
+## the blocks around (see mask; a roof's: RoofBlocks.boxes).
+static func solid_boxes(block: int, cell: Vector3i, voxel_at: Callable) -> Array[AABB]:
+	if Tiles.is_roof(block):
+		return RoofBlocks.boxes(RoofBlocks.surface(block, cell, voxel_at), cell)
+	return boxes(mask(block, cell, voxel_at), cell)
+
+
 ## The box around a shaped block (local units; stairs: the whole cell).
 static func bounds(block: int, cell: Vector3i) -> AABB:
+	if Tiles.is_roof(block):
+		return RoofBlocks.bounds(block, cell)
 	var box := AABB()
 	var first := true
 	for part in boxes(mask(block, cell, Callable()), cell):
@@ -161,6 +181,8 @@ static func bounds(block: int, cell: Vector3i) -> AABB:
 
 ## How high (levels, over its cell's floor) a shaped block's top is.
 static func top_of(block: int) -> float:
+	if Tiles.is_roof(block):
+		return RoofBlocks.top_of(block)
 	return 0.5 if shape_of(block) == Shape.SLAB else 1.0
 
 
@@ -173,6 +195,8 @@ static func top_of(block: int) -> float:
 static func placement(
 	cell: Vector3i, block: int, front: Vector2i, face: Vector3i, upper: bool, voxel_at: Callable
 ) -> Dictionary:
+	if Tiles.is_roof(block):
+		return RoofBlocks.placement(cell, block, front, upper, voxel_at)
 	var there: int = voxel_at.call(cell)
 	var other := Voxels.block_of(there)
 	var material := material_of(block)

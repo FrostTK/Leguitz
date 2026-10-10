@@ -392,6 +392,17 @@ const SHAPED := [
 		"keys": {"I": Items.Id.IRON_INGOT},
 		"result": [Items.Id.IRON_RAILING, 6],
 	},
+	# Roofs: tiles of brick, slates split from deepslate, shingles split
+	# from logs, thatch of wheat; a chimney of brick.
+	{"pattern": ["BBB"], "keys": {"B": Items.Id.BRICK}, "result": [Items.Id.ROOF_TILES, 1]},
+	{"pattern": ["DDD"], "keys": {"D": Items.Id.DEEPSLATE}, "result": [Items.Id.SLATES, 2]},
+	{"pattern": ["LL"], "keys": {"L": LOGS}, "result": [Items.Id.SHINGLES, 2]},
+	{"pattern": ["WW", "WW"], "keys": {"W": Items.Id.WHEAT}, "result": [Items.Id.THATCH, 1]},
+	{
+		"pattern": ["B B", "B B", "BBB"],
+		"keys": {"B": Items.Id.BRICK},
+		"result": [Items.Id.CHIMNEY, 2],
+	},
 	# Glass: old glass (sand in it), leaded glass, panes of each.
 	{
 		"ingredients":
@@ -576,6 +587,15 @@ const WINDOW_RECIPES := {
 	Glass.Design.ROUND: [[" P ", "PGP", " P "], 2],
 }
 
+## A roof's pieces (RoofBlocks.Shape): their pattern of the covering, how
+## many it makes; a dormer: the covering over planks and glass.
+const ROOF_RECIPES := {
+	RoofBlocks.Shape.SLOPE: [["M ", "MM"], 4],
+	RoofBlocks.Shape.RIDGE: [[" M ", "M M"], 4],
+	RoofBlocks.Shape.GENTLE: [["M  ", "MMM"], 6],
+}
+const DORMER_PATTERN := ["MMM", "PGP"]
+
 ## Stairs and slabs (ShapedBlocks.Shape): their pattern of the material,
 ## how many it makes.
 const SHAPED_RECIPES := {
@@ -589,7 +609,8 @@ static var _all: Array[Dictionary] = []
 
 ## Every recipe: each log gives 4 planks (shapeless: "ingredients"),
 ## SHAPED, stairs and slabs of each material (SHAPED_RECIPES; two slabs
-## give the block back), windows and doors of each frame (WINDOW_RECIPES),
+## give the block back), roof pieces and dormers of each covering
+## (ROOF_RECIPES), windows and doors of each frame (WINDOW_RECIPES),
 ## then the tools, the armor, and the kitchen's dishes.
 static func all() -> Array[Dictionary]:
 	if _all.is_empty():
@@ -603,6 +624,14 @@ static func all() -> Array[Dictionary]:
 			_all.append({"pattern": shape[0], "keys": keys, "result": [entry[0], shape[1]]})
 			if entry[2] != ShapedBlocks.Shape.STAIRS:
 				_all.append({"ingredients": [entry[0], entry[0]], "result": [entry[1], 1]})
+		for entry: Array in RoofBlocks.items():
+			var shape: Array = ROOF_RECIPES[entry[2]]
+			var keys := {"M": entry[1]}
+			_all.append({"pattern": shape[0], "keys": keys, "result": [entry[0], shape[1]]})
+		for covering: Array in RoofBlocks.COVERINGS:
+			var keys := {"M": covering[2], "P": PLANKS, "G": Items.Id.GLASS}
+			var dormer := Items.item_placing(covering[3])
+			_all.append({"pattern": DORMER_PATTERN, "keys": keys, "result": [dormer, 1]})
 		for frame in Glass.FRAMES.size():
 			for design: int in WINDOW_RECIPES:
 				var window := Items.item_placing(Glass.window(design, frame))

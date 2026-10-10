@@ -76,6 +76,10 @@ WALLS = [
     "IRON_WINDOW_SMALL",
     "IRON_WINDOW_SASH",
     "IRON_WINDOW_ROUND",
+    "ROOF_TILES",
+    "SLATES",
+    "SHINGLES",
+    "THATCH",
 ]
 # Walls from this row on draw from random generators of their own, so the
 # textures made before them (and the cliffs after) stay the same.
@@ -727,6 +731,120 @@ def wool(rng, face):
     return c, height
 
 
+def roof_tiles(rng, face):
+    """Terracotta roof tiles: rounded tiles in courses of 4 px, staggered,
+    each lapping the course under it (its lip light, a shadow under it),
+    every tile a little warmer or browner."""
+    base, dark, light, shadow = "#b4552e", "#83391b", "#d47448", "#5e2613"
+    c = Canvas(TILE, TILE)
+    height = np.zeros((TILE, TILE), dtype=np.float32)
+    for course in range(4):
+        offset = 2 if course % 2 else 0
+        tints = [float(rng.uniform(-0.08, 0.08)) for _ in range(5)]
+        for row in range(4):
+            y = course * 4 + row
+            for x in range(TILE):
+                column = (x + offset) % 4
+                tile = (x + offset) // 4
+                color = (dark, base, light, base)[column]
+                if row == 0:
+                    color = shadow if column == 0 else dark
+                elif row == 3 and column != 0:
+                    color = shade(color, 0.1)
+                c.put(x, y, shade(color, tints[tile]))
+                height[y, x] = 0.35 + row * 0.15 + (0.15 if column == 2 else 0.0)
+    if face:
+        c.fill(0, TILE - 1, TILE, 1, shade(shadow, 0.1))
+    return c, height
+
+
+def slates(rng, face):
+    """Slates: blue-grey rectangles in courses of 4 px, staggered, a dark
+    line where each laps the next, a few lighter or darker."""
+    base, dark, light, line = "#5c6371", "#434955", "#767e8d", "#2b2f37"
+    c = Canvas(TILE, TILE)
+    height = np.zeros((TILE, TILE), dtype=np.float32)
+    for course in range(4):
+        offset = 2 if course % 2 else 0
+        tints = [float(rng.uniform(-0.07, 0.07)) for _ in range(5)]
+        for row in range(4):
+            y = course * 4 + row
+            for x in range(TILE):
+                column = (x + offset) % 4
+                slate = (x + offset) // 4
+                if row == 0:
+                    color = line
+                elif column == 0:
+                    color = dark
+                else:
+                    color = light if row == 3 else base
+                    color = shade(color, tints[slate])
+                c.put(x, y, color)
+                height[y, x] = 0.4 + row * 0.12
+    speckle(rng, c, [shade(base, 0.08), shade(base, -0.06)], 0.08)
+    return c, height
+
+
+def shingles(rng, face):
+    """Wood shingles: weathered boards of uneven widths in courses of 4 px,
+    dark gaps between them, the grain running down."""
+    base, dark, light, gap = "#8a7254", "#655039", "#a88d69", "#3f3123"
+    c = Canvas(TILE, TILE)
+    height = np.zeros((TILE, TILE), dtype=np.float32)
+    for course in range(4):
+        x = int(rng.integers(0, 3))
+        edges = []
+        while x < TILE:
+            edges.append(x)
+            x += int(rng.integers(3, 6))
+        for row in range(4):
+            y = course * 4 + row
+            for x in range(TILE):
+                color = base
+                if row == 0:
+                    color = gap
+                elif x in edges:
+                    color = gap if row < 3 else dark
+                elif row == 3:
+                    color = light
+                c.put(x, y, color)
+                height[y, x] = 0.4 + row * 0.12
+        for _ in range(3):
+            gx, gy = int(rng.integers(0, TILE)), course * 4 + int(rng.integers(1, 3))
+            if gx not in edges:
+                c.put(gx, gy, dark)
+    speckle(rng, c, ["#8e8a80", shade(base, 0.06)], 0.06)
+    return c, height
+
+
+def thatch(rng, face):
+    """Thatch: straw in layers of 8 px, strands running down, each layer's
+    ragged edge hanging over the one under it."""
+    base, dark, light, shadow = "#c4a259", "#937537", "#e0c47e", "#6e5527"
+    c = Canvas(TILE, TILE)
+    c.fill(0, 0, TILE, TILE, base)
+    height = np.zeros((TILE, TILE), dtype=np.float32)
+    for x in range(TILE):
+        y = int(rng.integers(0, 4))
+        while y < TILE:
+            length = int(rng.integers(2, 5))
+            color = (dark, light, base)[int(rng.integers(0, 3))]
+            c.fill(x, y, 1, length, color)
+            y += length + int(rng.integers(1, 3))
+    for layer in range(2):
+        top = layer * 8
+        for x in range(TILE):
+            hang = int(rng.integers(0, 2))
+            c.put(x, top + 7 - hang, shade(light, -0.05) if hang else light)
+            c.put(x, top, shadow if rng.random() < 0.6 else dark)
+            for row in range(8):
+                height[top + row, x] = 0.3 + row * 0.08
+    return c, height
+
+
+ROOFS = {"ROOF_TILES": roof_tiles, "SLATES": slates, "SHINGLES": shingles, "THATCH": thatch}
+
+
 def wall_tile(rng, name, is_top, variant):
     """The tile of a wall added after the first ones (own generator)."""
     if name in PLANKS:
@@ -739,6 +857,8 @@ def wall_tile(rng, name, is_top, variant):
         return cut_sandstone(rng, not is_top)
     if name == "WOOL":
         return wool(rng, not is_top)
+    if name in ROOFS:
+        return ROOFS[name](rng, not is_top)
     if name == "OLD_GLASS":
         return old_glass(rng, variant)
     if name == "LEADED_GLASS":

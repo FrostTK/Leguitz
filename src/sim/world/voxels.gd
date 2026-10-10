@@ -26,6 +26,9 @@ const FLAG_LIQUID := 4
 ## Stairs and slabs (ShapedBlocks): solid in part of their cell. (8 and 16
 ## are ChunkMesher's.)
 const FLAG_SHAPED := 32
+## A roof's pieces (RoofBlocks; shaped too): they keep the sky out and top
+## their column (ChunkData.tops).
+const FLAG_ROOF := 64
 
 static var _flags := _build_flags()
 
@@ -65,6 +68,11 @@ static func is_liquid(voxel: int) -> bool:
 ## Stairs or a slab (ShapedBlocks).
 static func is_shaped(voxel: int) -> bool:
 	return _flags[voxel] & FLAG_SHAPED != 0
+
+
+## A roof's piece (RoofBlocks).
+static func is_roof(voxel: int) -> bool:
+	return _flags[voxel] & FLAG_ROOF != 0
 
 
 ## Water, still or flowing.
@@ -128,5 +136,7 @@ static func _build_flags() -> PackedByteArray:
 			flags[voxel] = FLAG_SOLID
 			if Tiles.is_shaped(block):
 				flags[voxel] |= FLAG_SHAPED
+			if Tiles.is_roof(block):
+				flags[voxel] |= FLAG_ROOF
 	flags[UNKNOWN] = FLAG_CUBE | FLAG_SOLID
 	return flags

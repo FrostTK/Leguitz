@@ -150,9 +150,10 @@ Godot **4.7.2** (GDScript), rendu Forward+. 259 tests unitaires, lint propre.
 | 8.3 Rideaux et tapis | Les **rideaux** se **tirent et se nouent** au clic droit (ou E), comme on ouvre un portillon ; **tirés, ils arrêtent la lumière du jour** : une pièce aux rideaux tous tirés devient sombre (la lanterne du joueur s'allume, et les monstres peuvent y venir comme dans le noir). Quatre sortes : courts ou **longs jusqu'au sol** (la case dessous doit être libre), sur une **tringle en bois ou en fer forgé** (des lingots de fer au lieu des bâtons ; les longs à l'établi). Ils se **teignent** au pot de peinture (ils gardent leur couleur tirés ou noués) et l'arrosoir les lave. Le **tapis** (deux laines ou deux lins en font trois) se pose au sol ; des tapis d'une même couleur côte à côte n'en font **qu'un grand** (la bordure seulement autour), de couleurs différentes ils gardent chacun la leur ; il se teint aussi. **Les meubles se posent sur un tapis** (table, chaises, coffres, fours, et même des blocs) : il reste dessous et revient quand on enlève le meuble ; si son sol casse, il tombe avec. Le livre : chapitre Maison | `cd07559` |
 | Lumière colorée naturelle | Demandé par le propriétaire (la lumière à travers les fenêtres teintées faisait des formes géométriques qui sautaient avec l'heure) : le verre teinté arrête le soleil blanc dans les ombres, et chaque point du sol, des murs, des meubles et des tapis cherche vers le soleil s'il voit le jour à travers du verre teinté : il reçoit alors le soleil filtré par cette couleur. Les taches tombent exactement là où va la lumière (le cadre, les barreaux et le plomb y dessinent leur ombre), suivent le soleil en continu et gardent la texture de ce qu'elles éclairent ; un verre teinté en blanc donne la même tache que le soleil à travers du verre clair. Le soir, elles sont faibles comme le soleil couchant ; une verrière dans un toit donne les plus belles. Environ 0,4 ms de carte graphique | `292638e` |
 | 8.4 Portes, trappes, échelles, volets | Des **portes** de deux niveaux de haut, une par essence (six planches d'un même bois : chêne à quatre panneaux, bouleau à petite fenêtre, épicéa rustique à écharpe, chêne noir clouté, jungle à lattes, acacia à fenêtre cintrée), une **porte vitrée** (du verre sur du chêne, elle laisse entrer le jour) et une **porte en fer forgé** ; elles se posent face au joueur, au nu du mur, s'ouvrent et se ferment au clic droit (ou E) ; **côte à côte, deux portes font une porte double** (gonds de part et d'autre) qui s'ouvre d'un seul geste. Fermée, une porte ne laisse passer personne ni la lumière du jour. Des **trappes** (bois, fer) se posent contre le bord d'un trou dans le sol : fermées on marche dessus, ouvertes on descend. Des **échelles** au mur : on grimpe en sautant ou en avançant contre elle, Maj tient sur place, on glisse doucement sinon, sans jamais se faire mal ; une échelle sous une trappe mène à la cave et on en ressort sur le plancher. Des **volets** à l'extérieur des fenêtres, à persiennes, qui se ferment au clic droit (fermés ils arrêtent le jour) et **se peignent** au pot. Des **barreaux en fer forgé** et des **garde-corps** (bois, fer forgé) qui se raccordent entre eux et aux murs (et aux vitres pour les barreaux) : personne ne passe par-dessus, on voit au travers. Le livre : chapitre Maison, « Portes, échelles et volets » | `fb62623` |
-| Le verre montre l'eau | Demandé par le propriétaire (à travers le verre, on voyait le fond de la rivière, pas l'eau) : le verre ne recopie plus l'image de l'écran, faite avant que l'eau soit dessinée ; il se pose maintenant par-dessus ce qui est derrière lui, en deux passes (sa teinte, puis son reflet du ciel et l'éclat du soleil). L'eau se voit à travers le verre, les vitres et les fenêtres, et aussi le verre derrière du verre (deux épaisseurs se teintent l'une l'autre) et la pluie. Le verre ancien ne déforme plus ce qui est derrière lui : il ondule par des reflets en vagues. La brume lointaine efface la teinte comme avant | « Glass shows water » |
+| Le verre montre l'eau | Demandé par le propriétaire (à travers le verre, on voyait le fond de la rivière, pas l'eau) : le verre ne recopie plus l'image de l'écran, faite avant que l'eau soit dessinée ; il se pose maintenant par-dessus ce qui est derrière lui, en deux passes (sa teinte, puis son reflet du ciel et l'éclat du soleil). L'eau se voit à travers le verre, les vitres et les fenêtres, et aussi le verre derrière du verre (deux épaisseurs se teintent l'une l'autre) et la pluie. Le verre ancien ne déforme plus ce qui est derrière lui : il ondule par des reflets en vagues. La brume lointaine efface la teinte comme avant | `5965810` |
+| 8.5 Toitures | Quatre **couvertures** : des **tuiles** en terre cuite (trois briques), des **ardoises** (trois ardoises des abîmes en font deux), des **bardeaux** de bois (deux bûches en font deux) et du **chaume** (quatre blés), en blocs pleins et en pièces de toit : la **pente** à 45° (elle monte en s'éloignant du joueur, Maj dans l'autre sens) qui tourne toute seule ses **coins** comme les escaliers (**arêtiers** dehors, **noues** dedans), le **faîtage** (le haut du toit : ses bouts se font en **croupe** là où le toit continue plus bas, jusqu'à la pyramide, et les faîtages côte à côte se raccordent et **se croisent** pour les toits en T et en croix ; une **faîtière** court dessus), la **pente douce** (un niveau sur deux cases, basse puis haute), la **rive** (des tuiles relevées le long d'un pignon ouvert, dont le triangle prend la texture du mur dessous). On **marche sur les toits**, ils arrêtent le jour et la pluie, la **neige** s'y pose en hiver, la vue en coupe les enlève au-dessus du joueur ; dessous, le grenier est en planches. Des **lucarnes** (une fenêtre dans un petit pignon, à la place d'une pente, qui éclaire le grenier) et une **cheminée** en briques qui s'empile à travers le toit, coiffée de deux pots, et qui **fume** quand un feu de camp ou un four allumé brûle dessous. Le livre : chapitre Maison, « Toitures » | « Roofs » |
 
-**Pas encore fait** (prévu) : toits, nouveaux matériaux et décoration (phase 8),
+**Pas encore fait** (prévu) : nouveaux matériaux et décoration (phase 8),
 structures, menus de départ, sons, mode Arcade (en attente), mobile.
 
 ---
@@ -277,14 +278,16 @@ xvfb-run -a -s "-screen 0 960x540x24" godot --path . --audio-driver Dummy --reso
 
 ---
 
-## 5. Prochaine étape au « go » : Phase 8, étape 5 (toitures)
+## 5. Prochaine étape au « go » : Phase 8, étape 6 (nouveaux matériaux)
 
 **La phase 7 est terminée** (étapes 1 à 11 ci-dessous). La **phase 8, Construction et
 décoration**, est en cours : les étapes 1 (escaliers et dalles), 2 (verre et vitres, la teinte
-par case), 3 (rideaux et tapis) et 4 (portes, trappes, échelles, volets, barreaux, garde-corps)
-sont faites ; au prochain « go », l'**étape 5** (les toitures : tuiles, ardoise, bardeaux et
-chaume, leurs pièces, la cheminée, les lucarnes ; voir la section 6, où sont les décisions du
-propriétaire et tout le découpage).
+par case), 3 (rideaux et tapis), 4 (portes, trappes, échelles, volets, barreaux, garde-corps)
+et 5 (toitures) sont faites ; au prochain « go », l'**étape 6** (les nouveaux matériaux :
+pavés, pierre de taille, pierre moussue, plâtre teintable, colombages, torchis, parquet,
+carrelage, terre cuite, ardoise, briques de grès, avec leurs escaliers et dalles ; murets,
+piliers, poutres ; voir la section 6, où sont les décisions du propriétaire et tout le
+découpage).
 
 ### Phase 7 — Agriculture et élevage (terminée)
 
@@ -680,7 +683,20 @@ barrières et portails ; **pas encore de portes, d'escaliers ni de dalles**.
    seulement pour leur propriétaire en multijoueur), des trappes en bas de case ou au mur
    (hublots), des échelles de corde qui se déroulent, un portail en fer forgé, des volets roulants
    ou à battants simples, des portes qui grincent (avec les sons).
-5. (prochaine étape) **Toitures** (4 matériaux, leurs pièces, la cheminée).
+5. ✅ **Toitures** (voir section 3, ligne 8.5). Fait comme prévu, avec ces choix : chaque
+   couverture est aussi un bloc plein (on en fait les pièces comme les escaliers du bois) ; une
+   pièce de toit est pleine sous sa pente (pas un toit mince : dessous, le grenier a des
+   plafonds en marches, en planches) ; le faîtage est une pièce d'un demi-niveau, ses bouts et
+   ses croisements se font tout seuls, sa direction se choisit à la pose (le long d'un faîtage
+   voisin, sinon en travers du regard) ; la rive est automatique (des tuiles relevées sur un
+   pignon ouvert) et le triangle d'un pignon prend la texture du mur dessous ; la pente douce
+   choisit basse ou haute à la pose ; la lucarne est un objet qui laisse passer le jour ; la
+   cheminée fume si un feu brûle dans sa colonne jusqu'à huit niveaux sous son pied. Pas fait
+   (à proposer) : des toits minces (un vrai rampant vu du grenier), des coins et des faîtages
+   pour les pentes douces, des pentes plus raides (60°), un débord de toit et des gouttières,
+   des épis de faîtage et des girouettes, la neige qui glisse du toit, la pluie qui ruisselle
+   des gouttières, une cheminée qui réchauffe la pièce (avec l'âtre de l'étape 8), des tuiles
+   moussues avec le temps.
 6. **Nouveaux matériaux** (pavés, plâtre, colombages, parquet, carrelage…) avec leurs escaliers et
    dalles ; murets, piliers, poutres.
 7. **Chambre et salon** : le lit (dormir), les rangements, les étagères d'exposition, les assises

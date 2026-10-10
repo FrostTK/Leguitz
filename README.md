@@ -42,7 +42,10 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Saisons (réglage du monde) : cultures de saison et serres, arbres qui roussissent puis se dénudent, neige l'hiver, le calendrier à l'horloge, /saison | ✅ |
 | Verre et vitres refaits : verre clair continu, verre ancien, verre au plomb, vitres fines qui se raccordent, 28 fenêtres (4 dessins, 6 bois et fer forgé), teinte par case au pot de peinture (le cadre à part), lavée à l'arrosoir ; le soleil à travers le verre teinté colore le sol ; palette de 16 couleurs douces | ✅ |
 | Rideaux qui se tirent et se nouent (tirés, la pièce devient sombre), longs jusqu'au sol, tringle en bois ou en fer, teints au pot de peinture ; tapis qui se raccordent en un grand tapis, teints, sous les meubles | ✅ |
+| Toitures en tuiles, ardoises, bardeaux et chaume : pentes qui font leurs coins, faîtages en croupe et en croix, pentes douces, lucarnes, cheminée qui fume, neige en hiver | ✅ |
 | Portes de chaque bois, vitrée et en fer forgé (portes doubles), trappes, échelles où l'on grimpe, volets peints qui se ferment, barreaux et garde-corps qui se raccordent | ✅ |
+
+![Leguitz : toitures : une maison en planches au toit de tuiles à pignon et sa cheminée qui fume, une maison en pierre au toit d'ardoises en pyramide ; vues de dessus, une chaumière en pentes douces et une maison en croix au toit de bardeaux (faîtages croisés, noues) ; une maisonnette au toit d'ardoises avec sa lucarne ; les mêmes toits sous la neige en hiver](docs/screenshots/phase8-toitures.png)
 
 ![Leguitz : portes, trappes, échelles : un mur aux portes de chaque bois (chêne à panneaux, bouleau à petite fenêtre, chêne noir clouté, jungle à lattes, acacia à fenêtre cintrée, porte en fer forgé), une porte double vitrée ouverte et une porte double en chêne fermée ; une maison vue de dessus avec des volets bleus ouverts et des volets verts fermés, une mezzanine à garde-corps ; à l'intérieur, une fenêtre à barreaux en fer forgé et le garde-corps de la mezzanine ; une trappe ouverte sur la cave et une trappe fermée dans le plancher](docs/screenshots/phase8-portes-echelles.png)
 
@@ -334,7 +337,7 @@ Pour le multijoueur, il suffira de brancher un transport réseau.
 7. ✅ Agriculture et élevage (végétation qui pousse, champs et cultures, arrosage et compost,
    nouvelles cultures et arbres fruitiers, élevage, cuisine, pêche et bateaux, compagnons, saisons)
 8. Construction et décoration (en cours : escaliers et dalles, verre et vitres teintables,
-   rideaux et tapis, portes, trappes et échelles faits ; à venir : toitures, nouveaux matériaux,
+   rideaux et tapis, portes, trappes et échelles, toitures faits ; à venir : nouveaux matériaux,
    décoration intérieure, vitraux)
 9. Finitions PC (menus, sauvegardes, sons, options graphiques, Steam)
 10. Mobile (iOS, Android)

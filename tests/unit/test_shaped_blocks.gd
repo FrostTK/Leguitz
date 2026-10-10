@@ -62,7 +62,7 @@ func test_every_material_has_its_stairs_and_slabs() -> void:
 		assert_eq(Mining.hand_seconds(voxel), Mining.hand_seconds(stone), "%s breaks so" % name)
 		assert_eq(Mining.tool_for(voxel), Mining.tool_for(stone))
 		assert_false(Mining.needs_support(voxel), "%s may overhang" % name)
-	assert_eq(count, ShapedBlocks.MATERIALS.size() * 14)
+	assert_eq(count, (ShapedBlocks.MATERIALS.size() + RoofBlocks.COVERINGS.size()) * 14)
 	assert_eq(ShapedBlocks.items().size(), ShapedBlocks.MATERIALS.size() * 3)
 	for entry: Array in ShapedBlocks.items():
 		var item: int = entry[0]

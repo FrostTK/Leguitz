@@ -6,7 +6,7 @@ extends RefCounted
 ## and down into covered places, a level less per step: a cave far from
 ## any opening stays at 0. Block light: lava, fires, torches and lanterns
 ## shine EMISSION levels, a level less per step. Cubes stop both (not glass
-## or windows), and so does what is shut (SHUT_BLOCKS). ChunkMesher
+## or windows), and so do what is shut (SHUT_BLOCKS) and roofs. ChunkMesher
 ## bakes the sky light of a chunk into its faces (see sky), the server
 ## measures a cell's light for the monsters (Light).
 
@@ -293,7 +293,7 @@ static func _build_passing() -> PackedByteArray:
 			table[voxel] = OPAQUE
 		elif Voxels.is_cube(voxel) and not CLEAR_BLOCKS.has(Voxels.block_of(voxel)):
 			table[voxel] = OPAQUE
-		elif SHUT_BLOCKS.has(Voxels.block_of(voxel)):
+		elif SHUT_BLOCKS.has(Voxels.block_of(voxel)) or Voxels.is_roof(voxel):
 			table[voxel] = OPAQUE
 		elif Voxels.is_liquid(voxel):
 			table[voxel] = WATER

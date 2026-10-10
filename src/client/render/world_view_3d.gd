@@ -30,6 +30,8 @@ const FACE_ATLAS := preload("res://assets/textures/tiles/face_atlas.png")
 const FACE_NORMALS := preload("res://assets/textures/tiles/face_atlas_n.png")
 const FACE_EMISSION := preload("res://assets/textures/tiles/face_atlas_e.png")
 const MAX_POOLED_VIEWS := 48
+## Chimneys smoke this near the player (tiles).
+const SMOKE_REACH := 40.0
 ## Ground area (tiles²) up to which props keep full detail, then half.
 const FULL_DETAIL_AREA := 2500.0
 const HALF_DETAIL_AREA := 12000.0
@@ -87,6 +89,8 @@ var caps_shown := false
 var top_material := ShaderMaterial.new()
 var face_material := ShaderMaterial.new()
 var water_material := ShaderMaterial.new()
+## The smoke of the chimneys near the player.
+var smoke := ChimneySmoke.new()
 ## The see-through part of glass (GlassFaces), shared by the chunks: its
 ## tint, and its sheen in the next pass.
 var glass_material := ShaderMaterial.new()
@@ -141,6 +145,7 @@ func _ready() -> void:
 		material.set_shader_parameter("face_atlas", FACE_ATLAS)
 		material.set_shader_parameter("wall_atlas", TerrainRenderer.WALL_ATLAS)
 		material.set_shader_parameter("tint_colors", palette)
+	add_child(smoke)
 	_variants.resize(Tiles.Block.size())
 	for block: int in Tiles.Block.values():
 		_variants[block] = props.variant_count(block)
@@ -382,14 +387,21 @@ func wait_for_builds() -> void:
 	_jobs.clear()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if lod_by_distance and focus_tile.distance_squared_to(_lod_focus) > 4.0:
 		_refresh_lods()
 	_start_jobs()
 	_apply_results()
 	var time := Time.get_ticks_msec() / 1000.0
+	var spots: Array[Vector3] = []
 	for view: ChunkView3D in _views.values():
 		view.flicker(time)
+		if view.visible and not view.smokes.is_empty():
+			for spot in view.smokes:
+				var at := view.position + spot
+				if Vector2(at.x, at.z).distance_squared_to(focus_tile) < SMOKE_REACH * SMOKE_REACH:
+					spots.append(at)
+	smoke.update(delta, spots)
 
 
 func _start_jobs() -> void:

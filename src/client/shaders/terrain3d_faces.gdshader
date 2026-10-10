@@ -4,8 +4,9 @@ shader_type spatial;
 //   UV   = (pixels along the face, pixels down from the top of the face;
 //          for undersides: world pixels along x and z)
 //   UV2  = (face kind: 0-3 cliff materials, 4+ wall kinds; lip ground + 1,
-//          or -2 for the tops of stairs and slabs: ShapedFaces, or under
-//          -10 for the opaque pixels of glass: GlassFaces.FRAME_PASS)
+//          or -2 for the tops of stairs and slabs: ShapedFaces, -4 for a
+//          roof's covering: RoofFaces, or under -10 for the opaque pixels
+//          of glass: GlassFaces.FRAME_PASS)
 //   COLOR.r = variant (0 or 1), COLOR.g = lip ground variant / 3,
 //   COLOR.b = the sky light in front of the face (see sky_light.gdshaderinc)
 
@@ -118,6 +119,17 @@ void fragment() {
 		if (frame >= 0) {
 			float luma = dot(albedo, vec3(0.3, 0.59, 0.11));
 			albedo = tint_colors[frame] * clamp(luma / 0.3, 0.55, 1.4);
+		}
+	} else if (face_data.y < -3.5) {
+		// A roof's covering (RoofFaces), down its slope; snow on it in
+		// winter, under the open sky.
+		ivec2 at = ivec2(variant * 16 + u, kind * 16 + v);
+		albedo = texelFetch(face_atlas, at, 0).rgb;
+		normal = unpack_normal(texelFetch(face_normals, at, 0));
+		float patchy = float(hash2(ivec2(int(floor(UV.x)), down)) & 255u) / 255.0;
+		if (sky > SNOW_SKY && patchy < season_built_snow * 0.97 - 0.05) {
+			albedo = SNOW_COLOR * ((v & 3) == 0 ? 0.82 : 1.0);
+			normal = vec3(0.0, 0.0, 1.0);
 		}
 	} else if (face_data.y < -1.5) {
 		// The top of stairs or a slab: its material's top, its snow.

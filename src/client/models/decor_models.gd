@@ -41,6 +41,9 @@ static func build(block: int, variant: int) -> VoxelGrid:
 	var opening := OpeningModels.build(block, variant)
 	if opening != null:
 		return opening
+	var roof := RoofModels.build(block, variant)
+	if roof != null:
+		return roof
 	if ObjectShapes.is_curtain(block):
 		var kind := ObjectShapes.kind_of(block)
 		var tied: int = ObjectShapes.DRAWN.find_key(kind) if ObjectShapes.is_drawn(block) else kind
@@ -102,6 +105,8 @@ static func item(item_id: int) -> VoxelGrid:
 			return big_gate(false)
 		Items.Id.SHUTTERS:
 			return OpeningModels.shutters(true)
+		Items.Id.CHIMNEY:
+			return RoofModels.chimney(true)
 	var block: int = Items.PLACES_BLOCK.get(item_id, -1)
 	return build(block, 0) if block != -1 else null
 
@@ -111,6 +116,9 @@ static func color_of(kind: int) -> Color:
 	var opening := OpeningModels.color_of(kind)
 	if opening.a > 0.0:
 		return opening
+	var roof := RoofModels.color_of(kind)
+	if roof.a > 0.0:
+		return roof
 	if ObjectShapes.is_curtain(kind):
 		return Color(LINEN[2])
 	match kind:
