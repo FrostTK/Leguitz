@@ -926,6 +926,37 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   ChunkMesher's old Job. Items.FOOD moved to Food.SATIETY (items.gd's 1000 lines). LightField
   builds its shine table on first use (an init cycle through ObjectShapes). The book: Home and
   garden, Glass and windows.
+- Curtains and rugs (phase 8, step 3): curtains come tied back or drawn (ObjectShapes.DRAWN: kind
+  tied -> kind drawn; CURTAINS, CURTAINS_LONG, CURTAINS_IRON, CURTAINS_LONG_IRON, each drawn as
+  `<KIND>_CLOSED`; their facing kinds but CURTAINS' built by name, `_curtain_kinds`, all of them in
+  the static `_facing_kinds` that `facing` reads; WALL_MOUNTED, NON_SOLID; `is_curtain`,
+  `is_drawn`). Used (right click or E, like gates: Mining.swings, swung_cells, ObjectShapes.swung,
+  Msg.SWING_GATE, Fixtures.swing_gate) they are drawn or tied back; drawn they are OPAQUE to the
+  light (LightField.DRAWN_CURTAINS: the room behind goes dark, monsters may come; ChunkProps lights
+  them as the cell in front). Long ones (LONG_CURTAINS) hang down a level (SUNK, models 32 tall;
+  Mining._hung wants the cell under them free). Items CURTAINS_LONG, CURTAINS_IRON (iron ingots
+  for the rod), CURTAINS_LONG_IRON (long ones at the workbench); Items._placed_by maps the drawn
+  kinds. The RUG (two wool or linen make three; a FLOOR_OBJECT, NON_SOLID, a thin aiming body,
+  VoxelRay.SMALL_BODIES) joins the rugs of its tint around it: its version is the sides joined
+  (FENCE_SIDES bits, 16, ChunkProps._rug_sides), the border only where it stops. Furniture and
+  blocks go on a rug (Mining.takes: replaceable or a rug, in `_bench_room` and for cubes;
+  Mining.fills: aimed at a rug, anything but a rug goes into its cell, not on top): ChunkData
+  .set_voxel (`_keeps`) then keeps the rug in ChunkData.rugs (cell -> its tint, Tints.pack; saved
+  and sent with the chunk) and puts it back when the cell is set to air (server and client
+  guesses alike; GameServer.change_voxel sends what is there after it, the break cascade and its
+  prediction loop while what is left needs support: a rug falls with its floor too). A tint stays
+  when a block turns into the same piece (ObjectShapes.same_piece: curtains drawn, a gate
+  swung). Tints: `dyed` (curtains, rugs) take the glass slot's color (washed by the can);
+  BlockInteraction._tint_aimed comes first in `place` (a pot or the can on curtains dyes them
+  rather than drawing them; an axe only on windows). Dyed cloth: ChunkProps (src/client/render,
+  the props split from ChunkMesher: placing, turning, versions, the rug under something) gives a
+  tinted dyed prop DYED (128) in INSTANCE_CUSTOM.a and its color in .rgb (sRGB);
+  voxel.gdshaderinc (not PAINTED) paints its PAINT voxels (DecorModels CLOTH) with it against
+  DYE_LUMA. VoxelGrid.keep_detail: gen_models saves such light, thin models (rugs, curtains) as
+  their own coarser copies (a rug coarsened thickened into a slab). Models: DecorModels.curtains
+  (long, iron, drawn: a rod with brackets, finials on iron, pleated cloth and rings drawn, panels
+  tied a third of the way up), `rug(sides)` (rows of weave, a lozenge, a border). The book: Home
+  and garden (curtains, their kinds, rugs; tinting and washing cloth).
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made

@@ -5,7 +5,7 @@ extends RefCounted
 ## too), and what a cell is tinted with (ChunkData.tints, saved with the
 ## region and sent with the chunk: `pack`ed, its glass's color and its
 ## frame's). What takes a tint: glass, panes and windows (Glass; a
-## window's frame apart). A player's right click (Msg.TINT, `handle`)
+## window's frame apart), curtains and rugs (dyed). A player's right click (Msg.TINT, `handle`)
 ## with a pot tints the glass (`frame`: the frame) and uses a coat (the
 ## last leaves its bottle); the watering can washes the glass, the axe
 ## scrapes the frame (it wears). Players having the chunk are told
@@ -57,9 +57,15 @@ static func frame_of(packed: int) -> int:
 	return ((packed >> BITS) & MASK) - 1
 
 
-## Whether a block takes a tint (and a frame's: windows).
+## Whether a block takes a tint (and a frame's: windows): glass, curtains,
+## a rug.
 static func tintable(block: int) -> bool:
-	return Glass.is_glass(block)
+	return Glass.is_glass(block) or dyed(block)
+
+
+## Whether a block's cloth takes the tint (dyed: curtains, a rug).
+static func dyed(block: int) -> bool:
+	return ObjectShapes.is_curtain(block) or block == Tiles.Block.RUG
 
 
 ## A cell's tint (packed; 0: none) in the loaded world.

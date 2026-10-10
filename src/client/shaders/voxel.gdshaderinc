@@ -42,6 +42,12 @@ const float OCCLUSION_LIGHT = 0.55;
 instance uniform vec4 paint_color = vec4(0.0);
 instance uniform vec4 stripe_color = vec4(0.0);
 const float PAINT_LUMA = 0.36;
+#else
+// Cloth dyed with a tint (ChunkProps: curtains, rugs): its PAINT voxels
+// (UV.y 3) take the color given with the prop (INSTANCE_CUSTOM.rgb, sRGB)
+// when INSTANCE_CUSTOM.a carries DYED (128), shaded as the undyed cloth is
+// against DYE_LUMA.
+const float DYE_LUMA = 0.78;
 #endif
 
 global uniform vec2 weather_wind;
@@ -67,6 +73,9 @@ varying float foliage;
 #ifdef PAINTED
 varying float painted;
 varying float striped;
+#else
+varying float dyed;
+varying vec3 dye;
 #endif
 varying float glow;
 varying vec3 tint;
@@ -98,6 +107,9 @@ void vertex() {
 #ifdef PAINTED
 	painted = step(2.5, UV.y) - step(3.5, UV.y);
 	striped = step(3.5, UV.y);
+#else
+	dyed = 0.0;
+	dye = vec3(1.0);
 #endif
 	tint = vec3(1.0);
 	float phase = 0.0;
@@ -108,8 +120,8 @@ void vertex() {
 	own = 0.0;
 	if (use_instance_data) {
 		// Its alpha: the sky light (0 to 15) + 16 if deciduous + 32 where
-		// winters bite + 64 a small plant the snow buries, and its wind phase
-		// as the fraction.
+		// winters bite + 64 a small plant the snow buries + 128 dyed, and
+		// its wind phase as the fraction.
 		tint = INSTANCE_CUSTOM.rgb;
 		float bits = floor(INSTANCE_CUSTOM.a);
 		own = fract(INSTANCE_CUSTOM.a);
@@ -117,7 +129,14 @@ void vertex() {
 		sky = mod(bits, 16.0) / 15.0;
 		deciduous = mod(floor(bits / 16.0), 2.0);
 		wintry = mod(floor(bits / 32.0), 2.0);
-		buried = floor(bits / 64.0);
+		buried = mod(floor(bits / 64.0), 2.0);
+#ifndef PAINTED
+		if (bits >= 128.0) {
+			dye = INSTANCE_CUSTOM.rgb;
+			dyed = step(2.5, UV.y) - step(3.5, UV.y);
+			tint = vec3(1.0);
+		}
+#endif
 	}
 	// Before the wind bends it: in the world's local units, steady.
 	vec3 local_normal = normalize((world_to_local * vec4(NORMAL, 0.0)).xyz);
@@ -166,6 +185,11 @@ void fragment() {
 	if (coat.a > 0.5) {
 		float luma = dot(COLOR.rgb, vec3(0.299, 0.587, 0.114));
 		base = coat.rgb * clamp(luma / PAINT_LUMA, 0.6, 1.35);
+	}
+#else
+	if (dyed > 0.5) {
+		float luma = dot(COLOR.rgb, vec3(0.299, 0.587, 0.114));
+		base = dye * clamp(luma / DYE_LUMA, 0.45, 1.25);
 	}
 #endif
 	if (leaf && season_autumn > 0.0) {

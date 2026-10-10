@@ -391,6 +391,11 @@ enum Id {
 	IRON_WINDOW_SMALL,
 	IRON_WINDOW_SASH,
 	IRON_WINDOW_ROUND,
+	# Long curtains, on an iron rod; rugs.
+	CURTAINS_LONG,
+	CURTAINS_IRON,
+	CURTAINS_LONG_IRON,
+	RUG,
 }
 ## What a tool is made for (Mining.tool_for: what it breaks faster).
 enum Tool { NONE, PICKAXE, AXE, SHOVEL, SWORD, HOE }
@@ -617,6 +622,10 @@ const PLACES_BLOCK := {
 	Id.IRON_WINDOW_SMALL: Tiles.Block.IRON_WINDOW_SMALL,
 	Id.IRON_WINDOW_SASH: Tiles.Block.IRON_WINDOW_SASH,
 	Id.IRON_WINDOW_ROUND: Tiles.Block.IRON_WINDOW_ROUND,
+	Id.CURTAINS_LONG: Tiles.Block.CURTAINS_LONG,
+	Id.CURTAINS_IRON: Tiles.Block.CURTAINS_IRON,
+	Id.CURTAINS_LONG_IRON: Tiles.Block.CURTAINS_LONG_IRON,
+	Id.RUG: Tiles.Block.RUG,
 }
 
 ## What a ground gives (soil gives dirt); grounds left out give nothing.
@@ -949,6 +958,8 @@ static func _build_placed_by() -> Dictionary:
 		lookup[PLACES_BLOCK[item]] = item
 	for shut: int in ObjectShapes.OPENS:
 		lookup[ObjectShapes.OPENS[shut]] = lookup[shut]
+	for tied: int in ObjectShapes.DRAWN:
+		lookup[ObjectShapes.DRAWN[tied]] = lookup[tied]
 	# Stairs and slabs, any way they face, up or down: the item of their
 	# name (OAK_STAIRS_TOP_WEST: OAK_STAIRS; no other table, built after).
 	for block: int in Tiles.Block.values():

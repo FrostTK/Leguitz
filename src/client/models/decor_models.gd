@@ -17,6 +17,11 @@ const IRON := ["#2e2f35", "#4b4d55", "#6f727c", "#9a9ea8"]
 const STONE := ["#85838e", "#a3a1ab", "#bdbcc4", "#d6d5db"]
 const PORCELAIN := ["#aeb3b8", "#d2d6da", "#e9ecee", "#fbfcfd"]
 const LINEN := ["#9e8f74", "#bfb194", "#d9cdb1", "#ece3cc"]
+## A rug's wool, undyed: its border, the lozenge, the field (two weaves),
+## the light line.
+const RUG := ["#86725a", "#a8946f", "#cdbd98", "#e3d6b8", "#c3b28d"]
+## Cloth takes a tint (ChunkProps: voxel.gdshaderinc dyes PAINT voxels).
+const CLOTH := VoxelGrid.Kind.PAINT
 const GLASS := ["#9dc0ca", "#d4ebf0", "#f6fcfd"]
 const OLD_GLASS := ["#86a682", "#bcd6b4", "#e2f0dc"]
 const LEAD := ["#2e2f34", "#4a4b52", "#c4dce4"]
@@ -33,6 +38,11 @@ const LANTERN_GLOW := ["#e8902c", "#ffc35a", "#ffe6a4"]
 ## The model of a block (its kind's; a fence's version: the sides it joins,
 ## ObjectShapes.FENCE_SIDES bits). Null: not one of these.
 static func build(block: int, variant: int) -> VoxelGrid:
+	if ObjectShapes.is_curtain(block):
+		var kind := ObjectShapes.kind_of(block)
+		var tied: int = ObjectShapes.DRAWN.find_key(kind) if ObjectShapes.is_drawn(block) else kind
+		var iron := tied == Tiles.Block.CURTAINS_IRON or tied == Tiles.Block.CURTAINS_LONG_IRON
+		return curtains(ObjectShapes.LONG_CURTAINS.has(kind), iron, ObjectShapes.is_drawn(block))
 	match block:
 		Tiles.Block.TORCH_BRACKET:
 			return torch_bracket(false)
@@ -46,8 +56,8 @@ static func build(block: int, variant: int) -> VoxelGrid:
 			return lantern_hanging()
 		Tiles.Block.LANTERN_WALL:
 			return lantern_wall()
-		Tiles.Block.CURTAINS:
-			return curtains()
+		Tiles.Block.RUG:
+			return rug(variant)
 		Tiles.Block.GLASS_PANE:
 			return glass_pane(GLASS)
 		Tiles.Block.OLD_GLASS_PANE:
@@ -93,11 +103,13 @@ static func item(item_id: int) -> VoxelGrid:
 
 ## The color of a block's chips (BlockColors).
 static func color_of(kind: int) -> Color:
+	if ObjectShapes.is_curtain(kind):
+		return Color(LINEN[2])
 	match kind:
 		Tiles.Block.TORCH_BRACKET:
 			return Color(IRON[2])
-		Tiles.Block.CURTAINS:
-			return Color(LINEN[2])
+		Tiles.Block.RUG:
+			return Color(RUG[2])
 		Tiles.Block.GLASS_PANE:
 			return Color(GLASS[1])
 		Tiles.Block.OLD_GLASS_PANE:
@@ -238,21 +250,72 @@ static func lantern_wall() -> VoxelGrid:
 	return grid
 
 
-## Linen curtains on a wooden rod, drawn back to the sides (the window
-## behind shows between them), in folds.
-static func curtains() -> VoxelGrid:
-	var grid := VoxelGrid.new(Vector3i(16, 16, 16))
-	grid.box(Vector3i(0, 14, 1), Vector3i(15, 14, 1), _v(WOOD[1]))
-	grid.box(Vector3i(0, 14, 1), Vector3i(0, 15, 2), _v(WOOD[2]))
-	grid.box(Vector3i(15, 14, 1), Vector3i(15, 15, 2), _v(WOOD[2]))
+## Curtains on a rod against the wall (16 deep, its back at z = 0): `long`
+## down to the floor (two levels: ObjectShapes.SUNK), on an `iron` rod
+## (else wood), `drawn` across the window (else tied back on each side).
+## The cloth is PAINT (dyed with a tint: ChunkProps), pleated.
+static func curtains(long: bool, iron: bool, drawn: bool) -> VoxelGrid:
+	var height := 32 if long else 16
+	var grid := VoxelGrid.new(Vector3i(16, height, 16))
+	grid.keep_detail = true
+	var rod := height - 2
+	var metal: Array = IRON if iron else WOOD
+	grid.box(Vector3i(0, rod, 2), Vector3i(15, rod, 2), _v(metal[1]))
+	grid.box(Vector3i(1, rod + 1, 2), Vector3i(14, rod + 1, 2), _v(metal[3] if iron else metal[2]))
+	for x: int in [0, 15]:
+		grid.box(Vector3i(x, rod, 0), Vector3i(x, rod + 1, 2), _v(metal[2]))
+		if iron:
+			# Finials, a knob at each end.
+			grid.box(Vector3i(x, rod, 3), Vector3i(x, rod + 1, 3), _v(metal[3]))
+	if drawn:
+		_drawn_cloth(grid, rod - 1)
+	else:
+		_tied_cloth(grid, rod - 1, roundi(rod / 3.0))
+	return grid
+
+
+## Cloth drawn across, from the rings under the rod down to the floor of
+## the grid: pleats in and out, the two panels meeting in the middle, a
+## hem.
+static func _drawn_cloth(grid: VoxelGrid, top: int) -> void:
+	for x in 16:
+		var fold := x % 4
+		var front: int = [1, 2, 3, 2][fold]
+		var shade: int = [1, 2, 3, 2][fold]
+		if x == 7 or x == 8:
+			# Where the panels meet.
+			front = 1
+			shade = 0 if x == 7 else 1
+		for y in range(0, top + 1):
+			var tone := shade
+			if y == 0:
+				tone = 0
+			elif y == top:
+				tone = mini(shade + 1, 3)
+			for z in range(1, front + 1):
+				grid.set_voxel(Vector3i(x, y, z), _v(LINEN[tone if z == front else 0], CLOTH))
+		if x % 2 == 0:
+			# A ring on the rod.
+			grid.set_voxel(Vector3i(x, top + 1, 3), _v(LINEN[0], CLOTH))
+
+
+## Cloth tied back on each side: each panel narrows towards its tie, a
+## third of the way up (`tie`), and flares below it.
+static func _tied_cloth(grid: VoxelGrid, top: int, tie: int) -> void:
 	for x in 16:
 		var inner := x if x < 8 else 15 - x
 		if inner > 5:
 			continue
-		# Each panel narrows towards its tie, a third of the way up.
-		for y in range(1, 14):
-			var tie := absi(y - 5)
-			var width := 6 if y >= 9 else (3 + tie / 2 if y > 5 else 4)
+		for y in range(1, top + 1):
+			var from_tie := absi(y - tie)
+			var width := 4
+			if y >= tie + 4:
+				width = 6
+			elif y > tie:
+				width = 3 + from_tie / 2
+			elif tie > 6:
+				# Long ones flare towards the floor.
+				width = 4 + (tie - y) / 6
 			if inner >= width:
 				continue
 			var fold := (x + (1 if x >= 8 else 0)) % 3
@@ -260,12 +323,45 @@ static func curtains() -> VoxelGrid:
 			var shade: int = [1, 3, 2][fold]
 			if y <= 1:
 				shade = 0
-			grid.set_voxel(Vector3i(x, y, z), _v(LINEN[shade]))
+			grid.set_voxel(Vector3i(x, y, z), _v(LINEN[shade], CLOTH))
 			if fold == 1:
-				grid.set_voxel(Vector3i(x, y, 1), _v(LINEN[1]))
+				grid.set_voxel(Vector3i(x, y, 1), _v(LINEN[1], CLOTH))
 		# The ties, darker.
 		if inner < 4:
-			grid.set_voxel(Vector3i(x, 5, 2 if (x % 3) == 1 else 1), _v(LINEN[0]))
+			grid.set_voxel(Vector3i(x, tie, 2 if (x % 3) == 1 else 1), _v(LINEN[0], CLOTH))
+
+
+## A rug lying on the floor, a voxel thick: a woven field, a lozenge in the
+## middle, a border on the sides it does not join (`sides`:
+## ObjectShapes.FENCE_SIDES bits; joined rugs make one). PAINT: dyed with
+## a tint (ChunkProps).
+static func rug(sides: int) -> VoxelGrid:
+	var grid := VoxelGrid.new(Vector3i(16, 1, 16))
+	grid.keep_detail = true
+	for z in 16:
+		for x in 16:
+			var edge := 99
+			for bit in ObjectShapes.FENCE_SIDES.size():
+				if sides & (1 << bit) != 0:
+					continue
+				var side: Vector2i = ObjectShapes.FENCE_SIDES[bit]
+				var away := z if side.y < 0 else (15 - z if side.y > 0 else 99)
+				if side.x != 0:
+					away = 15 - x if side.x > 0 else x
+				edge = mini(edge, away)
+			var tone := 2 if z % 2 == 0 else 4
+			var lozenge := absi(x * 2 - 15) + absi(z * 2 - 15)
+			if lozenge <= 3:
+				tone = 3
+			elif lozenge >= 8 and lozenge <= 10:
+				tone = 1
+			if edge == 0:
+				tone = 0
+			elif edge == 1:
+				tone = 1
+			elif edge == 2:
+				tone = 3
+			grid.set_voxel(Vector3i(x, 0, z), _v(RUG[tone], CLOTH))
 	return grid
 
 

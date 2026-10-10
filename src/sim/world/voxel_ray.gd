@@ -19,6 +19,7 @@ const SMALL_BODIES := {
 	Tiles.Block.TORCH: [0.3, 0.95, 0.0],
 	Tiles.Block.LANTERN: [0.45, 0.85, 0.0],
 	Tiles.Block.LANTERN_HANGING: [0.45, 0.85, 0.15],
+	Tiles.Block.RUG: [1.0, 0.125, 0.0],
 }
 
 

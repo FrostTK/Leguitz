@@ -526,11 +526,13 @@ func _on_block_break(session: PlayerSession, message: Dictionary) -> void:
 		Fixtures.drop_hung(self, part, drops)
 		var above := part + Vector3i.UP
 		var standing := world.voxel_at(above)
-		if Mining.needs_support(standing):
+		# What stood on it falls, then the rug it stood on (it came back).
+		while Mining.needs_support(standing):
 			for piece in Mining.object_cells(above, standing, world.voxel_at):
 				change_voxel(piece, Voxels.AIR)
 			if drops:
 				drop_from(above, standing)
+			standing = world.voxel_at(above)
 
 
 ## A chest, a furnace or a kitchen machine broken: what it held falls out
@@ -813,11 +815,13 @@ func _collect(session: PlayerSession, dropped: DroppedItem) -> void:
 func change_voxel(cell: Vector3i, voxel: int) -> void:
 	var before := world.loaded_voxel_at(cell)
 	world.set_voxel(cell, voxel)
+	# What is there now (a rug comes back when what stood on it goes).
+	var now := world.loaded_voxel_at(cell)
 	fluids.touch(world.loaded_voxel_at, cell, before)
 	var coord := Coords.tile_to_chunk(Vector2i(cell.x, cell.z))
 	for session in sessions:
 		if session.joined and session.sent_chunks.has(coord):
-			session.transport.send(Msg.block_changed(cell, voxel))
+			session.transport.send(Msg.block_changed(cell, now))
 
 
 ## Whether a cell touches the terrain (a block is placed against another).

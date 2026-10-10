@@ -146,9 +146,10 @@ Godot **4.7.2** (GDScript), rendu Forward+. 259 tests unitaires, lint propre.
 | 7.10 Compagnons | Le **chien** : un **loup** à qui l'on donne de la **viande** (crue ou cuite) sans qu'il s'en prenne à nous la mange et, de temps en temps (une fois sur trois), **s'apprivoise** : il devient notre chien (gris comme un loup, collier rouge). Le **chat** : des **chats sauvages** vivent dans les plaines, forêts fleuries, savanes et jungles ; ils fuient le joueur, sauf s'il tient un **poisson** (ils approchent) ; du poisson les apprivoise de la même façon. **Clic droit** sur le sien avec autre chose que sa nourriture : l'**ordre suivant**, « te suit », « reste ici » (assis, endormi la nuit), « garde » (le troupeau pour un chien, les champs pour un chat) là où il est ; une caresse par jour. Sa nourriture le **soigne** (il guérit aussi tout seul, lentement), sinon lui donne envie d'un compagnon : **chiots et chatons**, à nous aussi, dans d'autres **robes** (chiens : gris, fauve, noir et blanc, chocolat, tacheté ; chats : tigré gris, roux, noir, blanc, tricolore, siamois). Qui suit reste au pied (s'assoit quand on s'arrête), nous **rejoint** si on va trop loin et **monte dans le bateau** avec nous. Le chien **aboie** contre les monstres et les loups ou ours en chasse (petits nuages, message « aboie, quelque chose approche ! ») et, s'il suit ou garde, **leur saute dessus** : un monstre mordu est blessé, un loup ou un ours mordu **s'enfuit** ; aucun prédateur ne chasse près d'un chien. De garde, il **ramène au troupeau** les moutons, vaches, chèvres, cochons, poules et canards qui s'éloignent (il passe derrière et les pousse). Le chat **chasse les taupes** (il attend qu'elles sortent) et **les corbeaux** (posés). Nos coups et nos flèches les épargnent. Corrigé au passage : la peinture des bateaux (7.9B) avait mis des variables par instance dans le shader de tous les objets voxel, ce qui saturait un tampon du moteur en première personne (« Too many instances… ») ; elle a maintenant un shader à part, réservé aux bateaux | `a9ee9ef` |
 | 7.11 Saisons | Un **calendrier** par monde : printemps, été, automne, hiver, **7 jours chacune** par défaut (menu pause : « Saisons », 3 à 28 jours, ou aucune ; commande **/saison** pour les admins : une saison et son jour, une durée, aucune) ; l'horloge affiche « Printemps, jour 3 » (et l'année à partir de la deuxième). Un monde réglé sur l'heure de l'appareil suit **la vraie date** (saisons du nord). Un monde d'avant les saisons commence au printemps le jour où il est chargé. **Cultures** : chacune pousse en ses saisons (tomates et melons l'été, blé, carottes et canne à sucre du printemps à l'automne, choux et betteraves aussi l'hiver…), sauf **sous un toit ou du verre** (une serre) ; les arbres fruitiers ne donnent des fruits qu'en été et en automne ; l'hiver, les pousses et les jeunes arbres attendent le printemps et l'herbe ne s'étend plus. Là où l'hiver est doux (déserts, savanes, jungles, badlands), rien n'attend. **Visuel** : au printemps un vert tendre, en été un vert profond ; en automne les chênes, bouleaux et arbres fruitiers **roussissent** (or, orange, rouge, chaque arbre et chaque feuille à son heure) puis **perdent leurs feuilles** (les feuilles qui tombent sont rousses) ; l'hiver, arbres **nus** et **neige** sur le sol, les berges, les toits, le haut des objets et des sapins, les fleurs et les touffes d'herbe enfouies, et **il neige au lieu de pleuvoir** ; à la fin de l'hiver la neige fond et les bourgeons s'ouvrent. Le livre (chapitre Ferme) donne les saisons de chaque culture | `d4bbd4c` |
 | 8.1 Escaliers et dalles | Pour les 6 bois, la pierre, la pierre lisse, les briques de pierre, les briques, les briques d'ardoise des abîmes, le grès et le grès taillé : des **escaliers** (6 blocs en marches → 4), des **dalles** (3 en ligne → 6) et des **dalles verticales** (3 en colonne → 6) ; deux dalles redonnent le bloc. Un escalier se pose **face au joueur** (la marche basse devant) ; visé sur la moitié haute d'un côté, ou avec Maj, ou sous un plafond, il se pose **à l'envers** ; côte à côte, les escaliers font leurs **coins** tout seuls (rentrants et sortants, comme Minecraft). Une dalle se pose en bas ou en haut de sa case ; une **deuxième dalle** de la même matière la complète en **bloc entier**. Une dalle verticale se pose contre le côté visé. **Les escaliers et les dalles se montent en marchant** (une marche d'un demi-niveau ; un bloc entier se saute toujours), on s'y cogne la tête, les animaux y marchent. Ils portent exactement les textures de leur matière (dessinés avec le terrain : légers, deux triangles par face), se cassent comme elle, et la neige d'hiver se pose dessus. Le livre : chapitre Maison (comment les poser) et Fabrication (une recette par forme, qui fait défiler les matières) | `1d17526` |
-| 8.2 Verre et vitres | Le verre refait, **à nous** : le **verre clair** se voit à peine (un reflet du ciel, plus vif en rasant, l'éclat du soleil) et deux blocs côte à côte font **une seule vitre** (un bord seulement là où le verre s'arrête) ; le **verre ancien** (quatre verres et du sable) est verdâtre, ondulé, avec des bulles ; le **verre au plomb** (huit verres autour d'un lingot de fer) fait des losanges sertis de plomb. Une **vitre fine** de chaque verre (six verres → 16) qui se **raccorde** aux vitres, au verre et aux murs voisins comme une barrière. Les **fenêtres** : 4 dessins (quatre carreaux, petits carreaux, à guillotine, œil-de-bœuf) dans 7 cadres (les 6 bois, le fer forgé), 28 fenêtres en tout (du verre au milieu de planches ou de lingots de fer). **Teinte par case** : un pot de peinture (clic droit) teinte le verre, une vitre ou une fenêtre (une couche à chaque fois, le pot vide laisse sa bouteille) ; avec **Maj**, il peint plutôt le **cadre** d'une fenêtre ; l'**arrosoir lave** le verre, la **hache gratte** le cadre. On voit à travers un verre teinté, en couleur, et il garde un peu de sa couleur au soleil. **Le soleil à travers un verre teinté colore le sol et les murs** (des taches de couleur qui suivent le soleil, au dessin des barreaux des fenêtres). La palette passe à **16 couleurs douces à nous** (7 pots ajoutés : brun, gris, bleu ciel, vert tendre, ocre, bordeaux, bleu canard ; les bateaux en profitent). Le livre : chapitre Maison, « Verre et fenêtres » | « Glass and panes » |
+| 8.2 Verre et vitres | Le verre refait, **à nous** : le **verre clair** se voit à peine (un reflet du ciel, plus vif en rasant, l'éclat du soleil) et deux blocs côte à côte font **une seule vitre** (un bord seulement là où le verre s'arrête) ; le **verre ancien** (quatre verres et du sable) est verdâtre, ondulé, avec des bulles ; le **verre au plomb** (huit verres autour d'un lingot de fer) fait des losanges sertis de plomb. Une **vitre fine** de chaque verre (six verres → 16) qui se **raccorde** aux vitres, au verre et aux murs voisins comme une barrière. Les **fenêtres** : 4 dessins (quatre carreaux, petits carreaux, à guillotine, œil-de-bœuf) dans 7 cadres (les 6 bois, le fer forgé), 28 fenêtres en tout (du verre au milieu de planches ou de lingots de fer). **Teinte par case** : un pot de peinture (clic droit) teinte le verre, une vitre ou une fenêtre (une couche à chaque fois, le pot vide laisse sa bouteille) ; avec **Maj**, il peint plutôt le **cadre** d'une fenêtre ; l'**arrosoir lave** le verre, la **hache gratte** le cadre. On voit à travers un verre teinté, en couleur, et il garde un peu de sa couleur au soleil. **Le soleil à travers un verre teinté colore le sol et les murs** (des taches de couleur qui suivent le soleil, au dessin des barreaux des fenêtres). La palette passe à **16 couleurs douces à nous** (7 pots ajoutés : brun, gris, bleu ciel, vert tendre, ocre, bordeaux, bleu canard ; les bateaux en profitent). Le livre : chapitre Maison, « Verre et fenêtres » | `7c506de` |
+| 8.3 Rideaux et tapis | Les **rideaux** se **tirent et se nouent** au clic droit (ou E), comme on ouvre un portillon ; **tirés, ils arrêtent la lumière du jour** : une pièce aux rideaux tous tirés devient sombre (la lanterne du joueur s'allume, et les monstres peuvent y venir comme dans le noir). Quatre sortes : courts ou **longs jusqu'au sol** (la case dessous doit être libre), sur une **tringle en bois ou en fer forgé** (des lingots de fer au lieu des bâtons ; les longs à l'établi). Ils se **teignent** au pot de peinture (ils gardent leur couleur tirés ou noués) et l'arrosoir les lave. Le **tapis** (deux laines ou deux lins en font trois) se pose au sol ; des tapis d'une même couleur côte à côte n'en font **qu'un grand** (la bordure seulement autour), de couleurs différentes ils gardent chacun la leur ; il se teint aussi. **Les meubles se posent sur un tapis** (table, chaises, coffres, fours, et même des blocs) : il reste dessous et revient quand on enlève le meuble ; si son sol casse, il tombe avec. Le livre : chapitre Maison | « Curtains and rugs » |
 
-**Pas encore fait** (prévu) : rideaux fermables, toits, portes et décoration (phase 8),
+**Pas encore fait** (prévu) : portes, toits et décoration (phase 8),
 structures, menus de départ, sons, mode Arcade (en attente), mobile.
 
 ---
@@ -273,13 +274,13 @@ xvfb-run -a -s "-screen 0 960x540x24" godot --path . --audio-driver Dummy --reso
 
 ---
 
-## 5. Prochaine étape au « go » : Phase 8, étape 3 (rideaux et tapis)
+## 5. Prochaine étape au « go » : Phase 8, étape 4 (portes, trappes, échelles, volets)
 
 **La phase 7 est terminée** (étapes 1 à 11 ci-dessous). La **phase 8, Construction et
-décoration**, est en cours : les étapes 1 (escaliers et dalles) et 2 (verre et vitres, la teinte
-par case) sont faites ; au prochain « go », l'**étape 3** (les rideaux fermables et teintables,
-qui assombrissent la pièce une fois fermés, et les tapis : voir la section 6, où sont les
-décisions du propriétaire et tout le découpage).
+décoration**, est en cours : les étapes 1 (escaliers et dalles), 2 (verre et vitres, la teinte
+par case) et 3 (rideaux et tapis) sont faites ; au prochain « go », l'**étape 4** (les portes,
+portes doubles et vitrées, trappes, échelles, volets, grilles et garde-corps : voir la section 6,
+où sont les décisions du propriétaire et tout le découpage).
 
 ### Phase 7 — Agriculture et élevage (terminée)
 
@@ -650,13 +651,18 @@ barrières et portails ; **pas encore de portes, d'escaliers ni de dalles**.
    les 24 verres teintés les plus proches (léger, à mesurer sur la carte graphique du
    propriétaire). La teinte par case sert pour l'instant au verre, aux vitres et aux fenêtres ;
    les rideaux et les tapis suivent à l'étape 3, le reste (plâtre, draps, barrières, portes,
-   coffres, meubles) avec leurs étapes. Pas fait (à proposer) : de vrais **vitraux** (un dessin
-   en plusieurs couleurs dans une seule case, à composer à l'établi), du verre dépoli (on ne voit
-   pas au travers), la lumière colorée des lanternes derrière un verre teinté (la nuit), des
-   reflets du paysage sur les grandes baies, la teinte gardée quand on casse et repose le bloc
-   (l'objet garderait sa couleur).
-3. (prochaine étape) Les **rideaux** fermables et teintables, les **tapis**.
-4. **Portes, trappes, échelles, volets**, garde-corps.
+   coffres, meubles) avec leurs étapes. Pas fait : les vitraux, le verre dépoli, la lumière des
+   lanternes à travers le verre teinté et la teinte gardée, **retenus par le propriétaire** (voir
+   l'étape 10) ; à proposer encore : des reflets du paysage sur les grandes baies.
+3. ✅ Les **rideaux** fermables et teintables, les **tapis** (voir section 3, ligne 8.3). Fait
+   comme prévu, avec ces choix : les rideaux se posent dans la case devant la fenêtre (les longs
+   descendent d'une case de plus), tirés ils comptent comme un mur pour la lumière du jour (pas de
+   demi-jour), les meubles et les blocs posés sur un tapis le gardent dessous (il revient quand on
+   les enlève), les coussins sont laissés à l'étape 7 (assises), et la tringle ne se peint pas.
+   Pas fait (à proposer) : des rideaux à demi tirés, un peu de jour à travers des rideaux clairs,
+   des voilages transparents, des tapis ronds ou à grands dessins (un motif sur plusieurs cases),
+   des tapis d'escalier, des franges, un tapis sur une dalle ou un escalier, peindre la tringle.
+4. (prochaine étape) **Portes, trappes, échelles, volets**, garde-corps.
 5. **Toitures** (4 matériaux, leurs pièces, la cheminée).
 6. **Nouveaux matériaux** (pavés, plâtre, colombages, parquet, carrelage…) avec leurs escaliers et
    dalles ; murets, piliers, poutres.
@@ -665,6 +671,11 @@ barrières et portails ; **pas encore de portes, d'escaliers ni de dalles**.
 8. **Ambiance** : lumières (lustre, bougies), cheminée, tableaux, horloge, miroir, plantes en pot,
    salle de bain.
 9. **Extérieur**.
+10. **Verre, suite** (retenu par le propriétaire en octobre 2026, parmi les propositions de
+    l'étape 2) : de vrais **vitraux** (un dessin en plusieurs couleurs dans une seule case, à
+    composer à l'établi), du **verre dépoli** (on ne voit pas au travers), la **lumière colorée
+    des lanternes** derrière un verre teinté la nuit, la **teinte gardée** quand on casse et
+    repose un bloc (l'objet garde sa couleur : verre, rideaux, tapis).
 
 ### Mode Arcade — en attente (ancienne phase 8, mise de côté par le propriétaire en octobre 2026)
 

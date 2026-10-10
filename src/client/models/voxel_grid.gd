@@ -24,6 +24,9 @@ var pivot := Vector2(-1.0, -1.0)
 ## better (a much lighter mesh) and the light painted on the leaves
 ## already darkens the inside.
 var foliage_ao := true
+## Its coarser copies are itself (gen_models): thin and light models (a
+## rug, curtains) that would thicken, coarsened, keep their detail.
+var keep_detail := false
 
 
 func _init(grid_size := Vector3i.ONE) -> void:

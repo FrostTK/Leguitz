@@ -273,6 +273,8 @@ static func _home() -> Array:
 		_icon(Items.Id.OAK_STAIRS, _t("BOOK_HOME_SHAPED")),
 		_icon(Items.Id.TORCH_BRACKET, _t("BOOK_HOME_BRACKET")),
 		_icon(Items.Id.CURTAINS, _t("BOOK_HOME_CURTAINS")),
+		_icon(Items.Id.CURTAINS_LONG_IRON, _t("BOOK_HOME_CURTAINS_KINDS")),
+		_icon(Items.Id.RUG, _t("BOOK_HOME_RUG")),
 		_icon(Items.Id.TABLE, _t("BOOK_HOME_FURNITURE")),
 		_heading("BOOK_HOME_GLASS"),
 		_icon(Items.Id.GLASS, _t("BOOK_HOME_CLEAR_GLASS")),

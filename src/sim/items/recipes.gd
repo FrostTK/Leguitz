@@ -332,6 +332,28 @@ const SHAPED := [
 		"keys": {"S": Items.Id.STICK, "W": [Items.Id.WOOL, Items.Id.LINEN]},
 		"result": [Items.Id.CURTAINS, 1],
 	},
+	{
+		"pattern": ["III", "W W", "W W"],
+		"keys": {"I": Items.Id.IRON_INGOT, "W": [Items.Id.WOOL, Items.Id.LINEN]},
+		"result": [Items.Id.CURTAINS_IRON, 2],
+	},
+	{
+		"pattern": ["SSS", "W W", "W W", "W W"],
+		"keys": {"S": Items.Id.STICK, "W": [Items.Id.WOOL, Items.Id.LINEN]},
+		"result": [Items.Id.CURTAINS_LONG, 1],
+		"workbench": true,
+	},
+	{
+		"pattern": ["III", "W W", "W W", "W W"],
+		"keys": {"I": Items.Id.IRON_INGOT, "W": [Items.Id.WOOL, Items.Id.LINEN]},
+		"result": [Items.Id.CURTAINS_LONG_IRON, 2],
+		"workbench": true,
+	},
+	{
+		"pattern": ["WW"],
+		"keys": {"W": [Items.Id.WOOL, Items.Id.LINEN]},
+		"result": [Items.Id.RUG, 3],
+	},
 	# Glass: old glass (sand in it), leaded glass, panes of each.
 	{
 		"ingredients":

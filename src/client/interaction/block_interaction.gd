@@ -163,6 +163,8 @@ func usable_here() -> bool:
 ## aimed at something to use, uses it (use_target); the player's book in
 ## hand opens instead.
 func place() -> void:
+	if _tint_aimed():
+		return
 	if usable_here():
 		use_target()
 		return
@@ -218,23 +220,32 @@ func place() -> void:
 	_put(cells, cell, slot, front, face, upper)
 
 
-## What a right click does rather than placing: the book in hand opens,
-## glass aimed at is tinted (a pot in hand; Shift: a window's frame),
-## washed (the watering can) or its frame scraped (an axe), a boat aimed at
-## is painted (a pot; Shift: its stripe) or scraped (an axe), else boarded,
-## the fishing rod casts. Returns whether it did.
+## Glass, curtains or a rug aimed at is tinted (a pot in hand; Shift: a
+## window's frame) or washed (the watering can), a window's frame scraped
+## (an axe): a right click (before using curtains). Returns whether it did.
+func _tint_aimed() -> bool:
+	var held := client.held_item()
+	if target == null or not Tints.tintable(Voxels.block_of(target.voxel)):
+		return false
+	var scrapes := Items.tool_of(held) == Items.Tool.AXE
+	if scrapes and not Glass.is_window(Voxels.block_of(target.voxel)):
+		return false
+	if not (scrapes or held in Items.PAINTS or held == Items.Id.WATERING_CAN):
+		return false
+	var frame := Input.is_action_pressed(InputBindings.SPRINT)
+	client.transport.send(Msg.tint(target.cell, client.inventory.selected, frame))
+	client.player_model.swing()
+	return true
+
+
+## What a right click does rather than placing: the book in hand opens, a
+## boat aimed at is painted (a pot; Shift: its stripe) or scraped (an axe),
+## else boarded, the fishing rod casts. Returns whether it did.
 func _instead_of_placing() -> bool:
 	var held := client.held_item()
 	if held == Items.Id.GUIDE_BOOK:
 		client.open_book()
 		return true
-	var tool := held in Items.PAINTS or Items.tool_of(held) == Items.Tool.AXE
-	if target != null and Tints.tintable(Voxels.block_of(target.voxel)):
-		if tool or held == Items.Id.WATERING_CAN:
-			var frame := Input.is_action_pressed(InputBindings.SPRINT)
-			client.transport.send(Msg.tint(target.cell, client.inventory.selected, frame))
-			client.player_model.swing()
-			return true
 	if target_boat >= 0 and (held in Items.PAINTS or Items.tool_of(held) == Items.Tool.AXE):
 		var stripe := Input.is_action_pressed(InputBindings.SPRINT)
 		client.transport.send(Msg.boat_paint(target_boat, client.inventory.selected, stripe))
@@ -684,9 +695,10 @@ func _break(hit: VoxelRay.Hit) -> void:
 	for part in cells:
 		var above := part + Vector3i.UP
 		var standing := client.world.voxel_at(above)
-		if Mining.needs_support(standing):
+		while Mining.needs_support(standing):
 			for piece in Mining.object_cells(above, standing, voxel_at):
 				_predict(piece, Voxels.AIR)
+			standing = client.world.voxel_at(above)
 	var slot := -1 if client.book_in_hand else client.inventory.selected
 	client.transport.send(Msg.block_break(hit.cell, slot))
 	_wear_tool(slot, hit.voxel)

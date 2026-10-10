@@ -95,6 +95,14 @@ const BLOCK_SECONDS := {
 	# What players place, by kind (any way it faces, open or shut).
 	Tiles.Block.TORCH_BRACKET: 1.5,
 	Tiles.Block.CURTAINS: 0.6,
+	Tiles.Block.CURTAINS_LONG: 0.7,
+	Tiles.Block.CURTAINS_IRON: 0.9,
+	Tiles.Block.CURTAINS_LONG_IRON: 1.0,
+	Tiles.Block.RUG: 0.3,
+	Tiles.Block.CURTAINS_CLOSED: 0.6,
+	Tiles.Block.CURTAINS_LONG_CLOSED: 0.7,
+	Tiles.Block.CURTAINS_IRON_CLOSED: 0.9,
+	Tiles.Block.CURTAINS_LONG_IRON_CLOSED: 1.0,
 	Tiles.Block.GLASS_PANE: 0.4,
 	Tiles.Block.OLD_GLASS_PANE: 0.4,
 	Tiles.Block.LEADED_GLASS_PANE: 0.4,
@@ -293,6 +301,7 @@ const PICKAXE_BLOCKS := {
 ## Objects placed as they are (no way to face), standing on a cube.
 const FLOOR_OBJECTS := {
 	Tiles.Block.TABLE: true,
+	Tiles.Block.RUG: true,
 	Tiles.Block.FENCE: true,
 	Tiles.Block.CAMPFIRE: true,
 	Tiles.Block.TORCH: true,
@@ -407,6 +416,10 @@ static func placement(
 		var under: int = voxel_at.call(cell + Vector3i.DOWN)
 		var still := Voxels.is_water(under) and Fluids.level_of(under) == 0
 		return {cell: voxel} if still and voxel_at.call(cell) == Voxels.AIR else {}
+	if block == Tiles.Block.RUG:
+		# On a floor, not on another rug.
+		var free: bool = voxel_at.call(cell) != voxel and _bench_room(cell, voxel_at)
+		return {cell: voxel} if free else {}
 	if FLOOR_OBJECTS.has(block):
 		return {cell: voxel} if _bench_room(cell, voxel_at) else {}
 	if Farming.SOWN.has(block):
@@ -420,7 +433,7 @@ static func placement(
 		var there: int = voxel_at.call(cell)
 		var free := is_replaceable(there) and not Voxels.is_liquid(there)
 		return {cell: voxel} if free and Growth.is_soil(voxel_at.call(cell + Vector3i.DOWN)) else {}
-	return {cell: voxel} if is_replaceable(voxel_at.call(cell)) else {}
+	return {cell: voxel} if takes(voxel_at.call(cell)) else {}
 
 
 ## Whether breaking a voxel wears the tool in hand (not what breaks at
@@ -430,12 +443,17 @@ static func wears(voxel: int) -> bool:
 
 
 ## Something of `kind` (see ObjectShapes.WALL_MOUNTED) hung in `cell`
-## facing `front`, on the cube behind it.
+## facing `front`, on the cube behind it (long curtains: the cell under
+## free too, they hang down to the floor).
 static func _hung(cell: Vector3i, kind: int, front: Vector2i, voxel_at: Callable) -> Dictionary:
 	var there: int = voxel_at.call(cell)
 	var behind: int = voxel_at.call(cell - Vector3i(front.x, 0, front.y))
 	if not is_replaceable(there) or Voxels.is_liquid(there) or not Voxels.is_cube(behind):
 		return {}
+	if ObjectShapes.LONG_CURTAINS.has(kind):
+		var below: int = voxel_at.call(cell + Vector3i.DOWN)
+		if Voxels.is_solid(below) or Voxels.is_cube(below) or Voxels.is_liquid(below):
+			return {}
 	return {cell: Voxels.of_block(ObjectShapes.facing(kind, front))}
 
 
@@ -453,9 +471,12 @@ static func under_ceiling(cell: Vector3i, voxel_at: Callable) -> Vector3i:
 
 
 ## Whether placing `voxel` aimed at `there` fills it (a torch into an empty
-## bracket, grapes on a trellis) instead of going next to it.
+## bracket, grapes on a trellis, anything but a rug onto a rug) instead of
+## going next to it.
 static func fills(there: int, voxel: int) -> bool:
 	var block := Voxels.block_of(voxel)
+	if is_rug(there):
+		return not is_rug(voxel)
 	if Farming.bed_of(block) == Farming.Bed.TRELLIS and Farming.SOWN.has(block):
 		return Voxels.block_of(there) == Tiles.Block.TRELLIS
 	return (
@@ -475,12 +496,17 @@ static func minds_the_side(voxel: int) -> bool:
 	)
 
 
-## Whether a voxel swings when used: a gate (see swung_cells).
+## Whether a voxel swings when used: a gate, curtains (drawn or tied
+## back; see swung_cells).
 static func swings(voxel: int) -> bool:
-	return voxel != Voxels.UNKNOWN and ObjectShapes.is_gate(Voxels.block_of(voxel))
+	if voxel == Voxels.UNKNOWN:
+		return false
+	var block := Voxels.block_of(voxel)
+	return ObjectShapes.is_gate(block) or ObjectShapes.is_curtain(block)
 
 
-## A gate in `cell` swung open or shut: its cells and their new voxels.
+## A gate in `cell` swung open or shut (curtains drawn or tied back): its
+## cells and their new voxels.
 static func swung_cells(cell: Vector3i, voxel: int, voxel_at: Callable) -> Dictionary:
 	var cells := {}
 	for part in object_cells(cell, voxel, voxel_at):
@@ -554,10 +580,20 @@ static func object_cells(cell: Vector3i, voxel: int, voxel_at: Callable) -> Arra
 static func _bench_room(cell: Vector3i, voxel_at: Callable) -> bool:
 	var there: int = voxel_at.call(cell)
 	return (
-		is_replaceable(there)
+		takes(there)
 		and not Voxels.is_liquid(there)
 		and Voxels.is_cube(voxel_at.call(cell + Vector3i.DOWN))
 	)
+
+
+## Whether furniture or a block can be placed into a voxel: what is
+## replaceable, and a rug (it then lies under it: ChunkData.rugs).
+static func takes(voxel: int) -> bool:
+	return is_replaceable(voxel) or is_rug(voxel)
+
+
+static func is_rug(voxel: int) -> bool:
+	return voxel == Voxels.of_block(Tiles.Block.RUG)
 
 
 ## Whether a block can be placed into a voxel: air, liquids, small plants

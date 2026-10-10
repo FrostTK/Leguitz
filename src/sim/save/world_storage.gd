@@ -160,6 +160,9 @@ func load_chunk(coord: Vector2i) -> ChunkData:
 	var tints: Dictionary = data.get("tints", {})
 	for cell: Vector3i in tints:
 		chunk.tints[cell] = int(tints[cell])
+	var rugs: Dictionary = data.get("rugs", {})
+	for cell: Vector3i in rugs:
+		chunk.rugs[cell] = int(rugs[cell])
 	return chunk
 
 
@@ -187,6 +190,7 @@ func store_chunk(chunk: ChunkData) -> void:
 		"watered": watered,
 		"machines": machines,
 		"tints": chunk.tints.duplicate(),
+		"rugs": chunk.rugs.duplicate(),
 	}
 	_dirty[key] = true
 

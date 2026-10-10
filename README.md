@@ -41,6 +41,9 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Escaliers, dalles et dalles verticales de chaque bois et de chaque pierre (coins automatiques, à l'envers, deux dalles font le bloc), qui se montent en marchant | ✅ |
 | Saisons (réglage du monde) : cultures de saison et serres, arbres qui roussissent puis se dénudent, neige l'hiver, le calendrier à l'horloge, /saison | ✅ |
 | Verre et vitres refaits : verre clair continu, verre ancien, verre au plomb, vitres fines qui se raccordent, 28 fenêtres (4 dessins, 6 bois et fer forgé), teinte par case au pot de peinture (le cadre à part), lavée à l'arrosoir ; le soleil à travers le verre teinté colore le sol ; palette de 16 couleurs douces | ✅ |
+| Rideaux qui se tirent et se nouent (tirés, la pièce devient sombre), longs jusqu'au sol, tringle en bois ou en fer, teints au pot de peinture ; tapis qui se raccordent en un grand tapis, teints, sous les meubles | ✅ |
+
+![Leguitz : rideaux et tapis : une pièce vue de dessus avec des rideaux de chaque sorte (noués, tirés, longs jusqu'au sol, tringle en bois ou en fer forgé, teints en rouge, jaune, bleu ciel, bordeaux), un grand tapis rouge sous une table et ses chaises, un tapis bleu, de petits tapis de couleurs ; la même pièce sous un toit en première personne, rideaux noués (le jour entre) puis tous tirés (la pièce devient sombre, la lanterne s'allume) ; l'inventaire des rideaux, du tapis et des 16 pots de peinture](docs/screenshots/phase8-rideaux-tapis.png)
 
 ![Leguitz : verre et vitres : les 28 fenêtres dans un mur de briques de pierre (quatre dessins, six bois et fer forgé, certaines peintes), le verre clair continu, le verre ancien et le verre au plomb, du verre teinté en six couleurs, des vitres qui tournent ; en première personne, une pièce sous une verrière teintée dont le soleil fait des taches de couleur au sol et sur les murs ; la même pièce vue de dessus, en coupe ; l'inventaire des verres, vitres, fenêtres et des 16 pots de peinture](docs/screenshots/phase8-verre-vitres.png)
 
@@ -327,9 +330,9 @@ Pour le multijoueur, il suffira de brancher un transport réseau.
 6. Souterrain et structures (en pause : maison et jardin, torches et lanternes, lumière des grottes, coulées d'eau et de lave faits)
 7. ✅ Agriculture et élevage (végétation qui pousse, champs et cultures, arrosage et compost,
    nouvelles cultures et arbres fruitiers, élevage, cuisine, pêche et bateaux, compagnons, saisons)
-8. Construction et décoration (en cours : escaliers et dalles, verre et vitres teintables faits ;
-   à venir : rideaux fermables, toitures, portes et échelles, nouveaux matériaux, décoration
-   intérieure)
+8. Construction et décoration (en cours : escaliers et dalles, verre et vitres teintables,
+   rideaux et tapis faits ; à venir : portes et échelles, toitures, nouveaux matériaux,
+   décoration intérieure, vitraux)
 9. Finitions PC (menus, sauvegardes, sons, options graphiques, Steam)
 10. Mobile (iOS, Android)
 

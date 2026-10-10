@@ -316,12 +316,37 @@ const OPENS := {
 	Tiles.Block.GATE: Tiles.Block.GATE_OPEN,
 	Tiles.Block.BIG_GATE: Tiles.Block.BIG_GATE_OPEN,
 }
+## Curtains (their kind tied back, as placed) and their kind drawn: they
+## are drawn and tied back when used (Mining.swings); drawn, they keep the
+## daylight out (LightField.DRAWN_CURTAINS). Their facing kinds are built
+## by name (`_curtain_kinds`).
+const DRAWN := {
+	Tiles.Block.CURTAINS: Tiles.Block.CURTAINS_CLOSED,
+	Tiles.Block.CURTAINS_LONG: Tiles.Block.CURTAINS_LONG_CLOSED,
+	Tiles.Block.CURTAINS_IRON: Tiles.Block.CURTAINS_IRON_CLOSED,
+	Tiles.Block.CURTAINS_LONG_IRON: Tiles.Block.CURTAINS_LONG_IRON_CLOSED,
+}
+## Long curtains hang down to the floor: their model goes a level under
+## their cell (SUNK), which must be free when they are hung.
+const LONG_CURTAINS := {
+	Tiles.Block.CURTAINS_LONG: true,
+	Tiles.Block.CURTAINS_LONG_CLOSED: true,
+	Tiles.Block.CURTAINS_LONG_IRON: true,
+	Tiles.Block.CURTAINS_LONG_IRON_CLOSED: true,
+}
 ## What hangs on the side of a cube (by kind), facing away from it: it
 ## falls with it.
 const WALL_MOUNTED := {
 	Tiles.Block.TORCH_BRACKET: true,
 	Tiles.Block.TORCH_BRACKET_LIT: true,
 	Tiles.Block.CURTAINS: true,
+	Tiles.Block.CURTAINS_CLOSED: true,
+	Tiles.Block.CURTAINS_LONG: true,
+	Tiles.Block.CURTAINS_LONG_CLOSED: true,
+	Tiles.Block.CURTAINS_IRON: true,
+	Tiles.Block.CURTAINS_IRON_CLOSED: true,
+	Tiles.Block.CURTAINS_LONG_IRON: true,
+	Tiles.Block.CURTAINS_LONG_IRON_CLOSED: true,
 	Tiles.Block.LANTERN_WALL: true,
 }
 ## What hangs from the cube above it (it falls with it, not with the
@@ -407,7 +432,14 @@ const SINGLE := {
 ## Objects drawn sunk this deep (levels): a fish trap's basket under the
 ## water's surface, its float on it; a shipyard's slipway down into the
 ## water (its bank at BoatModels.BANK).
-const SUNK := {Tiles.Block.FISH_TRAP: 0.75, Tiles.Block.SHIPYARD: 1.0}
+const SUNK := {
+	Tiles.Block.FISH_TRAP: 0.75,
+	Tiles.Block.SHIPYARD: 1.0,
+	Tiles.Block.CURTAINS_LONG: 1.0,
+	Tiles.Block.CURTAINS_LONG_CLOSED: 1.0,
+	Tiles.Block.CURTAINS_LONG_IRON: 1.0,
+	Tiles.Block.CURTAINS_LONG_IRON_CLOSED: 1.0,
+}
 ## Small things stand anywhere in their tile (whole voxels), not centered.
 const WANDERING := {
 	Tiles.Block.TALL_GRASS: true,
@@ -435,6 +467,9 @@ const WANDERING := {
 
 ## block -> (kind, way index), for the facing objects; a wide object's
 ## right end -> [axis it lies along, kind].
+## Every facing kind's blocks: FACING_KINDS, stairs and side slabs
+## (ShapedBlocks), curtains (`_curtain_kinds`).
+static var _facing_kinds := _all_facing_kinds()
 static var _facing := _build_facing()
 static var _wide_ends := _build_wide_ends()
 
@@ -446,7 +481,7 @@ static func is_tree(block: int) -> bool:
 static func variant_count(block: int) -> int:
 	if _facing.has(block) or _wide_ends.has(block) or SINGLE.has(base_kind(block)):
 		return 1
-	if block == Tiles.Block.FENCE:
+	if block == Tiles.Block.FENCE or block == Tiles.Block.RUG:
 		return FENCE_VARIANTS
 	return TREE_VARIANTS if TREES.has(block) else VARIANTS
 
@@ -541,11 +576,37 @@ static func is_open(block: int) -> bool:
 	return OPENS.values().has(base_kind(block))
 
 
+## Curtains, tied back or drawn, any way they face.
+static func is_curtain(block: int) -> bool:
+	var kind := kind_of(block)
+	return DRAWN.has(kind) or DRAWN.values().has(kind)
+
+
+## Curtains drawn (see DRAWN).
+static func is_drawn(block: int) -> bool:
+	return DRAWN.values().has(kind_of(block))
+
+
+## Whether two blocks are one thing (a tint stays when one turns into the
+## other): the same kind, a gate open or shut, curtains tied or drawn.
+static func same_piece(block: int, other: int) -> bool:
+	return _pair_of(base_kind(block)) == _pair_of(base_kind(other))
+
+
+static func _pair_of(kind: int) -> int:
+	var shut: Variant = OPENS.find_key(kind)
+	if shut != null:
+		return shut
+	var tied: Variant = DRAWN.find_key(kind)
+	return tied if tied != null else kind
+
+
 ## The gate's block once it swung (open <-> shut), the same way facing
-## (or the same end).
+## (or the same end); curtains' drawn or tied back.
 static func swung(block: int) -> int:
 	var kind := base_kind(block)
-	var other: int = OPENS.get(kind, OPENS.find_key(kind))
+	var pairs := DRAWN if is_curtain(block) else OPENS
+	var other: int = pairs.get(kind, pairs.find_key(kind))
 	if _wide_ends.has(block):
 		return wide_end(other, end_axis(block))
 	return facing(other, front_of(block))
@@ -581,7 +642,7 @@ static func front_of(block: int) -> Vector2i:
 ## side slabs: ShapedBlocks.facing_kinds) facing `front` (a unit step on
 ## the ground).
 static func facing(kind: int, front: Vector2i) -> int:
-	var blocks: Array = FACING_KINDS.get(kind, ShapedBlocks.facing_kinds().get(kind, []))
+	var blocks: Array = _facing_kinds.get(kind, [])
 	return blocks[maxi(WAYS.find(front), 0)]
 
 
@@ -695,15 +756,36 @@ static func footprint_rect(block: int, tile: Vector2i) -> Rect2:
 	return Rect2(center - Vector2.ONE * size * 0.5, Vector2.ONE * size)
 
 
-static func _build_facing() -> Dictionary:
-	var lookup := {}
+static func _all_facing_kinds() -> Dictionary:
 	var kinds := FACING_KINDS.duplicate()
 	kinds.merge(ShapedBlocks.facing_kinds())
-	for kind: int in kinds:
-		var blocks: Array = kinds[kind]
+	kinds.merge(_curtain_kinds())
+	return kinds
+
+
+static func _build_facing() -> Dictionary:
+	var lookup := {}
+	for kind: int in _facing_kinds:
+		var blocks: Array = _facing_kinds[kind]
 		for way in blocks.size():
 			lookup[blocks[way]] = Vector2i(kind, way)
 	return lookup
+
+
+## The curtains' facing kinds but the first (FACING_KINDS), by name: each
+## kind of DRAWN, tied back and drawn, and its blocks facing W, N, E.
+static func _curtain_kinds() -> Dictionary:
+	var kinds := {}
+	for tied: int in DRAWN:
+		for kind: int in [tied, DRAWN[tied]]:
+			if FACING_KINDS.has(kind):
+				continue
+			var name := String(Tiles.Block.find_key(kind))
+			var blocks := []
+			for way: String in ["", "_WEST", "_NORTH", "_EAST"]:
+				blocks.append(Tiles.Block[name + way])
+			kinds[kind] = blocks
+	return kinds
 
 
 static func _build_wide_ends() -> Dictionary:

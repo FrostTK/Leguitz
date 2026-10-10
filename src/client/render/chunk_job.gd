@@ -23,8 +23,10 @@ var map_only := false
 var serial := 0
 ## The chunk's columns' biomes (the seasons: SeasonLook.prop_bits).
 var biome := PackedByteArray()
-## The tints of the chunk and of its neighbors (Tints.pack, by cell).
+## The tints of the chunk and of its neighbors (Tints.pack, by cell), and
+## the rugs lying under things (ChunkData.rugs).
 var tints: Dictionary[Vector3i, int] = {}
+var rugs: Dictionary[Vector3i, int] = {}
 
 
 static func of_chunk(chunk: ChunkData, neighbor: Callable) -> ChunkJob:
@@ -41,4 +43,5 @@ static func of_chunk(chunk: ChunkData, neighbor: Callable) -> ChunkJob:
 			job.tops.append(other.tops if other != null else PackedByteArray())
 			if other != null:
 				job.tints.merge(other.tints)
+				job.rugs.merge(other.rugs)
 	return job

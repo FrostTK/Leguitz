@@ -36,8 +36,8 @@ func _save_lods(block: int, variant: int) -> int:
 	var grid := VoxelModels.build(block, variant)
 	var count := 0
 	for lod in VoxelModels.LODS:
-		var factor := 1 << lod
-		var lod_grid := grid if lod == 0 else grid.downsampled(factor)
+		var factor := 1 if grid.keep_detail else 1 << lod
+		var lod_grid := grid if factor == 1 else grid.downsampled(factor)
 		var triangles := _save_mesh(
 			VoxelMesher.build(lod_grid, factor), VoxelModels.block_path(block, variant, lod)
 		)

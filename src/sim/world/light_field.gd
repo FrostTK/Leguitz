@@ -6,8 +6,9 @@ extends RefCounted
 ## and down into covered places, a level less per step: a cave far from
 ## any opening stays at 0. Block light: lava, fires, torches and lanterns
 ## shine EMISSION levels, a level less per step. Cubes stop both (not glass
-## or windows). ChunkMesher bakes the sky light of a chunk into its faces
-## (see sky), the server measures a cell's light for the monsters (Light).
+## or windows), and so do curtains drawn (DRAWN_CURTAINS). ChunkMesher
+## bakes the sky light of a chunk into its faces (see sky), the server
+## measures a cell's light for the monsters (Light).
 
 const MAX := 15
 ## How a voxel lets light through (by voxel id): CLEAR, OPAQUE, or WATER
@@ -60,6 +61,26 @@ const CLEAR_BLOCKS := {
 	Tiles.Block.IRON_WINDOW_SMALL: true,
 	Tiles.Block.IRON_WINDOW_SASH: true,
 	Tiles.Block.IRON_WINDOW_ROUND: true,
+}
+## Curtains drawn (ObjectShapes.DRAWN, every way they face): they keep
+## the daylight out, as cubes do.
+const DRAWN_CURTAINS := {
+	Tiles.Block.CURTAINS_CLOSED: true,
+	Tiles.Block.CURTAINS_CLOSED_WEST: true,
+	Tiles.Block.CURTAINS_CLOSED_NORTH: true,
+	Tiles.Block.CURTAINS_CLOSED_EAST: true,
+	Tiles.Block.CURTAINS_LONG_CLOSED: true,
+	Tiles.Block.CURTAINS_LONG_CLOSED_WEST: true,
+	Tiles.Block.CURTAINS_LONG_CLOSED_NORTH: true,
+	Tiles.Block.CURTAINS_LONG_CLOSED_EAST: true,
+	Tiles.Block.CURTAINS_IRON_CLOSED: true,
+	Tiles.Block.CURTAINS_IRON_CLOSED_WEST: true,
+	Tiles.Block.CURTAINS_IRON_CLOSED_NORTH: true,
+	Tiles.Block.CURTAINS_IRON_CLOSED_EAST: true,
+	Tiles.Block.CURTAINS_LONG_IRON_CLOSED: true,
+	Tiles.Block.CURTAINS_LONG_IRON_CLOSED_WEST: true,
+	Tiles.Block.CURTAINS_LONG_IRON_CLOSED_NORTH: true,
+	Tiles.Block.CURTAINS_LONG_IRON_CLOSED_EAST: true,
 }
 
 ## Per voxel id: how it lets light through, how much it shines.
@@ -225,6 +246,8 @@ static func _build_passing() -> PackedByteArray:
 		if Voxels.is_lava(voxel):
 			table[voxel] = OPAQUE
 		elif Voxels.is_cube(voxel) and not CLEAR_BLOCKS.has(Voxels.block_of(voxel)):
+			table[voxel] = OPAQUE
+		elif DRAWN_CURTAINS.has(Voxels.block_of(voxel)):
 			table[voxel] = OPAQUE
 		elif Voxels.is_liquid(voxel):
 			table[voxel] = WATER

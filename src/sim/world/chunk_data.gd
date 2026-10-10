@@ -14,6 +14,8 @@ const SIZE := GameConst.CHUNK_SIZE
 const HEIGHT := GameConst.WORLD_HEIGHT
 ## Water surfaces sit this far (levels) below the top of their voxel.
 const WATER_DROP := 0.15
+## A rug's voxel (see rugs).
+const RUG := Voxels.BLOCK_BASE + Tiles.Block.RUG
 
 var coord := Vector2i.ZERO
 var voxels := PackedInt32Array()
@@ -41,8 +43,14 @@ var watered: Dictionary[Vector3i, float] = {}
 ## (see Machines), saved with it.
 var machines: Dictionary[Vector3i, Dictionary] = {}
 ## The cells tinted with paint (Tints.pack), by cell: saved with it and
-## sent with it; a cell changing loses its tint.
+## sent with it; a cell changing loses its tint (not curtains drawn or a
+## gate swung: ObjectShapes.same_piece).
 var tints: Dictionary[Vector3i, int] = {}
+## The rugs lying under what was placed on them, by cell: their tint
+## (Tints.pack; 0: none). Saved and sent with it. Something placed on a
+## rug puts it there; when that goes (the cell set to air), the rug comes
+## back (set_voxel: the server and the client's guesses alike).
+var rugs: Dictionary[Vector3i, int] = {}
 
 
 func _init(chunk_coord := Vector2i.ZERO) -> void:
@@ -62,9 +70,11 @@ func get_voxel(local: Vector3i) -> int:
 
 
 func set_voxel(local: Vector3i, voxel: int) -> void:
-	voxels[voxel_index(local.x, local.y, local.z)] = voxel
-	if not tints.is_empty():
-		tints.erase(Vector3i(coord.x * SIZE + local.x, local.y, coord.y * SIZE + local.z))
+	var index := voxel_index(local.x, local.y, local.z)
+	var before := voxels[index]
+	if not tints.is_empty() or not rugs.is_empty() or before == RUG:
+		voxel = _keeps(local, before, voxel)
+	voxels[index] = voxel
 	var column := local.z * SIZE + local.x
 	if Voxels.is_cube(voxel) or Voxels.is_liquid(voxel):
 		tops[column] = maxi(tops[column], local.y + 1)
@@ -80,6 +90,27 @@ func set_voxel(local: Vector3i, voxel: int) -> void:
 			if voxels[base + y] != Voxels.AIR:
 				raised[column] = y + 1
 				break
+
+
+## What a cell becomes when set to `voxel` (`before` there): a rug under
+## what goes on it, back when that goes; a tint kept by the same piece.
+func _keeps(local: Vector3i, before: int, voxel: int) -> int:
+	var cell := Vector3i(coord.x * SIZE + local.x, local.y, coord.y * SIZE + local.z)
+	if before == RUG and voxel != Voxels.AIR and voxel != RUG:
+		rugs[cell] = tints.get(cell, 0)
+		tints.erase(cell)
+		return voxel
+	if voxel == Voxels.AIR and rugs.has(cell):
+		var tint: int = rugs[cell]
+		rugs.erase(cell)
+		tints.erase(cell)
+		if tint != 0:
+			tints[cell] = tint
+		return RUG
+	if tints.has(cell):
+		if not ObjectShapes.same_piece(Voxels.block_of(before), Voxels.block_of(voxel)):
+			tints.erase(cell)
+	return voxel
 
 
 ## Row just above the terrain of a column (0 if the column is empty).
@@ -146,6 +177,7 @@ func duplicate_chunk() -> ChunkData:
 	copy.tops = tops.duplicate()
 	copy.raised = raised.duplicate()
 	copy.tints = tints.duplicate()
+	copy.rugs = rugs.duplicate()
 	copy.modified = modified
 	return copy
 
@@ -160,6 +192,7 @@ func to_dict() -> Dictionary:
 		"tops": tops,
 		"raised": raised,
 		"tints": tints,
+		"rugs": rugs,
 	}
 
 
@@ -181,10 +214,12 @@ static func from_dict(data: Dictionary) -> ChunkData:
 			chunk.raised[int(column)] = int(raised[column])
 	else:
 		chunk.recompute_tops()
-	var tints: Dictionary = data.get("tints", {})
-	for cell: Variant in tints:
-		if cell is Vector3i:
-			chunk.tints[cell] = int(tints[cell])
+	for key: String in ["tints", "rugs"]:
+		var cells: Dictionary = data.get(key, {})
+		var into: Dictionary = chunk.tints if key == "tints" else chunk.rugs
+		for cell: Variant in cells:
+			if cell is Vector3i:
+				into[cell] = int(cells[cell])
 	return chunk
 
 

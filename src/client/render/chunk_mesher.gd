@@ -268,10 +268,13 @@ static func build(job: ChunkJob) -> Result:
 				else:
 					var block := Voxels.block_of(voxel)
 					var biome := job.biome[lz * SIZE + lx] if not job.biome.is_empty() else 0
-					var prop_sky := sky_level(tables, index) + SeasonLook.prop_bits(block, biome)
-					_add_prop(
-						result, job.variants, voxel, voxels, base, lx, y, lz, origin, prop_sky
-					)
+					# Drawn curtains are lit as the room in front of them.
+					var lit := index
+					if ObjectShapes.is_drawn(block):
+						var front := ObjectShapes.front_of(block)
+						lit += front.x * STRIDE_X + front.y * STRIDE_Z
+					var prop_sky := sky_level(tables, lit) + SeasonLook.prop_bits(block, biome)
+					ChunkProps.add(result, job, voxel, voxels, base, lx, y, lz, origin, prop_sky)
 					if ObjectShapes.is_lit(block):
 						_add_flame(result, block, Vector3(lx + 0.5, y - SEA, lz + 0.5))
 						var rows := tops[column] - y
@@ -887,69 +890,3 @@ static func _add_side(
 	var tangent := Vector3(along.x, 0.0, along.y).normalized()
 	var normal := Vector3(-tangent.z, 0.0, tangent.x)
 	surface.quad(corners, uvs, normal, tangent, uv2, color)
-
-
-## A prop (tree, plant, rock...) standing in its voxel. Each gets a
-## variant, a quarter turn and a slight tint from its tile, so the same
-## seed always grows the same forest. A wide object (a workbench, a big
-## gate) is drawn from its left end, turned the way it faces, over both
-## its tiles; what players place keeps its turn (none, or the way it
-## faces); a fence's version is the sides it joins.
-static func _add_prop(
-	result: Result,
-	variants: PackedByteArray,
-	voxel: int,
-	voxels: PackedInt32Array,
-	base: int,
-	lx: int,
-	y: int,
-	lz: int,
-	origin: Vector2i,
-	sky := LightField.MAX
-) -> void:
-	var block := Voxels.block_of(voxel)
-	var count := variants[block]
-	if count == 0:
-		return
-	var tile := origin + Vector2i(lx, lz)
-	var h := HashUtil.hash2(ObjectShapes.SALT, tile.x, tile.y)
-	var height := float(y - SEA)
-	if y > 0 and Voxels.is_liquid(voxels[base + y - 1]):
-		height -= 1.0 - Fluids.surface(voxels[base + y - 1])
-	height -= ObjectShapes.SUNK.get(ObjectShapes.base_kind(block), 0.0)
-	# Where it stands and which version: the same as physics (ObjectShapes).
-	var offset := Vector2(ObjectShapes.offset_at(block, tile)) / 16.0
-	var foot := Vector3(lx + 0.5 + offset.x, height, lz + 0.5 + offset.y)
-	var turn := prop_turn(tile)
-	if ObjectShapes.front_of(block) != Vector2i.ZERO:
-		turn = Basis(Vector3.UP, ObjectShapes.turn_of(block))
-	elif (
-		Mining.FLOOR_OBJECTS.has(ObjectShapes.base_kind(block))
-		or Farming.bed_of(block) == Farming.Bed.TRELLIS
-	):
-		turn = Basis()
-	if ObjectShapes.is_wide_left(block):
-		var right := ObjectShapes.wide_right(block)
-		foot += Vector3(right.x, 0.0, right.y) * 0.5
-	var shade := 0.93 + ((h >> 16) & 15) / 15.0 * 0.14
-	var warmth := 0.97 + ((h >> 20) & 7) / 7.0 * 0.06
-	# Its wind phase, after the sky light it stands in (see voxel.gdshader).
-	var custom := Color(shade * warmth, shade, shade / warmth, sky + ((h >> 24) & 255) / 256.0)
-	var variant := ObjectShapes.variant_at(block, tile)
-	if block == Tiles.Block.FENCE:
-		variant = _fence_sides(voxels, base + y)
-	var key := Vector2i(ObjectShapes.model_block(block), variant % count)
-	if not result.props.has(key):
-		result.props[key] = []
-	result.props[key].append([Transform3D(turn, foot), custom])
-
-
-## The sides a fence at `index` (padded voxels) joins (ObjectShapes.FENCE_SIDES
-## bits: north, east, south, west).
-static func _fence_sides(voxels: PackedInt32Array, index: int) -> int:
-	var sides := 0
-	for bit in ObjectShapes.FENCE_SIDES.size():
-		var side: Vector2i = ObjectShapes.FENCE_SIDES[bit]
-		if ObjectShapes.fence_joins(voxels[index + side.x * STRIDE_X + side.y * STRIDE_Z]):
-			sides |= 1 << bit
-	return sides
