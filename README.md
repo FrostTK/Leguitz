@@ -37,7 +37,10 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Pêche : canne (lancer, touche, ferrer), 14 poissons selon l'eau, le climat, l'heure, la pluie et la profondeur, appâts (vers, boulettes, appât de poisson), nasses (écrevisses, crabes), algues et bois flotté, poissons grillés, soupe de poisson, sushis, poisson frit | ✅ |
 | Bateau et chantier naval : un chantier sur la rive (portique, treuil, cale qui descend dans l'eau), une coque de 2 à 5 places (poupe, sections, proue), bancs et coffres, moteur à charbon (fumée, hélice, jauge) ou avirons, mise à l'eau et retour au chantier, les animaux menés à la corde montent à bord | ✅ |
 | Filet de pêche du bateau (jeté ou relevé à bord, prises dans les coffres, usure, raccommodage) et peinture (huile de lin et pigments, 9 couleurs, coque et bande, la hache décape) | ✅ |
-| Chien et chat, saisons | à venir |
+| Chien (un loup apprivoisé avec de la viande) et chat (sauvage, apprivoisé avec du poisson) : suivent, restent ou gardent ; le chien aboie contre les monstres, les mord et chasse les loups, ramène le troupeau ; le chat chasse taupes et corbeaux ; chiots et chatons de plusieurs robes | ✅ |
+| Saisons | à venir |
+
+![Leguitz : les compagnons : les cinq robes des chiens et les six des chats, assis, avec un chiot et un chaton ; un chien de garde qui ramène un mouton vers le troupeau ; un chien qui aboie et mord une roche-mimique, avec son message ; en première personne, un chien, un chat et un chiot](docs/screenshots/phase7-compagnons.png)
 
 ![Leguitz : le filet et la peinture : des bateaux peints (rouge à bande blanche, bleu à bande jaune, noir à bande orange), un filet jeté derrière une poupe avec ses flotteurs et sa prise, un autre plié sur la poupe ; l'écran du bateau avec le filet et son usure, le pont à sa couleur ; le filet, l'huile de lin et les pots de peinture](docs/screenshots/phase7-filet-peinture.png)
 

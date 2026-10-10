@@ -209,7 +209,7 @@ func board(server: GameServer, session: GameServer.PlayerSession, id: int) -> vo
 	session.seat = place
 	for creature: Creature in server.creatures.living.values():
 		var animal := creature as Animal
-		if animal == null or animal.leader != session.id or animal.seated >= 0:
+		if animal == null or not animal.follows(session.id) or animal.seated >= 0:
 			continue
 		var bench := boat.free_bench(true)
 		var away := animal.center().distance_to(session.position) / GameConst.TILE_SIZE
@@ -248,7 +248,7 @@ func leave(server: GameServer, session: GameServer.PlayerSession, landing: bool)
 		session.transport.send(Msg.player_teleport(feet, spot.y))
 	for place: int in boat.seats.keys():
 		var animal := server.creatures.living.get(-boat.seats[place]) as Animal
-		if animal != null and animal.leader == session.id:
+		if animal != null and animal.follows(session.id):
 			boat.seats.erase(place)
 			_unseat(animal, spot)
 	server.broadcast(Msg.boat(boat))

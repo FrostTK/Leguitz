@@ -9,8 +9,9 @@ extends Creature
 ## pet and feed it, and gives wool, milk or eggs (its timers here,
 ## the rules in Husbandry).
 
-## What players see of it (Msg.ENTITY_*, `flags`): young, shorn, in love.
-enum Flag { BABY = 1, SHORN = 2, LOVE = 4 }
+## What players see of it (Msg.ENTITY_*, `flags`): young, shorn, in love;
+## a companion tame (a collar), barking.
+enum Flag { BABY = 1, SHORN = 2, LOVE = 4, TAME = 8, BARK = 16 }
 
 ## Seconds standing (idle or grazing) before deciding again.
 const REST_SECONDS := Vector2(2.0, 7.0)
@@ -62,6 +63,9 @@ var mate_at := NOWHERE
 var night := false
 var shelter := NO_SHELTER
 var shelter_searched := false
+## A dog herds it back to its post (Companions): it walks where it is
+## driven until it gets there.
+var herded := false
 
 var _timer := 0.0
 var _flee_from := Vector2.ZERO
@@ -85,6 +89,26 @@ func is_baby() -> bool:
 
 func led_by() -> int:
 	return leader
+
+
+## Whether it goes along with the player `player` (PlayerSession.id): on
+## their lead (a companion: told to follow them). Boats take it aboard.
+func follows(player: int) -> bool:
+	return leader == player and player >= 0
+
+
+## A dog drives it towards `goal` (a tile): it walks there, unless asleep,
+## led or already on its way there.
+func drive(goal: Vector2i, voxel_at: Callable) -> void:
+	if state in [State.SLEEP, State.FLEE] or leader >= 0:
+		return
+	if herded and not _way.is_empty():
+		return
+	if _walk_to(goal, voxel_at):
+		herded = true
+		_hurry = false
+		state = State.WANDER
+		dirty = true
 
 
 ## What players see of it (Flag bits).
@@ -201,6 +225,7 @@ func _rest(next: State, rng: RandomNumberGenerator) -> void:
 	_timer = rng.randf_range(REST_SECONDS.x, REST_SECONDS.y)
 	_way.clear()
 	_hurry = false
+	herded = false
 	dirty = true
 
 

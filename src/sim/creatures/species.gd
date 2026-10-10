@@ -28,13 +28,16 @@ enum Id {
 	MOLE,
 	CROW,
 	LANTERN_BUMBLEBEE,
+	DOG,
+	CAT,
 }
 
 ## The monsters (Monster), those that fly, and the animals that swim
 ## (their ways go over water: Pathfinder). Predators (Predator: wolves and
 ## bears) hunt what PREY lists and, provoked or at night, players; fish
 ## live under water (Fish); pests come to players' fields (Pests: the mole,
-## the crow, the lantern bumblebee).
+## the crow, the lantern bumblebee); companions (Companion: the dog, a
+## tamed wolf, and the cat) follow their player.
 const MONSTERS := {Id.LANTERN_MOTH: true, Id.SHADE_LURKER: true, Id.ROCK_MIMIC: true, Id.WISP: true}
 const FLIERS := {
 	Id.LANTERN_MOTH: true,
@@ -56,6 +59,7 @@ const PREY := {
 }
 const AQUATIC := {Id.FISH: true}
 const PESTS := {Id.MOLE: true, Id.CROW: true, Id.LANTERN_BUMBLEBEE: true}
+const COMPANIONS := {Id.DOG: true, Id.CAT: true}
 
 ## Name keys (i18n), and where each lives in a word (the book).
 const NAME_KEYS := {
@@ -82,6 +86,8 @@ const NAME_KEYS := {
 	Id.MOLE: "CREATURE_MOLE",
 	Id.CROW: "CREATURE_CROW",
 	Id.LANTERN_BUMBLEBEE: "CREATURE_LANTERN_BUMBLEBEE",
+	Id.DOG: "CREATURE_DOG",
+	Id.CAT: "CREATURE_CAT",
 }
 ## Monsters: how they hunt, in words (the book).
 const HOW_KEYS := {
@@ -114,6 +120,8 @@ const HOME_KEYS := {
 	Id.MOLE: "CREATURE_MOLE_HOME",
 	Id.CROW: "CREATURE_CROW_HOME",
 	Id.LANTERN_BUMBLEBEE: "CREATURE_LANTERN_BUMBLEBEE_HOME",
+	Id.DOG: "CREATURE_DOG_HOME",
+	Id.CAT: "CREATURE_CAT_HOME",
 }
 ## The body's box at the feet (world pixels, like PlayerBody.BOX) and its
 ## height (levels).
@@ -141,6 +149,8 @@ const BOX := {
 	Id.MOLE: Vector2(7.0, 7.0),
 	Id.CROW: Vector2(7.0, 7.0),
 	Id.LANTERN_BUMBLEBEE: Vector2(6.0, 6.0),
+	Id.DOG: Vector2(9.0, 9.0),
+	Id.CAT: Vector2(6.0, 6.0),
 }
 const TALL := {
 	Id.SHEEP: 1.1,
@@ -166,6 +176,8 @@ const TALL := {
 	Id.MOLE: 0.4,
 	Id.CROW: 0.55,
 	Id.LANTERN_BUMBLEBEE: 0.45,
+	Id.DOG: 0.9,
+	Id.CAT: 0.6,
 }
 ## Vitality (the player's points: a bare hand takes 1).
 const HEALTH := {
@@ -192,6 +204,8 @@ const HEALTH := {
 	Id.MOLE: 3,
 	Id.CROW: 3,
 	Id.LANTERN_BUMBLEBEE: 2,
+	Id.DOG: 14,
+	Id.CAT: 8,
 }
 ## Tiles per second: wandering, and running away (monsters: drawing back).
 const WALK_SPEED := {
@@ -218,6 +232,8 @@ const WALK_SPEED := {
 	Id.MOLE: 1.0,
 	Id.CROW: 3.0,
 	Id.LANTERN_BUMBLEBEE: 1.4,
+	Id.DOG: 1.7,
+	Id.CAT: 1.3,
 }
 const FLEE_SPEED := {
 	Id.SHEEP: 3.4,
@@ -243,10 +259,12 @@ const FLEE_SPEED := {
 	Id.MOLE: 2.0,
 	Id.CROW: 5.0,
 	Id.LANTERN_BUMBLEBEE: 2.5,
+	Id.DOG: 5.0,
+	Id.CAT: 4.6,
 }
 ## Monsters: tiles per second hunting (fliers: diving at the player), what
 ## their blow takes off, and what it is called when it makes a player pass
-## out (Vitals.Cause).
+## out (Vitals.Cause); companions: going for what they hunt, their bite.
 const CHASE_SPEED := {
 	Id.LANTERN_MOTH: 7.0,
 	Id.SHADE_LURKER: 3.2,
@@ -254,6 +272,8 @@ const CHASE_SPEED := {
 	Id.WISP: 6.0,
 	Id.WOLF: 4.6,
 	Id.BEAR: 3.8,
+	Id.DOG: 5.2,
+	Id.CAT: 4.8,
 }
 const DAMAGE := {
 	Id.LANTERN_MOTH: 1,
@@ -262,6 +282,8 @@ const DAMAGE := {
 	Id.WISP: 2,
 	Id.WOLF: 3,
 	Id.BEAR: 6,
+	Id.DOG: 3,
+	Id.CAT: 3,
 }
 const CAUSE := {
 	Id.LANTERN_MOTH: Vitals.Cause.MOTH,
@@ -296,9 +318,12 @@ const DROPS := {
 	Id.MOLE: [[Items.Id.HIDE, 0, 1]],
 	Id.CROW: [[Items.Id.FEATHER, 1, 2]],
 	Id.LANTERN_BUMBLEBEE: [],
+	Id.DOG: [],
+	Id.CAT: [],
 }
 ## Where herds are found, and how many in one (pigs are born on farms to
-## boars, bees come out of hives, pests come to fields: none in the wild).
+## boars, bees come out of hives, pests come to fields, dogs are tamed
+## wolves: none in the wild).
 const BIOMES := {
 	Id.SHEEP: [Biomes.Id.PLAINS, Biomes.Id.MEADOW, Biomes.Id.SNOWY_PLAINS, Biomes.Id.GROVE],
 	Id.BOAR: [Biomes.Id.FOREST, Biomes.Id.DARK_FOREST, Biomes.Id.OLD_GROWTH_TAIGA, Biomes.Id.SWAMP],
@@ -366,6 +391,15 @@ const BIOMES := {
 	Id.MOLE: [],
 	Id.CROW: [],
 	Id.LANTERN_BUMBLEBEE: [],
+	Id.DOG: [],
+	Id.CAT:
+	[
+		Biomes.Id.PLAINS,
+		Biomes.Id.FLOWER_FOREST,
+		Biomes.Id.SAVANNA,
+		Biomes.Id.SPARSE_JUNGLE,
+		Biomes.Id.JUNGLE,
+	],
 }
 const HERD := {
 	Id.SHEEP: Vector2i(2, 4),
@@ -387,6 +421,8 @@ const HERD := {
 	Id.MOLE: Vector2i(1, 1),
 	Id.CROW: Vector2i(1, 1),
 	Id.LANTERN_BUMBLEBEE: Vector2i(1, 1),
+	Id.DOG: Vector2i(1, 1),
+	Id.CAT: Vector2i(1, 2),
 }
 
 

@@ -9,7 +9,10 @@ extends Node3D
 ## pales, still, in the light, a mimic sits as a rock while dormant (legs
 ## and face hidden), a wisp pulses; it reddens when hurt and, dead, tips
 ## over and fades away. A young one is smaller (Animal.Flag.BABY); asleep,
-## an animal lies down, legs folded and head low.
+## an animal lies down, legs folded and head low. A dog or a cat sits
+## (State.SIT: on its haunches, front legs straight), wags or sways its
+## tail, a dog lifts its muzzle to bark (Flag.BARK, State.ALERT), both
+## lunge to bite (a cat leaps), a cat crouches stalking.
 
 const SHADER := preload("res://src/client/shaders/voxel.gdshader")
 const VOXEL := 1.0 / 16.0
@@ -40,6 +43,11 @@ const SLEEP_PITCH := 0.55
 const REAR_PITCH := 0.75
 const REAR_LIFT := 0.45
 const LUNGE := 0.3
+## Sitting, the body leans back this far (radians); a cat's leap lifts it
+## this much (levels), its crouch lowers it this much.
+const SIT_PITCH := 0.45
+const LEAP := 0.25
+const CROUCH := 0.06
 
 var id := 0
 var kind := Species.Id.SHEEP
@@ -49,8 +57,10 @@ var kind := Species.Id.SHEEP
 var target := Vector3.ZERO
 var heading := Vector2.DOWN
 var state := Creature.State.IDLE
-## What else it shows (Animal.Flag): young, shorn, in love.
+## What else it shows (Animal.Flag): young, shorn, in love, tame, barking;
+## a dog's or a cat's coat.
 var flags := 0
+var look := 0
 ## Dead: it tips over and fades; `finished` once gone.
 var dying := false
 var finished := false
@@ -77,6 +87,8 @@ var _sky := -1.0
 var _rest := 0.0
 var _rear := 0.0
 var _lunge := 0.0
+var _sit := 0.0
+var _crouch := 0.0
 var _meshes: Array[MeshInstance3D] = []
 var _shadowed := true
 ## The shader's parameters as last set (set again only when they change).
@@ -186,6 +198,7 @@ func animate(delta: float) -> void:
 	_animate_wings()
 	_animate_monster(delta)
 	_animate_wild(delta)
+	_animate_companion(delta)
 	_hurt = maxf(_hurt - delta / HURT_SECONDS, 0.0)
 	_set_parameter(&"hurt", _hurt)
 	var fade := _fade
@@ -230,6 +243,12 @@ func _animate_head(delta: float) -> void:
 	if state == Creature.State.GRAZE and not dying:
 		pitch = GRAZE_PITCH + sin(_time * 9.0) * 0.06
 	pitch = lerpf(pitch, SLEEP_PITCH, _rest)
+	if Species.COMPANIONS.has(kind):
+		# Level while sitting (the body leans back); a dog's muzzle up barking.
+		pitch += _sit * SIT_PITCH * (1.0 - _rest)
+		var barking := flags & Animal.Flag.BARK != 0 or state == Creature.State.ALERT
+		if barking and kind == Species.Id.DOG and not dying:
+			pitch -= 0.25 + absf(sin(_time * 11.0)) * 0.2
 	head.rotation.x = lerpf(head.rotation.x, pitch, 1.0 - exp(-6.0 * delta))
 
 
@@ -292,6 +311,49 @@ func _animate_wild(delta: float) -> void:
 			_sink = move_toward(_sink, 0.0 if up else 1.0, delta * 3.0)
 			_root.position.y -= _sink * Species.TALL[kind] * 1.2
 			_root.visible = _sink < 0.95
+
+
+## A dog or a cat: sitting on its haunches (the body leaning back, front
+## legs upright, hind legs folded forward, head level), its tail wagging
+## (a dog's; quicker when tame) or swaying (a cat's), a dog's muzzle up
+## barking, a lunge to bite (a cat leaps), a cat's crouch when stalking.
+func _animate_companion(delta: float) -> void:
+	if not Species.COMPANIONS.has(kind):
+		return
+	var sitting := state == Creature.State.SIT and not dying
+	_sit = move_toward(_sit, 1.0 if sitting else 0.0, delta * 4.0)
+	var pitch := _sit * SIT_PITCH
+	var shoulder: Vector3 = _joints["leg_fl"].position / VOXEL
+	var lower := shoulder.y * cos(pitch) + shoulder.z * sin(pitch) - shoulder.y
+	_root.rotation.x = -pitch
+	_root.position.y -= lower * VOXEL
+	for name: String in ["leg_fl", "leg_fr"]:
+		_joints[name].rotation.x = lerpf(_joints[name].rotation.x, pitch, _sit)
+	for name: String in ["leg_bl", "leg_br"]:
+		_joints[name].rotation.x = lerpf(_joints[name].rotation.x, pitch - PI * 0.5, _sit)
+	var striking := state == Creature.State.STRIKE and not dying
+	_lunge = move_toward(_lunge, 1.0 if striking else 0.0, delta * 8.0)
+	_root.position.z = _lunge * LUNGE
+	var stalking := kind == Species.Id.CAT and state == Creature.State.CHASE and not dying
+	_crouch = move_toward(_crouch, 1.0 if stalking else 0.0, delta * 4.0)
+	_root.position.y -= _crouch * CROUCH
+	if kind == Species.Id.CAT:
+		_root.position.y += _lunge * LEAP
+	var tail: Node3D = _joints["tail"]
+	var sway := 0.0
+	if _rest < 0.5 and not dying:
+		if kind == Species.Id.DOG:
+			var happy := (
+				flags & Animal.Flag.TAME != 0
+				and state in [Creature.State.IDLE, Creature.State.SIT, Creature.State.WANDER]
+			)
+			sway = sin(_time * (16.0 if happy else 5.0) + id) * (0.55 if happy else 0.2)
+		else:
+			sway = sin(_time * 2.2 + id) * 0.35
+	tail.rotation.y = sway
+	# Low: lying back on the ground sitting or asleep, down stalking.
+	var low := -0.35 * _sit - 0.6 * _crouch - 0.6 * _rest
+	tail.rotation.x = lerpf(tail.rotation.x, low, 0.2)
 
 
 ## A crow pecking on the ground (not flying).

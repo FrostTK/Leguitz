@@ -131,6 +131,7 @@ static func entity_spawn(creature: Creature) -> Dictionary:
 	var message := entity_move(creature)
 	message["t"] = ENTITY_SPAWN
 	message["kind"] = creature.species
+	message["look"] = creature.look()
 	return message
 
 

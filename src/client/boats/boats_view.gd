@@ -23,6 +23,7 @@ const WAKE_EVERY := 0.12
 const PROPELLER_TURNS := 3.0
 const ROW_STROKES := 0.8
 const WAKE := Color("e8f4f8")
+const PAINTED := preload("res://src/client/shaders/voxel_painted.gdshader")
 const SMOKE := Color("6e6a66")
 const PLANKS := Color("946a3c")
 const EMBERS := Color("f06a1e")
@@ -51,10 +52,15 @@ var _turns: Dictionary[int, float] = {}
 var _puffs: Array[Array] = []
 var _puff_mesh := BoxMesh.new()
 var _puff_material := StandardMaterial3D.new()
+## The boats' models: the voxel shader with their paint.
+var _material := ShaderMaterial.new()
 var _clock := 0.0
 
 
 func _ready() -> void:
+	_material.shader = PAINTED
+	_material.set_shader_parameter("use_instance_data", false)
+	_material.set_shader_parameter("cut_out", false)
 	_propeller = _mesh(BoatModels.propeller())
 	_oar = _mesh(BoatModels.oar())
 	_puff_mesh.size = Vector3.ONE * 0.2
@@ -259,7 +265,7 @@ static func _paint(index: int) -> Color:
 func _mesh(grid: VoxelGrid) -> Mesh:
 	var model := VoxelMesher.build(grid)
 	if model.get_surface_count() > 0:
-		model.surface_set_material(0, client.items.voxel_material)
+		model.surface_set_material(0, _material)
 	return model
 
 

@@ -231,7 +231,7 @@ func test_a_struck_wolf_turns_its_pack_on_the_player() -> void:
 	assert_eq(wolf.target_player, _session.id, "it turns on who struck it")
 	assert_eq(other.target_player, _session.id, "its pack too")
 	assert_eq(far.target_player, -1, "not wolves of another pack")
-	# Wild: it will not be tamed.
+	# Angry with you: no meat will tame it.
 	_session.inventory.items[0] = Items.Id.RAW_BEEF
 	_session.inventory.counts[0] = 1
 	_client.poll()
@@ -241,7 +241,8 @@ func test_a_struck_wolf_turns_its_pack_on_the_player() -> void:
 		func(m: Dictionary) -> bool: return m["t"] == Msg.ANIMAL_NOTICE
 	)
 	assert_eq(notices.size(), 1)
-	assert_eq(notices[0]["key"], "HUD_ANIMAL_WILD", "told it is wild")
+	assert_eq(notices[0]["key"], "HUD_WOLF_GROWLS", "told it wants nothing from you")
+	assert_eq(_session.inventory.counts[0], 1, "it took nothing")
 	assert_ne(tr("HUD_ANIMAL_WILD"), "HUD_ANIMAL_WILD")
 
 

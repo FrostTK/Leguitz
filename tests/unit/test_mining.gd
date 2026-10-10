@@ -151,7 +151,10 @@ func test_breaking_within_reach_and_what_stood_on_it() -> void:
 	assert_eq(changed.size(), 2)
 	assert_eq(changed[0]["cell"], cell)
 	assert_eq(changed[0]["voxel"], Voxels.AIR)
-	var dropped := said.filter(func(m: Dictionary) -> bool: return m["t"] == Msg.ITEM_SPAWN)
+	var dropped := said.filter(
+		func(m: Dictionary) -> bool: return m["t"] == Msg.ITEM_SPAWN and m["item"] != Items.Id.WORM
+	)
+	# (Now and then a worm too: not counted.)
 	assert_eq(dropped.size(), 2, "the soil and the flower fall where they were")
 	var chunk := server.world.chunks[Coords.tile_to_chunk(Vector2i(cell.x, cell.z))]
 	assert_true(chunk.modified, "saved with the world from now on")

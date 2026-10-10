@@ -25,6 +25,7 @@ const CHAPTERS: Array[String] = [
 	"BOOK_CHAPTER_FARM",
 	"BOOK_CHAPTER_SURVIVAL",
 	"BOOK_CHAPTER_ANIMALS",
+	"BOOK_CHAPTER_COMPANIONS",
 	"BOOK_CHAPTER_FISHING",
 	"BOOK_CHAPTER_BOATS",
 	"BOOK_CHAPTER_MONSTERS",
@@ -73,6 +74,7 @@ static func chapters() -> Array[Array]:
 		_farm(),
 		_survival(),
 		_animals(),
+		_companions(),
 		_fishing(),
 		_boats(),
 		_monsters(),
@@ -445,6 +447,8 @@ static func _animals() -> Array:
 	for kind: int in Species.BIOMES:
 		if kind == Species.Id.BEE or WILD_ICONS.has(kind) or Species.PESTS.has(kind):
 			continue
+		if Species.COMPANIONS.has(kind):
+			continue
 		var gifts := PackedStringArray()
 		for drop: Array in Species.DROPS[kind]:
 			gifts.append(_t(Items.name_key(drop[0])).to_lower())
@@ -488,6 +492,24 @@ static func _animals() -> Array:
 		)
 		entries.append(_icon(WILD_ICONS[kind], text))
 	return entries
+
+
+## The dog and the cat: taming them, their orders, guarding the herd,
+## barking, hunting pests, their care.
+static func _companions() -> Array:
+	return [
+		_title("BOOK_CHAPTER_COMPANIONS"),
+		_text("BOOK_COMPANIONS_INTRO"),
+		_heading("CREATURE_DOG"),
+		_icon(Items.Id.RAW_MUTTON, _t("BOOK_COMPANIONS_DOG")),
+		_icon(Items.Id.WOOL, _t("BOOK_COMPANIONS_GUARD")),
+		_icon(Items.Id.SHADE_ESSENCE, _t("BOOK_COMPANIONS_BARK")),
+		_heading("CREATURE_CAT"),
+		_icon(Items.Id.RAW_FISH, _t("BOOK_COMPANIONS_CAT")),
+		_icon(Items.Id.FEATHER, _t("BOOK_COMPANIONS_HUNT")),
+		_heading("BOOK_COMPANIONS_CARE_TITLE"),
+		_icon(Items.Id.COOKED_BEEF, _t("BOOK_COMPANIONS_CARE")),
+	]
 
 
 ## Each monster: where and when it comes out, how it hunts (the icon of

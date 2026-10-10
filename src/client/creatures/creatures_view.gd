@@ -7,7 +7,9 @@ extends Node3D
 ## Finds the creature a ray meets (aiming, `pick`). A dead one tips over,
 ## fades, and bursts into bits (`burst`). Farm life (Husbandry): young ones
 ## are small, a shorn sheep shows its skin, one in love gives off pink bits
-## (hearts), one on a lead is tied to its player's hand by a rope.
+## (hearts), one on a lead is tied to its player's hand by a rope. Dogs and
+## cats wear their coat (Msg.ENTITY_SPAWN `look`), a collar once tame; a
+## barking dog puffs out little clouds.
 ## While `thrifty` (off: Settings.extreme), what cannot be seen is spared:
 ## a creature out of the camera's view is not animated (it catches up when
 ## back), one small on screen (zoomed far out, or far from a first-person
@@ -42,6 +44,8 @@ const BITS := {
 	Species.Id.MOLE: Color("36302c"),
 	Species.Id.CROW: Color("1e2228"),
 	Species.Id.LANTERN_BUMBLEBEE: Color("ffe27a"),
+	Species.Id.DOG: Color("b87a32"),
+	Species.Id.CAT: Color("7a756e"),
 }
 ## The lights some carry (a wisp, a lantern bumblebee): their color, how
 ## far and how bright (they flicker).
@@ -55,6 +59,9 @@ const DIRT_SECONDS := 0.35
 ## Pink bits over an animal in love, this often (seconds).
 const HEART_COLOR := Color("ff6f9c")
 const HEART_SECONDS := 0.7
+## A barking dog's puffs, this often (seconds).
+const BARK_COLOR := Color("f4f0e6")
+const BARK_SECONDS := 0.3
 ## A lead: its color, thickness and segments (local units), how much it
 ## sags, where it ties on the animal (of its height) and the player's hand
 ## (levels over the feet).
@@ -76,6 +83,7 @@ const SMALL := {
 	Species.Id.MOLE: true,
 	Species.Id.CROW: true,
 	Species.Id.LANTERN_BUMBLEBEE: true,
+	Species.Id.CAT: true,
 }
 ## First person: creatures farther than this from the eye (global units)
 ## are small on screen.
@@ -115,6 +123,7 @@ var _ropes: Dictionary[int, Node3D] = {}
 var _rope_material := StandardMaterial3D.new()
 var _hearts := 0.0
 var _dirt := 0.0
+var _barks := 0.0
 
 
 func _ready() -> void:
@@ -132,8 +141,10 @@ func spawn(message: Dictionary) -> void:
 	if _bodies.has(id):
 		_bodies[id].queue_free()
 	var flags: int = message.get("flags", 0)
+	var look: int = message.get("look", 0)
 	var body := CreatureBody.new()
-	body.setup(id, kind, _meshes_of(kind, flags & Animal.Flag.SHORN != 0), flags)
+	body.setup(id, kind, _meshes_of(kind, flags, look), flags)
+	body.look = look
 	add_child(body)
 	_bodies[id] = body
 	_place(body, message)
@@ -154,14 +165,16 @@ func move(message: Dictionary) -> void:
 	if body == null or body.dying:
 		return
 	var flags: int = message.get("flags", 0)
-	if (flags ^ body.flags) & Animal.Flag.SHORN:
-		# Shorn, or its wool grew back: another fleece, where it stands.
+	if (flags ^ body.flags) & (Animal.Flag.SHORN | Animal.Flag.TAME):
+		# Shorn, or its wool grew back; tamed: another look, where it stands.
 		var kind := body.kind
+		var look := body.look
 		var at := body.position
 		var yaw := body.rotation.y
 		body.queue_free()
 		body = CreatureBody.new()
-		body.setup(id, kind, _meshes_of(kind, flags & Animal.Flag.SHORN != 0), flags)
+		body.setup(id, kind, _meshes_of(kind, flags, look), flags)
+		body.look = look
 		add_child(body)
 		_bodies[id] = body
 		body.position = at
@@ -303,6 +316,7 @@ func _process(delta: float) -> void:
 				var top: float = Species.TALL[body.kind] * body.size() + 0.15
 				burst.emit(body.position + Vector3(0.0, top, 0.0), HEART_COLOR, 3)
 	_dig(delta)
+	_bark(delta)
 	_draw_leads()
 
 
@@ -315,6 +329,19 @@ func _dig(delta: float) -> void:
 	for body: CreatureBody in _bodies.values():
 		if body.kind == Species.Id.MOLE and body.state != Creature.State.IDLE:
 			burst.emit(body.position + Vector3(0.0, 0.05, 0.0), DIRT_COLOR, 2)
+
+
+## Barking dogs puff little clouds out of their muzzle.
+func _bark(delta: float) -> void:
+	_barks += delta
+	if _barks < BARK_SECONDS:
+		return
+	_barks = 0.0
+	for body: CreatureBody in _bodies.values():
+		if body.flags & Animal.Flag.BARK and not body.dying:
+			var ahead := Vector3(body.heading.x, 0.0, body.heading.y) * 0.45 * body.size()
+			var up: float = Species.TALL[body.kind] * body.size() * 0.85
+			burst.emit(body.position + ahead + Vector3(0.0, up, 0.0), BARK_COLOR, 4)
 
 
 ## Whether a creature is small on screen (zoomed far out, or far from the
@@ -348,12 +375,15 @@ func _place(body: CreatureBody, message: Dictionary) -> void:
 		_leads.erase(body.id)
 
 
-## Per species (and fleece, shorn or not): part name -> mesh.
-func _meshes_of(kind: int, shorn := false) -> Dictionary:
-	var key := kind * 2 + (1 if shorn else 0)
+## Per species (a fleece, shorn or not; a coat, a collar once tame: its
+## Animal.Flag bits and look): part name -> mesh.
+func _meshes_of(kind: int, flags := 0, look := 0) -> Dictionary:
+	var shorn := flags & Animal.Flag.SHORN != 0
+	var collar := flags & Animal.Flag.TAME != 0
+	var key := kind * 1024 + look * 4 + (1 if shorn else 0) + (2 if collar else 0)
 	if not _meshes.has(key):
 		var meshes := {}
-		for part: CreatureModels.Part in CreatureModels.parts(kind, shorn):
+		for part: CreatureModels.Part in CreatureModels.parts(kind, shorn, look, collar):
 			meshes[part.name] = VoxelMesher.build(part.grid)
 		_meshes[key] = meshes
 	return _meshes[key]

@@ -1,5 +1,6 @@
 // The voxel models' shader (voxel.gdshader; voxel_view.gdshader with
-// VIEW_MODEL defined: what is in hand in first person).
+// VIEW_MODEL defined: what is in hand in first person; voxel_painted.gdshader
+// with PAINTED defined: the boats).
 #include "res://src/client/shaders/see_through.gdshaderinc"
 #include "res://src/client/shaders/sky_light.gdshaderinc"
 #ifdef VIEW_MODEL
@@ -33,19 +34,24 @@ uniform float view_model_fov = 70.0;
 #endif
 // How much the voxels' ambient occlusion also dims direct light.
 const float OCCLUSION_LIGHT = 0.55;
+#ifdef PAINTED
 // A boat's paint (sRGB; alpha 0: bare wood) on its PAINT and STRIPE voxels
 // (UV.y 3 and 4), shaded like the planks it covers (their brightness
-// against PAINT_LUMA).
+// against PAINT_LUMA). Instance uniforms take room for every instance
+// drawn with the shader: only the boats' (PAINTED) have them.
 instance uniform vec4 paint_color = vec4(0.0);
 instance uniform vec4 stripe_color = vec4(0.0);
 const float PAINT_LUMA = 0.36;
+#endif
 
 global uniform vec2 weather_wind;
 global uniform float weather_wetness;
 
 varying float foliage;
+#ifdef PAINTED
 varying float painted;
 varying float striped;
+#endif
 varying float glow;
 varying vec3 tint;
 varying float sky;
@@ -57,8 +63,10 @@ vec3 srgb_to_linear(vec3 c) {
 void vertex() {
 	glow = step(1.5, UV.y) - step(2.5, UV.y);
 	foliage = UV.y * (1.0 - step(1.5, UV.y));
+#ifdef PAINTED
 	painted = step(2.5, UV.y) - step(3.5, UV.y);
 	striped = step(3.5, UV.y);
+#endif
 	tint = vec3(1.0);
 	float phase = 0.0;
 	sky = sky_light;
@@ -97,11 +105,13 @@ void fragment() {
 		discard;
 	}
 	vec3 base = COLOR.rgb;
+#ifdef PAINTED
 	vec4 coat = paint_color * painted + stripe_color * striped;
 	if (coat.a > 0.5) {
 		float luma = dot(COLOR.rgb, vec3(0.299, 0.587, 0.114));
 		base = coat.rgb * clamp(luma / PAINT_LUMA, 0.6, 1.35);
 	}
+#endif
 	vec3 albedo = srgb_to_linear(base) * tint;
 	albedo = mix(albedo, vec3(0.75, 0.04, 0.03), hurt * 0.6);
 	albedo *= 1.0 - wet_darkening * weather_wetness * (1.0 - foliage * 0.5);

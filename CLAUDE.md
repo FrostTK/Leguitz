@@ -786,11 +786,45 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   [hull, stripe] (indices of Items.PAINTS, -1 bare; saved, kept on a shipyard, lost broken); an
   axe scrapes it. The shader paints it: VoxelGrid.Kind PAINT and STRIPE (VoxelMesher UV.y 3 and
   4; voxel.gdshaderinc `painted`/`striped`, instance uniforms paint_color and stripe_color, sRGB,
-  alpha 0 bare; the plank's brightness kept, PAINT_LUMA): BoatModels marks the strakes over the
-  water line PAINT, the top strake, gunwale and stem STRIPE, PAINT_COLORS; BoatsView._dress sets
+  alpha 0 bare; the plank's brightness kept, PAINT_LUMA; only with PAINTED defined, in
+  voxel_painted.gdshader, BoatsView's material: instance uniforms take room in a renderer buffer
+  for every instance of the shader, and first person's props ran it out): BoatModels marks the
+  strakes over the water line PAINT, the top strake, gunwale and stem STRIPE, PAINT_COLORS;
+  BoatsView._dress sets
   them per hull (set_instance_shader_parameter), and shows the net folded over the stern
   (BoatModels.net_bundle) or cast behind it (net_cast, its catch in it, cached by count); the
   boat screen draws the deck in its paint. The book's Boats chapter (net, paint, linseed oil).
+- Companions (phase 7, step 10; `src/sim/creatures/companion.gd`, `companions.gd`): Species DOG
+  (no BIOMES: a wolf tamed) and CAT (wild in plains, flower forests, savannas, jungles),
+  Species.COMPANIONS; a `Companion` (extends Animal, saved) has `owner_name` (the player's name;
+  "" wild or stray: it lives as animals do), `order` (Companion.Order FOLLOW, STAY, GUARD), `post`
+  (where it stays or guards), `coat` (Companions.COATS: dogs 5, cats 6, WILD_COATS first; sent as
+  Msg.ENTITY_SPAWN `look`, Creature.look), Flag.TAME (a collar) and BARK, State.SIT (appended).
+  `Companions` (static, given the server; Creatures.update runs `sense`, `land_blow`, and `gather`
+  every BRING_TICKS): Husbandry.tend hands it the right click (`tend`): a wolf given meat
+  (DOG_FOOD, raw or cooked) by a player it is not after is fed and now and then (TAME_CHANCE)
+  replaced by their dog (coat 0, grey); a wild cat, the same with fish (`cat_food`: every fish,
+  raw or grilled); it shies from players within SHY_RANGE unless they hold a fish (it comes up:
+  leader_at). Its player's food heals it (HEAL), else Husbandry.feed (public now: love, young ones;
+  Companions.born gives them a parent's coat or any, and their player); anything else cycles its
+  order (Companion.command; pets it once a day); someone else's says HUD_COMPANION_NOT_YOURS; its
+  player's blows and arrows spare it (Creature.belongs_to: Creatures.attack, Archery). Following,
+  it keeps at HEEL (sits after SIT_AFTER), is brought beside its player past BRING_RANGE (not
+  while they are aboard: Animal.follows makes Boats seat it, as led animals), counts as cared
+  for; it mends a point every MEND_SECONDS. Every LOOK_SECONDS a dog barks at monsters and
+  hunting predators within BARK_RANGE (its player told, BARK_NOTICE) and, following or guarding,
+  goes for those within DEFEND_RANGE of its player or post (LEASH): a bite hurts a monster, drives
+  a predator off (Predator handles FLEE now, its hunt and anger forgotten); Wildlife._hunt_prey
+  skips prey a dog `protects` (`dogs_of`); guarding, it drives back to its post the FLOCK animals
+  within HERD_RANGE farther than KEEP (`_pick_stray`, `_herd`: Companion.drive_at behind the
+  stray, Animal.drive towards the post until BACK_IN). A cat following or guarding (prowling
+  within PROWL) hunts moles and crows within HUNT_RANGE, biting a mole once up, a crow once landed
+  (`target_ready`). Client: CompanionModels (src/client/models; DOGS and CATS coats, a collar
+  with a tag, `parts(kind, coat, collar)`, a "tail" part; CreatureModels.parts takes look and
+  collar), CreaturesView (meshes keyed by flags and look; rebuilt when tamed; a barking dog's
+  puffs, BARK_SECONDS), CreatureBody (`_animate_companion`: sitting on its haunches, the tail
+  wagging or swaying, a dog's muzzle up barking, lunge and a cat's leap, a stalking crouch). The
+  book's Companions chapter (GuideBook._companions).
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made

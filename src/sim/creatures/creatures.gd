@@ -16,8 +16,9 @@ extends RefCounted
 ## leads, wool, milk, eggs, love, sleep): Husbandry. Wild ones (predators'
 ## hunts, turtles' eggs, beavers' dams): Wildlife; fish are born in the
 ## water of their chunk. What comes to fields (moles, crows, lantern
-## bumblebees): Pests. Never holds the server (the calls needing it are
-## given it).
+## bumblebees): Pests. Dogs and cats: Companions (following ones are
+## brought to their player every Companions.BRING_TICKS). Never holds the
+## server (the calls needing it are given it).
 
 const SALT := 0x5A11E7
 const HERD_CHANCE := 0.3
@@ -66,6 +67,8 @@ static func make(kind: int, feet: Vector2, height: float) -> Creature:
 		return Mole.create(kind, feet, height)
 	if kind == Species.Id.CROW:
 		return Crow.create(kind, feet, height)
+	if Species.COMPANIONS.has(kind):
+		return Companion.create(kind, feet, height)
 	return Animal.create(kind, feet, height)
 
 
@@ -132,6 +135,8 @@ func update(server: GameServer, delta: float) -> void:
 		Monsters.come_and_go(server, self)
 	if _ticks % Pests.PEST_TICKS == 7:
 		Pests.come_and_go(server, self)
+	if _ticks % Companions.BRING_TICKS == 11:
+		Companions.gather(server, self)
 	Husbandry.update(server, self)
 	var active := _active_chunks(sessions)
 	if active.is_empty():
@@ -151,6 +156,8 @@ func update(server: GameServer, delta: float) -> void:
 			Husbandry.sense(server, self, creature as Animal, delta * 2.0)
 			if Wildlife.minds(creature.species):
 				Wildlife.sense(server, self, creature as Animal, delta * 2.0)
+			elif creature is Companion:
+				Companions.sense(server, self, creature as Companion, delta * 2.0)
 		elif creature.species == Species.Id.BEE:
 			Apiary.sense(server, self, creature as Bee)
 		else:
@@ -163,6 +170,8 @@ func update(server: GameServer, delta: float) -> void:
 			Monsters.land_blow(server, monster)
 		elif creature is Predator and (creature as Predator).strike:
 			Wildlife.land_blow(server, self, creature as Predator)
+		elif creature is Companion and (creature as Companion).strike:
+			Companions.land_blow(server, self, creature as Companion)
 
 
 ## Shows each player the creatures of the chunks it has (see the class).
@@ -194,10 +203,12 @@ func sync(sessions: Array) -> void:
 ## (Msg.ATTACK): within Combat.REACH of their eye, not sooner than
 ## Combat.BLOW_SECONDS after their last blow. It is hurt (an animal runs
 ## away with its herd); a tool in hand wears (not in creative); dead, it
-## leaves what it gives where it fell.
+## leaves what it gives where it fell. Their own dog or cat is spared.
 func attack(server: GameServer, session: GameServer.PlayerSession, id: int, slot: int) -> void:
 	var target: Creature = living.get(id)
 	if target == null or not session.joined or not session.alive():
+		return
+	if target.belongs_to(session.id):
 		return
 	var now := server.tick_count * GameConst.TICK_DELTA
 	if now - session.last_blow < Combat.BLOW_SECONDS - Combat.BLOW_LEEWAY:
@@ -220,7 +231,7 @@ func attack(server: GameServer, session: GameServer.PlayerSession, id: int, slot
 		bag.wear_out(slot)
 		session.transport.send(Msg.inventory(bag))
 	Survival.spend(server, session, Vitals.BREAK_EFFORT)
-	if target is Animal and not (target is Predator):
+	if target is Animal and not (target is Predator) and not (target is Companion):
 		var reach := HERD_PANIC * GameConst.TILE_SIZE
 		for other: Creature in living.values():
 			if other is Animal and other != target and other.species == target.species:

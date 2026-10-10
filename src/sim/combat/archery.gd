@@ -122,6 +122,9 @@ func _meet_creature(server: GameServer, arrow: Arrow, before: Vector3) -> bool:
 	for creature: Creature in server.creatures.living.values():
 		if creature.bounds().intersects_segment(before, arrow.position) == null:
 			continue
+		if creature.belongs_to(arrow.shooter):
+			# The shooter's own dog or cat: it flies on.
+			continue
 		var damage := maxi(1, roundi(DAMAGE * arrow.velocity.length() / ARROW_SPEED))
 		var back := before - arrow.velocity.normalized()
 		if creature.hurt_by(Vector2(back.x, back.z) * GameConst.TILE_SIZE, damage):

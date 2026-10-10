@@ -7,7 +7,8 @@ extends Animal
 ## wanders as animals do; a bear sleeps at night, wolves roam (they hunt
 ## by night), and a bear warns a player who comes close (State.ALERT)
 ## before it charges. Hurt, it does not run away: it turns on who hit it
-## (`provoked`). Saved like the animals (not what it was after).
+## (`provoked`); only a dog's bite drives it off a while (`scare`: FLEE).
+## Saved like the animals (not what it was after).
 
 ## Within this far (tiles, from its middle to the target's) a blow lands.
 const REACH := 1.3
@@ -79,6 +80,13 @@ func think(delta: float, voxel_at: Callable, rng: RandomNumberGenerator) -> void
 	_cooldown -= delta
 	_repath -= delta
 	hunger = maxf(hunger - delta, 0.0)
+	if state == State.FLEE:
+		# Driven off by a dog.
+		if _timer <= 0.0:
+			_rest(State.IDLE, rng)
+		elif _way.is_empty() and _search <= 0.0:
+			_run_away(voxel_at, rng)
+		return
 	if has_target():
 		_chase(voxel_at)
 		return

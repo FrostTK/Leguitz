@@ -10,8 +10,8 @@ extends RefCounted
 
 ## What it does; its players see it (Msg.ENTITY_MOVE): animals graze,
 ## wander, flee and sleep; monsters chase, strike, lie dormant or freeze;
-## a bear warns (ALERT) before it charges.
-enum State { IDLE, GRAZE, WANDER, FLEE, CHASE, STRIKE, DORMANT, FROZEN, SLEEP, ALERT }
+## a bear warns (ALERT) before it charges, a dog barks; companions sit.
+enum State { IDLE, GRAZE, WANDER, FLEE, CHASE, STRIKE, DORMANT, FROZEN, SLEEP, ALERT, SIT }
 
 ## A point of its way is reached this close (tiles).
 const REACHED := 0.3
@@ -90,6 +90,17 @@ func flags() -> int:
 ## The player leading it (PlayerSession.id; -1: none).
 func led_by() -> int:
 	return -1
+
+
+## Its look among its kind's (a companion's coat; Msg.ENTITY_SPAWN).
+func look() -> int:
+	return 0
+
+
+## Whether it is the companion of the player `player` (PlayerSession.id):
+## their blows and arrows spare it.
+func belongs_to(_player: int) -> bool:
+	return false
 
 
 ## The middle of its box on the ground (world pixels).

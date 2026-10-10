@@ -11,8 +11,9 @@ extends RefCounted
 ## (Light.is_lit: torches, lanterns, fires keep them off); hungry, a
 ## predator goes for the nearest prey animal (Species.PREY) within
 ## HUNT_RANGE, its pack with it, for a while (Predator.CHASE_SECONDS: fences
-## keep a herd safe), and once it has killed it is fed HUNGER_SECONDS
-## (paced). No creative player nor spectator is ever a target.
+## keep a herd safe, and a dog: Companions.protects), and once it has killed
+## it is fed HUNGER_SECONDS (paced). No creative player nor spectator is
+## ever a target.
 ## Turtles lay their eggs on sand every EGG_SECONDS (paced), not near other
 ## eggs; the eggs hatch (Growth calls `hatch`: TURTLE_EGGS, _1, _2, then
 ## young turtles). Beavers build a dam of sticks in the still water by the
@@ -201,8 +202,9 @@ static func _hunt_prey(
 			predator.target_id = member.target_id
 			return
 	var nearest := HUNT_RANGE * GameConst.TILE_SIZE
+	var dogs := Companions.dogs_of(creatures)
 	for creature: Creature in creatures.living.values():
-		if not Species.PREY.has(creature.species):
+		if not Species.PREY.has(creature.species) or Companions.protects(dogs, creature):
 			continue
 		var distance := creature.center().distance_to(predator.center())
 		if distance < nearest:

@@ -128,7 +128,7 @@ static func sense(server: GameServer, creatures: Creatures, animal: Animal, delt
 	if not animal.night:
 		animal.shelter = Animal.NO_SHELTER
 		animal.shelter_searched = false
-	elif animal.affection > 0 and not animal.shelter_searched:
+	elif animal.affection > 0 and not animal.shelter_searched and not animal is Companion:
 		animal.shelter_searched = true
 		animal.shelter = find_shelter(creatures.voxel_at, animal)
 	if animal.state == Creature.State.SLEEP:
@@ -149,12 +149,16 @@ static func tend(
 		return
 	if not _within_reach(session, animal):
 		return
+	var slot := int(message.get("slot", -1))
+	var bag := session.inventory
+	if Companions.tend(server, session, animal, slot):
+		# A dog or a cat, or a wolf given meat.
+		session.transport.send(Msg.inventory(bag))
+		return
 	if Wildlife.is_wild(animal.species):
 		# Wolves, bears and fish are no farm animals.
 		_notice(session, animal, "HUD_ANIMAL_WILD")
 		return
-	var slot := int(message.get("slot", -1))
-	var bag := session.inventory
 	var held := bag.items[slot] if slot >= 0 and slot < Inventory.HOTBAR else Items.Id.NONE
 	var day := server.clock.day_index()
 	if animal.leader == session.id:
@@ -170,7 +174,7 @@ static func tend(
 	elif held == Items.Id.BUCKET:
 		_milk(server, session, animal, slot)
 	elif FEED.get(animal.species, []).has(held):
-		_feed(server, session, animal, slot, day)
+		feed(server, session, animal, slot, day)
 	else:
 		_pet(session, animal, day)
 	session.transport.send(Msg.inventory(bag))
@@ -278,6 +282,8 @@ static func _birth(
 	# Born to loved parents, it knows its players a little.
 	young.affection = (mother.affection + father.affection) / 4
 	young.cared_day = server.clock.day_index()
+	if young is Companion:
+		Companions.born(young as Companion, mother as Companion, father as Companion, creatures.rng)
 	for parent: Animal in [mother, father]:
 		parent.love = 0.0
 		parent.breed_rest = server.clock.scale_duration(BREED_REST_SECONDS)
@@ -326,7 +332,9 @@ static func _nest_near(voxel_at: Callable, animal: Animal) -> Vector3i:
 	return best
 
 
-static func _feed(
+## Feeds an animal what it eats from a hotbar slot: a young one grows
+## sooner, a grown one falls in love; once a day it loves more.
+static func feed(
 	server: GameServer, session: GameServer.PlayerSession, animal: Animal, slot: int, day: int
 ) -> void:
 	var used := false

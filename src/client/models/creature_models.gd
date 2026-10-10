@@ -46,8 +46,10 @@ static var _parts: Dictionary[int, Array] = {}
 
 
 ## The parts of a species' model (built once); `shorn`: a sheep without
-## its fleece.
-static func parts(kind: int, shorn := false) -> Array:
+## its fleece; a dog's or a cat's in its coat (`look`), with a `collar`.
+static func parts(kind: int, shorn := false, look := 0, collar := false) -> Array:
+	if Species.COMPANIONS.has(kind):
+		return CompanionModels.parts(kind, look, collar)
 	if kind == Species.Id.SHEEP and shorn:
 		if not _parts.has(-1):
 			_parts[-1] = _sheep(true)
