@@ -120,7 +120,7 @@ func test_fences_join_their_neighbors_and_keep_bodies_out() -> void:
 		chunk.set_voxel(Vector3i(x, SEA, 8), fence)
 	chunk.set_voxel(Vector3i(7, SEA, 8), Voxels.of_block(Tiles.Block.GATE))
 	chunk.set_voxel(Vector3i(5, SEA, 7), Voxels.of_block(Tiles.Block.STONE))
-	var job := ChunkMesher.Job.of_chunk(chunk, func(_coord: Vector2i) -> ChunkData: return null)
+	var job := ChunkJob.of_chunk(chunk, func(_coord: Vector2i) -> ChunkData: return null)
 	job.variants.resize(256)
 	job.variants[Tiles.Block.FENCE] = ObjectShapes.FENCE_VARIANTS
 	var result := ChunkMesher.build(job)
@@ -207,7 +207,7 @@ func test_what_hangs_high_over_the_ground_is_drawn() -> void:
 	assert_eq(copy.raised, chunk.raised, "sent with the chunk")
 	copy.recompute_tops()
 	assert_eq(copy.raised, chunk.raised, "found again when loaded")
-	var job := ChunkMesher.Job.of_chunk(chunk, func(_coord: Vector2i) -> ChunkData: return null)
+	var job := ChunkJob.of_chunk(chunk, func(_coord: Vector2i) -> ChunkData: return null)
 	job.variants.resize(256)
 	job.variants[Tiles.Block.CURTAINS] = 1
 	var result := ChunkMesher.build(job)

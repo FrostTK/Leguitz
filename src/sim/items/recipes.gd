@@ -240,6 +240,25 @@ const SHAPED := [
 		"result": [Items.Id.PAINT_ORANGE, 1],
 	},
 	{"ingredients": [Items.Id.LINSEED_OIL, REDS, BLUES], "result": [Items.Id.PAINT_PURPLE, 1]},
+	{"ingredients": [Items.Id.LINSEED_OIL, Items.Id.DIRT], "result": [Items.Id.PAINT_BROWN, 1]},
+	{
+		"ingredients": [Items.Id.LINSEED_OIL, COALS, Items.Id.FLOWER_WHITE],
+		"result": [Items.Id.PAINT_GREY, 1],
+	},
+	{
+		"ingredients": [Items.Id.LINSEED_OIL, BLUES, Items.Id.FLOWER_WHITE],
+		"result": [Items.Id.PAINT_SKY, 1],
+	},
+	{
+		"ingredients": [Items.Id.LINSEED_OIL, Items.Id.CACTUS, Items.Id.FLOWER_YELLOW],
+		"result": [Items.Id.PAINT_LIME, 1],
+	},
+	{"ingredients": [Items.Id.LINSEED_OIL, Items.Id.RED_SAND], "result": [Items.Id.PAINT_OCHRE, 1]},
+	{"ingredients": [Items.Id.LINSEED_OIL, REDS, COALS], "result": [Items.Id.PAINT_BURGUNDY, 1]},
+	{
+		"ingredients": [Items.Id.LINSEED_OIL, BLUES, Items.Id.CACTUS],
+		"result": [Items.Id.PAINT_TEAL, 1],
+	},
 	{
 		"pattern": ["S S", "SSS", "S S"],
 		"keys": {"S": Items.Id.STICK},
@@ -313,11 +332,27 @@ const SHAPED := [
 		"keys": {"S": Items.Id.STICK, "W": [Items.Id.WOOL, Items.Id.LINEN]},
 		"result": [Items.Id.CURTAINS, 1],
 	},
+	# Glass: old glass (sand in it), leaded glass, panes of each.
+	{
+		"ingredients":
+		[Items.Id.GLASS, Items.Id.GLASS, Items.Id.GLASS, Items.Id.GLASS, Items.Id.SAND],
+		"result": [Items.Id.OLD_GLASS, 4],
+	},
+	{
+		"pattern": ["GGG", "GIG", "GGG"],
+		"keys": {"G": Items.Id.GLASS, "I": Items.Id.IRON_INGOT},
+		"result": [Items.Id.LEADED_GLASS, 8],
+	},
 	{"pattern": ["GGG", "GGG"], "keys": {"G": Items.Id.GLASS}, "result": [Items.Id.GLASS_PANE, 16]},
 	{
-		"pattern": ["PPP", "PGP", "PPP"],
-		"keys": {"P": PLANKS, "G": Items.Id.GLASS},
-		"result": [Items.Id.WINDOW, 4],
+		"pattern": ["GGG", "GGG"],
+		"keys": {"G": Items.Id.OLD_GLASS},
+		"result": [Items.Id.OLD_GLASS_PANE, 16],
+	},
+	{
+		"pattern": ["GGG", "GGG"],
+		"keys": {"G": Items.Id.LEADED_GLASS},
+		"result": [Items.Id.LEADED_GLASS_PANE, 16],
 	},
 	{
 		"pattern": ["PPP", "S S", "S S"],
@@ -472,6 +507,15 @@ const KITCHEN := [
 	},
 ]
 
+## Windows (Glass.Design): their pattern of the frame's material (P) and
+## glass (G), how many it makes.
+const WINDOW_RECIPES := {
+	Glass.Design.FOUR: [["PPP", "PGP", "PPP"], 4],
+	Glass.Design.SMALL: [["PGP", "PGP", "PGP"], 4],
+	Glass.Design.SASH: [["PPP", "GGG", "PPP"], 4],
+	Glass.Design.ROUND: [[" P ", "PGP", " P "], 2],
+}
+
 ## Stairs and slabs (ShapedBlocks.Shape): their pattern of the material,
 ## how many it makes.
 const SHAPED_RECIPES := {
@@ -485,8 +529,8 @@ static var _all: Array[Dictionary] = []
 
 ## Every recipe: each log gives 4 planks (shapeless: "ingredients"),
 ## SHAPED, stairs and slabs of each material (SHAPED_RECIPES; two slabs
-## give the block back), then the tools, the armor, and the kitchen's
-## dishes.
+## give the block back), windows of each frame (WINDOW_RECIPES), then the
+## tools, the armor, and the kitchen's dishes.
 static func all() -> Array[Dictionary]:
 	if _all.is_empty():
 		for log_item: int in Items.PLANKS_OF:
@@ -499,6 +543,12 @@ static func all() -> Array[Dictionary]:
 			_all.append({"pattern": shape[0], "keys": keys, "result": [entry[0], shape[1]]})
 			if entry[2] != ShapedBlocks.Shape.STAIRS:
 				_all.append({"ingredients": [entry[0], entry[0]], "result": [entry[1], 1]})
+		for frame in Glass.FRAMES.size():
+			for design: int in WINDOW_RECIPES:
+				var window := Items.item_placing(Glass.window(design, frame))
+				var keys := {"P": Glass.FRAMES[frame][1], "G": Items.Id.GLASS}
+				var made: Array = WINDOW_RECIPES[design]
+				_all.append({"pattern": made[0], "keys": keys, "result": [window, made[1]]})
 		for tool: int in Items.TOOLS:
 			var keys := {"M": TOOL_MATERIALS[Items.tier_of(tool)], "S": Items.Id.STICK}
 			var pattern: Array = TOOL_PATTERNS[Items.tool_of(tool)]

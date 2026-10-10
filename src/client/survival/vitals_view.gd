@@ -166,4 +166,4 @@ func _update_eating(delta: float) -> void:
 		var slot := client.inventory.selected
 		client.inventory.take(slot, 1)
 		client.transport.send(Msg.eat(slot))
-		food = mini(food + Items.FOOD.get(item, 0), Vitals.MAX_FOOD)
+		food = mini(food + Food.SATIETY.get(item, 0), Vitals.MAX_FOOD)

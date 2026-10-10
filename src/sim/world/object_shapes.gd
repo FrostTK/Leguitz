@@ -223,6 +223,20 @@ const FACING_KINDS := {
 		Tiles.Block.LANTERN_WALL_NORTH,
 		Tiles.Block.LANTERN_WALL_EAST,
 	],
+	Tiles.Block.OLD_GLASS_PANE:
+	[
+		Tiles.Block.OLD_GLASS_PANE,
+		Tiles.Block.OLD_GLASS_PANE_WEST,
+		Tiles.Block.OLD_GLASS_PANE_NORTH,
+		Tiles.Block.OLD_GLASS_PANE_EAST,
+	],
+	Tiles.Block.LEADED_GLASS_PANE:
+	[
+		Tiles.Block.LEADED_GLASS_PANE,
+		Tiles.Block.LEADED_GLASS_PANE_WEST,
+		Tiles.Block.LEADED_GLASS_PANE_NORTH,
+		Tiles.Block.LEADED_GLASS_PANE_EAST,
+	],
 }
 ## Objects two tiles long: their kind (in FACING_KINDS: their left end,
 ## which holds the model) and the block of their right end, lying beside
@@ -268,6 +282,8 @@ const TOPS := {
 ## (voxels; the others facing them: BOX_SIZE).
 const FOOTPRINTS := {
 	Tiles.Block.GLASS_PANE: 16,
+	Tiles.Block.OLD_GLASS_PANE: 16,
+	Tiles.Block.LEADED_GLASS_PANE: 16,
 	Tiles.Block.TOILET: 10,
 	Tiles.Block.TABLE: 14,
 	Tiles.Block.CHAIR: 12,

@@ -63,6 +63,18 @@ func set_voxel(cell: Vector3i, voxel: int) -> int:
 	return before
 
 
+## A cell's tint changed (Msg.TINTED; Tints.pack, 0: none).
+func set_tint(cell: Vector3i, packed: int) -> void:
+	var chunk := chunk_at(Vector2i(cell.x, cell.z))
+	if chunk == null:
+		return
+	if packed == 0:
+		chunk.tints.erase(cell)
+	else:
+		chunk.tints[cell] = packed
+	revision += 1
+
+
 ## Height (levels) of the terrain surface of a column (-INF if unknown).
 func surface_height(tile: Vector2i) -> float:
 	var chunk := chunk_at(tile)

@@ -40,6 +40,9 @@ static func modeled_blocks() -> Array[int]:
 	for block in Tiles.Block.size():
 		if block == Tiles.Block.AIR or Tiles.is_cube(block) or ShapedBlocks.is_shaped(block):
 			continue
+		if Glass.is_pane(block):
+			# Meshed with the terrain (GlassFaces).
+			continue
 		if ObjectShapes.model_block(block) == block:
 			result.append(block)
 	return result

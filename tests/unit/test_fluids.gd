@@ -125,7 +125,7 @@ func test_flowing_liquids_show_their_sides() -> void:
 	chunk.set_voxel(Vector3i(5, SEA + 3, 5), Voxels.of_ground(WATER))
 	chunk.set_voxel(Vector3i(6, SEA + 3, 5), Voxels.of_ground(Tiles.Ground.WATER_FLOW_1))
 	chunk.set_voxel(Vector3i(7, SEA, 5), Voxels.of_ground(Tiles.Ground.WATER_FLOW_1))
-	var job := ChunkMesher.Job.of_chunk(chunk, func(_coord: Vector2i) -> ChunkData: return null)
+	var job := ChunkJob.of_chunk(chunk, func(_coord: Vector2i) -> ChunkData: return null)
 	job.variants.resize(Tiles.Block.size())
 	var result := ChunkMesher.build(job)
 	var water := result.parts[ChunkMesher.Part.WATER]

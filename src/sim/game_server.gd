@@ -425,7 +425,10 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 			if session.joined and Time.get_ticks_msec() - _last_save_msec >= SAVE_REQUEST_MSEC:
 				save()
 		var other:
-			if not boats.handle(self, session, message):
+			if (
+				not boats.handle(self, session, message)
+				and not Tints.handle(self, session, message)
+			):
 				push_warning("Server: unknown message type %s" % other)
 
 

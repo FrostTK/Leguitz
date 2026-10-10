@@ -25,18 +25,9 @@ const BRASS := ["#8a6a1e", "#c49a32", "#e8c45a"]
 const COPPER := ["#7a3a1c", "#b9612d", "#e2894a"]
 const ROPE := "#c8b07a"
 const CHEST_WOOD := ["#7a5130", "#9a6a3c", "#b37f4b"]
-## The paints' colours (sRGB), in the order of Items.PAINTS.
-const PAINT_COLORS := [
-	"#b8322a",
-	"#e2b42e",
-	"#2e5aa8",
-	"#ebe6dc",
-	"#e07a9a",
-	"#3e8a3a",
-	"#2a2a2e",
-	"#e0782a",
-	"#7a3a9a"
-]
+## The paints' colours (sRGB), in the order of Items.PAINTS (the palette
+## of our own, Tints).
+const PAINT_COLORS := Tints.COLORS
 const NET := ["#c8b98e", "#a8996e"]
 const FLOATS := ["#e8a020", "#d8402a"]
 const CAUGHT := ["#9aa8b0", "#b8a060", "#7e9eae"]

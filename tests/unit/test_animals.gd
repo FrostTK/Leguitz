@@ -261,7 +261,7 @@ func test_meat_roasts_and_wool_builds() -> void:
 	var raw := [Items.Id.RAW_MUTTON, Items.Id.RAW_PORK, Items.Id.RAW_CHICKEN, Items.Id.RAW_VENISON]
 	for item: int in raw:
 		var cooked := Smelting.result_of(Tiles.Block.FOOD_FURNACE, item)
-		assert_true(Items.FOOD[cooked] > Items.FOOD[item], "%s feeds more roasted" % item)
+		assert_true(Food.SATIETY[cooked] > Food.SATIETY[item], "%s feeds more roasted" % item)
 		assert_eq(Smelting.result_of(Tiles.Block.FACTORY_FURNACE, item), Items.Id.CHARRED_FOOD)
 	assert_true(Vitals.POISONS.has(Items.Id.RAW_CHICKEN), "raw chicken makes sick")
 	assert_eq(Items.placed_voxel(Items.Id.WOOL), Voxels.of_block(Tiles.Block.WOOL))

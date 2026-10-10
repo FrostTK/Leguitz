@@ -57,6 +57,7 @@ const BOAT_STEER := "boat_steer"
 const BOAT_HIT := "boat_hit"
 const NET := "net"
 const BOAT_PAINT := "boat_paint"
+const TINT := "tint"
 
 ## map_request() row for a map of the surface.
 const MAP_SURFACE := -1
@@ -100,6 +101,7 @@ const BOAT_REMOVE := "boat_remove"
 const BOAT_HURT := "boat_hurt"
 const NOTICE := "notice"
 const BOAT_SCREEN := "boat_screen"
+const TINTED := "tinted"
 
 
 ## The player hits the creature `id` with the hotbar slot `slot` in hand
@@ -393,6 +395,17 @@ static func animal_notice(key: String, kind: int, value: int) -> Dictionary:
 ## workbench facing `front`, see Mining.placement).
 ## `front`: the way an object placed faces; `face`: the side of the cube
 ## aimed at (UP: its top; see Mining.placement).
+## A pot of paint, the watering can or the axe in hotbar slot `slot` on
+## the glass in `cell` (`frame`: a window's frame; Tints).
+static func tint(cell: Vector3i, slot: int, frame: bool) -> Dictionary:
+	return {"t": TINT, "cell": cell, "slot": slot, "frame": frame}
+
+
+## The tint of a cell changed (Tints.pack; 0: none).
+static func tinted(cell: Vector3i, packed: int) -> Dictionary:
+	return {"t": TINTED, "cell": cell, "tint": packed}
+
+
 ## `upper`: aimed at the upper half of a side, or Shift (stairs upside
 ## down, a high slab).
 static func block_place(

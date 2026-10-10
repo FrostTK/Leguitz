@@ -40,6 +40,9 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Chien (un loup apprivoisé avec de la viande) et chat (sauvage, apprivoisé avec du poisson) : suivent, restent ou gardent ; le chien aboie contre les monstres, les mord et chasse les loups, ramène le troupeau ; le chat chasse taupes et corbeaux ; chiots et chatons de plusieurs robes | ✅ |
 | Escaliers, dalles et dalles verticales de chaque bois et de chaque pierre (coins automatiques, à l'envers, deux dalles font le bloc), qui se montent en marchant | ✅ |
 | Saisons (réglage du monde) : cultures de saison et serres, arbres qui roussissent puis se dénudent, neige l'hiver, le calendrier à l'horloge, /saison | ✅ |
+| Verre et vitres refaits : verre clair continu, verre ancien, verre au plomb, vitres fines qui se raccordent, 28 fenêtres (4 dessins, 6 bois et fer forgé), teinte par case au pot de peinture (le cadre à part), lavée à l'arrosoir ; le soleil à travers le verre teinté colore le sol ; palette de 16 couleurs douces | ✅ |
+
+![Leguitz : verre et vitres : les 28 fenêtres dans un mur de briques de pierre (quatre dessins, six bois et fer forgé, certaines peintes), le verre clair continu, le verre ancien et le verre au plomb, du verre teinté en six couleurs, des vitres qui tournent ; en première personne, une pièce sous une verrière teintée dont le soleil fait des taches de couleur au sol et sur les murs ; la même pièce vue de dessus, en coupe ; l'inventaire des verres, vitres, fenêtres et des 16 pots de peinture](docs/screenshots/phase8-verre-vitres.png)
 
 ![Leguitz : escaliers et dalles : toutes les matières vues de biais (dalles, escaliers, dalles verticales et hautes, une petite pyramide aux coins tournés, un mur de briques à corniche d'escaliers renversés), un escalier de briques de pierre en première personne, la vue de dessus et leurs icônes dans l'inventaire](docs/screenshots/phase8-escaliers-dalles.png)
 
@@ -324,9 +327,9 @@ Pour le multijoueur, il suffira de brancher un transport réseau.
 6. Souterrain et structures (en pause : maison et jardin, torches et lanternes, lumière des grottes, coulées d'eau et de lave faits)
 7. ✅ Agriculture et élevage (végétation qui pousse, champs et cultures, arrosage et compost,
    nouvelles cultures et arbres fruitiers, élevage, cuisine, pêche et bateaux, compagnons, saisons)
-8. Construction et décoration (en cours : escaliers et dalles faits ; à venir : toitures, portes
-   et échelles, nouveaux matériaux, verre et vitres refaits et teintables, rideaux fermables,
-   décoration intérieure)
+8. Construction et décoration (en cours : escaliers et dalles, verre et vitres teintables faits ;
+   à venir : rideaux fermables, toitures, portes et échelles, nouveaux matériaux, décoration
+   intérieure)
 9. Finitions PC (menus, sauvegardes, sons, options graphiques, Steam)
 10. Mobile (iOS, Android)
 

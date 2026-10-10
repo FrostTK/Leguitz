@@ -28,11 +28,45 @@ const SHINE := {
 }
 const LAVA_SHINE := 15
 ## Cubes the light goes through.
-const CLEAR_BLOCKS := {Tiles.Block.GLASS: true, Tiles.Block.WINDOW: true}
+const CLEAR_BLOCKS := {
+	Tiles.Block.GLASS: true,
+	Tiles.Block.WINDOW: true,
+	Tiles.Block.OLD_GLASS: true,
+	Tiles.Block.LEADED_GLASS: true,
+	Tiles.Block.OAK_WINDOW_SMALL: true,
+	Tiles.Block.OAK_WINDOW_SASH: true,
+	Tiles.Block.OAK_WINDOW_ROUND: true,
+	Tiles.Block.BIRCH_WINDOW: true,
+	Tiles.Block.BIRCH_WINDOW_SMALL: true,
+	Tiles.Block.BIRCH_WINDOW_SASH: true,
+	Tiles.Block.BIRCH_WINDOW_ROUND: true,
+	Tiles.Block.SPRUCE_WINDOW: true,
+	Tiles.Block.SPRUCE_WINDOW_SMALL: true,
+	Tiles.Block.SPRUCE_WINDOW_SASH: true,
+	Tiles.Block.SPRUCE_WINDOW_ROUND: true,
+	Tiles.Block.DARK_OAK_WINDOW: true,
+	Tiles.Block.DARK_OAK_WINDOW_SMALL: true,
+	Tiles.Block.DARK_OAK_WINDOW_SASH: true,
+	Tiles.Block.DARK_OAK_WINDOW_ROUND: true,
+	Tiles.Block.JUNGLE_WINDOW: true,
+	Tiles.Block.JUNGLE_WINDOW_SMALL: true,
+	Tiles.Block.JUNGLE_WINDOW_SASH: true,
+	Tiles.Block.JUNGLE_WINDOW_ROUND: true,
+	Tiles.Block.ACACIA_WINDOW: true,
+	Tiles.Block.ACACIA_WINDOW_SMALL: true,
+	Tiles.Block.ACACIA_WINDOW_SASH: true,
+	Tiles.Block.ACACIA_WINDOW_ROUND: true,
+	Tiles.Block.IRON_WINDOW: true,
+	Tiles.Block.IRON_WINDOW_SMALL: true,
+	Tiles.Block.IRON_WINDOW_SASH: true,
+	Tiles.Block.IRON_WINDOW_ROUND: true,
+}
 
 ## Per voxel id: how it lets light through, how much it shines.
 static var _passing := _build_passing()
-static var _shining := _build_shining()
+## Built on first use: ObjectShapes (base_kind) may still be loading when
+## this class is (ObjectShapes -> ShapedBlocks -> Mining -> Growth -> Light).
+static var _shining := PackedByteArray()
 
 
 ## How a voxel lets light through (CLEAR, OPAQUE, WATER).
@@ -42,6 +76,8 @@ static func passing(voxel: int) -> int:
 
 ## How much light a voxel shines (0: none).
 static func shine(voxel: int) -> int:
+	if _shining.is_empty():
+		_shining = _build_shining()
 	return _shining[voxel] if voxel < _shining.size() else 0
 
 

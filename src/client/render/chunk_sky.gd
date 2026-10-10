@@ -30,7 +30,7 @@ static func level(levels: PackedByteArray, open: PackedInt32Array, index: int) -
 
 
 ## The sky light over the chunk and its neighbors (LightField.sky).
-static func field(job: ChunkMesher.Job) -> Array:
+static func field(job: ChunkJob) -> Array:
 	var voxels := PackedInt32Array()
 	var tops := PackedByteArray()
 	for rz in REGION_SPAN:

@@ -102,7 +102,7 @@ func test_the_lights_each_burn_their_way() -> void:
 			chunk.set_voxel(Vector3i(lx, SEA - 1, lz), Voxels.of_block(Tiles.Block.STONE))
 	chunk.set_voxel(Vector3i(2, SEA, 2), Voxels.of_block(Tiles.Block.TORCH))
 	chunk.set_voxel(Vector3i(8, SEA, 8), Voxels.of_block(Tiles.Block.LANTERN))
-	var job := ChunkMesher.Job.of_chunk(chunk, func(_coord: Vector2i) -> ChunkData: return null)
+	var job := ChunkJob.of_chunk(chunk, func(_coord: Vector2i) -> ChunkData: return null)
 	job.variants.resize(Tiles.Block.size())
 	var result := ChunkMesher.build(job)
 	assert_eq(result.lava_spots.size(), 2)

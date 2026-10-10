@@ -251,7 +251,7 @@ func test_fishing_recipes_cooking_and_worms() -> void:
 	for fish: int in FishTable.SPECIES.keys() + FishTable.SHELLFISH.keys():
 		var cooked := Smelting.result_of(Tiles.Block.FOOD_FURNACE, fish)
 		assert_true(Items.is_food(fish) and Items.is_food(cooked), "%d grills" % fish)
-		assert_true(Items.FOOD[cooked] > Items.FOOD[fish], "cooked feeds better")
+		assert_true(Food.SATIETY[cooked] > Food.SATIETY[fish], "cooked feeds better")
 		var charred := Smelting.result_of(Tiles.Block.FACTORY_FURNACE, cooked)
 		assert_eq(charred, Items.Id.CHARRED_FOOD, "the factory furnace chars it")
 		assert_true(fish in Recipes.SEAFOOD, "a seafood")

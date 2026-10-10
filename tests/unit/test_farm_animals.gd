@@ -257,7 +257,7 @@ func test_a_full_hive_gives_honey_to_a_bottle_and_combs_to_shears() -> void:
 	_hold(Items.Id.HONEY_BOTTLE)
 	_session.food = 5
 	Survival.eat(_server, _session, 0)
-	assert_eq(_session.food, 5 + Items.FOOD[Items.Id.HONEY_BOTTLE])
+	assert_eq(_session.food, 5 + Food.SATIETY[Items.Id.HONEY_BOTTLE])
 	assert_eq(_session.inventory.items[0], Items.Id.GLASS_BOTTLE)
 	# A hive broken gives itself back; a wild nest its combs.
 	var rng := RandomNumberGenerator.new()

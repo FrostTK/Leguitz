@@ -319,7 +319,7 @@ func test_raspberries_and_peaches_are_picked() -> void:
 	cells.resize(Inventory.OWN_GRID * Inventory.OWN_GRID)
 	cells[0] = Items.Id.PEACH
 	assert_eq(Recipes.result_of(cells, Inventory.OWN_GRID), Vector2i(Items.Id.PEACH_PIT, 1))
-	assert_true(Items.FOOD.has(Items.Id.RASPBERRY) and Items.FOOD.has(Items.Id.PEACH))
+	assert_true(Food.SATIETY.has(Items.Id.RASPBERRY) and Food.SATIETY.has(Items.Id.PEACH))
 
 
 func test_a_tree_falls_only_when_it_is_gone() -> void:
@@ -384,7 +384,9 @@ func test_what_the_new_crops_make() -> void:
 	assert_eq(Recipes.result_of(grid.call(trellis), width), Vector2i(Items.Id.TRELLIS, 2))
 	var oven := Tiles.Block.FOOD_FURNACE
 	assert_eq(Smelting.result_of(oven, Items.Id.CORN), Items.Id.ROASTED_CORN)
-	assert_true(Items.FOOD[Items.Id.ROASTED_CORN] > Items.FOOD[Items.Id.CORN], "cooked feeds more")
+	assert_true(
+		Food.SATIETY[Items.Id.ROASTED_CORN] > Food.SATIETY[Items.Id.CORN], "cooked feeds more"
+	)
 	for item: int in [Items.Id.CABBAGE, Items.Id.GRAPES, Items.Id.APPLE_SEEDS, Items.Id.FLAX]:
 		assert_true(Composting.COMPOSTABLE.has(item), "%s composts" % Items.name_key(item))
 	var rng := RandomNumberGenerator.new()

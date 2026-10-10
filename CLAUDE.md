@@ -323,12 +323,11 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   textures stay the same; restore the ground atlases from git when their pixels did not
   change), then Items (PLACES_BLOCK, BLOCK_DROPS) and Mining (time, tool). Block items are cubes
   wearing their top texture above and below and their face texture around (ItemLibrary._cube;
-  alpha scissor for glass). Glass is a cube for physics and mining but one sees through it
-  (TileAtlas.CLEAR_WALLS): ChunkMesher gives it CLEAR_CUBE instead of CUBE, so it does not hide
-  its neighbors' faces (two panes hide each other's, and what stands under or behind glass is
-  meshed as seen from the sky, `_sky_through`), and the terrain shaders cut out its texture's
-  clear pixels (alpha < 0.5, shadows too) and draw its backs as panes, not rock sections
-  (`see_through_walls`). Placing aimed at a small plant puts the block in its place (Minecraft's).
+  glass's clear pixels glazed, `_glazed`). Glass is a cube for physics and mining but one sees
+  through it (TileAtlas.CLEAR_WALLS): ChunkMesher gives it CLEAR_CUBE instead of CUBE, so it does
+  not hide its neighbors' faces (what stands under or behind glass is meshed as seen from the
+  sky, `sky_through`), and draws it apart (GlassFaces, see Glass and panes below). Placing aimed
+  at a small plant puts the block in its place (Minecraft's).
 - The workbench is a voxel model two tiles long (WorkbenchModel: a carpenter's bench with a
   vise, drawers, a cupboard, and an iron anvil, hammer and saw on top) standing in two object
   voxels: its left end seen from its front (WORKBENCH, _WEST, _NORTH, _EAST: the way it faces,
@@ -890,6 +889,43 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   atlas (wall_atlas, wall_normals on the face material) and lays the season's built snow there.
   Item icons and in hand: ItemLibrary._shaped (octant faces wearing the textures). BlockColors
   takes the material's.
+- Glass and panes (phase 8, step 2; `src/sim/world/glass.gd`, Glass: static tables, shared):
+  glass cubes in a Style (Glass.CUBES: GLASS CLEAR, almost unseen, side by side one pane with a
+  border only where it stops; OLD_GLASS greenish, wavy, bubbles; LEADED_GLASS diamonds in lead),
+  thin panes of each (Glass.PANES: GLASS_PANE, OLD_GLASS_PANE, LEADED_GLASS_PANE, facing kinds,
+  FOOTPRINTS 16; `pane_sides` joins cubes and panes N, E, S, W like fences, alone across the way
+  it faces) and windows (FRAMED cubes, CLEAR_WALLS, LightField.CLEAR_BLOCKS): a Design (FOUR,
+  SMALL, SASH, ROUND) in a frame of FRAMES (the six woods, wrought iron), blocks
+  `<FRAME>_WINDOW<DESIGN>` (the oak four-pane one is the old WINDOW), `window(design, frame)`,
+  `window_of`; art in gen_art (`glass`, `old_glass`, `leaded_glass`, `window(frame, design)`,
+  FRAME_COLORS), recipes Recipes.WINDOW_RECIPES per frame material (planks, iron ingots), old
+  glass (4 glass + sand), leaded (8 glass around an iron ingot), 16 panes of 6 glass. Drawn with
+  the terrain, not as props (VoxelModels.modeled_blocks skips panes; DecorModels.glass_pane only
+  for the items): ChunkMesher calls GlassFaces.build_cube (CLEAR_CUBE) / build_pane, each face
+  twice: its opaque pixels (frames, lead, borders, bubbles) in the face meshes, UV2.y under
+  FRAME_PASS (-10; terrain3d_faces.gdshader: casts shadows, a frame in its paint), and its clear
+  pixels in their own meshes (Part.GLASS, DEEP_GLASS; ChunkView3D.glass, cave_glass, no shadow)
+  drawn by `glass.gdshader` (the screen seen through, tinted, a sheen brighter grazing, the sun's
+  glints; old glass wobbles; stained glass shows some of its own color lit, STAINED); edge bits
+  drop the border where the same glass in the same tint goes on; UV2 packs edges, top, the
+  tint and the style. Tints (`src/sim/world/tints.gd`, static, given the server): the palette
+  COLORS (16 soft colors of our own, by Items.PAINTS: 7 paints added, PAINT_BROWN .. PAINT_TEAL;
+  BoatModels.PAINT_COLORS is it), a cell's tint packed (`pack`: glass + 1 | (frame + 1) << 5) in
+  ChunkData.tints (by world cell; saved in the region as "tints", sent with the chunk, lost when
+  set_voxel changes the cell; ChunkJob.tints merges the 9 chunks'). Msg.TINT (BlockInteraction
+  ._instead_of_placing: the right click on glass with a pot, Shift for a window's frame, the
+  watering can washes the glass, an axe scrapes the frame and wears; not predicted): `handle`
+  (GameServer's fallback after Boats), a coat used, the last leaves its GLASS_BOTTLE; Msg.TINTED
+  to players having the chunk (ClientWorld.set_tint, WorldView3D.voxel_changed). The faces and
+  glass shaders get the palette (`tint_colors`, linear). Sunlight through tinted glass colors
+  what it falls on (asked by the owner): `GlassLight` (src/client/render, in the world root)
+  puts a Decal per sunlit tinted glass cell near the player (MOST, REACH chunks): the sun's rays
+  taken to local units by the root's inverse, the box the face the light comes in by swept along
+  them to where they land (Decals take sheared boxes), the face's clear pixels as its texture
+  (DECAL_FILTER_NEAREST), colored, fading with the sun. ChunkJob (src/client/render) is
+  ChunkMesher's old Job. Items.FOOD moved to Food.SATIETY (items.gd's 1000 lines). LightField
+  builds its shine table on first use (an init cycle through ObjectShapes). The book: Home and
+  garden, Glass and windows.
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made
@@ -939,7 +975,7 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   `WorldClock.scale_duration()`). Satiety: MAX_FOOD points, one spent per point of effort (time:
   FOOD_SECONDS paced; WALK_EFFORT per tile; BREAK_EFFORT per block; HEAL_EFFORT per point
   healed); at 0 starving costs a point of vitality every STARVE_SECONDS; under WEAK no running
-  (LocalPlayer.can_sprint). Food: Items.FOOD (satiety per item), Vitals.POISONS (raw red
+  (LocalPlayer.can_sprint). Food: Food.SATIETY (satiety per item), Vitals.POISONS (raw red
   mushroom: sick). The server keeps PlayerSession.health and .food (saved with the player;
   health 0 = passed out) and runs `Survival` (stateless, given the server): falls reported by
   the client (Msg.player_move's `fell`, from PlayerBody.take_fall), lava the feet are in, air

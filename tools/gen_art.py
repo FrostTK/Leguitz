@@ -47,6 +47,35 @@ WALLS = [
     "OAK_PLANKS", "BIRCH_PLANKS", "SPRUCE_PLANKS", "DARK_OAK_PLANKS", "JUNGLE_PLANKS",
     "ACACIA_PLANKS", "STONE_BRICKS", "SMOOTH_STONE", "BRICKS", "DEEPSLATE_BRICKS",
     "CUT_SANDSTONE", "GLASS", "WOOL", "WINDOW",
+    "OLD_GLASS",
+    "LEADED_GLASS",
+    "OAK_WINDOW_SMALL",
+    "OAK_WINDOW_SASH",
+    "OAK_WINDOW_ROUND",
+    "BIRCH_WINDOW",
+    "BIRCH_WINDOW_SMALL",
+    "BIRCH_WINDOW_SASH",
+    "BIRCH_WINDOW_ROUND",
+    "SPRUCE_WINDOW",
+    "SPRUCE_WINDOW_SMALL",
+    "SPRUCE_WINDOW_SASH",
+    "SPRUCE_WINDOW_ROUND",
+    "DARK_OAK_WINDOW",
+    "DARK_OAK_WINDOW_SMALL",
+    "DARK_OAK_WINDOW_SASH",
+    "DARK_OAK_WINDOW_ROUND",
+    "JUNGLE_WINDOW",
+    "JUNGLE_WINDOW_SMALL",
+    "JUNGLE_WINDOW_SASH",
+    "JUNGLE_WINDOW_ROUND",
+    "ACACIA_WINDOW",
+    "ACACIA_WINDOW_SMALL",
+    "ACACIA_WINDOW_SASH",
+    "ACACIA_WINDOW_ROUND",
+    "IRON_WINDOW",
+    "IRON_WINDOW_SMALL",
+    "IRON_WINDOW_SASH",
+    "IRON_WINDOW_ROUND",
 ]
 # Walls from this row on draw from random generators of their own, so the
 # textures made before them (and the cliffs after) stay the same.
@@ -559,21 +588,118 @@ def cut_sandstone(rng, face):
 
 
 def glass(rng, variant):
-    """Glass: a pale frame, clear inside (transparent pixels, cut out by the
-    terrain shaders) but for a few glints."""
-    edge, dark, shine = "#d4ebf0", "#9dc0ca", "#f6fcfd"
+    """Clear glass: a thin pale border, clear inside (transparent pixels: the
+    glass shader shows what lies behind and its sheen). Side by side, the
+    border goes where the glass goes on (GlassFaces)."""
+    edge, corner = "#d6e6ec", "#eef6f8"
     c = Canvas(TILE, TILE)
     c.fill(0, 0, TILE, 1, edge)
+    c.fill(0, TILE - 1, TILE, 1, edge)
     c.fill(0, 0, 1, TILE, edge)
+    c.fill(TILE - 1, 0, 1, TILE, edge)
+    for x, y in ((0, 0), (TILE - 1, 0), (0, TILE - 1), (TILE - 1, TILE - 1)):
+        c.put(x, y, corner)
+    height = np.full((TILE, TILE), 0.8, dtype=np.float32)
+    return c, height
+
+
+def old_glass(rng, variant):
+    """Old blown glass: a greenish border, a few bubbles caught in it (the
+    shader makes it wavy and greenish)."""
+    edge, bubble = "#9fbb98", "#d2e4c8"
+    c = Canvas(TILE, TILE)
+    c.fill(0, 0, TILE, 1, edge)
+    c.fill(0, TILE - 1, TILE, 1, edge)
+    c.fill(0, 0, 1, TILE, edge)
+    c.fill(TILE - 1, 0, 1, TILE, edge)
+    for x, y in ((4, 3), (11, 5), (6, 10), (12, 12), (3, 13), (9, 8)):
+        c.put(x, y, bubble)
+    height = np.full((TILE, TILE), 0.8, dtype=np.float32)
+    return c, height
+
+
+def leaded_glass(rng, variant):
+    """Leaded glass: diamonds set in lead, a lead border (which goes where the
+    glass goes on)."""
+    lead, light = "#3a3b40", "#55565c"
+    c = Canvas(TILE, TILE)
+    for y in range(TILE):
+        for x in range(TILE):
+            if (x + y) % 8 == 0 or (x - y + TILE) % 8 == 0:
+                c.put(x, y, lead if (x + y) % 16 else light)
+    c.fill(0, 0, TILE, 1, lead)
+    c.fill(0, TILE - 1, TILE, 1, lead)
+    c.fill(0, 0, 1, TILE, lead)
+    c.fill(TILE - 1, 0, 1, TILE, lead)
+    height = np.full((TILE, TILE), 0.7, dtype=np.float32)
+    return c, height
+
+
+# Window frames: (base, dark, light) of each wood (PLANKS), and wrought iron.
+FRAME_COLORS = {
+    "OAK": PLANKS["OAK_PLANKS"],
+    "BIRCH": PLANKS["BIRCH_PLANKS"],
+    "SPRUCE": PLANKS["SPRUCE_PLANKS"],
+    "DARK_OAK": PLANKS["DARK_OAK_PLANKS"],
+    "JUNGLE": PLANKS["JUNGLE_PLANKS"],
+    "ACACIA": PLANKS["ACACIA_PLANKS"],
+    "IRON": ("#3e3e46", "#26262c", "#5e5e68"),
+}
+
+
+def window(rng, variant, frame="OAK", design=""):
+    """A window: its frame (a wood or wrought iron) and its bars, clear
+    between (transparent, like glass): four panes, small panes, a sash, or a
+    round eye."""
+    base, dark, light = FRAME_COLORS[frame]
+    c = Canvas(TILE, TILE)
+    height = np.full((TILE, TILE), 0.5, dtype=np.float32)
+
+    def bar(x, y, w, h):
+        c.fill(x, y, w, h, base)
+        height[y:y + h, x:x + w] = 0.8
+
+    if design == "_ROUND":
+        # A round eye in a square of the frame.
+        for y in range(TILE):
+            for x in range(TILE):
+                d = ((x - 7.5) ** 2 + (y - 7.5) ** 2) ** 0.5
+                if d > 6.3:
+                    c.put(x, y, base)
+                    height[y, x] = 0.8
+                elif d > 5.3:
+                    c.put(x, y, dark if y > 7 else light)
+                    height[y, x] = 0.7
+        c.fill(0, 0, TILE, 1, light)
+        c.fill(0, 0, 1, TILE, light)
+        c.fill(0, TILE - 1, TILE, 1, dark)
+        c.fill(TILE - 1, 0, 1, TILE, dark)
+        return c, height
+    bar(0, 0, TILE, 2)
+    bar(0, TILE - 2, TILE, 2)
+    bar(0, 0, 2, TILE)
+    bar(TILE - 2, 0, 2, TILE)
+    if design == "":
+        bar(2, 7, TILE - 4, 2)
+        bar(7, 2, 2, TILE - 4)
+        c.fill(2, 8, TILE - 4, 1, dark)
+        c.fill(8, 2, 1, TILE - 4, dark)
+    elif design == "_SMALL":
+        bar(7, 2, 2, TILE - 4)
+        bar(2, 5, TILE - 4, 1)
+        bar(2, 10, TILE - 4, 1)
+        c.fill(8, 2, 1, TILE - 4, dark)
+    elif design == "_SASH":
+        # The meeting rail, the upper sash in small panes.
+        bar(1, 7, TILE - 2, 2)
+        c.fill(1, 8, TILE - 2, 1, dark)
+        bar(5, 2, 1, 5)
+        bar(10, 2, 1, 5)
+    c.fill(0, 0, TILE, 1, light)
+    c.fill(0, 0, 1, TILE, light)
     c.fill(0, TILE - 1, TILE, 1, dark)
     c.fill(TILE - 1, 0, 1, TILE, dark)
-    starts = [(3, 5), (9, 11)] if variant == 0 else [(4, 4), (8, 12)]
-    for x, y in starts:
-        for i in range(3):
-            c.put(x + i, y - i, shine)
-    c.put(11, 4, shine)
-    c.put(12, 3, edge)
-    height = np.full((TILE, TILE), 0.8, dtype=np.float32)
+    c.put(1, 1, light)
     return c, height
 
 
@@ -601,38 +727,6 @@ def wool(rng, face):
     return c, height
 
 
-def window(rng, variant):
-    """A window: a wooden frame and crossbars around four panes, clear
-    (transparent, like glass) but for a few glints."""
-    wood, dark, light = "#9a6a3c", "#6e4a2a", "#c08a52"
-    glint = "#f6fcfd"
-    c = Canvas(TILE, TILE)
-    c.fill(0, 0, TILE, 2, wood)
-    c.fill(0, 0, 2, TILE, wood)
-    c.fill(0, TILE - 2, TILE, 2, wood)
-    c.fill(TILE - 2, 0, 2, TILE, wood)
-    c.fill(0, 0, TILE, 1, light)
-    c.fill(0, 0, 1, TILE, light)
-    c.fill(0, TILE - 1, TILE, 1, dark)
-    c.fill(TILE - 1, 0, 1, TILE, dark)
-    c.fill(2, 7, TILE - 4, 2, wood)
-    c.fill(7, 2, 2, TILE - 4, wood)
-    c.fill(2, 8, TILE - 4, 1, dark)
-    c.fill(8, 2, 1, TILE - 4, dark)
-    c.fill(1, 1, 1, 1, light)
-    # Glints across the panes.
-    starts = [(3, 5), (10, 12)] if variant == 0 else [(4, 4), (10, 13)]
-    for x, y in starts:
-        for i in range(2):
-            c.put(x + i, y - i, glint)
-    c.put(11, 4, glint)
-    height = np.full((TILE, TILE), 0.8, dtype=np.float32)
-    height[2:TILE - 2, 2:TILE - 2] = 0.5
-    height[7:9, :] = 0.8
-    height[:, 7:9] = 0.8
-    return c, height
-
-
 def wall_tile(rng, name, is_top, variant):
     """The tile of a wall added after the first ones (own generator)."""
     if name in PLANKS:
@@ -645,8 +739,15 @@ def wall_tile(rng, name, is_top, variant):
         return cut_sandstone(rng, not is_top)
     if name == "WOOL":
         return wool(rng, not is_top)
+    if name == "OLD_GLASS":
+        return old_glass(rng, variant)
+    if name == "LEADED_GLASS":
+        return leaded_glass(rng, variant)
     if name == "WINDOW":
         return window(rng, variant)
+    if "_WINDOW" in name:
+        frame, design = name.split("_WINDOW")
+        return window(rng, variant, frame, design)
     return glass(rng, variant)
 
 

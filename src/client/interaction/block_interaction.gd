@@ -218,14 +218,23 @@ func place() -> void:
 	_put(cells, cell, slot, front, face, upper)
 
 
-## What a right click does rather than placing: the book in hand opens, a
-## boat aimed at is painted (a pot in hand; Shift: its stripe) or scraped
-## (an axe), else boarded, the fishing rod casts. Returns whether it did.
+## What a right click does rather than placing: the book in hand opens,
+## glass aimed at is tinted (a pot in hand; Shift: a window's frame),
+## washed (the watering can) or its frame scraped (an axe), a boat aimed at
+## is painted (a pot; Shift: its stripe) or scraped (an axe), else boarded,
+## the fishing rod casts. Returns whether it did.
 func _instead_of_placing() -> bool:
 	var held := client.held_item()
 	if held == Items.Id.GUIDE_BOOK:
 		client.open_book()
 		return true
+	var tool := held in Items.PAINTS or Items.tool_of(held) == Items.Tool.AXE
+	if target != null and Tints.tintable(Voxels.block_of(target.voxel)):
+		if tool or held == Items.Id.WATERING_CAN:
+			var frame := Input.is_action_pressed(InputBindings.SPRINT)
+			client.transport.send(Msg.tint(target.cell, client.inventory.selected, frame))
+			client.player_model.swing()
+			return true
 	if target_boat >= 0 and (held in Items.PAINTS or Items.tool_of(held) == Items.Tool.AXE):
 		var stripe := Input.is_action_pressed(InputBindings.SPRINT)
 		client.transport.send(Msg.boat_paint(target_boat, client.inventory.selected, stripe))

@@ -18,6 +18,8 @@ const STONE := ["#85838e", "#a3a1ab", "#bdbcc4", "#d6d5db"]
 const PORCELAIN := ["#aeb3b8", "#d2d6da", "#e9ecee", "#fbfcfd"]
 const LINEN := ["#9e8f74", "#bfb194", "#d9cdb1", "#ece3cc"]
 const GLASS := ["#9dc0ca", "#d4ebf0", "#f6fcfd"]
+const OLD_GLASS := ["#86a682", "#bcd6b4", "#e2f0dc"]
+const LEAD := ["#2e2f34", "#4a4b52", "#c4dce4"]
 const WATER := ["#3f7fa8", "#6aa6c8"]
 const FIRE := ["#b4280c", "#ea5a12", "#f99a1c", "#ffd04a", "#fff2b0"]
 const EMBER := ["#3a1c10", "#7a2a10"]
@@ -47,7 +49,11 @@ static func build(block: int, variant: int) -> VoxelGrid:
 		Tiles.Block.CURTAINS:
 			return curtains()
 		Tiles.Block.GLASS_PANE:
-			return glass_pane()
+			return glass_pane(GLASS)
+		Tiles.Block.OLD_GLASS_PANE:
+			return glass_pane(OLD_GLASS)
+		Tiles.Block.LEADED_GLASS_PANE:
+			return glass_pane(LEAD, true)
 		Tiles.Block.SINK:
 			return sink()
 		Tiles.Block.TOILET:
@@ -94,6 +100,10 @@ static func color_of(kind: int) -> Color:
 			return Color(LINEN[2])
 		Tiles.Block.GLASS_PANE:
 			return Color(GLASS[1])
+		Tiles.Block.OLD_GLASS_PANE:
+			return Color(OLD_GLASS[1])
+		Tiles.Block.LEADED_GLASS_PANE:
+			return Color(LEAD[1])
 		Tiles.Block.SINK, Tiles.Block.TOILET:
 			return Color(PORCELAIN[2])
 		Tiles.Block.CAMPFIRE, Tiles.Block.TORCH:
@@ -261,16 +271,24 @@ static func curtains() -> VoxelGrid:
 
 ## A glass pane across the middle of its tile: a pale frame, clear inside
 ## but for a few glints.
-static func glass_pane() -> VoxelGrid:
+static func glass_pane(colors: Array, leaded := false) -> VoxelGrid:
 	var grid := VoxelGrid.new(Vector3i(16, 16, 16))
 	for z in range(7, 9):
-		grid.box(Vector3i(0, 0, z), Vector3i(15, 0, z), _v(GLASS[0]))
-		grid.box(Vector3i(0, 15, z), Vector3i(15, 15, z), _v(GLASS[1]))
-		grid.box(Vector3i(0, 0, z), Vector3i(0, 15, z), _v(GLASS[1]))
-		grid.box(Vector3i(15, 0, z), Vector3i(15, 15, z), _v(GLASS[0]))
+		grid.box(Vector3i(0, 0, z), Vector3i(15, 0, z), _v(colors[0]))
+		grid.box(Vector3i(0, 15, z), Vector3i(15, 15, z), _v(colors[1]))
+		grid.box(Vector3i(0, 0, z), Vector3i(0, 15, z), _v(colors[1]))
+		grid.box(Vector3i(15, 0, z), Vector3i(15, 15, z), _v(colors[0]))
+	if leaded:
+		# Diamonds set in lead (the panes are the item's; placed, the
+		# terrain draws them: GlassFaces).
+		for y in range(1, 15):
+			for x in range(1, 15):
+				if (x + y) % 8 == 0 or (x - y + 16) % 8 == 0:
+					grid.set_voxel(Vector3i(x, y, 8), _v(colors[0]))
+		return grid
 	for start: Vector2i in [Vector2i(3, 5), Vector2i(9, 12), Vector2i(10, 4)]:
 		for i in 3:
-			grid.set_voxel(Vector3i(start.x + i, start.y - i, 8), _v(GLASS[2]))
+			grid.set_voxel(Vector3i(start.x + i, start.y - i, 8), _v(colors[2]))
 	return grid
 
 

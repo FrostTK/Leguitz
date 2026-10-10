@@ -40,6 +40,9 @@ var watered: Dictionary[Vector3i, float] = {}
 ## Server side: what the kitchen's machines and the fish traps hold, by cell
 ## (see Machines), saved with it.
 var machines: Dictionary[Vector3i, Dictionary] = {}
+## The cells tinted with paint (Tints.pack), by cell: saved with it and
+## sent with it; a cell changing loses its tint.
+var tints: Dictionary[Vector3i, int] = {}
 
 
 func _init(chunk_coord := Vector2i.ZERO) -> void:
@@ -60,6 +63,8 @@ func get_voxel(local: Vector3i) -> int:
 
 func set_voxel(local: Vector3i, voxel: int) -> void:
 	voxels[voxel_index(local.x, local.y, local.z)] = voxel
+	if not tints.is_empty():
+		tints.erase(Vector3i(coord.x * SIZE + local.x, local.y, coord.y * SIZE + local.z))
 	var column := local.z * SIZE + local.x
 	if Voxels.is_cube(voxel) or Voxels.is_liquid(voxel):
 		tops[column] = maxi(tops[column], local.y + 1)
@@ -140,6 +145,7 @@ func duplicate_chunk() -> ChunkData:
 	copy.biome = biome.duplicate()
 	copy.tops = tops.duplicate()
 	copy.raised = raised.duplicate()
+	copy.tints = tints.duplicate()
 	copy.modified = modified
 	return copy
 
@@ -153,6 +159,7 @@ func to_dict() -> Dictionary:
 		"biome": biome,
 		"tops": tops,
 		"raised": raised,
+		"tints": tints,
 	}
 
 
@@ -174,6 +181,10 @@ static func from_dict(data: Dictionary) -> ChunkData:
 			chunk.raised[int(column)] = int(raised[column])
 	else:
 		chunk.recompute_tops()
+	var tints: Dictionary = data.get("tints", {})
+	for cell: Variant in tints:
+		if cell is Vector3i:
+			chunk.tints[cell] = int(tints[cell])
 	return chunk
 
 

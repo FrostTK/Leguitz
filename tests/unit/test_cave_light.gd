@@ -101,7 +101,7 @@ func test_chunk_meshes_bake_the_sky_light() -> void:
 				chunk.set_voxel(Vector3i(lx, y, lz), Voxels.AIR)
 	for y in range(SEA - 2, SEA + 6):
 		chunk.set_voxel(Vector3i(10, y, 10), Voxels.AIR)
-	var job := ChunkMesher.Job.of_chunk(chunk, func(_coord: Vector2i) -> ChunkData: return null)
+	var job := ChunkJob.of_chunk(chunk, func(_coord: Vector2i) -> ChunkData: return null)
 	job.variants.resize(Tiles.Block.size())
 	var result := ChunkMesher.build(job)
 	var deep := result.parts[ChunkMesher.Part.DEEP_TOPS]

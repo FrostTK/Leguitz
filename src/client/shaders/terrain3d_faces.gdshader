@@ -4,7 +4,8 @@ shader_type spatial;
 //   UV   = (pixels along the face, pixels down from the top of the face;
 //          for undersides: world pixels along x and z)
 //   UV2  = (face kind: 0-3 cliff materials, 4+ wall kinds; lip ground + 1,
-//          or -2 for the tops of stairs and slabs: ShapedFaces)
+//          or -2 for the tops of stairs and slabs: ShapedFaces, or under
+//          -10 for the opaque pixels of glass: GlassFaces.FRAME_PASS)
 //   COLOR.r = variant (0 or 1), COLOR.g = lip ground variant / 3,
 //   COLOR.b = the sky light in front of the face (see sky_light.gdshaderinc)
 
@@ -20,6 +21,8 @@ uniform sampler2D face_emission : source_color, filter_nearest;
 // The tops of the walls (stairs' and slabs' tops wear them).
 uniform sampler2D wall_atlas : source_color, filter_nearest;
 uniform sampler2D wall_normals : filter_nearest;
+// The palette of tints (Tints.COLORS), linear: a window's painted frame.
+uniform vec3 tint_colors[16];
 uniform float emission_strength = 2.2;
 // Per wall kind: 1 for the walls one sees through (glass): their clear
 // pixels are cut out, their backs seen through them are not rock sections.
@@ -89,6 +92,28 @@ void fragment() {
 		if (seasonal > 0 && sky > SNOW_SKY && patchy < season_snow * 1.2 - 0.1) {
 			albedo = SNOW_COLOR * (v == 2 ? 0.85 : 1.0);
 			normal = vec3(0.0, 0.0, 1.0);
+		}
+	} else if (face_data.y < -9.5) {
+		// Glass (GlassFaces): its frame, lead, border and bubbles, opaque
+		// (its clear pixels are the glass meshes'); no border where the
+		// same glass goes on; a frame in its paint.
+		int glass_bits = int(-face_data.y - 10.0 + 0.5);
+		int frame = glass_bits / 32 - 1;
+		int edges = glass_bits & 15;
+		bool on_top = (glass_bits & 16) != 0;
+		vec4 texel = on_top
+				? texelFetch(wall_atlas, ivec2(u, (kind - WALL_KIND_OFFSET) * 16 + v), 0)
+				: texelFetch(face_atlas, ivec2(u, kind * 16 + v), 0);
+		bool goes_on = (v == 0 && (edges & 1) != 0) || (v == 15 && (edges & 2) != 0)
+				|| (u == 0 && (edges & 4) != 0) || (u == 15 && (edges & 8) != 0);
+		if (texel.a < 0.5 || goes_on) {
+			discard;
+		}
+		albedo = texel.rgb;
+		normal = vec3(0.0, 0.0, 1.0);
+		if (frame >= 0) {
+			float luma = dot(albedo, vec3(0.3, 0.59, 0.11));
+			albedo = tint_colors[frame] * clamp(luma / 0.3, 0.55, 1.4);
 		}
 	} else if (face_data.y < -1.5) {
 		// The top of stairs or a slab: its material's top, its snow.

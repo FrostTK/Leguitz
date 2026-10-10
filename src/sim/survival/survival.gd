@@ -135,7 +135,7 @@ static func eat(server: GameServer, session: GameServer.PlayerSession, slot: int
 			session.inventory.counts[slot] = 1
 		elif session.inventory.add(left, 1) > 0:
 			server.throw_item(session, left, 1)
-	session.food = mini(session.food + Items.FOOD[item], Vitals.MAX_FOOD)
+	session.food = mini(session.food + Food.SATIETY[item], Vitals.MAX_FOOD)
 	Effects.take(session.effects, item, server.clock.scale_duration(1.0))
 	session.transport.send(Msg.inventory(session.inventory))
 	_tell(session)

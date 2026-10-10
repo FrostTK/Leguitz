@@ -21,6 +21,7 @@ extends Node3D
 const TOP_SHADER := preload("res://src/client/shaders/terrain3d_top.gdshader")
 const FACE_SHADER := preload("res://src/client/shaders/terrain3d_faces.gdshader")
 const WATER_SHADER := preload("res://src/client/shaders/water.gdshader")
+const GLASS_SHADER := preload("res://src/client/shaders/glass.gdshader")
 const FACE_ATLAS := preload("res://assets/textures/tiles/face_atlas.png")
 const FACE_NORMALS := preload("res://assets/textures/tiles/face_atlas_n.png")
 const FACE_EMISSION := preload("res://assets/textures/tiles/face_atlas_e.png")
@@ -82,6 +83,8 @@ var caps_shown := false
 var top_material := ShaderMaterial.new()
 var face_material := ShaderMaterial.new()
 var water_material := ShaderMaterial.new()
+## The see-through part of glass (GlassFaces), shared by the chunks.
+var glass_material := ShaderMaterial.new()
 var props := PropLibrary.new()
 
 var _views: Dictionary[Vector2i, ChunkView3D] = {}
@@ -118,6 +121,15 @@ func _ready() -> void:
 	face_material.set_shader_parameter("ground_season", TerrainRenderer.seasonal_table())
 	face_material.set_shader_parameter("wall_atlas", TerrainRenderer.WALL_ATLAS)
 	face_material.set_shader_parameter("wall_normals", TerrainRenderer.WALL_NORMALS)
+	var palette := PackedVector3Array()
+	for index in Tints.COLORS.size():
+		var linear := Tints.color(index).srgb_to_linear()
+		palette.append(Vector3(linear.r, linear.g, linear.b))
+	face_material.set_shader_parameter("tint_colors", palette)
+	glass_material.shader = GLASS_SHADER
+	glass_material.set_shader_parameter("face_atlas", FACE_ATLAS)
+	glass_material.set_shader_parameter("wall_atlas", TerrainRenderer.WALL_ATLAS)
+	glass_material.set_shader_parameter("tint_colors", palette)
 	_variants.resize(Tiles.Block.size())
 	for block: int in Tiles.Block.values():
 		_variants[block] = props.variant_count(block)
@@ -381,7 +393,7 @@ func _start_jobs() -> void:
 		var view: ChunkView3D = _views.get(coord)
 		if chunk == null or view == null:
 			continue
-		var job := ChunkMesher.Job.of_chunk(chunk, _chunk)
+		var job := ChunkJob.of_chunk(chunk, _chunk)
 		job.variants = _variants
 		job.cut_row = cut_row
 		if cut_row < ChunkData.HEIGHT and cut_region != null and not cut_region.everywhere:
@@ -395,7 +407,7 @@ func _start_jobs() -> void:
 		_jobs[coord] = WorkerThreadPool.add_task(_build.bind(job), false, "Chunk mesh")
 
 
-func _build(job: ChunkMesher.Job) -> void:
+func _build(job: ChunkJob) -> void:
 	var result := ChunkMesher.build(job)
 	_results_mutex.lock()
 	_results.append(result)
@@ -497,6 +509,6 @@ func _chunk(coord: Vector2i) -> ChunkData:
 
 
 func _new_view() -> ChunkView3D:
-	var view := ChunkView3D.new(top_material, face_material, water_material)
+	var view := ChunkView3D.new(top_material, face_material, water_material, glass_material)
 	add_child(view)
 	return view

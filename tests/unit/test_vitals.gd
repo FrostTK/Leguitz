@@ -167,7 +167,7 @@ func test_satiety_goes_with_time_and_effort_and_food_brings_it_back() -> void:
 	session.food = 10
 	client.send(Msg.eat(1))
 	server.process_messages()
-	assert_eq(session.food, 10 + Items.FOOD[Items.Id.BERRIES])
+	assert_eq(session.food, 10 + Food.SATIETY[Items.Id.BERRIES])
 	assert_eq(session.inventory.counts[1], 2)
 	session.inventory.add(Items.Id.MUSHROOM_RED, 1)
 	var red := session.inventory.items.find(Items.Id.MUSHROOM_RED)

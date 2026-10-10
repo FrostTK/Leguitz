@@ -37,6 +37,9 @@ static func handle(client: GameClient, message: Dictionary) -> void:
 			client.weather_effects.apply_state(message["weather"])
 		Msg.WORLD_SAVED:
 			client.save_notice.flash()
+		Msg.TINTED:
+			client.world.set_tint(message["cell"], message["tint"])
+			client.world_view.voxel_changed(message["cell"])
 		Msg.BLOCK_CHANGED:
 			client.interaction.on_block_changed(message["cell"], message["voxel"])
 			client.weather_effects.terrain_changed()

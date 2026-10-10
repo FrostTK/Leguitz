@@ -148,7 +148,7 @@ func test_shears_and_a_bucket_take_wool_and_milk() -> void:
 	_hold(Items.Id.MILK_BUCKET)
 	_session.food = 5
 	Survival.eat(_server, _session, 0)
-	assert_eq(_session.food, 5 + Items.FOOD[Items.Id.MILK_BUCKET])
+	assert_eq(_session.food, 5 + Food.SATIETY[Items.Id.MILK_BUCKET])
 	assert_eq(_session.inventory.items[0], Items.Id.BUCKET, "the bucket back in hand")
 	# Too young for either.
 	var lamb := _animal(Species.Id.SHEEP, -2, 0)

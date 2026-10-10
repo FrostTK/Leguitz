@@ -73,7 +73,7 @@ func test_chunks_cut_their_maps_and_caps_where_the_cut_reaches() -> void:
 	for row in range(SEA, SEA + 4):
 		chunk.set_voxel(Vector3i(13, row, 13), planks)
 	var region := CutRegion.around(world, Vector2i(7, 7), 0.0)
-	var job := ChunkMesher.Job.of_chunk(chunk, func(_coord: Vector2i) -> ChunkData: return null)
+	var job := ChunkJob.of_chunk(chunk, func(_coord: Vector2i) -> ChunkData: return null)
 	job.variants.resize(256)
 	job.cut_row = SEA + 2
 	job.cut_columns = region.columns_of(Vector2i.ZERO)

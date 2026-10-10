@@ -75,6 +75,8 @@ var player_model := PlayerModel.new()
 var lighting := LightingController.new()
 var weather_effects := WeatherEffects.new()
 var clouds := CloudShadows3D.new()
+## Sunlight through tinted glass colors the floor.
+var glass_light := GlassLight.new()
 var sun := DirectionalLight3D.new()
 var environment := Environment.new()
 
@@ -259,6 +261,11 @@ func _setup_world() -> void:
 	world_root.add_child(world_view)
 	world_root.add_child(clouds)
 	world_root.add_child(player_model)
+	glass_light.process_mode = Node.PROCESS_MODE_PAUSABLE
+	glass_light.client_world = world
+	glass_light.sun = sun
+	glass_light.player = local_player
+	world_root.add_child(glass_light)
 	weather_effects.client_world = world
 	weather_effects.local_player = local_player
 	weather_effects.clock = clock

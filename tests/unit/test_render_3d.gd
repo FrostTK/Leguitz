@@ -46,7 +46,7 @@ static func _area(surface: ChunkMesher.Surface) -> float:
 
 
 func _build(chunk: ChunkData, cut_row := ChunkData.HEIGHT) -> ChunkMesher.Result:
-	var job := ChunkMesher.Job.of_chunk(chunk, _no_neighbor)
+	var job := ChunkJob.of_chunk(chunk, _no_neighbor)
 	job.variants.resize(256)
 	job.cut_row = cut_row
 	return ChunkMesher.build(job)
@@ -305,14 +305,18 @@ func test_glass_shows_what_is_behind_it() -> void:
 	chunk.set_voxel(Vector3i(12, SEA, 5), stone)
 	chunk.set_voxel(Vector3i(13, SEA, 5), glass)
 	var result := _build(chunk)
-	# 4 sides, 4 + 4 (not between the two), the stone's 4 (also behind the
-	# pane), the pane's 3 (not against the stone).
-	assert_eq(result.parts[ChunkMesher.Part.FACES].quad_count(), 4 + 8 + 4 + 3)
+	# Glass (GlassFaces: its frames' pass in the faces, its glass apart):
+	# 4 sides and a top, 4 + 4 (not between the two) and a top, the
+	# pane's 3 (not against the stone) and a top; the stone's 4 (also
+	# behind the pane).
+	var glass_faces := 5 + 9 + 4
+	assert_eq(result.parts[ChunkMesher.Part.FACES].quad_count(), glass_faces + 4)
+	assert_eq(result.parts[ChunkMesher.Part.GLASS].quad_count(), glass_faces)
 	assert_true(result.parts[ChunkMesher.Part.DEEP_FACES].quad_count() == 1, "the world bottom")
 	# The ground under the panes shows from the sky (not under the stone),
-	# so does the top of each pile.
+	# so does the stone's top.
 	var ground := float(GameConst.CHUNK_AREA - 1)
-	assert_almost(_area(result.parts[ChunkMesher.Part.TOPS]), ground + 4.0, 0.001)
+	assert_almost(_area(result.parts[ChunkMesher.Part.TOPS]), ground + 1.0, 0.001)
 	assert_true(result.parts[ChunkMesher.Part.DEEP_TOPS].is_empty(), "nothing under cover")
 	var glass_kind: int = TileAtlas.WALL_KINDS[Tiles.Block.GLASS]
 	assert_eq(ChunkMesher.face_kind(glass), ChunkMesher.WALL_KIND_OFFSET + glass_kind)
@@ -334,7 +338,7 @@ func test_building_blocks_cut_by_the_view_show_their_top() -> void:
 	assert_eq(caps.quad_count(), 1, "the planks cut through, not the rock")
 	assert_almost(caps.vertices[0].y, 2.0, 0.01, "at the cut")
 	assert_eq(int(caps.uv2s[0].x), ChunkMesher.top_code(planks), "wearing the planks' top")
-	var job := ChunkMesher.Job.of_chunk(chunk, _no_neighbor)
+	var job := ChunkJob.of_chunk(chunk, _no_neighbor)
 	job.variants.resize(256)
 	job.cut_row = SEA + 2
 	job.map_only = true

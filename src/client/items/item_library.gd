@@ -5,6 +5,8 @@ extends RefCounted
 ## cubes wearing their block's texture; the others are voxel models
 ## (ItemModels).
 
+## Glass seen as an item (_glazed): its pane and its sheen.
+const GLAZE: Array[Color] = [Color("#bcd8e2"), Color("#e8f4f8")]
 const VOXEL_SHADER := preload("res://src/client/shaders/voxel.gdshader")
 
 ## For the voxel models (no per-instance tint, no see-through hole).
@@ -228,15 +230,27 @@ static func _cube_faces(mesh: ArrayMesh, faces: Array, texture: Image) -> void:
 			tool.set_uv(uvs[i])
 			tool.add_vertex(corners[i])
 	var material := StandardMaterial3D.new()
-	material.albedo_texture = ImageTexture.create_from_image(texture)
+	material.albedo_texture = ImageTexture.create_from_image(_glazed(texture))
 	material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	if texture.detect_alpha() != Image.ALPHA_NONE:
-		# Glass: its clear pixels are cut out.
-		material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
 	material.cull_mode = BaseMaterial3D.CULL_DISABLED
 	material.roughness = 0.9
 	tool.set_material(material)
 	tool.commit(mesh)
+
+
+## Glass's clear pixels (its art's, alpha < 0.5) as an item: a pale pane
+## with a sheen across it (the terrain sees through them, an item cannot).
+static func _glazed(texture: Image) -> Image:
+	if texture.detect_alpha() == Image.ALPHA_NONE:
+		return texture
+	var glazed := texture.duplicate() as Image
+	glazed.convert(Image.FORMAT_RGBA8)
+	for y in glazed.get_height():
+		for x in glazed.get_width():
+			if glazed.get_pixel(x, y).a < 0.5:
+				var sheen := (x + y) % 11 < 2
+				glazed.set_pixel(x, y, GLAZE[1] if sheen else GLAZE[0])
+	return glazed
 
 
 ## The 16 x 16 texture of a block's sides (the terrain's face atlas).

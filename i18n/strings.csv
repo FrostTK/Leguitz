@@ -432,7 +432,7 @@ BOOK_COMBAT_FALLS,"Armor does not soften falls, lava, drowning or hunger.","L'ar
 ITEM_TORCH_BRACKET,Torch bracket,Support mural de torche
 ITEM_CURTAINS,Curtains,Rideaux
 ITEM_GLASS_PANE,Glass pane,Vitre
-ITEM_WINDOW,Window,Fenêtre
+ITEM_WINDOW,Oak window,Fenêtre en chêne
 ITEM_SINK,Sink,Évier
 ITEM_TOILET,Toilet,Toilettes
 ITEM_TABLE,Table,Table
@@ -446,8 +446,8 @@ BOOK_HOME_INTRO,"Furnish your house and your garden (their recipes are in the Cr
 BOOK_HOME_WALL,Hung on a wall: aim at the side of a block. It falls with it.,Accroché au mur : vise le côté d'un bloc. Il tombe avec lui.
 BOOK_HOME_BRACKET,Torch bracket: on a wall; aim at it with a torch in hand to put one in.,Support mural : au mur ; vise-le avec une torche en main pour l'y mettre.
 BOOK_HOME_CURTAINS,"Curtains: on a wall, in front of a window.","Rideaux : au mur, devant une fenêtre."
-BOOK_HOME_WINDOW,Window: a block of glass in a wooden frame.,Fenêtre : un bloc de verre dans un cadre en bois.
-BOOK_HOME_PANE,Glass pane: a thin pane across its tile.,Vitre : une plaque fine au milieu de sa case.
+BOOK_HOME_WINDOW,"Windows: four panes, small panes, a sash or a round eye. Glass in the middle of planks or iron ingots, at the workbench or in your grid.","Fenêtres : quatre carreaux, petits carreaux, à guillotine ou œil-de-bœuf. Du verre au milieu de planches ou de lingots de fer, à l'établi ou dans ta grille."
+BOOK_HOME_PANE,"Panes, of each glass: thin, they join the panes, glass and walls beside them; alone, one stands across its tile.","Vitres, de chaque verre : fines, elles rejoignent les vitres, le verre et les murs à côté ; seule, une vitre se dresse en travers de sa case."
 BOOK_HOME_FURNITURE,"Sink, toilet, table and chair: to furnish the rooms.","Évier, toilettes, table et chaise : pour meubler les pièces."
 BOOK_HOME_GARDEN,Garden,Jardin
 BOOK_HOME_FENCE,"Fence: it joins the fences, gates and blocks beside it. Nobody jumps over it: animals stay in their pen.","Barrière : elle se raccorde aux barrières, portails et blocs voisins. Personne ne saute par-dessus : les animaux restent dans leur enclos."
@@ -1013,3 +1013,48 @@ BOOK_CRAFT_SLABS,Slabs,Dalles
 BOOK_CRAFT_SIDE_SLABS,Side slabs,Dalles verticales
 BOOK_CRAFT_HALVES,Two halves: the block back,Deux moitiés : le bloc entier
 BOOK_HOME_SHAPED,"Stairs and slabs of each wood and stone. Stairs face you, their low step in front; aim at the upper half of a side (or hold {sprint}) and they go upside down, under a ceiling too. Side by side, they turn their corners by themselves. A slab fills the low half of its cell, or the high one the same way; a side slab goes against the side you aim at. Two halves of one material make the whole block. You walk up a half-level step without jumping.","Escaliers et dalles de chaque bois et de chaque pierre. Un escalier te fait face, sa marche basse devant ; vise la moitié haute d'un côté (ou garde {sprint}) et il se pose à l'envers, sous un plafond aussi. Côte à côte, ils font leurs coins tout seuls. Une dalle remplit la moitié basse de sa case, ou la haute de la même façon ; une dalle verticale se pose contre le côté visé. Deux moitiés d'une même matière font le bloc entier. Une marche d'un demi-niveau se monte sans sauter."
+ITEM_PAINT_BROWN,Brown paint,Peinture brune
+ITEM_PAINT_GREY,Grey paint,Peinture grise
+ITEM_PAINT_SKY,Sky blue paint,Peinture bleu ciel
+ITEM_PAINT_LIME,Soft green paint,Peinture vert tendre
+ITEM_PAINT_OCHRE,Ochre paint,Peinture ocre
+ITEM_PAINT_BURGUNDY,Burgundy paint,Peinture bordeaux
+ITEM_PAINT_TEAL,Teal paint,Peinture bleu canard
+ITEM_OLD_GLASS,Old glass,Verre ancien
+ITEM_LEADED_GLASS,Leaded glass,Vitrail au plomb
+ITEM_OLD_GLASS_PANE,Old glass pane,Vitre de verre ancien
+ITEM_LEADED_GLASS_PANE,Leaded pane,Vitre au plomb
+ITEM_OAK_WINDOW_SMALL,Oak small-paned window,Fenêtre à petits carreaux en chêne
+ITEM_OAK_WINDOW_SASH,Oak sash window,Fenêtre à guillotine en chêne
+ITEM_OAK_WINDOW_ROUND,Oak round window,Œil-de-bœuf en chêne
+ITEM_BIRCH_WINDOW,Birch window,Fenêtre en bouleau
+ITEM_BIRCH_WINDOW_SMALL,Birch small-paned window,Fenêtre à petits carreaux en bouleau
+ITEM_BIRCH_WINDOW_SASH,Birch sash window,Fenêtre à guillotine en bouleau
+ITEM_BIRCH_WINDOW_ROUND,Birch round window,Œil-de-bœuf en bouleau
+ITEM_SPRUCE_WINDOW,Spruce window,Fenêtre en épicéa
+ITEM_SPRUCE_WINDOW_SMALL,Spruce small-paned window,Fenêtre à petits carreaux en épicéa
+ITEM_SPRUCE_WINDOW_SASH,Spruce sash window,Fenêtre à guillotine en épicéa
+ITEM_SPRUCE_WINDOW_ROUND,Spruce round window,Œil-de-bœuf en épicéa
+ITEM_DARK_OAK_WINDOW,Dark oak window,Fenêtre en chêne noir
+ITEM_DARK_OAK_WINDOW_SMALL,Dark oak small-paned window,Fenêtre à petits carreaux en chêne noir
+ITEM_DARK_OAK_WINDOW_SASH,Dark oak sash window,Fenêtre à guillotine en chêne noir
+ITEM_DARK_OAK_WINDOW_ROUND,Dark oak round window,Œil-de-bœuf en chêne noir
+ITEM_JUNGLE_WINDOW,Jungle window,Fenêtre en acajou
+ITEM_JUNGLE_WINDOW_SMALL,Jungle small-paned window,Fenêtre à petits carreaux en acajou
+ITEM_JUNGLE_WINDOW_SASH,Jungle sash window,Fenêtre à guillotine en acajou
+ITEM_JUNGLE_WINDOW_ROUND,Jungle round window,Œil-de-bœuf en acajou
+ITEM_ACACIA_WINDOW,Acacia window,Fenêtre en acacia
+ITEM_ACACIA_WINDOW_SMALL,Acacia small-paned window,Fenêtre à petits carreaux en acacia
+ITEM_ACACIA_WINDOW_SASH,Acacia sash window,Fenêtre à guillotine en acacia
+ITEM_ACACIA_WINDOW_ROUND,Acacia round window,Œil-de-bœuf en acacia
+ITEM_IRON_WINDOW,Wrought iron window,Fenêtre en fer forgé
+ITEM_IRON_WINDOW_SMALL,Wrought iron small-paned window,Fenêtre à petits carreaux en fer forgé
+ITEM_IRON_WINDOW_SASH,Wrought iron sash window,Fenêtre à guillotine en fer forgé
+ITEM_IRON_WINDOW_ROUND,Wrought iron round window,Œil-de-bœuf en fer forgé
+BOOK_HOME_GLASS,Glass and windows,Verre et fenêtres
+BOOK_HOME_CLEAR_GLASS,"Glass: you hardly see it, a sheen and the sun's glints. Side by side, blocks of glass make one pane: their border only shows where the glass stops.","Verre : on le voit à peine, un reflet et l'éclat du soleil. Côte à côte, les blocs de verre font une seule vitre : leur bord ne se voit que là où le verre s'arrête."
+BOOK_HOME_OLD_GLASS,"Old glass (four glass and sand): greenish and wavy, with bubbles caught in it.","Verre ancien (quatre verres et du sable) : verdâtre et ondulé, des bulles prises dedans."
+BOOK_HOME_LEADED_GLASS,Leaded glass (eight glass around an iron ingot): diamonds set in lead.,Verre au plomb (huit verres autour d'un lingot de fer) : des losanges sertis de plomb.
+BOOK_HOME_WINDOW_FRAMES,"A window's frame is of the wood it is made of (oak, birch, spruce, dark oak, jungle, acacia) or of wrought iron.","Le cadre d'une fenêtre est du bois dont elle est faite (chêne, bouleau, épicéa, chêne noir, jungle, acacia) ou de fer forgé."
+BOOK_HOME_TINT,"A pot of paint on glass, a pane or a window (right click) tints its glass: a coat each time. Hold {sprint} to paint a window's frame instead. The sun through tinted glass colors what it falls on.","Un pot de peinture sur du verre, une vitre ou une fenêtre (clic droit) teinte son verre : une couche à chaque fois. Garde {sprint} pour peindre plutôt le cadre d'une fenêtre. Le soleil à travers un verre teinté colore ce sur quoi il tombe."
+BOOK_HOME_WASH,"The watering can washes a tint off the glass; an axe scrapes the paint off a frame.","L'arrosoir lave la teinte du verre ; une hache gratte la peinture d'un cadre."

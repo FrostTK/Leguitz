@@ -31,7 +31,7 @@ extends RefCounted
 ## much of the ambient light reach them, none in a closed cave; faces only
 ## merge with faces in the same light.
 
-enum Part { TOPS, FACES, DEEP_TOPS, DEEP_FACES, WATER, DEEP_WATER, CAPS }
+enum Part { TOPS, FACES, DEEP_TOPS, DEEP_FACES, WATER, DEEP_WATER, CAPS, GLASS, DEEP_GLASS }
 enum Side { NORTH, EAST, SOUTH, WEST }
 
 const SIZE := GameConst.CHUNK_SIZE
@@ -94,45 +94,6 @@ static var _clear := _build_clear()
 static var _flags := _build_flags()
 ## 1 for the building blocks capped at the view's cut.
 static var _capped := _build_capped()
-
-
-## What a build reads: the voxels and column tops of the chunk and of its
-## 8 neighbors (3 x 3, row by row; empty arrays where not loaded).
-class Job:
-	extends RefCounted
-	var coord := Vector2i.ZERO
-	var voxels: Array[PackedInt32Array] = []
-	var tops: Array[PackedByteArray] = []
-	## The chunk's columns where something rises over the terrain (see
-	## ChunkData.raised).
-	var raised: Dictionary[int, int] = {}
-	## Model variants per block (0 = not a prop), see PropLibrary.
-	var variants := PackedByteArray()
-	## Row the view cuts the world at (HEIGHT: no cut), for the surface map,
-	## and the columns it cuts (chunk and border, SPAN x SPAN, 1 where it
-	## does; empty: all, see CutRegion.columns_of).
-	var cut_row := HEIGHT
-	var cut_columns := PackedByteArray()
-	## Surface map only (the cut moved): no geometry.
-	var map_only := false
-	## Bumped by every new build of the chunk: older results are dropped.
-	var serial := 0
-	## The chunk's columns' biomes (the seasons: SeasonLook.prop_bits).
-	var biome := PackedByteArray()
-
-	static func of_chunk(chunk: ChunkData, neighbor: Callable) -> Job:
-		var job := Job.new()
-		job.coord = chunk.coord
-		job.raised = chunk.raised.duplicate()
-		job.biome = chunk.biome.duplicate()
-		for dz in range(-1, 2):
-			for dx in range(-1, 2):
-				var other: ChunkData = (
-					chunk if dx == 0 and dz == 0 else neighbor.call(chunk.coord + Vector2i(dx, dz))
-				)
-				job.voxels.append(other.voxels if other != null else PackedInt32Array())
-				job.tops.append(other.tops if other != null else PackedByteArray())
-		return job
 
 
 ## What a build produces.
@@ -216,7 +177,7 @@ class Surface:
 
 
 ## Builds a chunk (thread-safe: only reads the job).
-static func build(job: Job) -> Result:
+static func build(job: ChunkJob) -> Result:
 	var result := Result.new()
 	result.coord = job.coord
 	result.serial = job.serial
@@ -273,6 +234,9 @@ static func build(job: Job) -> Result:
 						and flags[voxels[index - STRIDE_Z]] & CUBE != 0
 					):
 						continue
+					if flag & CLEAR_CUBE != 0:
+						GlassFaces.build_cube(result, job, voxels, tops, tables, column, lx, y, lz)
+						continue
 					_add_cube(result, flats, voxels, tops, tables, column, lx, y, lz, origin)
 				elif flag & LIQUID != 0:
 					var above := voxels[base + y + 1] if y + 1 < HEIGHT else Voxels.AIR
@@ -299,6 +263,8 @@ static func build(job: Job) -> Result:
 						lava_counts[quarter] += 1
 				elif flag & Voxels.FLAG_SHAPED != 0:
 					ShapedFaces.build(result, voxels, tops, tables, column, lx, y, lz, origin)
+				elif Glass.is_pane(Voxels.block_of(voxel)):
+					GlassFaces.build_pane(result, job, voxels, tops, tables, column, lx, y, lz)
 				else:
 					var block := Voxels.block_of(voxel)
 					var biome := job.biome[lz * SIZE + lx] if not job.biome.is_empty() else 0

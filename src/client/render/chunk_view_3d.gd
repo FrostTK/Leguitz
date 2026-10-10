@@ -18,6 +18,9 @@ var terrain := MeshInstance3D.new()
 var caves := MeshInstance3D.new()
 var water := MeshInstance3D.new()
 var cave_water := MeshInstance3D.new()
+## The see-through part of its glass (GlassFaces; no shadow), in caves too.
+var glass := MeshInstance3D.new()
+var cave_glass := MeshInstance3D.new()
 ## The tops of building blocks cut by the view (ChunkMesher caps), shown
 ## while the view cuts the world.
 var caps := MeshInstance3D.new()
@@ -26,6 +29,7 @@ var top_material: ShaderMaterial
 var cap_material: ShaderMaterial
 var face_material: ShaderMaterial
 var water_material: ShaderMaterial
+var glass_material: ShaderMaterial
 var caves_shown := false
 ## Level of detail of the props shown (see WorldView3D.lod_of).
 var props_lod := 0
@@ -58,8 +62,12 @@ var _sky_levels := PackedByteArray()
 
 
 func _init(
-	base_top_material: ShaderMaterial, faces: ShaderMaterial, base_water_material: ShaderMaterial
+	base_top_material: ShaderMaterial,
+	faces: ShaderMaterial,
+	base_water_material: ShaderMaterial,
+	glass_shader: ShaderMaterial = null
 ) -> void:
+	glass_material = glass_shader
 	top_material = base_top_material.duplicate()
 	top_material.set_shader_parameter("chunk_data", _data_texture)
 	cap_material = top_material.duplicate()
@@ -70,10 +78,11 @@ func _init(
 	add_child(terrain)
 	add_child(caves)
 	caves.visible = false
-	for node in [water, cave_water, caps]:
+	for node in [water, cave_water, caps, glass, cave_glass]:
 		node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(node)
 	cave_water.visible = false
+	cave_glass.visible = false
 	caps.visible = false
 
 
@@ -90,6 +99,8 @@ func apply(result: ChunkMesher.Result, library: PropLibrary, lod: int) -> void:
 	caves.mesh = _mesh(parts[ChunkMesher.Part.DEEP_TOPS], parts[ChunkMesher.Part.DEEP_FACES])
 	water.mesh = _water_mesh(parts[ChunkMesher.Part.WATER])
 	cave_water.mesh = _water_mesh(parts[ChunkMesher.Part.DEEP_WATER])
+	glass.mesh = _glass_mesh(parts[ChunkMesher.Part.GLASS])
+	cave_glass.mesh = _glass_mesh(parts[ChunkMesher.Part.DEEP_GLASS])
 	apply_caps(parts[ChunkMesher.Part.CAPS])
 	props_lod = lod
 	_apply_props(result.props, library, lod)
@@ -161,6 +172,7 @@ func show_caves(shown: bool) -> void:
 	caves_shown = shown
 	caves.visible = shown
 	cave_water.visible = shown
+	cave_glass.visible = shown
 	for i in _lava_spots.size():
 		_lava_lights[i].visible = shown or not _lava_deep[i]
 
@@ -223,6 +235,14 @@ func _water_mesh(surface: ChunkMesher.Surface) -> ArrayMesh:
 	if not surface.is_empty():
 		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface.arrays())
 		mesh.surface_set_material(0, water_material)
+	return mesh
+
+
+func _glass_mesh(surface: ChunkMesher.Surface) -> ArrayMesh:
+	var mesh := ArrayMesh.new()
+	if not surface.is_empty() and glass_material != null:
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface.arrays())
+		mesh.surface_set_material(0, glass_material)
 	return mesh
 
 

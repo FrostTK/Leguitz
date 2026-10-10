@@ -263,7 +263,8 @@ static func _furnaces() -> Array:
 
 
 ## What furnishes a house and a garden: what hangs on a wall, the
-## furniture, the lights, fences and gates, the campfire.
+## furniture, glass and windows and their tints, the lights, fences and
+## gates, the campfire.
 static func _home() -> Array:
 	return [
 		_title("BOOK_CHAPTER_HOME"),
@@ -272,9 +273,16 @@ static func _home() -> Array:
 		_icon(Items.Id.OAK_STAIRS, _t("BOOK_HOME_SHAPED")),
 		_icon(Items.Id.TORCH_BRACKET, _t("BOOK_HOME_BRACKET")),
 		_icon(Items.Id.CURTAINS, _t("BOOK_HOME_CURTAINS")),
-		_icon(Items.Id.WINDOW, _t("BOOK_HOME_WINDOW")),
-		_icon(Items.Id.GLASS_PANE, _t("BOOK_HOME_PANE")),
 		_icon(Items.Id.TABLE, _t("BOOK_HOME_FURNITURE")),
+		_heading("BOOK_HOME_GLASS"),
+		_icon(Items.Id.GLASS, _t("BOOK_HOME_CLEAR_GLASS")),
+		_icon(Items.Id.OLD_GLASS, _t("BOOK_HOME_OLD_GLASS")),
+		_icon(Items.Id.LEADED_GLASS, _t("BOOK_HOME_LEADED_GLASS")),
+		_icon(Items.Id.GLASS_PANE, _t("BOOK_HOME_PANE")),
+		_icon(Items.Id.WINDOW, _t("BOOK_HOME_WINDOW")),
+		_icon(Items.Id.IRON_WINDOW_ROUND, _t("BOOK_HOME_WINDOW_FRAMES")),
+		_icon(Items.Id.PAINT_SKY, _t("BOOK_HOME_TINT")),
+		_icon(Items.Id.WATERING_CAN, _t("BOOK_HOME_WASH")),
 		_heading("BOOK_HOME_LIGHTS"),
 		_icon(Items.Id.TORCH, _t("BOOK_HOME_TORCH")),
 		_icon(Items.Id.LANTERN, _t("BOOK_HOME_LANTERN")),
@@ -402,10 +410,10 @@ static func _survival() -> Array:
 		_text("BOOK_SURVIVAL_WATER"),
 		_heading("BOOK_SURVIVAL_FOODS"),
 	]
-	var foods := Items.FOOD.keys()
-	foods.sort_custom(func(a: int, b: int) -> bool: return Items.FOOD[a] > Items.FOOD[b])
+	var foods := Food.SATIETY.keys()
+	foods.sort_custom(func(a: int, b: int) -> bool: return Food.SATIETY[a] > Food.SATIETY[b])
 	for item: int in foods:
-		var text := _t("BOOK_SURVIVAL_FEEDS") % [_t(Items.name_key(item)), Items.FOOD[item]]
+		var text := _t("BOOK_SURVIVAL_FEEDS") % [_t(Items.name_key(item)), Food.SATIETY[item]]
 		if Vitals.POISONS.has(item):
 			text += " " + _t("BOOK_SURVIVAL_SICK")
 		entries.append(_icon(item, text))

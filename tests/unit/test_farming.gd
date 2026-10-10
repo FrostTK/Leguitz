@@ -144,7 +144,7 @@ func test_what_crops_and_grass_give_and_what_wheat_makes() -> void:
 	var oven := Tiles.Block.FOOD_FURNACE
 	assert_eq(Smelting.result_of(oven, Items.Id.DOUGH), Items.Id.BREAD)
 	assert_eq(Smelting.result_of(oven, Items.Id.POTATO), Items.Id.BAKED_POTATO)
-	assert_true(Items.FOOD[Items.Id.BREAD] > Items.FOOD[Items.Id.POTATO], "cooked feeds more")
+	assert_true(Food.SATIETY[Items.Id.BREAD] > Food.SATIETY[Items.Id.POTATO], "cooked feeds more")
 	assert_eq(
 		Items.drops(Voxels.of_ground(Tiles.Ground.FARMLAND_WET), Vector2i.ZERO, rng)[0].x,
 		Items.Id.DIRT
