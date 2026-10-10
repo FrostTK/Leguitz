@@ -170,20 +170,35 @@ static func _craft() -> Array:
 	var planks := []
 	var tools := {}
 	var armor := {}
+	var shaped := {}
 	for recipe: Dictionary in Recipes.all():
 		var made: int = recipe["result"][0]
+		var halves: bool = recipe.has("ingredients") and _is_shaped(recipe["ingredients"][0])
 		if recipe.has("ingredients") and Items.PLANKS_OF.has(recipe["ingredients"][0]):
 			planks.append(recipe)
+		elif _is_shaped(made) or halves:
+			var group := "BOOK_CRAFT_HALVES" if halves else _shaped_label(made)
+			shaped.get_or_add(group, []).append(recipe)
 		elif Items.TOOLS.has(made):
 			tools.get_or_add(Items.tool_of(made), []).append(recipe)
 		elif Armor.is_armor(made):
 			armor.get_or_add(Armor.piece_of(made), []).append(recipe)
 	var sawn: int = planks[0]["result"][1]
 	entries.append({"kind": Kind.RECIPE, "text": _t("BOOK_CRAFT_PLANKS") % sawn, "recipes": planks})
+	# Stairs and slabs: one entry each, going through the materials.
+	for group: String in shaped:
+		var recipes: Array = shaped[group]
+		var label := _t(group)
+		if recipes[0]["result"][1] > 1:
+			label += "  ×%d" % recipes[0]["result"][1]
+		entries.append({"kind": Kind.RECIPE, "text": label, "recipes": recipes})
 	var at_bench := []
 	for recipe: Dictionary in Recipes.all():
 		var item: int = recipe["result"][0]
 		if recipe.get("kitchen", false):
+			continue
+		var halves: bool = recipe.has("ingredients") and _is_shaped(recipe["ingredients"][0])
+		if halves or _is_shaped(item):
 			continue
 		if not recipe in planks and not Items.TOOLS.has(item) and not Armor.is_armor(item):
 			var result: Array = recipe["result"]
@@ -202,6 +217,20 @@ static func _craft() -> Array:
 	entries.append_array(at_bench)
 	entries.append(_text("BOOK_CRAFT_MORE"))
 	return entries
+
+
+static func _is_shaped(item: Variant) -> bool:
+	return item is int and ShapedBlocks.item_shape(item) >= 0
+
+
+## The book's name of a stairs' or slabs' recipe group.
+static func _shaped_label(item: int) -> String:
+	match ShapedBlocks.item_shape(item):
+		ShapedBlocks.Shape.STAIRS:
+			return "BOOK_CRAFT_STAIRS"
+		ShapedBlocks.Shape.SLAB:
+			return "BOOK_CRAFT_SLABS"
+	return "BOOK_CRAFT_SIDE_SLABS"
 
 
 ## How furnaces work, what each makes (drawn like recipes: one item in,
@@ -240,6 +269,7 @@ static func _home() -> Array:
 		_title("BOOK_CHAPTER_HOME"),
 		_text("BOOK_HOME_INTRO"),
 		_text("BOOK_HOME_WALL"),
+		_icon(Items.Id.OAK_STAIRS, _t("BOOK_HOME_SHAPED")),
 		_icon(Items.Id.TORCH_BRACKET, _t("BOOK_HOME_BRACKET")),
 		_icon(Items.Id.CURTAINS, _t("BOOK_HOME_CURTAINS")),
 		_icon(Items.Id.WINDOW, _t("BOOK_HOME_WINDOW")),

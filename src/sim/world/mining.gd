@@ -273,6 +273,7 @@ static func can_place(voxel: int) -> bool:
 	var block := Voxels.block_of(voxel)
 	return (
 		Voxels.is_cube(voxel)
+		or Voxels.is_shaped(voxel)
 		or ObjectShapes.front_of(block) != Vector2i.ZERO
 		or FLOOR_OBJECTS.has(block)
 		or Growth.SAPLINGS.has(block)
@@ -294,9 +295,16 @@ static func can_place(voxel: int) -> bool:
 ## straight against a wall; a lantern on the ground, hung from the cube
 ## above (its underside aimed at) or on a wall.
 static func placement(
-	cell: Vector3i, voxel: int, front: Vector2i, voxel_at: Callable, face := Vector3i.UP
+	cell: Vector3i,
+	voxel: int,
+	front: Vector2i,
+	voxel_at: Callable,
+	face := Vector3i.UP,
+	upper := false
 ) -> Dictionary:
 	var block := Voxels.block_of(voxel)
+	if ShapedBlocks.is_shaped(block):
+		return ShapedBlocks.placement(cell, block, front, face, upper, voxel_at)
 	var kind := ObjectShapes.kind_of(block)
 	if ObjectShapes.WALL_MOUNTED.has(kind):
 		return _hung(cell, kind, front, voxel_at)
@@ -512,6 +520,7 @@ static func needs_support(voxel: int) -> bool:
 	var block := Voxels.block_of(voxel)
 	return (
 		Voxels.is_object(voxel)
+		and not Voxels.is_shaped(voxel)
 		and not ObjectShapes.is_wall_mounted(block)
 		and not ObjectShapes.is_hanging(block)
 	)
@@ -531,6 +540,9 @@ static func break_seconds(voxel: int, held: int) -> float:
 ## The tool a voxel breaks faster with (Items.Tool.NONE: only the hand).
 static func tool_for(voxel: int) -> int:
 	var block := Voxels.block_of(voxel)
+	if ShapedBlocks.is_shaped(block):
+		# Stairs and slabs break as their material does.
+		return tool_for(Voxels.of_block(ShapedBlocks.material_of(block)))
 	if block == Tiles.Block.AIR:
 		var ground := Voxels.ground_of(voxel)
 		if ground == Tiles.Ground.NONE or Voxels.is_liquid(voxel):
@@ -547,6 +559,8 @@ static func tool_for(voxel: int) -> int:
 ## Seconds to break a voxel by hand: how hard it is.
 static func hand_seconds(voxel: int) -> float:
 	var block := Voxels.block_of(voxel)
+	if ShapedBlocks.is_shaped(block):
+		return hand_seconds(Voxels.of_block(ShapedBlocks.material_of(block)))
 	if block == Tiles.Block.AIR:
 		return GROUND_SECONDS.get(Voxels.ground_of(voxel), SOIL_SECONDS)
 	if Growth.YOUNG.has(block):

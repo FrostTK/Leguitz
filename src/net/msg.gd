@@ -393,10 +393,14 @@ static func animal_notice(key: String, kind: int, value: int) -> Dictionary:
 ## workbench facing `front`, see Mining.placement).
 ## `front`: the way an object placed faces; `face`: the side of the cube
 ## aimed at (UP: its top; see Mining.placement).
+## `upper`: aimed at the upper half of a side, or Shift (stairs upside
+## down, a high slab).
 static func block_place(
-	cell: Vector3i, slot: int, front := Vector2i(0, 1), face := Vector3i.UP
+	cell: Vector3i, slot: int, front := Vector2i(0, 1), face := Vector3i.UP, upper := false
 ) -> Dictionary:
-	return {"t": BLOCK_PLACE, "cell": cell, "slot": slot, "front": front, "face": face}
+	return {
+		"t": BLOCK_PLACE, "cell": cell, "slot": slot, "front": front, "face": face, "upper": upper
+	}
 
 
 ## The player swings the gate in `cell` open or shut.

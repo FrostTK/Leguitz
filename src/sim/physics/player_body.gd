@@ -2,10 +2,11 @@ class_name PlayerBody
 extends RefCounted
 ## A player's body among the voxels: feet position on the map (world
 ## pixels), height (levels) and vertical speed. Like in Minecraft it walks
-## up rises of STEP_UP, falls off edges, bumps its head on ceilings and
-## jumps 1.25 levels, so it climbs one voxel at a time; it stands on cubes
-## and on the furniture under it (a workbench, a chest, a furnace:
-## ObjectShapes.stand_height). In water or lava it swims: it sinks slowly,
+## up rises of STEP_UP (half a level: stairs and slabs), falls off edges,
+## bumps its head on ceilings and jumps 1.25 levels, so it climbs one voxel
+## at a time; it stands on cubes, on stairs and slabs (ShapedBlocks: the
+## boxes of their octants) and on the furniture under it (a workbench, a
+## chest, a furnace: ObjectShapes.stand_height). In water or lava it swims: it sinks slowly,
 ## rises while jump is held up to float with its head out, leaps out
 ## against a bank; falls end there (they never hurt). In creative it flies
 ## (fly; a spectator's ghost flies through everything).
@@ -20,8 +21,9 @@ const BOX := Vector2(10.0, 6.0)
 ## Height of a player's body (levels): it fits through two-voxel gaps
 ## (animals: `tall`).
 const BODY_HEIGHT := 1.7
-## Small rises (a water bank) are walked up without jumping.
-const STEP_UP := 0.2
+## Rises up to half a level (a step of stairs, a slab, a water bank) are
+## walked up without jumping; a whole level is jumped.
+const STEP_UP := 0.55
 ## Tallest object (levels, see ObjectShapes.blocking_levels): how far down
 ## to look for a trunk rising into the body.
 const MAX_OBJECT_LEVELS := 8
@@ -130,9 +132,20 @@ static func obstacle(
 	var low := floori(height + STEP_UP + EPSILON) + GameConst.SEA_LEVEL
 	var high := ceili(height + body_height - EPSILON) + GameConst.SEA_LEVEL
 	var whole := Rect2(Vector2(tile * GameConst.TILE_SIZE), Vector2.ONE * GameConst.TILE_SIZE)
+	var shaped := Rect2()
 	for row in range(low - MAX_OBJECT_LEVELS, high):
 		var voxel: int = voxel_at.call(Vector3i(tile.x, row, tile.y))
 		if not Voxels.is_solid(voxel) or Voxels.is_liquid(voxel):
+			continue
+		if Voxels.is_shaped(voxel):
+			# Its boxes higher than a step and lower than the head.
+			var cell := Vector3i(tile.x, row, tile.y)
+			var block := Voxels.block_of(voxel)
+			for box in ShapedBlocks.boxes(ShapedBlocks.mask(block, cell, voxel_at), cell):
+				var low_enough := box.position.y < height + body_height - EPSILON
+				if box.end.y > height + STEP_UP + EPSILON and low_enough:
+					var rect := _rect_of(box)
+					shaped = rect if not shaped.has_area() else shaped.merge(rect)
 			continue
 		if Voxels.is_object(voxel):
 			var block := Voxels.block_of(voxel)
@@ -142,7 +155,7 @@ static func obstacle(
 				return ObjectShapes.footprint_rect(block, tile)
 		elif row >= low:
 			return whole
-	return Rect2()
+	return shaped
 
 
 ## Height of the first voxel to stand on below `limit` in a column (under
@@ -155,17 +168,45 @@ static func _ground_below(tile: Vector2i, limit: float, voxel_at: Callable, body
 		var top := _furniture_top(tile, row + 1, in_limit, body)
 		if top != -INF and top <= limit:
 			return top
+		top = _shaped_top(tile, row + 1, in_limit, limit, voxel_at, body)
+		if top != -INF:
+			return top
 	while row >= 0:
 		var voxel: int = voxel_at.call(Vector3i(tile.x, row, tile.y))
 		if voxel == Voxels.UNKNOWN:
 			return -INF
 		if Voxels.is_cube(voxel):
 			return float(row + 1 - GameConst.SEA_LEVEL)
+		var step := _shaped_top(tile, row, voxel, limit, voxel_at, body)
+		if step != -INF:
+			return step
 		var top := _furniture_top(tile, row, voxel, body)
 		if top != -INF:
 			return top
 		row -= 1
 	return -INF
+
+
+## The highest top (levels) of the boxes of stairs or a slab in a voxel
+## under `body` (world pixels) and no higher than `limit`, else -INF.
+static func _shaped_top(
+	tile: Vector2i, row: int, voxel: int, limit: float, voxel_at: Callable, body: Rect2
+) -> float:
+	if not Voxels.is_shaped(voxel):
+		return -INF
+	var cell := Vector3i(tile.x, row, tile.y)
+	var best := -INF
+	var block := Voxels.block_of(voxel)
+	for box in ShapedBlocks.boxes(ShapedBlocks.mask(block, cell, voxel_at), cell):
+		if box.end.y <= limit + EPSILON and _rect_of(box).intersects(body):
+			best = maxf(best, box.end.y)
+	return best
+
+
+## A box's footprint (world pixels).
+static func _rect_of(box: AABB) -> Rect2:
+	var size := float(GameConst.TILE_SIZE)
+	return Rect2(box.position.x * size, box.position.z * size, box.size.x * size, box.size.z * size)
 
 
 ## The top (levels) of the furniture in a voxel when `body` (world pixels)
@@ -345,12 +386,25 @@ func glide(motion: Vector2, voxel_at: Callable) -> void:
 	needs_landing = false
 
 
-## Highest feet height under the voxels above the head (INF if clear).
+## Highest feet height under the voxels above the head (INF if clear):
+## cubes, and the lowest box over the head of stairs or a slab.
 func _ceiling_above(next_height: float, voxel_at: Callable) -> float:
 	var row := floori(next_height + tall) + GameConst.SEA_LEVEL
 	var area := TileCollider.covered_tiles(feet, box)
+	var ceiling := INF
+	var body := TileCollider.body_rect(feet, box)
 	for ty in range(area.position.y, area.end.y):
 		for tx in range(area.position.x, area.end.x):
 			if Voxels.is_cube(voxel_at.call(Vector3i(tx, row, ty))):
-				return float(row - GameConst.SEA_LEVEL) - tall
-	return INF
+				ceiling = minf(ceiling, float(row - GameConst.SEA_LEVEL) - tall)
+			for shaped_row in range(floori(height + tall) + GameConst.SEA_LEVEL, row + 1):
+				var cell := Vector3i(tx, shaped_row, ty)
+				var voxel: int = voxel_at.call(cell)
+				if not Voxels.is_shaped(voxel):
+					continue
+				var mask := ShapedBlocks.mask(Voxels.block_of(voxel), cell, voxel_at)
+				for part in ShapedBlocks.boxes(mask, cell):
+					var above := part.position.y >= height + tall - EPSILON
+					if above and _rect_of(part).intersects(body):
+						ceiling = minf(ceiling, part.position.y - tall)
+	return ceiling

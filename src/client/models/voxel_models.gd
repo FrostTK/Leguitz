@@ -38,7 +38,7 @@ const SHOES := "#4a3020"
 static func modeled_blocks() -> Array[int]:
 	var result: Array[int] = []
 	for block in Tiles.Block.size():
-		if block == Tiles.Block.AIR or Tiles.is_cube(block):
+		if block == Tiles.Block.AIR or Tiles.is_cube(block) or ShapedBlocks.is_shaped(block):
 			continue
 		if ObjectShapes.model_block(block) == block:
 			result.append(block)

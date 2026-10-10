@@ -561,10 +561,12 @@ static func front_of(block: int) -> Vector2i:
 	return WAYS[_facing[block].y] if _facing.has(block) else Vector2i.ZERO
 
 
-## The block of a facing object (`kind`: see FACING_KINDS) facing `front`
-## (a unit step on the ground).
+## The block of a facing object (`kind`: see FACING_KINDS; stairs and
+## side slabs: ShapedBlocks.facing_kinds) facing `front` (a unit step on
+## the ground).
 static func facing(kind: int, front: Vector2i) -> int:
-	return FACING_KINDS[kind][maxi(WAYS.find(front), 0)]
+	var blocks: Array = FACING_KINDS.get(kind, ShapedBlocks.facing_kinds().get(kind, []))
+	return blocks[maxi(WAYS.find(front), 0)]
 
 
 ## How a facing object turns its model (made facing +z), radians about the
@@ -679,8 +681,10 @@ static func footprint_rect(block: int, tile: Vector2i) -> Rect2:
 
 static func _build_facing() -> Dictionary:
 	var lookup := {}
-	for kind: int in FACING_KINDS:
-		var blocks: Array = FACING_KINDS[kind]
+	var kinds := FACING_KINDS.duplicate()
+	kinds.merge(ShapedBlocks.facing_kinds())
+	for kind: int in kinds:
+		var blocks: Array = kinds[kind]
 		for way in blocks.size():
 			lookup[blocks[way]] = Vector2i(kind, way)
 	return lookup

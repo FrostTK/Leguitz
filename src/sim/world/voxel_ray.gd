@@ -4,7 +4,8 @@ extends RefCounted
 ## units (1 tile across = 1 level up = 1 unit, see Render3D): the first
 ## cube or object it meets. Air and liquids let it through. Objects are
 ## met on their body as physics sees it (a tree on its trunk, all the way
-## up; ObjectShapes), small plants on the lower part of their cell.
+## up; ObjectShapes), small plants on the lower part of their cell, stairs
+## and slabs on their octants (ShapedBlocks; `box` is then the block's).
 
 ## Height (levels) of the small plants' body.
 const PLANT_HEIGHT := 0.7
@@ -76,7 +77,11 @@ static func cast(
 			return hit
 		# An object counts only where the ray meets its body inside this cell
 		# (something closer, in the next cells, would hide it otherwise).
-		var met := _object_in(cell, voxel, origin, dir, voxel_at)
+		var met := (
+			_shaped_in(cell, voxel, origin, dir, voxel_at)
+			if Voxels.is_shaped(voxel)
+			else _object_in(cell, voxel, origin, dir, voxel_at)
+		)
 		if (
 			met != null
 			and met.distance <= minf(minf(t_max.x, minf(t_max.y, t_max.z)), max_distance)
@@ -100,9 +105,27 @@ static func cast(
 	return null
 
 
+## Where the ray meets stairs or a slab in `cell` (its nearest octant box),
+## null if it misses them.
+static func _shaped_in(
+	cell: Vector3i, voxel: int, origin: Vector3, dir: Vector3, voxel_at: Callable
+) -> Hit:
+	var block := Voxels.block_of(voxel)
+	var best: Hit = null
+	for box in ShapedBlocks.boxes(ShapedBlocks.mask(block, cell, voxel_at), cell):
+		var hit := _hit_box(box, cell, voxel, origin, dir)
+		if hit != null and (best == null or hit.distance < best.distance):
+			best = hit
+	if best != null:
+		best.box = ShapedBlocks.bounds(block, cell)
+	return best
+
+
 ## The body (local units) of an object standing in voxel `cell`: what
 ## hangs on a wall a slice of its tile against it, an open gate its tile.
 static func object_box(block: int, cell: Vector3i) -> AABB:
+	if ShapedBlocks.is_shaped(block):
+		return ShapedBlocks.bounds(block, cell)
 	var tile := Vector2i(cell.x, cell.z)
 	var level := float(cell.y - GameConst.SEA_LEVEL)
 	if SMALL_BODIES.has(block):

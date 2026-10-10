@@ -472,17 +472,33 @@ const KITCHEN := [
 	},
 ]
 
+## Stairs and slabs (ShapedBlocks.Shape): their pattern of the material,
+## how many it makes.
+const SHAPED_RECIPES := {
+	ShapedBlocks.Shape.STAIRS: [["M  ", "MM ", "MMM"], 4],
+	ShapedBlocks.Shape.SLAB: [["MMM"], 6],
+	ShapedBlocks.Shape.SIDE_SLAB: [["M", "M", "M"], 6],
+}
+
 static var _all: Array[Dictionary] = []
 
 
 ## Every recipe: each log gives 4 planks (shapeless: "ingredients"),
-## SHAPED, then the tools, the armor, and the kitchen's dishes.
+## SHAPED, stairs and slabs of each material (SHAPED_RECIPES; two slabs
+## give the block back), then the tools, the armor, and the kitchen's
+## dishes.
 static func all() -> Array[Dictionary]:
 	if _all.is_empty():
 		for log_item: int in Items.PLANKS_OF:
 			_all.append({"ingredients": [log_item], "result": [Items.PLANKS_OF[log_item], 4]})
 		for recipe: Dictionary in SHAPED:
 			_all.append(recipe)
+		for entry: Array in ShapedBlocks.items():
+			var shape: Array = SHAPED_RECIPES[entry[2]]
+			var keys := {"M": entry[1]}
+			_all.append({"pattern": shape[0], "keys": keys, "result": [entry[0], shape[1]]})
+			if entry[2] != ShapedBlocks.Shape.STAIRS:
+				_all.append({"ingredients": [entry[0], entry[0]], "result": [entry[1], 1]})
 		for tool: int in Items.TOOLS:
 			var keys := {"M": TOOL_MATERIALS[Items.tier_of(tool)], "S": Items.Id.STICK}
 			var pattern: Array = TOOL_PATTERNS[Items.tool_of(tool)]

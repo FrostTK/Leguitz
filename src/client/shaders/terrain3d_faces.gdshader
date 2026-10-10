@@ -3,7 +3,8 @@ shader_type spatial;
 // and the undersides closing the rock. Mesh data:
 //   UV   = (pixels along the face, pixels down from the top of the face;
 //          for undersides: world pixels along x and z)
-//   UV2  = (face kind: 0-3 cliff materials, 4+ wall kinds; lip ground + 1)
+//   UV2  = (face kind: 0-3 cliff materials, 4+ wall kinds; lip ground + 1,
+//          or -2 for the tops of stairs and slabs: ShapedFaces)
 //   COLOR.r = variant (0 or 1), COLOR.g = lip ground variant / 3,
 //   COLOR.b = the sky light in front of the face (see sky_light.gdshaderinc)
 
@@ -16,6 +17,9 @@ render_mode cull_disabled;
 uniform sampler2D face_atlas : source_color, filter_nearest;
 uniform sampler2D face_normals : filter_nearest;
 uniform sampler2D face_emission : source_color, filter_nearest;
+// The tops of the walls (stairs' and slabs' tops wear them).
+uniform sampler2D wall_atlas : source_color, filter_nearest;
+uniform sampler2D wall_normals : filter_nearest;
 uniform float emission_strength = 2.2;
 // Per wall kind: 1 for the walls one sees through (glass): their clear
 // pixels are cut out, their backs seen through them are not rock sections.
@@ -26,6 +30,7 @@ const int WALL_KIND_OFFSET = 4;
 // terrain3d_top.gdshader): its grass's tint, the snow on it.
 uniform int ground_season[64];
 global uniform float season_snow;
+global uniform float season_built_snow;
 global uniform vec3 season_grass;
 const float SNOW_SKY = 0.9;
 const vec3 SNOW_COLOR = vec3(0.8, 0.84, 0.9);
@@ -83,6 +88,16 @@ void fragment() {
 		float patchy = float(hash2(ivec2(int(floor(UV.x)), down)) & 255u) / 255.0;
 		if (seasonal > 0 && sky > SNOW_SKY && patchy < season_snow * 1.2 - 0.1) {
 			albedo = SNOW_COLOR * (v == 2 ? 0.85 : 1.0);
+			normal = vec3(0.0, 0.0, 1.0);
+		}
+	} else if (face_data.y < -1.5) {
+		// The top of stairs or a slab: its material's top, its snow.
+		ivec2 at = ivec2(variant * 16 + u, (kind - WALL_KIND_OFFSET) * 16 + v);
+		albedo = texelFetch(wall_atlas, at, 0).rgb;
+		normal = unpack_normal(texelFetch(wall_normals, at, 0));
+		float patchy = float(hash2(ivec2(int(floor(UV.x)), int(floor(UV.y)))) & 255u) / 255.0;
+		if (sky > SNOW_SKY && patchy < season_built_snow * 1.2 - 0.1) {
+			albedo = SNOW_COLOR;
 			normal = vec3(0.0, 0.0, 1.0);
 		}
 	} else {

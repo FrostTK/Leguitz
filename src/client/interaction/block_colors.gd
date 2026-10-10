@@ -72,6 +72,9 @@ static func leaves_of(block: int) -> Color:
 
 static func _compute(voxel: int) -> Color:
 	var block := Voxels.block_of(voxel)
+	if ShapedBlocks.is_shaped(block):
+		# Stairs and slabs: their material's.
+		return _compute(Voxels.of_block(ShapedBlocks.material_of(block)))
 	if block == Tiles.Block.AIR:
 		return _average(TerrainRenderer.GROUND_ATLAS.get_image(), Voxels.ground_of(voxel))
 	if TileAtlas.is_wall(block):

@@ -116,6 +116,8 @@ func _ready() -> void:
 	face_material.set_shader_parameter("ground_atlas", TerrainRenderer.GROUND_ATLAS)
 	face_material.set_shader_parameter("ground_normals", TerrainRenderer.GROUND_NORMALS)
 	face_material.set_shader_parameter("ground_season", TerrainRenderer.seasonal_table())
+	face_material.set_shader_parameter("wall_atlas", TerrainRenderer.WALL_ATLAS)
+	face_material.set_shader_parameter("wall_normals", TerrainRenderer.WALL_NORMALS)
 	_variants.resize(Tiles.Block.size())
 	for block: int in Tiles.Block.values():
 		_variants[block] = props.variant_count(block)

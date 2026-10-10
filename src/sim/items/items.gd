@@ -312,6 +312,46 @@ enum Id {
 	PAINT_BLACK,
 	PAINT_ORANGE,
 	PAINT_PURPLE,
+	# Stairs, slabs and side slabs (ShapedBlocks), per material.
+	OAK_STAIRS,
+	OAK_SLAB,
+	OAK_SIDE_SLAB,
+	BIRCH_STAIRS,
+	BIRCH_SLAB,
+	BIRCH_SIDE_SLAB,
+	SPRUCE_STAIRS,
+	SPRUCE_SLAB,
+	SPRUCE_SIDE_SLAB,
+	DARK_OAK_STAIRS,
+	DARK_OAK_SLAB,
+	DARK_OAK_SIDE_SLAB,
+	JUNGLE_STAIRS,
+	JUNGLE_SLAB,
+	JUNGLE_SIDE_SLAB,
+	ACACIA_STAIRS,
+	ACACIA_SLAB,
+	ACACIA_SIDE_SLAB,
+	STONE_STAIRS,
+	STONE_SLAB,
+	STONE_SIDE_SLAB,
+	SMOOTH_STONE_STAIRS,
+	SMOOTH_STONE_SLAB,
+	SMOOTH_STONE_SIDE_SLAB,
+	STONE_BRICK_STAIRS,
+	STONE_BRICK_SLAB,
+	STONE_BRICK_SIDE_SLAB,
+	BRICK_STAIRS,
+	BRICK_SLAB,
+	BRICK_SIDE_SLAB,
+	DEEPSLATE_BRICK_STAIRS,
+	DEEPSLATE_BRICK_SLAB,
+	DEEPSLATE_BRICK_SIDE_SLAB,
+	SANDSTONE_STAIRS,
+	SANDSTONE_SLAB,
+	SANDSTONE_SIDE_SLAB,
+	CUT_SANDSTONE_STAIRS,
+	CUT_SANDSTONE_SLAB,
+	CUT_SANDSTONE_SIDE_SLAB,
 }
 ## What a tool is made for (Mining.tool_for: what it breaks faster).
 enum Tool { NONE, PICKAXE, AXE, SHOVEL, SWORD, HOE }
@@ -860,7 +900,7 @@ static func placed_voxel(item: int) -> int:
 		return Voxels.of_ground(PLACES[item])
 	if PLACES_BLOCK.has(item):
 		return Voxels.of_block(PLACES_BLOCK[item])
-	return Voxels.AIR
+	return Voxels.of_block(ShapedBlocks.placed_by(item))
 
 
 ## What breaking a voxel gives: [[item, count], ...]. `tile` is where it
@@ -929,6 +969,16 @@ static func _build_placed_by() -> Dictionary:
 		lookup[PLACES_BLOCK[item]] = item
 	for shut: int in ObjectShapes.OPENS:
 		lookup[ObjectShapes.OPENS[shut]] = lookup[shut]
+	# Stairs and slabs, any way they face, up or down: the item of their
+	# name (OAK_STAIRS_TOP_WEST: OAK_STAIRS; no other table, built after).
+	for block: int in Tiles.Block.values():
+		if not Tiles.is_shaped(block):
+			continue
+		var name := String(Tiles.Block.find_key(block))
+		for shape: String in ["_SIDE_SLAB", "_STAIRS", "_SLAB"]:
+			if shape in name:
+				lookup[block] = Id[name.substr(0, name.find(shape)) + shape]
+				break
 	for shape: int in ObjectShapes.SHAPE_OF:
 		lookup[shape] = lookup[ObjectShapes.SHAPE_OF[shape]]
 	lookup[Tiles.Block.TORCH_BRACKET_LIT] = Id.TORCH_BRACKET

@@ -128,7 +128,7 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   moss), meshed by VoxelMesher (greedy faces + AO) and saved by
   `godot --headless --path . -s res://tools/gen_models.gd [-- --only=oak]` into `assets/models/`
   (commit the .res files; rerun after changing a model; all of them take ~15 min). Every non-cube
-  block needs a model (tested). `voxel.gdshader` (its code in voxel.gdshaderinc, shared with
+  block needs a model (tested), but stairs and slabs (ShapedBlocks: drawn with the terrain). `voxel.gdshader` (its code in voxel.gdshaderinc, shared with
   voxel_view.gdshader, what is in hand in first person) handles wind, wetness and leaf backlight;
   VoxelGrid.Kind.GLOW voxels (fire) light themselves (VoxelMesher UV.y = 2, EMISSION).
   `see_through.gdshaderinc` (voxel and terrain shaders) dithers away what stands between the
@@ -184,7 +184,7 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   each chunk once every CHECK_TICKS: no more 100 ms hitch every 5 s); Apiary.flowers_near reads
   the chunks' voxels straight (it takes the WorldState).
 - Movement is Minecraft-like (`src/sim/physics/player_body.gd`, shared client/server) among voxels
-  (`voxel_at` callable, Voxels.UNKNOWN = not loaded = solid): body 1.7 levels tall, walk up 0.2,
+  (`voxel_at` callable, Voxels.UNKNOWN = not loaded = solid): body 1.7 levels tall, walk up 0.55 (stairs, slabs),
   jump 1.25, bump ceilings, fall off edges; solid objects block their footprint up their height
   (trees: the trunk, see ObjectShapes); furniture (workbench, chest, furnaces: ObjectShapes.TOPS,
   the height of their models' tops) blocks up to its top and is stood on once the feet get there
@@ -857,6 +857,39 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   (autumn all, turned colors; none in winter). The book's Farm chapter (Seasons: the rules, each
   crop's seasons, GuideBook._crop_item). Tests without seasons turn them off
   (Seasons.set_length(clock, 0)); a new world starts on spring's first day.
+- Stairs and slabs (phase 8, step 1; `src/sim/world/shaped_blocks.gd`, ShapedBlocks): per material
+  of MATERIALS (the 6 planks, stone, smooth stone, stone bricks, bricks, deepslate bricks,
+  sandstone, cut sandstone) 14 blocks appended to Tiles.Block (generated: `<PREFIX>_STAIRS` and its
+  facings, `_STAIRS_TOP` upside down, `_SLAB`, `_SLAB_TOP`, `_SIDE_SLAB` and its facings; the range
+  OAK_STAIRS..CUT_SANDSTONE_SIDE_SLAB_EAST is Tiles.is_shaped, which Voxels' flags use: no table,
+  ShapedBlocks' static tables come after) and 3 items (`<PREFIX>_STAIRS`, `_SLAB`, `_SIDE_SLAB`;
+  Items.placed_voxel, Items._placed_by from the names). Voxels.FLAG_SHAPED (32: ChunkMesher uses 8
+  and 16), `is_shaped`. A shape is a mask of the cell's 8 octants (bit x + 2 z + 4 y; LOW, HIGH,
+  `side(way)`), `mask(block, cell, voxel_at)`: stairs are their base half and the other layer's
+  back half, turned into outer and inner corners by the stairs ahead and behind (Minecraft's rule;
+  an invalid voxel_at: straight); `boxes(mask, cell)` (local units). Facing kinds: stairs, upside
+  down stairs and side slabs join ObjectShapes (`_build_facing` merges `facing_kinds`, `facing`
+  looks there too; ShapedBlocks keeps its own WAYS). Physics (PlayerBody): STEP_UP is now 0.55 (a
+  half level walked up, a whole one jumped); `obstacle` unites the boxes rising over the step and
+  under the head (one rect per tile), `_ground_below`/`_shaped_top` stand on the highest box top
+  under the body, `_ceiling_above` bumps on boxes over the head. VoxelRay meets their octant boxes
+  (`_shaped_in`, the hit's box the block's `bounds`). Placing (Mining.placement -> ShapedBlocks
+  .placement, Msg.BLOCK_PLACE `upper`: aimed at a side's upper half or Shift): stairs face the
+  player, upside down under a ceiling or when upper; a slab low or high; a side slab against the
+  side aimed at (on a floor facing the player); the other half of the same material there makes
+  the cube (BlockInteraction aims at the slab's own cell when `completes`). They need no support,
+  break and take tools as their material (Mining), count as terrain to place against
+  (GameServer._against_terrain), are walked on by animals (Pathfinder.ground_at, `top_of`).
+  Recipes: Recipes.SHAPED_RECIPES (stairs 6 -> 4, slab 3 in a row -> 6, side slab 3 in a column ->
+  6), two halves give the block back; the book groups them (GuideBook._craft) and tells how to
+  place them (Home chapter). Drawn with the terrain, not as props (no model; VoxelModels
+  .modeled_blocks skips them): ChunkMesher calls ShapedFaces.build (src/client/render): each
+  filled octant's faces not against its own octants, a cube, or a neighbor's filled octant, as
+  half-cell quads in the face meshes, sides in the material's face texture where a cube's side
+  would show those pixels, tops with UV2.y TOP_FACE (-2): terrain3d_faces.gdshader reads the wall
+  atlas (wall_atlas, wall_normals on the face material) and lays the season's built snow there.
+  Item icons and in hand: ItemLibrary._shaped (octant faces wearing the textures). BlockColors
+  takes the material's.
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made

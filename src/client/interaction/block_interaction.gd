@@ -176,11 +176,16 @@ func place() -> void:
 	# A small plant aimed at gives way to the block (as in Minecraft); a
 	# torch goes into an empty bracket aimed at.
 	var fills := Mining.fills(target.voxel, voxel)
+	# A slab on a slab of its material: the cell's other half.
+	fills = fills or ShapedBlocks.completes(target.voxel, target.normal, client.held_item())
 	var replaced := not fills and Mining.is_replaceable(target.voxel)
 	if target.normal == Vector3i.ZERO and not replaced and not fills:
 		return
 	var cell := target.cell if replaced or fills else target.cell + target.normal
 	var face := Vector3i.UP if replaced else target.normal
+	# Stairs upside down, a slab high: aimed at a side's upper half, or Shift.
+	var high := target.point.y - floorf(target.point.y) > 0.5 and face.y == 0
+	var upper := high or Input.is_action_pressed(InputBindings.SPRINT)
 	if (
 		Voxels.block_of(voxel) == Tiles.Block.LANTERN
 		and face == Vector3i.UP
@@ -204,13 +209,13 @@ func place() -> void:
 		front = Vector2i(face.x, face.z)
 	elif ObjectShapes.is_wall_mounted(Voxels.block_of(voxel)):
 		return
-	var cells := Mining.placement(cell, voxel, front, client.world.voxel_at, face)
+	var cells := Mining.placement(cell, voxel, front, client.world.voxel_at, face, upper)
 	if cells.is_empty():
 		return
 	for at: Vector3i in cells:
 		if Voxels.is_solid(cells[at]) and Mining.overlaps_body(at, player.position, player.height):
 			return
-	_put(cells, cell, slot, front, face)
+	_put(cells, cell, slot, front, face, upper)
 
 
 ## What a right click does rather than placing: the book in hand opens, a
@@ -238,12 +243,14 @@ func _instead_of_placing() -> bool:
 
 ## Shows what is placed at once, uses it up (not in creative) and tells
 ## the server.
-func _put(cells: Dictionary, cell: Vector3i, slot: int, front: Vector2i, face: Vector3i) -> void:
+func _put(
+	cells: Dictionary, cell: Vector3i, slot: int, front: Vector2i, face: Vector3i, upper := false
+) -> void:
 	for at: Vector3i in cells:
 		_predict(at, cells[at])
 	if not client.modes.creative():
 		client.inventory.take(slot, 1)
-	client.transport.send(Msg.block_place(cell, slot, front, face))
+	client.transport.send(Msg.block_place(cell, slot, front, face, upper))
 	client.player_model.swing()
 
 

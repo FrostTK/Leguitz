@@ -281,7 +281,7 @@ static func build(job: Job) -> Result:
 					if covered and sides == 0:
 						continue
 					var rows := tops[column] - y
-					var deep := rows > 1 and not _sky_through(voxels, flags, clear, base + y, rows)
+					var deep := rows > 1 and not sky_through(voxels, flags, clear, base + y, rows)
 					var part := Part.DEEP_TOPS if deep else Part.TOPS
 					if clear[voxel] != 0:
 						part = Part.DEEP_WATER if deep else Part.WATER
@@ -289,7 +289,7 @@ static func build(job: Job) -> Result:
 						_add_liquid_sides(result, voxels, tables, index, lx, y, lz, deep)
 					if covered:
 						continue
-					var light := _sky(tables, index + 1) if y + 1 < HEIGHT else LightField.MAX
+					var light := sky_level(tables, index + 1) if y + 1 < HEIGHT else LightField.MAX
 					_record_flat(flats, y, voxel, part, 0, lx, lz, light)
 					if Tiles.is_lava(voxel):
 						var quarter := (
@@ -297,10 +297,12 @@ static func build(job: Job) -> Result:
 						)
 						lava_sums[quarter] += Vector3(lx + 0.5, y + 2 - SEA, lz + 0.5)
 						lava_counts[quarter] += 1
+				elif flag & Voxels.FLAG_SHAPED != 0:
+					ShapedFaces.build(result, voxels, tops, tables, column, lx, y, lz, origin)
 				else:
 					var block := Voxels.block_of(voxel)
 					var biome := job.biome[lz * SIZE + lx] if not job.biome.is_empty() else 0
-					var prop_sky := _sky(tables, index) + SeasonLook.prop_bits(block, biome)
+					var prop_sky := sky_level(tables, index) + SeasonLook.prop_bits(block, biome)
 					_add_prop(
 						result, job.variants, voxel, voxels, base, lx, y, lz, origin, prop_sky
 					)
@@ -308,7 +310,7 @@ static func build(job: Job) -> Result:
 						_add_flame(result, block, Vector3(lx + 0.5, y - SEA, lz + 0.5))
 						var rows := tops[column] - y
 						result.lava_deep.append(
-							rows > 1 and not _sky_through(voxels, flags, clear, base + y, rows)
+							rows > 1 and not sky_through(voxels, flags, clear, base + y, rows)
 						)
 	_record_caps(flats, voxels, job.cut_row, job.cut_columns)
 	_add_flats(result, flats)
@@ -555,7 +557,7 @@ static func _add_liquid_sides(
 			bottom = LiquidFaces.top(voxels, liquids, surfaces, index + step)
 			if bottom >= top - 0.001:
 				continue
-		var light := _sky(tables, index + step) / float(LightField.MAX)
+		var light := sky_level(tables, index + step) / float(LightField.MAX)
 		_add_side(
 			result.parts[part],
 			lx,
@@ -604,12 +606,12 @@ static func _add_cube(
 	var above := voxels[index + 1] if y + 1 < HEIGHT else Voxels.AIR
 	if _open(flags, clear, above) and above != voxel:
 		var rows := tops[column] - y
-		var sky := rows <= 1 or _sky_through(voxels, flags, clear, index, rows)
+		var sky := rows <= 1 or sky_through(voxels, flags, clear, index, rows)
 		var part := Part.TOPS if sky else Part.DEEP_TOPS
-		var light := _sky(tables, index + 1) if y + 1 < HEIGHT else LightField.MAX
+		var light := sky_level(tables, index + 1) if y + 1 < HEIGHT else LightField.MAX
 		_record_flat(flats, y, codes[voxel], part, 0, lx, lz, light)
 	if y > 0 and flags[voxels[index - 1]] & CUBE == 0 and voxels[index - 1] != voxel:
-		var below := _sky(tables, index - 1)
+		var below := sky_level(tables, index - 1)
 		_record_flat(flats, y, kinds[voxel], Part.DEEP_FACES, FLAT_UNDERSIDE, lx, lz, below)
 	var kind := kinds[voxel]
 	for side in 4:
@@ -629,7 +631,7 @@ static func _add_cube(
 		var deep := _side_deep(voxels, tops, flags, clear, index, step, other, y)
 		if deep < 0:
 			continue
-		var light := _sky(tables, index + step)
+		var light := sky_level(tables, index + step)
 		var run := Vector3i(kind, deep, light)
 		# The run below took this voxel already: same material, open too.
 		if y > 0 and _continues_run(voxels, tops, tables, index - 1, step, other, y - 1, run):
@@ -682,13 +684,13 @@ static func _side_deep(
 		return -1
 	if clear[neighbor] != 0:
 		var rows := tops[other] - y
-		return 0 if rows <= 1 or _sky_through(voxels, flags, clear, index + step, rows) else 1
+		return 0 if rows <= 1 or sky_through(voxels, flags, clear, index + step, rows) else 1
 	if flag & LIQUID != 0:
 		var above := voxels[index + step + 1] if y + 1 < HEIGHT else Voxels.AIR
 		if flags[above] & TERRAIN != 0:
 			return -1
 		return 0 if y + 1 >= tops[other] else 1
-	if y < tops[other] and not _sky_through(voxels, flags, clear, index + step, tops[other] - y):
+	if y < tops[other] and not sky_through(voxels, flags, clear, index + step, tops[other] - y):
 		return 1
 	return 0
 
@@ -716,12 +718,12 @@ static func _continues_run(
 		return false
 	if _side_deep(voxels, tops, flags, clear, index, step, other, y) != run.y:
 		return false
-	return _sky(tables, index + step) == run.z
+	return sky_level(tables, index + step) == run.z
 
 
 ## The sky light (0..LightField.MAX) of the padded cell at `index` (see
 ## pad), from the build's sky field (tables[4], tables[5]: ChunkSky).
-static func _sky(tables: Array, index: int) -> int:
+static func sky_level(tables: Array, index: int) -> int:
 	return ChunkSky.level(tables[4], tables[5], index)
 
 
@@ -737,7 +739,7 @@ static func _open(flags: PackedByteArray, clear: PackedByteArray, voxel: int) ->
 ## stands under or behind glass) or are only thin covers (a building's
 ## roofs and floors, a single natural layer: seen through its windows and
 ## doors); THICK_COVER natural ones in a row (rock) hide it in a cave.
-static func _sky_through(
+static func sky_through(
 	voxels: PackedInt32Array, flags: PackedByteArray, clear: PackedByteArray, index: int, rows: int
 ) -> bool:
 	var run := 0

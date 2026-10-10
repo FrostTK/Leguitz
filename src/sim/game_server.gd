@@ -583,7 +583,8 @@ func _on_block_place(session: PlayerSession, message: Dictionary) -> void:
 	var face: Vector3i = message.get("face", Vector3i.UP)
 	if absi(face.x) + absi(face.y) + absi(face.z) != 1:
 		face = Vector3i.UP
-	var cells := Mining.placement(cell, voxel, front, world.voxel_at, face)
+	var upper := bool(message.get("upper", false))
+	var cells := Mining.placement(cell, voxel, front, world.voxel_at, face, upper)
 	var near := Mining.reach_to(session.position, session.height, cell)
 	var ok := (
 		cell.y >= Mining.LOWEST_ROW
@@ -821,7 +822,8 @@ func _against_terrain(cell: Vector3i) -> bool:
 	for side: Vector3i in [
 		Vector3i.UP, Vector3i.DOWN, Vector3i.LEFT, Vector3i.RIGHT, Vector3i.FORWARD, Vector3i.BACK
 	]:
-		if Voxels.is_cube(world.voxel_at(cell + side)):
+		var there := world.voxel_at(cell + side)
+		if Voxels.is_cube(there) or Voxels.is_shaped(there):
 			return true
 	return false
 

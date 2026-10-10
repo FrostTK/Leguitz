@@ -969,3 +969,47 @@ CMD_SEASON_SYNCED,This world follows your computer's date: its season is the rea
 BOOK_FARM_SEASONS,Seasons,Saisons
 BOOK_FARM_SEASONS_INTRO,"Each season lasts a few days (pause menu: Seasons). A crop grows only in its seasons, unless it is under a roof or glass (a greenhouse). In winter saplings and young trees wait for spring, grass no longer spreads, snow falls instead of rain; fruit trees bear fruit only in summer and autumn. Where winters are mild (deserts, savannas, jungles, badlands) nothing waits.","Chaque saison dure quelques jours (menu pause : Saisons). Une culture ne pousse qu'en ses saisons, sauf sous un toit ou du verre (une serre). L'hiver, les pousses et les jeunes arbres attendent le printemps, l'herbe ne s'étend plus, il neige au lieu de pleuvoir ; les arbres fruitiers ne donnent des fruits qu'en été et en automne. Là où l'hiver est doux (déserts, savanes, jungles, badlands), rien n'attend."
 BOOK_FARM_SEASON_CROP,%s: %s,%s : %s
+ITEM_OAK_STAIRS,Oak stairs,Escalier en chêne
+ITEM_OAK_SLAB,Oak slab,Dalle en chêne
+ITEM_OAK_SIDE_SLAB,Oak side slab,Dalle verticale en chêne
+ITEM_BIRCH_STAIRS,Birch stairs,Escalier en bouleau
+ITEM_BIRCH_SLAB,Birch slab,Dalle en bouleau
+ITEM_BIRCH_SIDE_SLAB,Birch side slab,Dalle verticale en bouleau
+ITEM_SPRUCE_STAIRS,Spruce stairs,Escalier en épicéa
+ITEM_SPRUCE_SLAB,Spruce slab,Dalle en épicéa
+ITEM_SPRUCE_SIDE_SLAB,Spruce side slab,Dalle verticale en épicéa
+ITEM_DARK_OAK_STAIRS,Dark oak stairs,Escalier en chêne noir
+ITEM_DARK_OAK_SLAB,Dark oak slab,Dalle en chêne noir
+ITEM_DARK_OAK_SIDE_SLAB,Dark oak side slab,Dalle verticale en chêne noir
+ITEM_JUNGLE_STAIRS,Jungle stairs,Escalier en acajou
+ITEM_JUNGLE_SLAB,Jungle slab,Dalle en acajou
+ITEM_JUNGLE_SIDE_SLAB,Jungle side slab,Dalle verticale en acajou
+ITEM_ACACIA_STAIRS,Acacia stairs,Escalier en acacia
+ITEM_ACACIA_SLAB,Acacia slab,Dalle en acacia
+ITEM_ACACIA_SIDE_SLAB,Acacia side slab,Dalle verticale en acacia
+ITEM_STONE_STAIRS,Stone stairs,Escalier en pierre
+ITEM_STONE_SLAB,Stone slab,Dalle en pierre
+ITEM_STONE_SIDE_SLAB,Stone side slab,Dalle verticale en pierre
+ITEM_SMOOTH_STONE_STAIRS,Smooth stone stairs,Escalier en pierre lisse
+ITEM_SMOOTH_STONE_SLAB,Smooth stone slab,Dalle en pierre lisse
+ITEM_SMOOTH_STONE_SIDE_SLAB,Smooth stone side slab,Dalle verticale en pierre lisse
+ITEM_STONE_BRICK_STAIRS,Stone brick stairs,Escalier en briques de pierre
+ITEM_STONE_BRICK_SLAB,Stone brick slab,Dalle en briques de pierre
+ITEM_STONE_BRICK_SIDE_SLAB,Stone brick side slab,Dalle verticale en briques de pierre
+ITEM_BRICK_STAIRS,Brick stairs,Escalier en briques
+ITEM_BRICK_SLAB,Brick slab,Dalle en briques
+ITEM_BRICK_SIDE_SLAB,Brick side slab,Dalle verticale en briques
+ITEM_DEEPSLATE_BRICK_STAIRS,Deepslate brick stairs,Escalier en briques d'ardoise des abîmes
+ITEM_DEEPSLATE_BRICK_SLAB,Deepslate brick slab,Dalle en briques d'ardoise des abîmes
+ITEM_DEEPSLATE_BRICK_SIDE_SLAB,Deepslate brick side slab,Dalle verticale en briques d'ardoise des abîmes
+ITEM_SANDSTONE_STAIRS,Sandstone stairs,Escalier en grès
+ITEM_SANDSTONE_SLAB,Sandstone slab,Dalle en grès
+ITEM_SANDSTONE_SIDE_SLAB,Sandstone side slab,Dalle verticale en grès
+ITEM_CUT_SANDSTONE_STAIRS,Cut sandstone stairs,Escalier en grès taillé
+ITEM_CUT_SANDSTONE_SLAB,Cut sandstone slab,Dalle en grès taillé
+ITEM_CUT_SANDSTONE_SIDE_SLAB,Cut sandstone side slab,Dalle verticale en grès taillé
+BOOK_CRAFT_STAIRS,Stairs (any wood or stone),Escaliers (tout bois ou toute pierre)
+BOOK_CRAFT_SLABS,Slabs,Dalles
+BOOK_CRAFT_SIDE_SLABS,Side slabs,Dalles verticales
+BOOK_CRAFT_HALVES,Two halves: the block back,Deux moitiés : le bloc entier
+BOOK_HOME_SHAPED,"Stairs and slabs of each wood and stone. Stairs face you, their low step in front; aim at the upper half of a side (or hold {sprint}) and they go upside down, under a ceiling too. Side by side, they turn their corners by themselves. A slab fills the low half of its cell, or the high one the same way; a side slab goes against the side you aim at. Two halves of one material make the whole block. You walk up a half-level step without jumping.","Escaliers et dalles de chaque bois et de chaque pierre. Un escalier te fait face, sa marche basse devant ; vise la moitié haute d'un côté (ou garde {sprint}) et il se pose à l'envers, sous un plafond aussi. Côte à côte, ils font leurs coins tout seuls. Une dalle remplit la moitié basse de sa case, ou la haute de la même façon ; une dalle verticale se pose contre le côté visé. Deux moitiés d'une même matière font le bloc entier. Une marche d'un demi-niveau se monte sans sauter."

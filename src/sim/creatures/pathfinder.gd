@@ -109,6 +109,10 @@ static func ground_at(
 		if Voxels.is_cube(voxel):
 			ground = float(row + 1 - sea)
 			break
+		if Voxels.is_shaped(voxel):
+			# Stairs and slabs: walked on.
+			ground = float(row - sea) + ShapedBlocks.top_of(Voxels.block_of(voxel))
+			break
 		if Voxels.is_solid(voxel):
 			# A trunk, a rock, furniture: no way through its tile.
 			return NAN

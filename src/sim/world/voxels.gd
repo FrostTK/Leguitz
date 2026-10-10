@@ -23,6 +23,9 @@ const UNKNOWN := ID_COUNT - 1
 const FLAG_CUBE := 1
 const FLAG_SOLID := 2
 const FLAG_LIQUID := 4
+## Stairs and slabs (ShapedBlocks): solid in part of their cell. (8 and 16
+## are ChunkMesher's.)
+const FLAG_SHAPED := 32
 
 static var _flags := _build_flags()
 
@@ -57,6 +60,11 @@ static func is_solid(voxel: int) -> bool:
 
 static func is_liquid(voxel: int) -> bool:
 	return _flags[voxel] & FLAG_LIQUID != 0
+
+
+## Stairs or a slab (ShapedBlocks).
+static func is_shaped(voxel: int) -> bool:
+	return _flags[voxel] & FLAG_SHAPED != 0
 
 
 ## Water, still or flowing.
@@ -118,5 +126,7 @@ static func _build_flags() -> PackedByteArray:
 			flags[voxel] = FLAG_CUBE | FLAG_SOLID
 		elif Tiles.is_block_solid(block):
 			flags[voxel] = FLAG_SOLID
+			if Tiles.is_shaped(block):
+				flags[voxel] |= FLAG_SHAPED
 	flags[UNKNOWN] = FLAG_CUBE | FLAG_SOLID
 	return flags

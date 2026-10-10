@@ -117,6 +117,8 @@ func _build(item: int) -> void:
 	if grid != null:
 		model = VoxelMesher.build(grid)
 		model.surface_set_material(0, voxel_material)
+	elif ShapedBlocks.item_shape(item) >= 0:
+		model = _shaped(Items.placed_voxel(item))
 	else:
 		model = _cube(Items.placed_voxel(item))
 	_meshes[item] = model
@@ -141,6 +143,67 @@ static func _cube(voxel: int) -> Mesh:
 	_cube_faces(mesh, ends, block_texture(voxel))
 	_cube_faces(mesh, sides, face_texture(voxel))
 	return mesh
+
+
+## Stairs or a slab (standing on y = 0, centered) wearing their material's
+## textures as on the terrain: its top above and below, its face around.
+static func _shaped(voxel: int) -> Mesh:
+	var mesh := ArrayMesh.new()
+	var block := Voxels.block_of(voxel)
+	var material := Voxels.of_block(ShapedBlocks.material_of(block))
+	var mask := ShapedBlocks.mask(block, Vector3i.ZERO, Callable())
+	var ends := SurfaceTool.new()
+	var sides := SurfaceTool.new()
+	for tool: SurfaceTool in [ends, sides]:
+		tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for octant in 8:
+		if mask & (1 << octant) == 0:
+			continue
+		var o := Vector3(octant & 1, (octant >> 2) & 1, (octant >> 1) & 1)
+		for out: Vector3i in ShapedFaces.OUT:
+			var next := Vector3i(o) + out
+			var inside := next.clamp(Vector3i.ZERO, Vector3i.ONE) == next
+			if inside and mask & (1 << (next.x + next.z * 2 + next.y * 4)) != 0:
+				continue
+			_octant_face(ends if out.y != 0 else sides, o, Vector3(out))
+	_commit(mesh, ends, block_texture(material))
+	_commit(mesh, sides, face_texture(material))
+	return mesh
+
+
+## The face of a half-cube octant `o` (0 or 1 along each axis) looking
+## `out`, its texture the part of the cell's it covers.
+static func _octant_face(tool: SurfaceTool, o: Vector3, out: Vector3) -> void:
+	var u := Vector3(out.z, 0.0, -out.x) if out.y == 0 else Vector3.RIGHT
+	var v := Vector3.DOWN if out.y == 0 else Vector3(0.0, 0.0, out.y)
+	var center := (o + Vector3.ONE * 0.5 + out * 0.5) * 0.5 - Vector3(0.5, 0.0, 0.5)
+	var corners := [
+		center - u * 0.25 - v * 0.25,
+		center + u * 0.25 - v * 0.25,
+		center + u * 0.25 + v * 0.25,
+		center - u * 0.25 + v * 0.25,
+	]
+	var uvs := []
+	for corner: Vector3 in corners:
+		var at := corner + Vector3(0.5, 0.0, 0.5)
+		var along := at.dot(u) + (1.0 if u.dot(Vector3.ONE) < 0.0 else 0.0)
+		var down := at.dot(v) + (1.0 if v.y < 0.0 else 0.0)
+		uvs.append(Vector2(along, down))
+	for i: int in [0, 1, 2, 0, 2, 3]:
+		tool.set_normal(out)
+		tool.set_uv(uvs[i])
+		tool.add_vertex(corners[i])
+
+
+## Adds what a SurfaceTool holds to `mesh`, wearing a texture.
+static func _commit(mesh: ArrayMesh, tool: SurfaceTool, texture: Image) -> void:
+	var material := StandardMaterial3D.new()
+	material.albedo_texture = ImageTexture.create_from_image(texture)
+	material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	material.roughness = 0.9
+	tool.set_material(material)
+	tool.commit(mesh)
 
 
 ## Square faces of a unit cube ([normal, u, v] each) wearing a texture,
