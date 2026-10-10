@@ -416,8 +416,8 @@ captures, commit et retour :
 
 **Après la phase 7** : la **nouvelle phase 8, Construction et décoration** (escaliers, dalles,
 toitures, portes, verre et vitres refaits et teintables, rideaux fermables, décoration intérieure ;
-voir la section 6), demandée par le propriétaire ; ses propositions sont à valider avant son
-premier « go ». Le **mode Arcade** (ancienne phase 8) est **en attente**.
+voir la section 6), demandée par le propriétaire, qui a gardé toutes les propositions et tranché
+les choix (octobre 2026). Le **mode Arcade** (ancienne phase 8) est **en attente**.
 
 Plus tard (après la phase 7) : le **cheval** que l'on monte.
 
@@ -497,9 +497,17 @@ La demande du propriétaire, telle quelle :
 > tinter le verre/les vitres avec des couleurs. Rendre les rideaux fermables et pouvoir également
 > les tinter.
 
-Elle vient **après la 7.11 (Saisons)**, la dernière étape de la phase 7. Les propositions
-ci-dessous sont **à valider avec le propriétaire avant son premier « go »** : ce qu'il garde, ce
-qu'il écarte, et les points marqués « *à décider* ». Le jeu n'a aujourd'hui que des cubes (6
+Elle vient **après la 7.11 (Saisons)**, la dernière étape de la phase 7.
+
+**Décisions du propriétaire (octobre 2026)** : il **garde toutes les propositions** ci-dessous
+(verres, matériaux, formes, extérieur, meubles : tout) et tranche les choix :
+1. les escaliers et les dalles posés **se montent en marchant** (un bloc plein se saute toujours) ;
+2. une **palette d'environ 16 couleurs douces, à nous** (pas les 16 teintures de Minecraft) ;
+3. les rideaux fermés **assombrissent la pièce** ;
+4. le soleil à travers un verre teinté ou un vitrail **colore le sol** ;
+5. **tout** est gardé.
+
+Le jeu n'a aujourd'hui que des cubes (6
 planches, pierre, deepslate, grès, briques de pierre, pierre lisse, briques, briques de
 deepslate, grès taillé, verre, laine, fenêtre), la vitre fine, les rideaux (toujours ouverts),
 barrières et portails ; **pas encore de portes, d'escaliers ni de dalles**.
@@ -510,7 +518,7 @@ barrières et portails ; **pas encore de portes, d'escaliers ni de dalles**.
   ciel suivent sa vraie forme.
 - **Monter une marche sans sauter** : on monte en marchant une marche d'un demi-bloc (escaliers,
   dalles) ; un bloc plein se saute toujours. Cela change la règle « pas d'escaliers, on saute »
-  pour les escaliers que l'on pose (*à décider*, recommandé).
+  pour les escaliers que l'on pose (décidé).
 - **Rendu** : un bloc partiel est un modèle voxel peint pixel pour pixel avec la texture de son
   matériau : un escalier en briques a exactement les briques du mur d'à côté.
 - **Pose** : un escalier se tourne vers le joueur ; viser la moitié haute d'une face (ou Maj) le
@@ -521,21 +529,23 @@ barrières et portails ; **pas encore de portes, d'escaliers ni de dalles**.
   **pot de peinture** sur un bloc teintable le colore (gardé dans le chunk, sauvegardé) ; la
   **hache décape** le bois, l'**arrosoir lave** le verre et les tissus. Pour le verre, les vitres,
   les rideaux, les tapis, le plâtre, les draps, puis les barrières, portes, coffres et meubles.
-  Palette (*à décider*) : garder les 9 couleurs des pots, ou passer à environ 16 avec une palette
-  à nous (tons doux : brun, gris, bleu ciel, vert tendre, ocre, bordeaux…), pas les 16 teintures
-  de Minecraft.
+  Palette (décidé) : **environ 16 couleurs douces, à nous** (tons doux : brun, gris, bleu ciel,
+  vert tendre, ocre, bordeaux…), pas les 16 teintures de Minecraft. Les 9 pots actuels gardent
+  leurs identifiants (sauvegardés, et les bateaux peints s'en servent) ; leurs couleurs peuvent
+  être adoucies pour s'accorder aux nouvelles, et on ajoute les autres pots (avec leurs pigments),
+  pour les bateaux aussi.
 
 **Blocs de construction** :
 1. **Escaliers** (droits, coins, à l'envers) et **dalles** : **demi-hauteur** (en bas, en haut ;
    deux font un bloc) et **demi-largeur** (dalle verticale contre un côté de la case), dans chaque
    matériau : les 6 bois, pierre, pierre lisse, briques de pierre, briques, briques de deepslate,
    grès, grès taillé, et les nouveaux matériaux ci-dessous.
-2. **Autres formes** (*à choisir*) : **murets** (fins, ils se raccordent comme les barrières :
+2. **Autres formes** (toutes gardées) : **murets** (fins, ils se raccordent comme les barrières :
    clôtures de pierre, parapets), **piliers et colonnes** (pierre ou bois, avec chapiteau),
    **poutres** équarries (couchées dans les trois sens ou debout : charpentes, colombages),
    **quarts de bloc** (petites marches, rebords de fenêtre), **arches** (demi-cercle sur deux
    cases, pour les portes et les ponts).
-3. **Nouveaux matériaux** (*à choisir*), chacun avec ses escaliers et ses dalles : **pavés**
+3. **Nouveaux matériaux** (tous gardés), chacun avec ses escaliers et ses dalles : **pavés**
    (pierre brute assemblée), **pierre de taille** (gros blocs appareillés), **pierre moussue**
    (vieilles constructions), **plâtre / crépi** (blanc cassé, teintable), **colombages** (plâtre et
    poutres : droit, en croix, en diagonale), **torchis**, **parquet** (lames et chevrons, pour les 6
@@ -551,13 +561,13 @@ barrières et portails ; **pas encore de portes, d'escaliers ni de dalles**.
    descendre à la cave, ou sur le côté), **échelles** (on y grimpe), **volets** (sur les fenêtres,
    ouvrables), **grilles et barreaux** en fer forgé, **garde-corps** (escaliers, balcons,
    mezzanines). Le jeu n'a pas encore de portes : sans doute le plus attendu.
-6. **Extérieur** (*à choisir*) : allées (gravier, dalles de jardin, pas japonais), lampadaire,
+6. **Extérieur** (tout gardé) : allées (gravier, dalles de jardin, pas japonais), lampadaire,
    puits, fontaine, boîte aux lettres (multijoueur), banc de jardin, jardinière, pergola, nichoir,
    girouette.
 
 **Verre et vitres refaits, teintables** :
 - Le verre actuel (bordure pâle et reflets en traits diagonaux) fait trop Minecraft. Trois verres
-  proposés (*à choisir*) :
+  (tous les trois gardés) :
   - **verre clair** : presque invisible, juste un reflet doux du ciel en dégradé et quelques
     éclats, **sans cadre** ; deux blocs de verre côte à côte n'en font qu'un (verre continu : un
     bord seulement là où le verre s'arrête) ;
@@ -569,16 +579,17 @@ barrières et portails ; **pas encore de portes, d'escaliers ni de dalles**.
 - **Teinte** : un pot de peinture sur le verre ou une vitre donne un **verre coloré
   translucide** : on voit à travers, en couleur (une passe transparente comme l'eau, plus des
   pixels découpés) ; le cadre d'une fenêtre se peint à part (Maj + clic droit, comme la bande d'un
-  bateau). Option (*à décider*, plus coûteuse) : le soleil à travers un vitrail colore le sol.
+  bateau). Décidé : le soleil à travers un verre teinté ou un vitrail **colore le sol** (plus
+  coûteux : à mesurer sur la carte graphique du propriétaire).
 
 **Rideaux** :
 - **Ouverts ou fermés** au clic droit (ou E) : ouverts, noués sur les côtés (le modèle actuel) ;
   fermés, tirés devant la fenêtre. Fermés, ils **cachent la vue** et **assombrissent la pièce** :
-  la lumière du jour ne passe plus par cette fenêtre (*à décider*).
+  la lumière du jour ne passe plus par cette fenêtre (décidé).
 - **Teintables** avec les pots de peinture ; deux longueurs (court, jusqu'au sol) ; tringle en
   bois ou en fer.
 
-**Décoration intérieure** (*à choisir*) :
+**Décoration intérieure** (tout gardé) :
 - **Lit** (2 cases, draps teintables) : y dormir passe la nuit (quand tous les joueurs dorment ;
   pas en temps synchronisé avec l'appareil) et fixe l'endroit où l'on se réveille après avoir perdu
   connaissance.
@@ -600,7 +611,7 @@ barrières et portails ; **pas encore de portes, d'escaliers ni de dalles**.
 - **Salle de bain** : baignoire, douche, lavabo (l'évier et les toilettes existent).
 - **Divers** : berceau, coffre à jouets, piano, horloge comtoise, paravent.
 
-**Découpage proposé** (une étape par « go », à revoir avec le propriétaire) :
+**Découpage** (une étape par « go ») :
 1. Le socle des blocs partiels (physique, visée, rendu, pose) et les **escaliers et dalles** des
    matériaux existants.
 2. Le **verre et les vitres** refaits, la **teinte par case**, le verre teinté translucide.
@@ -613,7 +624,7 @@ barrières et portails ; **pas encore de portes, d'escaliers ni de dalles**.
    et les tables.
 8. **Ambiance** : lumières (lustre, bougies), cheminée, tableaux, horloge, miroir, plantes en pot,
    salle de bain.
-9. **Extérieur** (si gardé).
+9. **Extérieur**.
 
 ### Mode Arcade — en attente (ancienne phase 8, mise de côté par le propriétaire en octobre 2026)
 

@@ -320,8 +320,9 @@ Pour le multijoueur, il suffira de brancher un transport réseau.
 7. Agriculture et élevage (en cours : végétation qui pousse, champs et cultures, arrosage et compost,
    nouvelles cultures et arbres fruitiers, élevage, cuisine, pêche et bateaux, compagnons ; reste
    les saisons)
-8. Construction et décoration (à venir : escaliers, dalles, toitures, portes et échelles, nouveaux
-   matériaux, verre et vitres refaits et teintables, rideaux fermables, décoration intérieure)
+8. Construction et décoration (à venir, propositions validées : escaliers, dalles, toitures,
+   portes et échelles, nouveaux matériaux, verre et vitres refaits et teintables, rideaux
+   fermables, décoration intérieure)
 9. Finitions PC (menus, sauvegardes, sons, options graphiques, Steam)
 10. Mobile (iOS, Android)
 
