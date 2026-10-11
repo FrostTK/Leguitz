@@ -46,6 +46,8 @@ const FIRES := {
 	Tiles.Block.CAMPFIRE: true,
 	Tiles.Block.FOOD_FURNACE_LIT: true,
 	Tiles.Block.FACTORY_FURNACE_LIT: true,
+	Tiles.Block.FIREPLACE_LIT: true,
+	Tiles.Block.STOVE_LIT: true,
 }
 const EPSILON := 0.0001
 

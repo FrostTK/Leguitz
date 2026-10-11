@@ -69,176 +69,38 @@ const SOLIDS := {
 ## The ways an object placed facing the player can face, in the order of
 ## the blocks of each kind in FACING_KINDS.
 const WAYS: Array[Vector2i] = [Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1), Vector2i(1, 0)]
-## Objects placed facing the player: each kind (its first block, whose
-## model the others share) and its block for each of the WAYS. The
-## workbench's and the big gate's are their left end seen from their
-## front; furnaces come unlit and lit, and a food furnace that melted ore
-## is broken; gates come closed and open; what hangs on a wall faces away
-## from it.
-const FACING_KINDS := {
-	Tiles.Block.SHIPYARD:
-	[
-		Tiles.Block.SHIPYARD,
-		Tiles.Block.SHIPYARD_WEST,
-		Tiles.Block.SHIPYARD_NORTH,
-		Tiles.Block.SHIPYARD_EAST,
-	],
-	Tiles.Block.KITCHEN:
-	[
-		Tiles.Block.KITCHEN,
-		Tiles.Block.KITCHEN_WEST,
-		Tiles.Block.KITCHEN_NORTH,
-		Tiles.Block.KITCHEN_EAST,
-	],
-	Tiles.Block.WORKBENCH:
-	[
-		Tiles.Block.WORKBENCH,
-		Tiles.Block.WORKBENCH_WEST,
-		Tiles.Block.WORKBENCH_NORTH,
-		Tiles.Block.WORKBENCH_EAST,
-	],
-	Tiles.Block.CHEST:
-	[
-		Tiles.Block.CHEST,
-		Tiles.Block.CHEST_WEST,
-		Tiles.Block.CHEST_NORTH,
-		Tiles.Block.CHEST_EAST,
-	],
-	Tiles.Block.FOOD_FURNACE:
-	[
-		Tiles.Block.FOOD_FURNACE,
-		Tiles.Block.FOOD_FURNACE_WEST,
-		Tiles.Block.FOOD_FURNACE_NORTH,
-		Tiles.Block.FOOD_FURNACE_EAST,
-	],
-	Tiles.Block.FOOD_FURNACE_LIT:
-	[
-		Tiles.Block.FOOD_FURNACE_LIT,
-		Tiles.Block.FOOD_FURNACE_LIT_WEST,
-		Tiles.Block.FOOD_FURNACE_LIT_NORTH,
-		Tiles.Block.FOOD_FURNACE_LIT_EAST,
-	],
-	Tiles.Block.FACTORY_FURNACE:
-	[
-		Tiles.Block.FACTORY_FURNACE,
-		Tiles.Block.FACTORY_FURNACE_WEST,
-		Tiles.Block.FACTORY_FURNACE_NORTH,
-		Tiles.Block.FACTORY_FURNACE_EAST,
-	],
-	Tiles.Block.FACTORY_FURNACE_LIT:
-	[
-		Tiles.Block.FACTORY_FURNACE_LIT,
-		Tiles.Block.FACTORY_FURNACE_LIT_WEST,
-		Tiles.Block.FACTORY_FURNACE_LIT_NORTH,
-		Tiles.Block.FACTORY_FURNACE_LIT_EAST,
-	],
-	Tiles.Block.BROKEN_FURNACE:
-	[
-		Tiles.Block.BROKEN_FURNACE,
-		Tiles.Block.BROKEN_FURNACE_WEST,
-		Tiles.Block.BROKEN_FURNACE_NORTH,
-		Tiles.Block.BROKEN_FURNACE_EAST,
-	],
-	Tiles.Block.TORCH_BRACKET:
-	[
-		Tiles.Block.TORCH_BRACKET,
-		Tiles.Block.TORCH_BRACKET_WEST,
-		Tiles.Block.TORCH_BRACKET_NORTH,
-		Tiles.Block.TORCH_BRACKET_EAST,
-	],
-	Tiles.Block.CURTAINS:
-	[
-		Tiles.Block.CURTAINS,
-		Tiles.Block.CURTAINS_WEST,
-		Tiles.Block.CURTAINS_NORTH,
-		Tiles.Block.CURTAINS_EAST,
-	],
-	Tiles.Block.GLASS_PANE:
-	[
-		Tiles.Block.GLASS_PANE,
-		Tiles.Block.GLASS_PANE_WEST,
-		Tiles.Block.GLASS_PANE_NORTH,
-		Tiles.Block.GLASS_PANE_EAST,
-	],
-	Tiles.Block.SINK:
-	[
-		Tiles.Block.SINK,
-		Tiles.Block.SINK_WEST,
-		Tiles.Block.SINK_NORTH,
-		Tiles.Block.SINK_EAST,
-	],
-	Tiles.Block.TOILET:
-	[
-		Tiles.Block.TOILET,
-		Tiles.Block.TOILET_WEST,
-		Tiles.Block.TOILET_NORTH,
-		Tiles.Block.TOILET_EAST,
-	],
-	Tiles.Block.CHAIR:
-	[
-		Tiles.Block.CHAIR,
-		Tiles.Block.CHAIR_WEST,
-		Tiles.Block.CHAIR_NORTH,
-		Tiles.Block.CHAIR_EAST,
-	],
-	Tiles.Block.GATE:
-	[
-		Tiles.Block.GATE,
-		Tiles.Block.GATE_WEST,
-		Tiles.Block.GATE_NORTH,
-		Tiles.Block.GATE_EAST,
-	],
-	Tiles.Block.GATE_OPEN:
-	[
-		Tiles.Block.GATE_OPEN,
-		Tiles.Block.GATE_OPEN_WEST,
-		Tiles.Block.GATE_OPEN_NORTH,
-		Tiles.Block.GATE_OPEN_EAST,
-	],
-	Tiles.Block.BIG_GATE:
-	[
-		Tiles.Block.BIG_GATE,
-		Tiles.Block.BIG_GATE_WEST,
-		Tiles.Block.BIG_GATE_NORTH,
-		Tiles.Block.BIG_GATE_EAST,
-	],
-	Tiles.Block.BIG_GATE_OPEN:
-	[
-		Tiles.Block.BIG_GATE_OPEN,
-		Tiles.Block.BIG_GATE_OPEN_WEST,
-		Tiles.Block.BIG_GATE_OPEN_NORTH,
-		Tiles.Block.BIG_GATE_OPEN_EAST,
-	],
-	Tiles.Block.TORCH_BRACKET_LIT:
-	[
-		Tiles.Block.TORCH_BRACKET_LIT,
-		Tiles.Block.TORCH_BRACKET_LIT_WEST,
-		Tiles.Block.TORCH_BRACKET_LIT_NORTH,
-		Tiles.Block.TORCH_BRACKET_LIT_EAST,
-	],
-	Tiles.Block.LANTERN_WALL:
-	[
-		Tiles.Block.LANTERN_WALL,
-		Tiles.Block.LANTERN_WALL_WEST,
-		Tiles.Block.LANTERN_WALL_NORTH,
-		Tiles.Block.LANTERN_WALL_EAST,
-	],
-	Tiles.Block.OLD_GLASS_PANE:
-	[
-		Tiles.Block.OLD_GLASS_PANE,
-		Tiles.Block.OLD_GLASS_PANE_WEST,
-		Tiles.Block.OLD_GLASS_PANE_NORTH,
-		Tiles.Block.OLD_GLASS_PANE_EAST,
-	],
-	Tiles.Block.LEADED_GLASS_PANE:
-	[
-		Tiles.Block.LEADED_GLASS_PANE,
-		Tiles.Block.LEADED_GLASS_PANE_WEST,
-		Tiles.Block.LEADED_GLASS_PANE_NORTH,
-		Tiles.Block.LEADED_GLASS_PANE_EAST,
-	],
-}
-## Objects two tiles long: their kind (in FACING_KINDS: their left end,
+## Objects placed facing the player, by kind (its first block, whose model
+## the others share; its blocks for each of the WAYS are built by name:
+## <KIND>, <KIND>_WEST, _NORTH, _EAST). The workbench's and the big gate's
+## are their left end seen from their front; furnaces come unlit and lit,
+## and a food furnace that melted ore is broken; gates come closed and
+## open; what hangs on a wall faces away from it.
+const FACING_KINDS: Array[int] = [
+	Tiles.Block.SHIPYARD,
+	Tiles.Block.KITCHEN,
+	Tiles.Block.WORKBENCH,
+	Tiles.Block.CHEST,
+	Tiles.Block.FOOD_FURNACE,
+	Tiles.Block.FOOD_FURNACE_LIT,
+	Tiles.Block.FACTORY_FURNACE,
+	Tiles.Block.FACTORY_FURNACE_LIT,
+	Tiles.Block.BROKEN_FURNACE,
+	Tiles.Block.TORCH_BRACKET,
+	Tiles.Block.CURTAINS,
+	Tiles.Block.GLASS_PANE,
+	Tiles.Block.SINK,
+	Tiles.Block.TOILET,
+	Tiles.Block.CHAIR,
+	Tiles.Block.GATE,
+	Tiles.Block.GATE_OPEN,
+	Tiles.Block.BIG_GATE,
+	Tiles.Block.BIG_GATE_OPEN,
+	Tiles.Block.TORCH_BRACKET_LIT,
+	Tiles.Block.LANTERN_WALL,
+	Tiles.Block.OLD_GLASS_PANE,
+	Tiles.Block.LEADED_GLASS_PANE,
+]
+## Objects two tiles long: their kind (a facing kind: their left end,
 ## which holds the model) and the block of their right end, lying beside
 ## it, per axis it lies along (x, z). How deep (voxels) their body is across.
 const WIDE_KINDS := {
@@ -246,8 +108,20 @@ const WIDE_KINDS := {
 	Tiles.Block.BIG_GATE: [Tiles.Block.BIG_GATE_END_X, Tiles.Block.BIG_GATE_END_Z],
 	Tiles.Block.BIG_GATE_OPEN: [Tiles.Block.BIG_GATE_OPEN_END_X, Tiles.Block.BIG_GATE_OPEN_END_Z],
 	Tiles.Block.SOFA: [Tiles.Block.SOFA_END_X, Tiles.Block.SOFA_END_Z],
+	Tiles.Block.FIREPLACE: [Tiles.Block.FIREPLACE_END_X, Tiles.Block.FIREPLACE_END_Z],
+	Tiles.Block.FIREPLACE_LIT: [Tiles.Block.FIREPLACE_LIT_END_X, Tiles.Block.FIREPLACE_LIT_END_Z],
+	Tiles.Block.BATHTUB: [Tiles.Block.BATHTUB_END_X, Tiles.Block.BATHTUB_END_Z],
+	Tiles.Block.PIANO: [Tiles.Block.PIANO_END_X, Tiles.Block.PIANO_END_Z],
 }
-const WIDE_DEPTH := {Tiles.Block.WORKBENCH: 14, Tiles.Block.BIG_GATE: 6, Tiles.Block.SOFA: 14}
+const WIDE_DEPTH := {
+	Tiles.Block.WORKBENCH: 14,
+	Tiles.Block.BIG_GATE: 6,
+	Tiles.Block.SOFA: 14,
+	Tiles.Block.FIREPLACE: 12,
+	Tiles.Block.FIREPLACE_LIT: 12,
+	Tiles.Block.BATHTUB: 14,
+	Tiles.Block.PIANO: 10,
+}
 const BENCH_DEPTH := 14
 ## Chests and furnaces: so many voxels square, a level high.
 const BOX_SIZE := 14
@@ -286,6 +160,16 @@ const TOPS := {
 	Tiles.Block.NIGHTSTAND: 10,
 	Tiles.Block.PEDESTAL_TABLE: 13,
 	Tiles.Block.TABLE_CLOTHED: 14,
+	Tiles.Block.FIREPLACE: 16,
+	Tiles.Block.FIREPLACE_LIT: 16,
+	Tiles.Block.STOVE: 12,
+	Tiles.Block.STOVE_LIT: 12,
+	Tiles.Block.BATHTUB: 9,
+	Tiles.Block.WASHBASIN: 13,
+	Tiles.Block.GRANDFATHER_CLOCK: 31,
+	Tiles.Block.TOY_CHEST: 11,
+	Tiles.Block.PIANO: 15,
+	Tiles.Block.CRADLE: 10,
 	Tiles.Block.COMPOSTER: 14,
 	Tiles.Block.PUMPKIN: 12,
 	Tiles.Block.MELON: 11,
@@ -346,6 +230,13 @@ const FOOTPRINTS := {
 	Tiles.Block.COFFEE_TABLE: 14,
 	Tiles.Block.PEDESTAL_TABLE: 10,
 	Tiles.Block.TABLE_CLOTHED: 14,
+	Tiles.Block.STOVE: 12,
+	Tiles.Block.STOVE_LIT: 12,
+	Tiles.Block.WASHBASIN: 10,
+	Tiles.Block.GRANDFATHER_CLOCK: 10,
+	Tiles.Block.CRADLE: 12,
+	Tiles.Block.FOLDING_SCREEN: 8,
+	Tiles.Block.HOUSEPLANT: 8,
 	Tiles.Block.FENCE: 16,
 	Tiles.Block.GATE: 16,
 	Tiles.Block.CAMPFIRE: 12,
@@ -384,7 +275,7 @@ const FOOTPRINTS := {
 	Tiles.Block.DARK_OAK_BEAM: 10,
 }
 ## What keeps bodies out (fences, closed gates and doors, bars,
-## railings): two levels high, nobody jumps over.
+## railings, walls, a folding screen): two levels high, nobody jumps over.
 const BARRIERS := {
 	Tiles.Block.FENCE: true,
 	Tiles.Block.GATE: true,
@@ -405,6 +296,7 @@ const BARRIERS := {
 	Tiles.Block.BRICK_WALL: true,
 	Tiles.Block.MOSSY_STONE_WALL: true,
 	Tiles.Block.SANDSTONE_WALL: true,
+	Tiles.Block.FOLDING_SCREEN: true,
 }
 ## The furnaces (their unlit kind) and their lit kind.
 const LIT := {
@@ -438,13 +330,14 @@ const DRAWN := {
 	Tiles.Block.CURTAINS_IRON: Tiles.Block.CURTAINS_IRON_CLOSED,
 	Tiles.Block.CURTAINS_LONG_IRON: Tiles.Block.CURTAINS_LONG_IRON_CLOSED,
 }
-## Long curtains hang down to the floor: their model goes a level under
-## their cell (SUNK), which must be free when they are hung.
+## Long curtains (and a tapestry) hang down to the floor: their model goes
+## a level under their cell (SUNK), which must be free when they are hung.
 const LONG_CURTAINS := {
 	Tiles.Block.CURTAINS_LONG: true,
 	Tiles.Block.CURTAINS_LONG_CLOSED: true,
 	Tiles.Block.CURTAINS_LONG_IRON: true,
 	Tiles.Block.CURTAINS_LONG_IRON_CLOSED: true,
+	Tiles.Block.TAPESTRY: true,
 }
 ## What hangs on the side of a cube (by kind), facing away from it: it
 ## falls with it.
@@ -469,10 +362,27 @@ const WALL_MOUNTED := {
 	Tiles.Block.SHUTTERS_CLOSED: true,
 	Tiles.Block.WALL_CUPBOARD: true,
 	Tiles.Block.SHELF: true,
+	Tiles.Block.WALL_SCONCE: true,
+	Tiles.Block.WALL_SCONCE_OUT: true,
+	Tiles.Block.PAINTING: true,
+	Tiles.Block.PORTRAIT: true,
+	Tiles.Block.WALL_CLOCK: true,
+	Tiles.Block.MIRROR: true,
+	Tiles.Block.FRAMED_MAP: true,
+	Tiles.Block.DEER_TROPHY: true,
+	Tiles.Block.BEAR_TROPHY: true,
+	Tiles.Block.TAPESTRY: true,
+	Tiles.Block.SPICE_RACK: true,
+	Tiles.Block.COAT_RACK: true,
+	Tiles.Block.WINDOW_BOX: true,
 }
 ## What hangs from the cube above it (it falls with it, not with the
 ## floor).
-const HANGING := {Tiles.Block.LANTERN_HANGING: true}
+const HANGING := {
+	Tiles.Block.LANTERN_HANGING: true,
+	Tiles.Block.CHANDELIER: true,
+	Tiles.Block.CHANDELIER_OUT: true,
+}
 ## What burns and lights its surroundings (ChunkMesher's lights), and keeps
 ## monsters away (Light.near_fire); a lit furnace too (LIT).
 const LIGHTS := {
@@ -482,6 +392,13 @@ const LIGHTS := {
 	Tiles.Block.LANTERN_HANGING: true,
 	Tiles.Block.LANTERN_WALL: true,
 	Tiles.Block.CAMPFIRE: true,
+	Tiles.Block.CANDLE: true,
+	Tiles.Block.CANDELABRA: true,
+	Tiles.Block.CHANDELIER: true,
+	Tiles.Block.BEDSIDE_LAMP: true,
+	Tiles.Block.WALL_SCONCE: true,
+	Tiles.Block.FIREPLACE_LIT: true,
+	Tiles.Block.STOVE_LIT: true,
 }
 ## Other shapes of one thing (a lantern hung from a ceiling or a wall): the
 ## kind it is placed as, the item's.
@@ -577,6 +494,15 @@ const SINGLE := {
 	Tiles.Block.SPRUCE_BEAM_Z: true,
 	Tiles.Block.DARK_OAK_BEAM_X: true,
 	Tiles.Block.DARK_OAK_BEAM_Z: true,
+	Tiles.Block.CANDLE: true,
+	Tiles.Block.CANDLE_OUT: true,
+	Tiles.Block.CANDELABRA: true,
+	Tiles.Block.CANDELABRA_OUT: true,
+	Tiles.Block.CHANDELIER: true,
+	Tiles.Block.CHANDELIER_OUT: true,
+	Tiles.Block.BEDSIDE_LAMP: true,
+	Tiles.Block.BEDSIDE_LAMP_OFF: true,
+	Tiles.Block.CUSHION: true,
 }
 ## Objects drawn sunk this deep (levels): a fish trap's basket under the
 ## water's surface, its float on it; a shipyard's slipway down into the
@@ -588,6 +514,7 @@ const SUNK := {
 	Tiles.Block.CURTAINS_LONG_CLOSED: 1.0,
 	Tiles.Block.CURTAINS_LONG_IRON: 1.0,
 	Tiles.Block.CURTAINS_LONG_IRON_CLOSED: 1.0,
+	Tiles.Block.TAPESTRY: 1.0,
 }
 ## Small things stand anywhere in their tile (whole voxels), not centered.
 const WANDERING := {
@@ -614,11 +541,15 @@ const WANDERING := {
 	Tiles.Block.WILD_RASPBERRY: true,
 }
 
+## What has two states (pair_of, swung): gates and doors, curtains and
+## shutters, lights and a shower (Decor.SWITCHED), hearths (Hearths.LIT).
+const PAIRS: Array[Dictionary] = [OPENS, DRAWN, Decor.SWITCHED, Hearths.LIT]
+
 ## block -> (kind, way index), for the facing objects; a wide object's
 ## right end -> [axis it lies along, kind].
 ## Every facing kind's blocks: FACING_KINDS, stairs and side slabs
 ## (ShapedBlocks), roof slopes (RoofBlocks), curtains, shutters, doors,
-## trapdoors, the ladder, dormers (`_named_kinds`).
+## trapdoors, the ladder, dormers, furniture (`_named_kinds`).
 static var _facing_kinds := _all_facing_kinds()
 static var _facing := _build_facing()
 static var _wide_ends := _build_wide_ends()
@@ -629,6 +560,10 @@ static func is_tree(block: int) -> bool:
 
 
 static func variant_count(block: int) -> int:
+	var versions := Decor.versions(block)
+	if versions > 0:
+		# Pictures, a pot's plants, a window box's flowers.
+		return versions
 	if Openings.is_door(block) or block == Tiles.Block.CHIMNEY:
 		# Hung on its left or its right (Openings.hinge_right); a chimney's
 		# shaft or its top (ChunkProps).
@@ -745,29 +680,41 @@ static func is_drawn(block: int) -> bool:
 
 
 ## Whether two blocks are one thing (a tint stays when one turns into the
-## other): the same kind, a gate open or shut, curtains tied or drawn.
+## other): the same kind, a gate open or shut, curtains tied or drawn, a
+## lamp on or off, a hearth lit or not.
 static func same_piece(block: int, other: int) -> bool:
 	return pair_of(base_kind(block)) == pair_of(base_kind(other))
 
 
 ## The kind of a thing as it is placed: an open gate or door's shut kind,
-## drawn curtains' tied kind, else the kind itself.
+## drawn curtains' tied kind, a light put out's lit kind, a lit hearth's
+## unlit kind, else the kind itself.
 static func pair_of(kind: int) -> int:
-	var shut: Variant = OPENS.find_key(kind)
-	if shut != null:
-		return shut
-	var tied: Variant = DRAWN.find_key(kind)
-	return tied if tied != null else kind
+	for pairs: Dictionary in PAIRS:
+		var placed: Variant = pairs.find_key(kind)
+		if placed != null:
+			return placed
+	return kind
 
 
-## The gate's block once it swung (open <-> shut), the same way facing
-## (or the same end); curtains' drawn or tied back.
+## The block of a thing with two states once it changed (a gate open <->
+## shut, curtains drawn or tied back, a light on or off, a hearth lit or
+## out), the same way facing (or the same end); the block itself if it has
+## no other state.
 static func swung(block: int) -> int:
 	var kind := base_kind(block)
-	var pairs := DRAWN if is_curtain(block) else OPENS
-	var other: int = pairs.get(kind, pairs.find_key(kind))
+	var other := -1
+	for pairs: Dictionary in PAIRS:
+		if pairs.has(kind):
+			other = pairs[kind]
+		elif pairs.find_key(kind) != null:
+			other = pairs.find_key(kind)
+	if other < 0:
+		return block
 	if _wide_ends.has(block):
 		return wide_end(other, end_axis(block))
+	if not _facing.has(block):
+		return other
 	return facing(other, front_of(block))
 
 
@@ -798,6 +745,11 @@ static func model_block(block: int) -> int:
 ## Which way a facing object faces (ZERO: not one).
 static func front_of(block: int) -> Vector2i:
 	return WAYS[_facing[block].y] if _facing.has(block) else Vector2i.ZERO
+
+
+## A facing kind's blocks (WAYS order), else the block alone.
+static func blocks_of(kind: int) -> Array:
+	return _facing_kinds.get(kind, [kind])
 
 
 ## The block of a facing object (`kind`: see FACING_KINDS; stairs and
@@ -919,7 +871,7 @@ static func footprint_rect(block: int, tile: Vector2i) -> Rect2:
 
 
 static func _all_facing_kinds() -> Dictionary:
-	var kinds := FACING_KINDS.duplicate()
+	var kinds := {}
 	kinds.merge(ShapedBlocks.facing_kinds())
 	kinds.merge(RoofBlocks.facing_kinds())
 	kinds.merge(_named_kinds())
@@ -935,19 +887,24 @@ static func _build_facing() -> Dictionary:
 	return lookup
 
 
-## The facing kinds built by name (but those of FACING_KINDS): curtains
-## and shutters (DRAWN), doors and trapdoors (OPENS), open or shut, the
-## ladder, the dormers; each with its blocks facing W, N, E (<KIND>_WEST...).
+## The facing kinds built by name: FACING_KINDS, curtains and shutters
+## (DRAWN), doors and trapdoors (OPENS), open or shut, the ladder, the
+## dormers, furniture and the ambiance's (Furniture, Decor); each with its
+## blocks facing W, N, E (<KIND>_WEST...).
 static func _named_kinds() -> Dictionary:
 	var kinds := {}
-	var named: Array = DRAWN.keys() + DRAWN.values() + OPENS.keys() + OPENS.values()
+	var named: Array = []
+	for kinds_of: Array in [FACING_KINDS, DRAWN.keys(), DRAWN.values(), OPENS.keys()]:
+		named.append_array(kinds_of)
+	named.append_array(OPENS.values())
 	named.append(Tiles.Block.LADDER)
 	for covering: Array in RoofBlocks.COVERINGS:
 		named.append(covering[3])
 	named.append_array(Furniture.FACING)
+	named.append_array(Decor.FACING)
 	for kind: int in named:
 		var name := String(Tiles.Block.find_key(kind))
-		if FACING_KINDS.has(kind) or not Tiles.Block.has(name + "_WEST"):
+		if kinds.has(kind) or not Tiles.Block.has(name + "_WEST"):
 			continue
 		var blocks := []
 		for way: String in ["", "_WEST", "_NORTH", "_EAST"]:

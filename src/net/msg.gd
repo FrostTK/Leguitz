@@ -62,6 +62,9 @@ const TINT := "tint"
 const SLEEP := "sleep"
 const WAKE := "wake"
 const SHELF := "shelf"
+## The ambiance: to feed a hearth (or put it out), to show the next picture.
+const STOKE := "stoke"
+const TURN_PICTURE := "turn_picture"
 
 ## map_request() row for a map of the surface.
 const MAP_SURFACE := -1
@@ -408,7 +411,6 @@ static func tint(cell: Vector3i, slot: int, frame: bool) -> Dictionary:
 	return {"t": TINT, "cell": cell, "slot": slot, "frame": frame}
 
 
-## The tint of a cell changed (Tints.pack; 0: none).
 ## The player sleeps in the bed in `cell` (or makes it where they wake up).
 static func sleep(cell: Vector3i) -> Dictionary:
 	return {"t": SLEEP, "cell": cell}
@@ -430,12 +432,24 @@ static func shelf(cell: Vector3i, slot: int) -> Dictionary:
 	return {"t": SHELF, "cell": cell, "slot": slot}
 
 
+## What hotbar slot `slot` holds goes into the hearth in `cell` (a fuel;
+## the watering can puts it out: Hearths).
+static func stoke(cell: Vector3i, slot: int) -> Dictionary:
+	return {"t": STOKE, "cell": cell, "slot": slot}
+
+
+## The picture in `cell` shows the next one (Decor).
+static func turn_picture(cell: Vector3i) -> Dictionary:
+	return {"t": TURN_PICTURE, "cell": cell}
+
+
 ## What the shelf in `cell` holds (Shelves.SLOTS items, NONE: empty; none
 ## at all: an empty array).
 static func shelf_items(cell: Vector3i, items: PackedInt32Array) -> Dictionary:
 	return {"t": SHELF_ITEMS, "cell": cell, "items": items}
 
 
+## The tint of a cell changed (Tints.pack; 0: none).
 static func tinted(cell: Vector3i, packed: int) -> Dictionary:
 	return {"t": TINTED, "cell": cell, "tint": packed}
 

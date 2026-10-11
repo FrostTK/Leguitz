@@ -14,12 +14,24 @@ const PLANT_HEIGHT := 0.7
 const WALL_SLICE := 0.3
 const LANTERN_SLICE := 0.75
 ## Small lights met on a little body of their own, in the middle of their
-## tile: [width, height, how high it starts] (local units).
+## tile: [width, height, how high it starts] (local units). What may stand
+## on furniture (Decor.sink) starts under its cell, where it is drawn on a
+## low table.
 const SMALL_BODIES := {
 	Tiles.Block.TORCH: [0.3, 0.95, 0.0],
 	Tiles.Block.LANTERN: [0.45, 0.85, 0.0],
 	Tiles.Block.LANTERN_HANGING: [0.45, 0.85, 0.15],
 	Tiles.Block.RUG: [1.0, 0.125, 0.0],
+	Tiles.Block.CANDLE: [0.3, 0.7, -0.4],
+	Tiles.Block.CANDLE_OUT: [0.3, 0.7, -0.4],
+	Tiles.Block.CANDELABRA: [0.6, 1.0, -0.4],
+	Tiles.Block.CANDELABRA_OUT: [0.6, 1.0, -0.4],
+	Tiles.Block.BEDSIDE_LAMP: [0.5, 1.0, -0.4],
+	Tiles.Block.BEDSIDE_LAMP_OFF: [0.5, 1.0, -0.4],
+	Tiles.Block.FLOWER_POT: [0.5, 0.8, -0.4],
+	Tiles.Block.CHANDELIER: [0.8, 0.8, 0.2],
+	Tiles.Block.CHANDELIER_OUT: [0.8, 0.8, 0.2],
+	Tiles.Block.CUSHION: [0.8, 0.35, 0.0],
 }
 
 

@@ -157,6 +157,9 @@ func load_chunk(coord: Vector2i) -> ChunkData:
 	var machines: Dictionary = data.get("machines", {})
 	for cell: Vector3i in machines:
 		chunk.machines[cell] = (machines[cell] as Dictionary).duplicate()
+	var fires: Dictionary = data.get("fires", {})
+	for cell: Vector3i in fires:
+		chunk.fires[cell] = float(fires[cell])
 	var tints: Dictionary = data.get("tints", {})
 	for cell: Vector3i in tints:
 		chunk.tints[cell] = int(tints[cell])
@@ -192,6 +195,7 @@ func store_chunk(chunk: ChunkData) -> void:
 		"growing": chunk.growing.keys(),
 		"watered": watered,
 		"machines": machines,
+		"fires": chunk.fires.duplicate(),
 		"tints": chunk.tints.duplicate(),
 		"rugs": chunk.rugs.duplicate(),
 		"shelves": chunk.shelves.duplicate(),

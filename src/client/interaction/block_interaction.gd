@@ -159,7 +159,7 @@ func usable_here() -> bool:
 		and (
 			Mining.opens(target.voxel)
 			or Mining.swings(target.voxel)
-			or FurnitureUse.usable(target.voxel)
+			or FurnitureUse.usable(target.voxel, client.held_item())
 		)
 		and not Input.is_action_pressed(InputBindings.SPRINT)
 	)

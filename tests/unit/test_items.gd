@@ -197,7 +197,11 @@ func test_broken_blocks_drop_items_players_pick_up() -> void:
 	var expected := Items.drops(voxel, tile, RandomNumberGenerator.new())[0].x
 	client.send(Msg.block_break(cell))
 	server.process_messages()
-	assert_eq(server.items.size(), 1, "it lies where the block was")
+	# (Now and then a worm comes out of the soil too: Drops.WORM_CHANCE.)
+	var lying := server.items.values().filter(
+		func(d: DroppedItem) -> bool: return d.item != Items.Id.WORM
+	)
+	assert_eq(lying.size(), 1, "it lies where the block was")
 	var said := client.poll().filter(func(m: Dictionary) -> bool: return m["t"] == Msg.ITEM_SPAWN)
 	assert_eq(said[0]["item"], expected)
 	for i in 40:

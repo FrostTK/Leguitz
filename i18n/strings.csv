@@ -1225,3 +1225,48 @@ BOOK_HOME_STORAGE,"Storage, opened like a chest: a wardrobe (two chests, two lev
 BOOK_HOME_SHELF,"Display shelf (on a wall): a right click puts one of what you hold on it, three at most; empty-handed, it gives you the last one back.","Étagère (au mur) : un clic droit y pose un de ce que tu tiens, trois au plus ; les mains vides, elle te rend le dernier."
 BOOK_HOME_SEATS,"Seats: a right click (or {use}) sits you down on a chair, an armchair, a sofa (two tiles), a bench, a stool, a rocking chair; move or jump to get up. Armchairs and sofas take a pot of paint.","Sièges : un clic droit (ou {use}) t'assoit sur une chaise, un fauteuil, un canapé (deux cases), un banc, un tabouret, un rocking-chair ; bouge ou saute pour te lever. Fauteuils et canapés prennent un pot de peinture."
 BOOK_HOME_TABLES,"Tables: a coffee table, a desk, a nightstand, a pedestal table. A tablecloth (three cloths make two) goes on a table, and takes a pot of paint.","Tables : une table basse, un bureau, une table de nuit, un guéridon. Une nappe (trois tissus en font deux) se pose sur une table, et prend un pot de peinture."
+ITEM_CANDLE,Candle,Bougie
+ITEM_CANDELABRA,Candelabra,Chandelier
+ITEM_CHANDELIER,Chandelier,Lustre
+ITEM_BEDSIDE_LAMP,Bedside lamp,Lampe de chevet
+ITEM_WALL_SCONCE,Wall sconce,Applique
+ITEM_FIREPLACE,Fireplace,Cheminée
+ITEM_STOVE,Wood stove,Poêle à bois
+ITEM_PAINTING,Painting,Tableau
+ITEM_PORTRAIT,Portrait,Portrait
+ITEM_WALL_CLOCK,Wall clock,Horloge murale
+ITEM_MIRROR,Mirror,Miroir
+ITEM_FRAMED_MAP,Framed map,Carte encadrée
+ITEM_DEER_TROPHY,Stag's head,Tête de cerf
+ITEM_BEAR_TROPHY,Bear's head,Tête d'ours
+ITEM_TAPESTRY,Tapestry,Tapisserie
+ITEM_SPICE_RACK,Spice rack,Étagère à épices
+ITEM_COAT_RACK,Coat rack,Portemanteau
+ITEM_CUSHION,Cushion,Coussin
+ITEM_FLOWER_POT,Flower pot,Pot de fleurs
+ITEM_WINDOW_BOX,Window box,Jardinière
+ITEM_HOUSEPLANT,House plant,Plante verte
+ITEM_BATHTUB,Bathtub,Baignoire
+ITEM_SHOWER,Shower,Douche
+ITEM_WASHBASIN,Washbasin,Lavabo
+ITEM_GRANDFATHER_CLOCK,Grandfather clock,Horloge comtoise
+ITEM_TOY_CHEST,Toy chest,Coffre à jouets
+ITEM_PIANO,Piano,Piano
+ITEM_CRADLE,Cradle,Berceau
+ITEM_FOLDING_SCREEN,Folding screen,Paravent
+HUD_HEARTH_FUEL,Wood or coal lights it.,Du bois ou du charbon l'allume.
+HUD_HEARTH_FULL,It holds all the wood it can.,Il y a déjà tout le bois qu'il peut tenir.
+HUD_POT_PLANTS,"A flower, a sapling, a fern or a mushroom goes in a pot.","Une fleur, une pousse, une fougère ou un champignon va dans un pot."
+EFFECT_WARM,Warm,Au chaud
+EFFECT_WARM_HOW,the cold spares you and you heal faster,le froid t'épargne et tu guéris plus vite
+EFFECT_COLD,Cold,Froid
+EFFECT_COLD_HOW,hunger comes faster and you no longer heal,la faim vient plus vite et tu ne guéris plus
+BOOK_HOME_AMBIANCE,Ambiance,Ambiance
+BOOK_HOME_LIGHTS,"Lights: candles (string over honeycomb: four), a candelabra, a chandelier (it hangs from the ceiling over where you aim), a bedside lamp whose shade takes a pot of paint, a wall sconce. Candles, candelabras and lamps also stand on a table or any furniture. A right click (or {use}) puts them out or lights them.","Lumières : des bougies (de la ficelle sur un rayon de miel : quatre), un chandelier, un lustre (il pend au plafond au-dessus de là où tu vises), une lampe de chevet dont l'abat-jour prend un pot de peinture, une applique. Bougies, chandeliers et lampes se posent aussi sur une table ou un meuble. Un clic droit (ou {use}) les éteint ou les rallume."
+BOOK_HOME_HEARTH,"Fireplace (two tiles) and wood stove: a right click with wood or coal in hand puts a log in and lights them; they burn a good while (eight times longer than in a furnace), then go out. The watering can puts them out. A chimney over them smokes.","Cheminée (deux cases) et poêle à bois : un clic droit avec du bois ou du charbon en main y met une bûche et les allume ; ils brûlent longtemps (huit fois plus que dans un four), puis s'éteignent. L'arrosoir les éteint. Une cheminée au-dessus fume."
+BOOK_HOME_WARMTH,"In winter, where it snows, the cold makes hunger come faster and you no longer heal. Indoors near a lit fireplace or stove, or near a campfire, you are warm: the cold spares you for a while after, and you heal faster.","En hiver, là où il neige, le froid fait venir la faim plus vite et tu ne guéris plus. Dans la maison près d'une cheminée ou d'un poêle allumés, ou près d'un feu de camp, tu es au chaud : le froid t'épargne un moment après, et tu guéris plus vite."
+BOOK_HOME_PICTURES,"On the walls: paintings (landscapes) and portraits; a right click shows the next picture. A mirror, a stag's or a bear's head, a tapestry that takes a pot of paint, a spice rack, a coat rack.","Aux murs : des tableaux (paysages) et des portraits ; un clic droit montre le tableau suivant. Un miroir, une tête de cerf ou d'ours, une tapisserie qui prend un pot de peinture, une étagère à épices, un portemanteau."
+BOOK_HOME_CLOCKS,A wall clock and a grandfather clock tell the time of the day. A framed map shows the land around it.,Une horloge murale et une horloge comtoise donnent l'heure du jour. Une carte encadrée montre le pays autour d'elle.
+BOOK_HOME_PLANTS,"Flower pot (on the floor or a piece of furniture): a right click puts in the flower, the sapling, the fern or the mushroom you hold; empty-handed, you take it back. A window box under a window, a house plant, a cushion to sit on.","Pot de fleurs (au sol ou sur un meuble) : un clic droit y plante la fleur, la pousse, la fougère ou le champignon que tu tiens ; les mains vides, tu le reprends. Une jardinière sous une fenêtre, une plante verte, un coussin où s'asseoir."
+BOOK_HOME_BATHROOM,"Bathroom: a bathtub (two tiles; sit in it), a shower (a right click turns it on), a washbasin. The watering can fills at a bathtub or a washbasin.","Salle de bain : une baignoire (deux cases ; on s'y assoit), une douche (un clic droit l'ouvre), un lavabo. L'arrosoir se remplit à une baignoire ou à un lavabo."
+BOOK_HOME_MORE,"And more: a toy chest (it stores), a piano (two tiles), a cradle and a folding screen that take a pot of paint.","Et encore : un coffre à jouets (il range), un piano (deux cases), un berceau et un paravent qui prennent un pot de peinture."

@@ -3,7 +3,8 @@ extends Control
 ## What the dishes eaten do (Effects), over the vitality (Hotbar): a badge
 ## for each, in its color with its sign (a cross healing, a bowl keeping
 ## hunger off, chevrons for speed, a sword for strength, a pickaxe for
-## haste), a bar under it running out with its time.
+## haste, a flame for warmth, a snowflake for the cold), a bar under it
+## running out with its time (none for what lasts as long as its cause).
 
 const BADGE := 9.0
 const GAP := 3.0
@@ -15,6 +16,8 @@ const SIGNS := {
 	Effects.Kind.SWIFT: ["#.#..", ".#.#.", "..#.#", ".#.#.", "#.#.."],
 	Effects.Kind.STRONG: ["....#", "...#.", "#.#..", ".#...", "#.#.."],
 	Effects.Kind.HASTE: [".###.", "#.#.#", "..#..", "..#..", "..#.."],
+	Effects.Kind.WARM: ["..#..", ".##..", ".###.", "#####", ".###."],
+	Effects.Kind.COLD: ["#.#.#", ".###.", "##.##", ".###.", "#.#.#"],
 }
 
 ## Kind -> seconds left, and what each had when last given.
@@ -54,8 +57,10 @@ func _draw() -> void:
 					draw_rect(
 						Rect2(at + Vector2(column + 2, y + 2), Vector2.ONE), color.lightened(0.6)
 					)
+		x += BADGE + GAP
+		if Effects.LASTING.has(kind):
+			continue
 		var left: float = _effects[kind] / maxf(_full.get(kind, _effects[kind]), 0.01)
 		var bar := Rect2(at + Vector2(0.0, BADGE + 1.0), Vector2(BADGE, 2.0))
 		draw_rect(bar, UiTheme.WOOD_DARK)
 		draw_rect(Rect2(bar.position, Vector2(roundf(BADGE * clampf(left, 0.0, 1.0)), 2.0)), color)
-		x += BADGE + GAP

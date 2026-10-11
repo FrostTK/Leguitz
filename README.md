@@ -42,10 +42,13 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Saisons (réglage du monde) : cultures de saison et serres, arbres qui roussissent puis se dénudent, neige l'hiver, le calendrier à l'horloge, /saison | ✅ |
 | Verre et vitres refaits : verre clair continu, verre ancien, verre au plomb, vitres fines qui se raccordent, 28 fenêtres (4 dessins, 6 bois et fer forgé), teinte par case au pot de peinture (le cadre à part), lavée à l'arrosoir ; le soleil à travers le verre teinté colore le sol ; palette de 16 couleurs douces | ✅ |
 | Rideaux qui se tirent et se nouent (tirés, la pièce devient sombre), longs jusqu'au sol, tringle en bois ou en fer, teints au pot de peinture ; tapis qui se raccordent en un grand tapis, teints, sous les meubles | ✅ |
+| Ambiance : bougies, chandeliers, lustre, lampe de chevet et appliques qu'on allume et éteint, posés sur les meubles ; cheminée et poêle qui brûlent du bois, éclairent, fument et réchauffent (le froid de l'hiver) ; tableaux et portraits dessinés par le jeu, horloges à aiguilles, miroir, carte des alentours, trophées, tapisserie ; pots de fleurs, jardinières, plantes vertes, coussins ; baignoire, douche qui coule, lavabo ; horloge comtoise, coffre à jouets, piano, berceau, paravent | ✅ |
 | Chambre et salon : lit où l'on dort (la nuit passe, on s'y réveille), armoire, vaisselier, bibliothèque, commode, placard, caisses, panier, étagère qui montre ce qu'on y pose, sièges où l'on s'assoit (fauteuil et canapé teintables), tables, nappe | ✅ |
 | Nouveaux matériaux : pavés, pierre de taille, pierres moussues, plâtre qui se peint, colombages, torchis, parquets à lames et à chevrons, carrelage en damier, tomettes, terre cuite, ardoise polie, briques de grès ; leurs escaliers et dalles, quarts de bloc, murets, piliers, poutres | ✅ |
 | Toitures en tuiles, ardoises, bardeaux et chaume : pentes qui font leurs coins, faîtages en croupe et en croix, pentes douces, lucarnes, cheminée qui fume, neige en hiver | ✅ |
 | Portes de chaque bois, vitrée et en fer forgé (portes doubles), trappes, échelles où l'on grimpe, volets peints qui se ferment, barreaux et garde-corps qui se raccordent | ✅ |
+
+![Leguitz : ambiance : un salon au plâtre blanc vu de dessus, une cheminée allumée sous sa cheminée qui fume, des appliques, des tableaux, une horloge, une carte encadrée, des coussins, un fauteuil, un chandelier, une lampe de chevet, un pot de fleurs ; le même salon la nuit à la première personne sous un lustre de bougies, une tapisserie et une tête de cerf ; une salle de bain et un coin d'enfants vus de dessus, baignoire, lavabo et miroir, douche qui coule, poêle allumé, berceau, coffre à jouets, paravent, coussin ; près de la cheminée, l'horloge à 22 h 15 et la carte des alentours](docs/screenshots/phase8-ambiance.png)
 
 ![Leguitz : chambre et salon : une pièce au plâtre blanc, un lit à couverture bleue entre deux tables de nuit, une armoire, un bureau, un canapé bordeaux, une bibliothèque, un fauteuil bleu canard, une table basse ; une étagère portant une pomme, une lanterne et un pot de miel, une table à nappe rouge et ses chaises, des caisses empilées, un guéridon ; le joueur assis sur le canapé ; le joueur couché dans son lit la nuit, l'écran qui s'assombrit](docs/screenshots/phase8-chambre-salon.png)
 
@@ -343,8 +346,8 @@ Pour le multijoueur, il suffira de brancher un transport réseau.
 7. ✅ Agriculture et élevage (végétation qui pousse, champs et cultures, arrosage et compost,
    nouvelles cultures et arbres fruitiers, élevage, cuisine, pêche et bateaux, compagnons, saisons)
 8. Construction et décoration (en cours : escaliers et dalles, verre et vitres teintables,
-   rideaux et tapis, portes, trappes et échelles, toitures, nouveaux matériaux faits ; à venir :
-   décoration intérieure, extérieur, vitraux)
+   rideaux et tapis, portes, trappes et échelles, toitures, nouveaux matériaux, chambre et salon,
+   ambiance faits ; à venir : extérieur, vitraux)
 9. Finitions PC (menus, sauvegardes, sons, options graphiques, Steam)
 10. Mobile (iOS, Android)
 

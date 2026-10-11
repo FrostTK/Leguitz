@@ -322,3 +322,51 @@ const NON_SOLID_BLOCKS := {
 	Tiles.Block.SHIPYARD_NORTH: true,
 	Tiles.Block.SHIPYARD_EAST: true,
 }
+## The ambiance's things bodies walk through (phase 8, step 8), by kind:
+## each with its blocks facing other ways (<KIND>_WEST...), see
+## is_non_solid.
+const NON_SOLID_KINDS: Array[int] = [
+	Tiles.Block.CANDLE,
+	Tiles.Block.CANDLE_OUT,
+	Tiles.Block.CANDELABRA,
+	Tiles.Block.CANDELABRA_OUT,
+	Tiles.Block.CHANDELIER,
+	Tiles.Block.CHANDELIER_OUT,
+	Tiles.Block.BEDSIDE_LAMP,
+	Tiles.Block.BEDSIDE_LAMP_OFF,
+	Tiles.Block.WALL_SCONCE,
+	Tiles.Block.WALL_SCONCE_OUT,
+	Tiles.Block.PAINTING,
+	Tiles.Block.PORTRAIT,
+	Tiles.Block.WALL_CLOCK,
+	Tiles.Block.MIRROR,
+	Tiles.Block.FRAMED_MAP,
+	Tiles.Block.DEER_TROPHY,
+	Tiles.Block.BEAR_TROPHY,
+	Tiles.Block.TAPESTRY,
+	Tiles.Block.SPICE_RACK,
+	Tiles.Block.COAT_RACK,
+	Tiles.Block.CUSHION,
+	Tiles.Block.FLOWER_POT,
+	Tiles.Block.WINDOW_BOX,
+	Tiles.Block.SHOWER,
+	Tiles.Block.SHOWER_ON,
+]
+
+static var _non_solid := _expand(NON_SOLID_KINDS)
+
+
+## Whether a block is one of NON_SOLID_KINDS, any way it faces.
+static func is_non_solid(block: int) -> bool:
+	return _non_solid.has(block)
+
+
+static func _expand(kinds: Array[int]) -> Dictionary:
+	var blocks := {}
+	for kind in kinds:
+		blocks[kind] = true
+		var name := String(Tiles.Block.find_key(kind))
+		for way: String in ["_WEST", "_NORTH", "_EAST"]:
+			if Tiles.Block.has(name + way):
+				blocks[Tiles.Block[name + way]] = true
+	return blocks

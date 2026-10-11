@@ -42,6 +42,9 @@ var watered: Dictionary[Vector3i, float] = {}
 ## Server side: what the kitchen's machines and the fish traps hold, by cell
 ## (see Machines), saved with it.
 var machines: Dictionary[Vector3i, Dictionary] = {}
+## Server side: the hearths burning, by cell (their model's): the seconds
+## left (see Hearths), saved with it.
+var fires: Dictionary[Vector3i, float] = {}
 ## The cells tinted with paint (Tints.pack), by cell: saved with it and
 ## sent with it; a cell changing loses its tint (not curtains drawn or a
 ## gate swung: ObjectShapes.same_piece).

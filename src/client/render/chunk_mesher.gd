@@ -51,22 +51,9 @@ const WALL_KIND_OFFSET := 4
 const WALL_CODE := 64
 ## Surface map level of a column with nothing below the cut.
 const NO_LEVEL := -1000.0
-## Lava lights are placed per 8x8 quarter of the chunk.
+## Lava lights are placed per 8x8 quarter of the chunk (flames: PropLights).
 const LAVA_QUARTER := 8
-## How bright a lit furnace's light is (lava's: 0.8 to 2.2).
-const FIRE_LIGHT := 0.75
-const LAVA_COLOR := Color(1.0, 0.45, 0.15)
-## What else burns, by kind: where its flame is from the middle of its
-## tile's floor (local units; z towards the way it faces), how bright, its
-## color, and whether it flickers (flames do, a lantern's glass hardly).
-const FLAMES := {
-	Tiles.Block.CAMPFIRE: [Vector3(0.0, 0.5, 0.0), 1.4, Color(1.0, 0.55, 0.22), 1.0],
-	Tiles.Block.TORCH: [Vector3(0.0, 0.85, 0.0), 1.1, Color(1.0, 0.66, 0.32), 1.0],
-	Tiles.Block.TORCH_BRACKET_LIT: [Vector3(0.0, 1.1, -0.16), 1.1, Color(1.0, 0.66, 0.32), 1.0],
-	Tiles.Block.LANTERN: [Vector3(0.0, 0.4, 0.0), 1.25, Color(1.0, 0.76, 0.45), 0.25],
-	Tiles.Block.LANTERN_HANGING: [Vector3(0.0, 0.5, 0.0), 1.25, Color(1.0, 0.76, 0.45), 0.25],
-	Tiles.Block.LANTERN_WALL: [Vector3(0.0, 0.45, 0.0), 1.25, Color(1.0, 0.76, 0.45), 0.25],
-}
+const LAVA_COLOR := PropLights.LAVA_COLOR
 
 const CUBE := Voxels.FLAG_CUBE
 const LIQUID := Voxels.FLAG_LIQUID
@@ -121,6 +108,8 @@ class Result:
 	var lava_flicker: Array[float] = []
 	## Where chimneys smoke (local positions; RoofBlocks.smokes).
 	var smokes: Array[Vector3] = []
+	## The props brought to life (Decor.LIVE), by cell in the chunk.
+	var live: Array[Vector3i] = []
 	var surface_map := PackedFloat32Array()
 	## The chunk's sky light (see LightField.sky): per column, the row from
 	## which the sky is fully seen, and below it each cell's level.
@@ -294,9 +283,14 @@ static func build(job: ChunkJob) -> Result:
 					var prop_sky := light + SeasonLook.prop_bits(block, biome)
 					ChunkProps.add(result, job, voxel, voxels, base, lx, y, lz, origin, prop_sky)
 					if block == Tiles.Block.CHIMNEY and voxels[index + 1] != voxel:
-						_add_smoke(result, voxels, Vector3i(lx, y, lz))
-					if ObjectShapes.is_lit(block):
-						_add_flame(result, block, Vector3(lx + 0.5, y - SEA, lz + 0.5))
+						PropLights.add_smoke(result, voxels, Vector3i(lx, y, lz))
+					if Decor.is_live(block):
+						result.live.append(Vector3i(lx, y, lz))
+					var floor := Vector3(lx + 0.5, y - SEA, lz + 0.5)
+					if (
+						ObjectShapes.is_lit(block)
+						and PropLights.add_flame(result, block, floor, voxels[index - 1])
+					):
 						var rows := tops[column] - y
 						result.lava_deep.append(
 							rows > 1 and not sky_through(voxels, flags, clear, base + y, rows)
@@ -312,28 +306,6 @@ static func build(job: ChunkJob) -> Result:
 			result.lava_colors.append(LAVA_COLOR)
 			result.lava_flicker.append(0.0)
 	return result
-
-
-## A chimney's top (`cell` of the chunk) smokes over a fire.
-static func _add_smoke(result: Result, voxels: PackedInt32Array, cell: Vector3i) -> void:
-	var at := func(other: Vector3i) -> int: return ShapedFaces.voxel_at(voxels, other)
-	if RoofBlocks.smokes(cell, at):
-		result.smokes.append(Vector3(cell.x + 0.5, cell.y - SEA, cell.z + 0.5) + RoofModels.SMOKE)
-
-
-## The light of something burning in a tile (`floor`: the middle of its
-## floor, local units): a lit furnace's shines out of its front.
-static func _add_flame(result: Result, block: int, floor: Vector3) -> void:
-	var flame: Array = FLAMES.get(
-		ObjectShapes.base_kind(block), [Vector3(0.0, 0.5, 0.9), FIRE_LIGHT, LAVA_COLOR, 1.0]
-	)
-	var front := Vector2(ObjectShapes.front_of(block))
-	var offset: Vector3 = flame[0]
-	var at := floor + Vector3(front.x * offset.z, offset.y, front.y * offset.z)
-	result.lava_spots.append(at)
-	result.lava_strength.append(flame[1])
-	result.lava_colors.append(flame[2])
-	result.lava_flicker.append(flame[3])
 
 
 ## The chunk's arrays (`stride` bytes per column) plus a one-column border

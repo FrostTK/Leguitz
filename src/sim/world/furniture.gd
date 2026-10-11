@@ -11,7 +11,11 @@ extends RefCounted
 ## in it (Beds). Seats (SEATS) are sat on (FurnitureUse), at their height;
 ## a shelf on a wall shows what is put on it (Shelves). A tablecloth goes on
 ## a table (TABLE_CLOTHED); beds, armchairs, sofas and tablecloths take a
-## tint (Tints.dyed).
+## tint (Tints.dyed). The ambiance's (phase 8, step 8; Decor) too: a toy
+## chest stores, a grandfather clock, a shower and a folding screen stand
+## two levels, one sits in a bathtub and on a cushion, a bedside lamp's
+## shade, a cushion, a tapestry, a cradle's blanket and a screen's panels
+## take a tint.
 
 ## What stores things, by kind.
 const STORAGES := {
@@ -23,12 +27,17 @@ const STORAGES := {
 	Tiles.Block.WALL_CUPBOARD: true,
 	Tiles.Block.CRATE: true,
 	Tiles.Block.BASKET: true,
+	Tiles.Block.TOY_CHEST: true,
 }
 ## Two levels tall (their second cell a FURNITURE_TOP), by kind.
 const TALL := {
 	Tiles.Block.WARDROBE: true,
 	Tiles.Block.DRESSER: true,
 	Tiles.Block.BOOKCASE: true,
+	Tiles.Block.GRANDFATHER_CLOCK: true,
+	Tiles.Block.SHOWER: true,
+	Tiles.Block.SHOWER_ON: true,
+	Tiles.Block.FOLDING_SCREEN: true,
 }
 ## Seats, by kind: how high one sits (levels over the floor).
 const SEATS := {
@@ -38,6 +47,8 @@ const SEATS := {
 	Tiles.Block.BENCH: 0.45,
 	Tiles.Block.STOOL: 0.55,
 	Tiles.Block.ROCKING_CHAIR: 0.45,
+	Tiles.Block.BATHTUB: 0.22,
+	Tiles.Block.CUSHION: 0.28,
 }
 ## The facing kinds (ObjectShapes builds them by name).
 const FACING := [
@@ -63,6 +74,12 @@ const DYED := {
 	Tiles.Block.ARMCHAIR: true,
 	Tiles.Block.SOFA: true,
 	Tiles.Block.TABLE_CLOTHED: true,
+	Tiles.Block.BEDSIDE_LAMP: true,
+	Tiles.Block.BEDSIDE_LAMP_OFF: true,
+	Tiles.Block.CUSHION: true,
+	Tiles.Block.TAPESTRY: true,
+	Tiles.Block.CRADLE: true,
+	Tiles.Block.FOLDING_SCREEN: true,
 }
 
 

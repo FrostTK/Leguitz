@@ -12,7 +12,10 @@ extends RefCounted
 ## carries the color in INSTANCE_CUSTOM.rgb (sRGB; voxel.gdshaderinc
 ## dyes its PAINT voxels). Fences and rugs show the sides they join
 ## (ObjectShapes.FENCE_SIDES bits; rugs of one tint); a rug lying under
-## something (ChunkData.rugs) is drawn under it. Thread-safe.
+## something (ChunkData.rugs) is drawn under it. A picture shows the one
+## chosen (its tint's look: Decor.picture), a flower pot its plant
+## (Decor.pot_version); what stands on furniture is drawn on its top
+## (Decor.sink). Thread-safe.
 
 const SIZE := GameConst.CHUNK_SIZE
 const SPAN := SIZE + 2
@@ -69,6 +72,8 @@ static func _add(
 	if y > 0 and Voxels.is_liquid(voxels[base + y - 1]):
 		height -= 1.0 - Fluids.surface(voxels[base + y - 1])
 	height -= ObjectShapes.SUNK.get(ObjectShapes.base_kind(block), 0.0)
+	if y > 0:
+		height -= Decor.sink(block, voxels[base + y - 1])
 	# Where it stands and which version: the same as physics (ObjectShapes).
 	var offset := Vector2(ObjectShapes.offset_at(block, tile)) / 16.0
 	var foot := Vector3(at.x + 0.5 + offset.x, height, at.z + 0.5 + offset.y)
@@ -120,6 +125,11 @@ static func _add(
 	elif BuildShapes.is_pillar(block):
 		# Its capital at the stack's head, its base at its foot.
 		variant = BuildShapes.pillar_bits(voxel, voxels[index + 1], voxels[index - 1])
+	elif Decor.is_picture(block):
+		variant = Decor.picture(tint, variant)
+	elif Decor.is_pot(block):
+		var cell := Vector3i(tile.x, y, tile.y)
+		variant = Decor.pot_version(job.pots.get(cell, PackedInt32Array()))
 	var key := Vector2i(ObjectShapes.model_block(block), variant % count)
 	if not result.props.has(key):
 		result.props[key] = []

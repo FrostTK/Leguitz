@@ -61,7 +61,7 @@ func test_every_decoration_has_a_recipe_a_block_and_comes_back() -> void:
 		var voxel := Items.placed_voxel(item)
 		assert_true(Mining.can_place(voxel), "%s can be placed" % Items.name_key(item))
 		var block := Voxels.block_of(voxel)
-		var blocks: Array = ObjectShapes.FACING_KINDS.get(block, [block])
+		var blocks: Array = ObjectShapes.blocks_of(block)
 		for way: int in blocks:
 			var drops := Items.drops(Voxels.of_block(way), Vector2i.ZERO, rng)
 			assert_eq(

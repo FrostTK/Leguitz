@@ -321,6 +321,15 @@ static func _home() -> Array:
 		_icon(Items.Id.ARMCHAIR, _t("BOOK_HOME_SEATS")),
 		_icon(Items.Id.PEDESTAL_TABLE, _t("BOOK_HOME_TABLES")),
 		_icon(Items.Id.TABLE, _t("BOOK_HOME_FURNITURE")),
+		_heading("BOOK_HOME_AMBIANCE"),
+		_icon(Items.Id.CANDELABRA, _t("BOOK_HOME_LIGHTS")),
+		_icon(Items.Id.FIREPLACE, _t("BOOK_HOME_HEARTH")),
+		_icon(Items.Id.STOVE, _t("BOOK_HOME_WARMTH")),
+		_icon(Items.Id.PAINTING, _t("BOOK_HOME_PICTURES")),
+		_icon(Items.Id.GRANDFATHER_CLOCK, _t("BOOK_HOME_CLOCKS")),
+		_icon(Items.Id.FLOWER_POT, _t("BOOK_HOME_PLANTS")),
+		_icon(Items.Id.BATHTUB, _t("BOOK_HOME_BATHROOM")),
+		_icon(Items.Id.PIANO, _t("BOOK_HOME_MORE")),
 		_heading("BOOK_HOME_GLASS"),
 		_icon(Items.Id.GLASS, _t("BOOK_HOME_CLEAR_GLASS")),
 		_icon(Items.Id.OLD_GLASS, _t("BOOK_HOME_OLD_GLASS")),
@@ -433,7 +442,7 @@ static func _kitchen() -> Array:
 		entries.append(_icon(machine[0], _t(machine[1])))
 	entries.append(_heading("BOOK_KITCHEN_EFFECTS"))
 	entries.append(_text("BOOK_KITCHEN_EFFECTS_HOW"))
-	for kind: int in Effects.Kind.values():
+	for kind: int in Effects.FOOD_KINDS:
 		var text := (
 			_t("BOOK_KITCHEN_EFFECT") % [_t(Effects.NAME_KEYS[kind]), _t(Effects.HOW_KEYS[kind])]
 		)

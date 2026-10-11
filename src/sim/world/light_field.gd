@@ -26,6 +26,13 @@ const SHINE := {
 	Tiles.Block.TORCH_BRACKET_LIT: 14,
 	Tiles.Block.FOOD_FURNACE_LIT: 13,
 	Tiles.Block.FACTORY_FURNACE_LIT: 13,
+	Tiles.Block.CANDLE: 10,
+	Tiles.Block.CANDELABRA: 12,
+	Tiles.Block.CHANDELIER: 15,
+	Tiles.Block.BEDSIDE_LAMP: 12,
+	Tiles.Block.WALL_SCONCE: 13,
+	Tiles.Block.FIREPLACE_LIT: 15,
+	Tiles.Block.STOVE_LIT: 13,
 }
 const LAVA_SHINE := 15
 ## Cubes the light goes through.

@@ -15,13 +15,15 @@ extends RefCounted
 const WATERED_SECONDS := 300.0
 ## Server: a can is used this far at most (local units, like placing).
 const REACH_LEEWAY := 1.5
+## What fills a can besides water, by kind.
+const TAPS: Array[int] = [Tiles.Block.SINK, Tiles.Block.BATHTUB, Tiles.Block.WASHBASIN]
 
 
-## Whether a can is filled from a voxel: water (still or flowing), a sink.
+## Whether a can is filled from a voxel: water (still or flowing), a sink,
+## a bathtub, a washbasin (TAPS).
 static func fills_from(voxel: int) -> bool:
-	return (
-		Voxels.is_water(voxel) or ObjectShapes.base_kind(Voxels.block_of(voxel)) == Tiles.Block.SINK
-	)
+	var kind := ObjectShapes.base_kind(Voxels.block_of(voxel))
+	return Voxels.is_water(voxel) or kind in TAPS
 
 
 ## The farmland a can aimed at a cell waters: the cell, or the farmland

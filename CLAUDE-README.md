@@ -153,7 +153,8 @@ Godot **4.7.2** (GDScript), rendu Forward+. 259 tests unitaires, lint propre.
 | Le verre montre l'eau | Demandé par le propriétaire (à travers le verre, on voyait le fond de la rivière, pas l'eau) : le verre ne recopie plus l'image de l'écran, faite avant que l'eau soit dessinée ; il se pose maintenant par-dessus ce qui est derrière lui, en deux passes (sa teinte, puis son reflet du ciel et l'éclat du soleil). L'eau se voit à travers le verre, les vitres et les fenêtres, et aussi le verre derrière du verre (deux épaisseurs se teintent l'une l'autre) et la pluie. Le verre ancien ne déforme plus ce qui est derrière lui : il ondule par des reflets en vagues. La brume lointaine efface la teinte comme avant | `5965810` |
 | 8.5 Toitures | Quatre **couvertures** : des **tuiles** en terre cuite (trois briques), des **ardoises** (trois ardoises des abîmes en font deux), des **bardeaux** de bois (deux bûches en font deux) et du **chaume** (quatre blés), en blocs pleins et en pièces de toit : la **pente** à 45° (elle monte en s'éloignant du joueur, Maj dans l'autre sens) qui tourne toute seule ses **coins** comme les escaliers (**arêtiers** dehors, **noues** dedans), le **faîtage** (le haut du toit : ses bouts se font en **croupe** là où le toit continue plus bas, jusqu'à la pyramide, et les faîtages côte à côte se raccordent et **se croisent** pour les toits en T et en croix ; une **faîtière** court dessus), la **pente douce** (un niveau sur deux cases, basse puis haute), la **rive** (des tuiles relevées le long d'un pignon ouvert, dont le triangle prend la texture du mur dessous). On **marche sur les toits**, ils arrêtent le jour et la pluie, la **neige** s'y pose en hiver, la vue en coupe les enlève au-dessus du joueur ; dessous, le grenier est en planches. Des **lucarnes** (une fenêtre dans un petit pignon, à la place d'une pente, qui éclaire le grenier) et une **cheminée** en briques qui s'empile à travers le toit, coiffée de deux pots, et qui **fume** quand un feu de camp ou un four allumé brûle dessous. Le livre : chapitre Maison, « Toitures » | `c483955` |
 | 8.6 Nouveaux matériaux | Vingt-cinq matières : des **pavés** (pierre et gravier), de la **pierre de taille**, des **pierres moussues**, du **plâtre** qui se **peint** au pot (l'arrosoir le lave), trois **colombages** (droit, en croix, en écharpe : seul leur plâtre prend la couleur, les poutres restent en bois), du **torchis**, du **parquet** de chaque bois, à lames ou à **chevrons**, un **carrelage en damier**, des **tomettes**, de la **terre cuite** (le four d'usine la cuit), de l'**ardoise polie** et des **briques de grès**. Les huit matières de maçonnerie ont leurs **escaliers et dalles** (le plâtre aussi peint). Des **quarts de bloc** (petites marches, rebords de fenêtre) en chêne, épicéa, pierre lisse, briques de pierre, briques et plâtre. Des **murets** (pavés, briques de pierre, briques, pierres moussues, grès) qui se raccordent comme les barrières, aux murs et aux portails, et s'empilent ; des **piliers** (colonne de pierre cannelée, pilier de briques, poteau de bois) avec leur base et leur chapiteau ; des **poutres** (chêne, épicéa, chêne noir) couchées dans le sens du côté visé ou debout. Le livre : chapitre Maison, « Matériaux » | `f698d06` |
-| 8.7 Chambre et salon | Un **lit** de deux cases (trois tissus sur trois planches), sa couverture **teintable** : un clic droit en fait l'endroit où l'on se **réveille** après avoir perdu connaissance, et la nuit on s'y **couche** (l'écran s'assombrit) : quand tous les joueurs dorment, **la nuit passe** (pas avec des monstres autour, ni en temps synchronisé ou figé). Des **rangements** qui s'ouvrent comme un coffre : **armoire** et **bibliothèque** (deux niveaux de haut), **vaisselier** et ses assiettes, **commode**, **placard mural**, **caisses** qui s'empilent, **panier**. Une **étagère** au mur où l'on **pose** jusqu'à trois objets **qui se voient**. Des **sièges** où l'on **s'assoit** (clic droit ; on se lève en bougeant) : chaise, **fauteuil** et **canapé** (deux cases) teintables, **banc**, **tabouret**, **rocking-chair**. Des **tables** : basse, **bureau**, **table de nuit**, **guéridon**, et une **nappe** teintable qui se pose sur une table. Le livre : chapitre Maison, « Chambre et salon » | « Bedroom and living room » |
+| 8.7 Chambre et salon | Un **lit** de deux cases (trois tissus sur trois planches), sa couverture **teintable** : un clic droit en fait l'endroit où l'on se **réveille** après avoir perdu connaissance, et la nuit on s'y **couche** (l'écran s'assombrit) : quand tous les joueurs dorment, **la nuit passe** (pas avec des monstres autour, ni en temps synchronisé ou figé). Des **rangements** qui s'ouvrent comme un coffre : **armoire** et **bibliothèque** (deux niveaux de haut), **vaisselier** et ses assiettes, **commode**, **placard mural**, **caisses** qui s'empilent, **panier**. Une **étagère** au mur où l'on **pose** jusqu'à trois objets **qui se voient**. Des **sièges** où l'on **s'assoit** (clic droit ; on se lève en bougeant) : chaise, **fauteuil** et **canapé** (deux cases) teintables, **banc**, **tabouret**, **rocking-chair**. Des **tables** : basse, **bureau**, **table de nuit**, **guéridon**, et une **nappe** teintable qui se pose sur une table. Le livre : chapitre Maison, « Chambre et salon » | `bcb645f` |
+| 8.8 Ambiance | Des **lumières** qui s'allument et s'éteignent au clic droit : **bougies** (de la ficelle sur un rayon de miel), **chandelier** à trois branches, **lustre** qui pend au plafond, **lampe de chevet** à l'abat-jour teintable, **applique** murale ; bougies, chandeliers, lampes et pots se posent **sur une table ou un meuble**. Une **cheminée** de deux cases et un **poêle à bois** : une bûche ou du charbon les **allume**, ils brûlent longtemps puis s'éteignent (l'arrosoir les éteint), **éclairent**, **fument par la cheminée** au-dessus et **réchauffent** : en **hiver**, là où il neige, on a **froid** (la faim vient plus vite, on ne guérit plus) sauf au chaud près d'un feu (on guérit alors plus vite). Aux murs : **tableaux** (8 paysages) et **portraits** (8), dessinés par le jeu, qui défilent au clic droit, une **horloge** dont les **aiguilles donnent l'heure du jeu**, un **miroir**, une **carte encadrée** qui montre **le pays autour**, des **têtes de cerf et d'ours**, une **tapisserie** teintable, une étagère à épices, un portemanteau. Des **pots de fleurs** où l'on plante une fleur, une pousse, une fougère ou un champignon, une **jardinière**, des **plantes vertes**, des **coussins**. La **salle de bain** : **baignoire** (on s'y assoit), **douche** qui coule, **lavabo** (l'arrosoir s'y remplit). Et une **horloge comtoise** à balancier, un **coffre à jouets**, un **piano**, un **berceau**, un **paravent**. Le livre : chapitre Maison, « Ambiance » | « Ambiance » |
 
 **Pas encore fait** (prévu) : nouveaux matériaux et décoration (phase 8),
 structures, menus de départ, sons, mode Arcade (en attente), mobile.
@@ -280,16 +281,16 @@ xvfb-run -a -s "-screen 0 960x540x24" godot --path . --audio-driver Dummy --reso
 
 ---
 
-## 5. Prochaine étape au « go » : Phase 8, étape 8 (ambiance)
+## 5. Prochaine étape au « go » : Phase 8, étape 9 (extérieur)
 
 **La phase 7 est terminée** (étapes 1 à 11 ci-dessous). La **phase 8, Construction et
 décoration**, est en cours : les étapes 1 (escaliers et dalles), 2 (verre et vitres, la teinte
 par case), 3 (rideaux et tapis), 4 (portes, trappes, échelles, volets, barreaux, garde-corps),
-5 (toitures), 6 (nouveaux matériaux) et 7 (chambre et salon) sont faites ; au prochain « go »,
-l'**étape 8** (ambiance : le lustre, les bougies, la lampe de chevet, l'applique ; la cheminée qui
-éclaire, fume et réchauffe, le poêle ; les tableaux, l'horloge, le miroir, la carte encadrée, les
-trophées, la tapisserie ; les pots de fleurs et plantes ; la salle de bain ; voir la section 6,
-où sont les décisions du propriétaire et tout le découpage).
+5 (toitures), 6 (nouveaux matériaux), 7 (chambre et salon) et 8 (ambiance) sont faites ; au
+prochain « go », l'**étape 9** (extérieur : les allées de gravier, de dalles et de pas japonais,
+le lampadaire, le puits, la fontaine, la boîte aux lettres, le banc de jardin, la pergola, le
+nichoir, la girouette, et les arches laissées à l'étape 6 avec les ponts ; voir la section 6, où
+sont les décisions du propriétaire et tout le découpage).
 
 ### Phase 7 — Agriculture et élevage (terminée)
 
@@ -722,8 +723,28 @@ barrières et portails ; **pas encore de portes, d'escaliers ni de dalles**.
    rangements aux tailles différentes (le panier plus petit, l'armoire plus grande), des
    étagères sur pied et des vitrines, des livres qu'on écrit et qu'on range dans la
    bibliothèque, se reposer pour guérir plus vite.
-8. **Ambiance** : lumières (lustre, bougies), cheminée, tableaux, horloge, miroir, plantes en pot,
-   salle de bain.
+8. ✅ **Ambiance** (voir section 3, ligne 8.8). Fait comme prévu, avec ces choix : les lumières
+   s'allument et s'éteignent au clic droit et brûlent sans fin (sans combustible) ; bougies,
+   chandeliers, lampes et pots se posent au sol ou sur le dessus d'un meuble ; le lustre se pend
+   au plafond au-dessus de là où l'on vise ; la cheminée et le poêle brûlent leur combustible (une
+   bûche, huit fois plus longtemps que dans un four, jusqu'à 40 minutes de bois d'avance au rythme
+   par défaut ; l'arrosoir les éteint) ; ils réchauffent à 5 cases, sous un toit (un feu de camp
+   aussi, dehors), et la chaleur dure une minute et demie après ; le froid ne vient qu'en hiver,
+   là où il neige (pas dans les déserts, savanes, jungles), et fait seulement venir la faim plus
+   vite et arrêter la guérison (jamais en créatif) ; 8 paysages et 8 portraits dessinés par le
+   jeu, chaque case a le sien et un clic droit fait défiler ; la carte encadrée montre ce que le
+   joueur a chargé autour (une case de la carte pour 4 du monde) et se redessine toutes les
+   8 secondes ; le miroir est un verre argenté, sans vrai reflet ; les pots prennent fleurs,
+   pousses (et pépins d'arbres fruitiers), fougère et champignons, qui n'y poussent pas ; les
+   coussins sont des poufs où l'on s'assoit ; on s'assoit dans la baignoire ; le paravent est
+   une barrière ; la jardinière se fixe sous une fenêtre (trois bouquets). En passant, l'étagère
+   a une nouvelle recette (« PPP / S ») : à l'établi, celle du banc de bateau prenait sa place.
+   Pas fait (à proposer) : de vrais reflets dans le miroir, des tableaux plus grands (deux ou
+   quatre cases) et peindre les siens, des bougies qui se consument, une cheminée qui cuit
+   (crémaillère, marmite) et un poêle qui cuit, se laver pour un bienfait, jouer du piano (avec
+   les sons, phase 9), une horloge qui sonne, un berceau qui se balance, arroser les plantes
+   d'intérieur, d'autres plantes en pot (cactus, canne à sucre), des vêtements chauds contre le
+   froid.
 9. **Extérieur**.
 
 ### Mode Arcade — en attente (ancienne phase 8, mise de côté par le propriétaire en octobre 2026)
@@ -786,8 +807,10 @@ pousse). Elle reprendra quand le propriétaire le dira.
 
 - **Taille des fichiers** : `src/client/interaction/block_interaction.gd` fait 983 lignes (limite
   1000) : y sortir du code (par exemple ce que fait le clic droit sur les animaux, les machines,
-  la récolte) avant d'y ajouter ; `src/sim/game_server.gd` en fait 907 (les coffres en sont
-  sortis : Chests).
+  la récolte) avant d'y ajouter ; `src/client/game_client.gd` en fait 947, `src/sim/game_server.gd`
+  911 ; `object_shapes.gd` (922) et `mining.gd` (902) ont été allégés à l'étape 8.8 (les blocs
+  d'un objet tourné se construisent par leur nom, les temps et outils vont par sorte), les
+  recettes de la maison sont dans `home_recipes.gd`.
   `src/sim/world/tiles.gd` (la liste des numéros de blocs, qu'on ne fait qu'allonger) est exempté
   de la limite (commentaire `gdlint: disable=max-file-lines` en tête).
 - **Carte graphique** : mesuré sur le monde du propriétaire (ligne « Économies et Extrême ») : le

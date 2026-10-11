@@ -9,14 +9,21 @@ extends RefCounted
 ## fast; SWIFT walks SWIFT_SPEED times faster (the client); STRONG adds
 ## STRONG_DAMAGE to every blow (Creatures.attack); HASTE breaks HASTE_SPEED
 ## times faster (the client). A food with effects may be eaten full.
+## Not from food (Warmth): WARM, by a fire, keeps the cold off and heals
+## faster; COLD, in a biting winter, makes hunger come faster and stops
+## healing (it lasts while it is cold: LASTING).
 
-enum Kind { REGEN, FED, SWIFT, STRONG, HASTE }
+enum Kind { REGEN, FED, SWIFT, STRONG, HASTE, WARM, COLD }
 
 const REGEN_EVERY := 3.0
 const FED_SLOWER := 0.5
 const SWIFT_SPEED := 1.2
 const STRONG_DAMAGE := 2
 const HASTE_SPEED := 1.3
+## What food gives (the book's list), and what lasts as long as its cause
+## (no time running out: no bar).
+const FOOD_KINDS: Array[int] = [Kind.REGEN, Kind.FED, Kind.SWIFT, Kind.STRONG, Kind.HASTE]
+const LASTING := {Kind.COLD: true}
 ## Translation keys of the effects' names and of what they do.
 const NAME_KEYS := {
 	Kind.REGEN: "EFFECT_REGEN",
@@ -24,6 +31,8 @@ const NAME_KEYS := {
 	Kind.SWIFT: "EFFECT_SWIFT",
 	Kind.STRONG: "EFFECT_STRONG",
 	Kind.HASTE: "EFFECT_HASTE",
+	Kind.WARM: "EFFECT_WARM",
+	Kind.COLD: "EFFECT_COLD",
 }
 const HOW_KEYS := {
 	Kind.REGEN: "EFFECT_REGEN_HOW",
@@ -31,6 +40,8 @@ const HOW_KEYS := {
 	Kind.SWIFT: "EFFECT_SWIFT_HOW",
 	Kind.STRONG: "EFFECT_STRONG_HOW",
 	Kind.HASTE: "EFFECT_HASTE_HOW",
+	Kind.WARM: "EFFECT_WARM_HOW",
+	Kind.COLD: "EFFECT_COLD_HOW",
 }
 ## Their colors on screen (VitalsBar draws their badges).
 const COLORS := {
@@ -39,6 +50,8 @@ const COLORS := {
 	Kind.SWIFT: Color("6ac6e8"),
 	Kind.STRONG: Color("c86a3a"),
 	Kind.HASTE: Color("9ad05a"),
+	Kind.WARM: Color("e8803a"),
+	Kind.COLD: Color("8cc4ec"),
 }
 ## The effects of each food: kind -> seconds.
 const OF_FOOD := {

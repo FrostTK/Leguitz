@@ -45,6 +45,9 @@ static func handle(client: GameClient, message: Dictionary) -> void:
 		Msg.SHELF_ITEMS:
 			client.world.set_shelf(message["cell"], message["items"])
 			client.shelves.refresh(message["cell"])
+			if Decor.is_pot(Voxels.block_of(client.world.voxel_at(message["cell"]))):
+				# Its model shows its plant.
+				client.world_view.voxel_changed(message["cell"])
 		Msg.SLEEPING:
 			client.furniture.on_sleeping(message["cell"], message["on"])
 		Msg.BLOCK_CHANGED:

@@ -1119,8 +1119,52 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   (src/client/items; GameClient.shelves, in the world root) draws the shelves' things
   (ItemLibrary meshes) from the chunks (ClientMessages: CHUNK_DATA, CHUNK_UNLOAD, SHELF_ITEMS;
   ClientWorld.set_shelf). Items.PLACES_BLOCK is ItemBlocks.PLACES_BLOCK (its own file, for
-  room). Recipes in SHAPED (Recipes.CLOTH: wool or linen). The book: Home and garden (Bedroom and
-  living room).
+  room). Recipes in HomeRecipes.ROOMS (Recipes.CLOTH: wool or linen). The book: Home and garden
+  (Bedroom and living room).
+- Ambiance (phase 8, step 8; rules in `Decor`, src/sim/world/decor.gd, `Hearths`,
+  src/sim/world/hearths.gd, and `Warmth`, src/sim/survival/warmth.gd, static; models in
+  AmbianceModels, WallDecorModels and PaintingArt, which DecorModels hands them): lights (CANDLE,
+  CANDELABRA, CHANDELIER: ObjectShapes.HANGING, placed under the ceiling over the floor aimed at,
+  Mining.under_ceiling; BEDSIDE_LAMP, its shade dyed; WALL_SCONCE) and the shower are switched by
+  hand (Decor.SWITCHED: the kind as placed -> its other state, CANDLE_OUT...; ObjectShapes.PAIRS
+  holds OPENS, DRAWN, SWITCHED and Hearths.LIT for pair_of and swung, which gives a block without
+  another state back unchanged; Mining.swings; Items._placed_by maps the other states); only the
+  lit ones are in ObjectShapes.LIGHTS, LightField.SHINE and PropLights.FLAMES. Small things
+  (Decor.ON_FURNITURE: candles, candelabras, lamps, the flower pot) stand on a floor or on the top
+  of furniture (Decor.placement, `rest_height`; drawn down onto it, `sink`, by ChunkProps and
+  PropLights; GameServer._set_alone; their VoxelRay.SMALL_BODIES start under their cell). The
+  FIREPLACE (wide: WIDE_KINDS, its ends) and the STOVE are hearths: Msg.STOKE with a fuel in hand
+  (Smelting) lights them (Hearths.LIT, ObjectShapes.swung over every cell), BURN_SLOWER times the
+  fuel's furnace time (paced), MOST_SECONDS stored in ChunkData.fires (server, saved with the
+  region); Hearths.update (every TICKS) puts them out burnt, the watering can at once; a chimney
+  over them smokes (RoofBlocks.FIRES). Warmth (Survival.update, every Warmth.TICKS): within
+  WARM_RANGE of a campfire, or of a lit hearth while under a roof (not Watering.under_sky),
+  Effects.Kind.WARM (WARM_SECONDS paced, told again past TELL_AFTER) heals Survival.WARM_HEAL
+  faster; where Seasons.snows_in, a player not warm is COLD (Effects.LASTING: no bar, taken off
+  when it ends): COLD_HUNGER times the satiety, no healing; never in creative (Effects.FOOD_KINDS
+  are the dishes', the book's). Pictures (Decor.PICTURES: PAINTING landscapes, PORTRAIT;
+  ObjectShapes.variant_count asks Decor.versions) show their tile's version until Msg.TURN_PICTURE
+  (Decor.handle) keeps the next in the cell's tint (Tints' frame bits; ChunkProps:
+  Decor.picture). The FLOWER_POT is a shelf of one (Shelves.slots_of; only Decor.POTTED plants:
+  flowers, saplings and fruit pips, the fern, mushrooms; else HUD_POT_PLANTS): its model's version
+  (Decor.pot_version, 1 + the plant's index; AmbianceModels.flower_pot pastes the plant's own
+  model in) comes from ChunkJob.pots (the chunk's shelves; ClientMessages rebuilds the chunk on a
+  pot's SHELF_ITEMS). Live props (Decor.LIVE: WALL_CLOCK, GRANDFATHER_CLOCK, FRAMED_MAP,
+  SHOWER_ON): ChunkMesher notes their cells (Result.live, ChunkView3D.live) and WorldView3D's
+  `LiveProps` (src/client/effects; within LIVE_REACH) turns the clocks' hands with the game's time
+  (a pendulum swings), draws a framed map of the client's chunks around it (MAP_STEP tiles a
+  pixel, north up, again every MAP_SECONDS) on a quad over its canvas (WallDecorModels.MAP_CANVAS),
+  lets drops fall from a running shower (world space). On walls also a MIRROR, a DEER_TROPHY and a
+  BEAR_TROPHY, a TAPESTRY (long: LONG_CURTAINS, SUNK; dyed), a SPICE_RACK, a COAT_RACK, a
+  WINDOW_BOX (Decor.VERSIONS); a CUSHION (a seat, dyed), a HOUSEPLANT; the BATHTUB (wide, a seat)
+  and the WASHBASIN fill the can (Watering.TAPS; FurnitureUse.usable lets the can through), the
+  SHOWER (TALL, non-solid); a GRANDFATHER_CLOCK, a FOLDING_SCREEN (TALL, a barrier, dyed), a
+  TOY_CHEST (storage), a PIANO (wide), a CRADLE (dyed). Non-solid kinds: TileSets.NON_SOLID_KINDS
+  (their facings by name). ObjectShapes.FACING_KINDS is a list of kinds now, their blocks built by
+  name (`blocks_of`); ChunkMesher's flames and smoke moved to PropLights; Mining keeps times and
+  tools by kind (windows by Glass: WINDOW_SECONDS); the house's recipes are HomeRecipes (ROOMS,
+  AMBIANCE; the shelf's is "PPP / S": the boat bench's took the old one at the workbench). The
+  book: Home and garden (Ambiance).
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made

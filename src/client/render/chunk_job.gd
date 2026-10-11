@@ -27,6 +27,9 @@ var biome := PackedByteArray()
 ## the rugs lying under things (ChunkData.rugs).
 var tints: Dictionary[Vector3i, int] = {}
 var rugs: Dictionary[Vector3i, int] = {}
+## What the flower pots hold (ChunkData.shelves, theirs only: their model
+## shows the plant).
+var pots: Dictionary[Vector3i, PackedInt32Array] = {}
 
 
 static func of_chunk(chunk: ChunkData, neighbor: Callable) -> ChunkJob:
@@ -44,4 +47,6 @@ static func of_chunk(chunk: ChunkData, neighbor: Callable) -> ChunkJob:
 			if other != null:
 				job.tints.merge(other.tints)
 				job.rugs.merge(other.rugs)
+				if other == chunk:
+					job.pots.merge(other.shelves)
 	return job

@@ -301,6 +301,8 @@ func tick() -> void:
 		Furnaces.update(self, GameConst.TICK_DELTA * FURNACE_TICKS)
 	if tick_count % Machines.TICKS == 0:
 		Machines.update(self, GameConst.TICK_DELTA * Machines.TICKS)
+	if tick_count % Hearths.TICKS == 0:
+		Hearths.update(self, GameConst.TICK_DELTA * Hearths.TICKS)
 	Growth.update(self, -1.0, tick_count % Growth.CHECK_TICKS)
 	if tick_count % UNLOAD_CHECK_TICKS == 0:
 		_unload_unused_chunks()
@@ -411,6 +413,8 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 				and not Chests.handle(self, session, message)
 				and not Beds.handle(self, session, message)
 				and not Shelves.handle(self, session, message)
+				and not Hearths.handle(self, session, message)
+				and not Decor.handle(self, session, message)
 			):
 				push_warning("Server: unknown message type %s" % other)
 
@@ -607,10 +611,10 @@ func _on_block_place(session: PlayerSession, message: Dictionary) -> void:
 
 
 ## Whether a voxel is placed with nothing beside it: a crop (sown), what is
-## set on the water (a fish trap).
+## set on the water (a fish trap), what stands on furniture (a candle).
 static func _set_alone(voxel: int) -> bool:
 	var block := Voxels.block_of(voxel)
-	return Farming.SOWN.has(block) or Mining.ON_WATER.has(block)
+	return Farming.SOWN.has(block) or Mining.ON_WATER.has(block) or Decor.ON_FURNITURE.has(block)
 
 
 ## A player opened a workbench (crafting uses its whole grid) or a

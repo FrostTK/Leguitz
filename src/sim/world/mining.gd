@@ -55,35 +55,12 @@ const BLOCK_SECONDS := {
 	Tiles.Block.JUNGLE_PLANKS: 2.0,
 	Tiles.Block.ACACIA_PLANKS: 2.0,
 	Tiles.Block.WORKBENCH: 2.5,
-	Tiles.Block.WORKBENCH_WEST: 2.5,
-	Tiles.Block.WORKBENCH_NORTH: 2.5,
-	Tiles.Block.WORKBENCH_EAST: 2.5,
-	Tiles.Block.WORKBENCH_END_X: 2.5,
-	Tiles.Block.WORKBENCH_END_Z: 2.5,
 	Tiles.Block.CHEST: 2.5,
-	Tiles.Block.CHEST_WEST: 2.5,
-	Tiles.Block.CHEST_NORTH: 2.5,
-	Tiles.Block.CHEST_EAST: 2.5,
 	Tiles.Block.FOOD_FURNACE: 3.5,
-	Tiles.Block.FOOD_FURNACE_WEST: 3.5,
-	Tiles.Block.FOOD_FURNACE_NORTH: 3.5,
-	Tiles.Block.FOOD_FURNACE_EAST: 3.5,
 	Tiles.Block.FOOD_FURNACE_LIT: 3.5,
-	Tiles.Block.FOOD_FURNACE_LIT_WEST: 3.5,
-	Tiles.Block.FOOD_FURNACE_LIT_NORTH: 3.5,
-	Tiles.Block.FOOD_FURNACE_LIT_EAST: 3.5,
 	Tiles.Block.FACTORY_FURNACE: 3.5,
-	Tiles.Block.FACTORY_FURNACE_WEST: 3.5,
-	Tiles.Block.FACTORY_FURNACE_NORTH: 3.5,
-	Tiles.Block.FACTORY_FURNACE_EAST: 3.5,
 	Tiles.Block.FACTORY_FURNACE_LIT: 3.5,
-	Tiles.Block.FACTORY_FURNACE_LIT_WEST: 3.5,
-	Tiles.Block.FACTORY_FURNACE_LIT_NORTH: 3.5,
-	Tiles.Block.FACTORY_FURNACE_LIT_EAST: 3.5,
 	Tiles.Block.BROKEN_FURNACE: 3.5,
-	Tiles.Block.BROKEN_FURNACE_WEST: 3.5,
-	Tiles.Block.BROKEN_FURNACE_NORTH: 3.5,
-	Tiles.Block.BROKEN_FURNACE_EAST: 3.5,
 	Tiles.Block.STONE_BRICKS: 3.5,
 	Tiles.Block.SMOOTH_STONE: 3.5,
 	Tiles.Block.BRICKS: 4.0,
@@ -91,7 +68,6 @@ const BLOCK_SECONDS := {
 	Tiles.Block.CUT_SANDSTONE: 2.5,
 	Tiles.Block.GLASS: 0.5,
 	Tiles.Block.WOOL: 0.8,
-	Tiles.Block.WINDOW: 0.8,
 	Tiles.Block.ROOF_TILES: 3.0,
 	Tiles.Block.SLATES: 3.5,
 	Tiles.Block.SHINGLES: 1.5,
@@ -146,7 +122,8 @@ const BLOCK_SECONDS := {
 	Tiles.Block.JUNGLE_HERRINGBONE: 2.0,
 	Tiles.Block.ACACIA_PARQUET: 2.0,
 	Tiles.Block.ACACIA_HERRINGBONE: 2.0,
-	# What players place, by kind (any way it faces, open or shut).
+	# What players place, by kind (any way it faces, open or shut, lit or
+	# not).
 	Tiles.Block.TORCH_BRACKET: 1.5,
 	Tiles.Block.CURTAINS: 0.6,
 	Tiles.Block.CURTAINS_LONG: 0.7,
@@ -177,33 +154,6 @@ const BLOCK_SECONDS := {
 	Tiles.Block.LEADED_GLASS_PANE: 0.4,
 	Tiles.Block.OLD_GLASS: 0.5,
 	Tiles.Block.LEADED_GLASS: 0.5,
-	Tiles.Block.OAK_WINDOW_SMALL: 0.8,
-	Tiles.Block.OAK_WINDOW_SASH: 0.8,
-	Tiles.Block.OAK_WINDOW_ROUND: 0.8,
-	Tiles.Block.BIRCH_WINDOW: 0.8,
-	Tiles.Block.BIRCH_WINDOW_SMALL: 0.8,
-	Tiles.Block.BIRCH_WINDOW_SASH: 0.8,
-	Tiles.Block.BIRCH_WINDOW_ROUND: 0.8,
-	Tiles.Block.SPRUCE_WINDOW: 0.8,
-	Tiles.Block.SPRUCE_WINDOW_SMALL: 0.8,
-	Tiles.Block.SPRUCE_WINDOW_SASH: 0.8,
-	Tiles.Block.SPRUCE_WINDOW_ROUND: 0.8,
-	Tiles.Block.DARK_OAK_WINDOW: 0.8,
-	Tiles.Block.DARK_OAK_WINDOW_SMALL: 0.8,
-	Tiles.Block.DARK_OAK_WINDOW_SASH: 0.8,
-	Tiles.Block.DARK_OAK_WINDOW_ROUND: 0.8,
-	Tiles.Block.JUNGLE_WINDOW: 0.8,
-	Tiles.Block.JUNGLE_WINDOW_SMALL: 0.8,
-	Tiles.Block.JUNGLE_WINDOW_SASH: 0.8,
-	Tiles.Block.JUNGLE_WINDOW_ROUND: 0.8,
-	Tiles.Block.ACACIA_WINDOW: 0.8,
-	Tiles.Block.ACACIA_WINDOW_SMALL: 0.8,
-	Tiles.Block.ACACIA_WINDOW_SASH: 0.8,
-	Tiles.Block.ACACIA_WINDOW_ROUND: 0.8,
-	Tiles.Block.IRON_WINDOW: 2.5,
-	Tiles.Block.IRON_WINDOW_SMALL: 2.5,
-	Tiles.Block.IRON_WINDOW_SASH: 2.5,
-	Tiles.Block.IRON_WINDOW_ROUND: 2.5,
 	Tiles.Block.SINK: 2.5,
 	Tiles.Block.TOILET: 2.5,
 	Tiles.Block.TABLE: 2.0,
@@ -231,16 +181,45 @@ const BLOCK_SECONDS := {
 	Tiles.Block.BEAVER_DAM: 1.2,
 	Tiles.Block.TURTLE_EGGS: 0.1,
 	Tiles.Block.KITCHEN: 2.0,
-	Tiles.Block.KITCHEN_WEST: 2.0,
-	Tiles.Block.KITCHEN_NORTH: 2.0,
-	Tiles.Block.KITCHEN_EAST: 2.0,
 	Tiles.Block.MILL: 2.5,
 	Tiles.Block.BUTTER_CHURN: 1.5,
 	Tiles.Block.BARREL: 2.0,
 	Tiles.Block.CHEESE_CELLAR: 2.0,
 	Tiles.Block.FISH_TRAP: 0.6,
 	Tiles.Block.SHIPYARD: 3.0,
+	Tiles.Block.CANDLE: 0.3,
+	Tiles.Block.CANDELABRA: 0.6,
+	Tiles.Block.CHANDELIER: 1.2,
+	Tiles.Block.BEDSIDE_LAMP: 0.6,
+	Tiles.Block.WALL_SCONCE: 0.8,
+	Tiles.Block.FIREPLACE: 4.0,
+	Tiles.Block.STOVE: 3.0,
+	Tiles.Block.PAINTING: 0.6,
+	Tiles.Block.PORTRAIT: 0.6,
+	Tiles.Block.WALL_CLOCK: 0.8,
+	Tiles.Block.MIRROR: 0.6,
+	Tiles.Block.FRAMED_MAP: 0.6,
+	Tiles.Block.DEER_TROPHY: 1.0,
+	Tiles.Block.BEAR_TROPHY: 1.0,
+	Tiles.Block.TAPESTRY: 0.6,
+	Tiles.Block.SPICE_RACK: 0.8,
+	Tiles.Block.COAT_RACK: 0.8,
+	Tiles.Block.CUSHION: 0.4,
+	Tiles.Block.FLOWER_POT: 0.4,
+	Tiles.Block.WINDOW_BOX: 0.6,
+	Tiles.Block.HOUSEPLANT: 0.6,
+	Tiles.Block.BATHTUB: 3.0,
+	Tiles.Block.SHOWER: 2.0,
+	Tiles.Block.WASHBASIN: 2.5,
+	Tiles.Block.GRANDFATHER_CLOCK: 2.0,
+	Tiles.Block.TOY_CHEST: 1.5,
+	Tiles.Block.PIANO: 2.5,
+	Tiles.Block.CRADLE: 1.5,
+	Tiles.Block.FOLDING_SCREEN: 1.2,
 }
+## Windows (Glass.is_window): wooden frames, iron ones.
+const WINDOW_SECONDS := 0.8
+const IRON_WINDOW_SECONDS := 2.5
 ## Trees by hand: chopping a trunk takes a while (a young one less).
 const TREE_SECONDS := 3.5
 const YOUNG_TREE_SECONDS := 1.2
@@ -271,39 +250,7 @@ const AXE_BLOCKS := {
 	Tiles.Block.JUNGLE_PLANKS: true,
 	Tiles.Block.ACACIA_PLANKS: true,
 	Tiles.Block.WORKBENCH: true,
-	Tiles.Block.WORKBENCH_WEST: true,
-	Tiles.Block.WORKBENCH_NORTH: true,
-	Tiles.Block.WORKBENCH_EAST: true,
-	Tiles.Block.WORKBENCH_END_X: true,
-	Tiles.Block.WORKBENCH_END_Z: true,
 	Tiles.Block.CHEST: true,
-	Tiles.Block.CHEST_WEST: true,
-	Tiles.Block.CHEST_NORTH: true,
-	Tiles.Block.CHEST_EAST: true,
-	Tiles.Block.WINDOW: true,
-	Tiles.Block.OAK_WINDOW_SMALL: true,
-	Tiles.Block.OAK_WINDOW_SASH: true,
-	Tiles.Block.OAK_WINDOW_ROUND: true,
-	Tiles.Block.BIRCH_WINDOW: true,
-	Tiles.Block.BIRCH_WINDOW_SMALL: true,
-	Tiles.Block.BIRCH_WINDOW_SASH: true,
-	Tiles.Block.BIRCH_WINDOW_ROUND: true,
-	Tiles.Block.SPRUCE_WINDOW: true,
-	Tiles.Block.SPRUCE_WINDOW_SMALL: true,
-	Tiles.Block.SPRUCE_WINDOW_SASH: true,
-	Tiles.Block.SPRUCE_WINDOW_ROUND: true,
-	Tiles.Block.DARK_OAK_WINDOW: true,
-	Tiles.Block.DARK_OAK_WINDOW_SMALL: true,
-	Tiles.Block.DARK_OAK_WINDOW_SASH: true,
-	Tiles.Block.DARK_OAK_WINDOW_ROUND: true,
-	Tiles.Block.JUNGLE_WINDOW: true,
-	Tiles.Block.JUNGLE_WINDOW_SMALL: true,
-	Tiles.Block.JUNGLE_WINDOW_SASH: true,
-	Tiles.Block.JUNGLE_WINDOW_ROUND: true,
-	Tiles.Block.ACACIA_WINDOW: true,
-	Tiles.Block.ACACIA_WINDOW_SMALL: true,
-	Tiles.Block.ACACIA_WINDOW_SASH: true,
-	Tiles.Block.ACACIA_WINDOW_ROUND: true,
 	Tiles.Block.TABLE: true,
 	Tiles.Block.CHAIR: true,
 	Tiles.Block.OAK_DOOR: true,
@@ -333,9 +280,6 @@ const AXE_BLOCKS := {
 	Tiles.Block.SCARECROW: true,
 	Tiles.Block.BEAVER_DAM: true,
 	Tiles.Block.KITCHEN: true,
-	Tiles.Block.KITCHEN_WEST: true,
-	Tiles.Block.KITCHEN_NORTH: true,
-	Tiles.Block.KITCHEN_EAST: true,
 	Tiles.Block.BUTTER_CHURN: true,
 	Tiles.Block.BARREL: true,
 	Tiles.Block.CHEESE_CELLAR: true,
@@ -382,30 +326,29 @@ const AXE_BLOCKS := {
 	Tiles.Block.JUNGLE_HERRINGBONE: true,
 	Tiles.Block.ACACIA_PARQUET: true,
 	Tiles.Block.ACACIA_HERRINGBONE: true,
+	Tiles.Block.PAINTING: true,
+	Tiles.Block.PORTRAIT: true,
+	Tiles.Block.WALL_CLOCK: true,
+	Tiles.Block.FRAMED_MAP: true,
+	Tiles.Block.DEER_TROPHY: true,
+	Tiles.Block.BEAR_TROPHY: true,
+	Tiles.Block.SPICE_RACK: true,
+	Tiles.Block.COAT_RACK: true,
+	Tiles.Block.WINDOW_BOX: true,
+	Tiles.Block.GRANDFATHER_CLOCK: true,
+	Tiles.Block.TOY_CHEST: true,
+	Tiles.Block.PIANO: true,
+	Tiles.Block.CRADLE: true,
+	Tiles.Block.FOLDING_SCREEN: true,
 }
 const PICKAXE_BLOCKS := {
 	Tiles.Block.ROCK: true,
 	Tiles.Block.MOSSY_ROCK: true,
 	Tiles.Block.FOOD_FURNACE: true,
-	Tiles.Block.FOOD_FURNACE_WEST: true,
-	Tiles.Block.FOOD_FURNACE_NORTH: true,
-	Tiles.Block.FOOD_FURNACE_EAST: true,
 	Tiles.Block.FOOD_FURNACE_LIT: true,
-	Tiles.Block.FOOD_FURNACE_LIT_WEST: true,
-	Tiles.Block.FOOD_FURNACE_LIT_NORTH: true,
-	Tiles.Block.FOOD_FURNACE_LIT_EAST: true,
 	Tiles.Block.FACTORY_FURNACE: true,
-	Tiles.Block.FACTORY_FURNACE_WEST: true,
-	Tiles.Block.FACTORY_FURNACE_NORTH: true,
-	Tiles.Block.FACTORY_FURNACE_EAST: true,
 	Tiles.Block.FACTORY_FURNACE_LIT: true,
-	Tiles.Block.FACTORY_FURNACE_LIT_WEST: true,
-	Tiles.Block.FACTORY_FURNACE_LIT_NORTH: true,
-	Tiles.Block.FACTORY_FURNACE_LIT_EAST: true,
 	Tiles.Block.BROKEN_FURNACE: true,
-	Tiles.Block.BROKEN_FURNACE_WEST: true,
-	Tiles.Block.BROKEN_FURNACE_NORTH: true,
-	Tiles.Block.BROKEN_FURNACE_EAST: true,
 	Tiles.Block.TORCH_BRACKET: true,
 	Tiles.Block.SINK: true,
 	Tiles.Block.TOILET: true,
@@ -414,15 +357,19 @@ const PICKAXE_BLOCKS := {
 	Tiles.Block.LANTERN_HANGING: true,
 	Tiles.Block.LANTERN_WALL: true,
 	Tiles.Block.MILL: true,
-	Tiles.Block.IRON_WINDOW: true,
-	Tiles.Block.IRON_WINDOW_SMALL: true,
-	Tiles.Block.IRON_WINDOW_SASH: true,
-	Tiles.Block.IRON_WINDOW_ROUND: true,
 	Tiles.Block.IRON_DOOR: true,
 	Tiles.Block.IRON_TRAPDOOR: true,
 	Tiles.Block.IRON_BARS: true,
 	Tiles.Block.IRON_RAILING: true,
 	Tiles.Block.CHIMNEY: true,
+	Tiles.Block.CANDELABRA: true,
+	Tiles.Block.CHANDELIER: true,
+	Tiles.Block.WALL_SCONCE: true,
+	Tiles.Block.FIREPLACE: true,
+	Tiles.Block.STOVE: true,
+	Tiles.Block.BATHTUB: true,
+	Tiles.Block.SHOWER: true,
+	Tiles.Block.WASHBASIN: true,
 }
 ## Objects placed as they are (no way to face), standing on a cube.
 const FLOOR_OBJECTS := {
@@ -459,6 +406,8 @@ const FLOOR_OBJECTS := {
 	Tiles.Block.STOOL: true,
 	Tiles.Block.COFFEE_TABLE: true,
 	Tiles.Block.PEDESTAL_TABLE: true,
+	Tiles.Block.CUSHION: true,
+	Tiles.Block.HOUSEPLANT: true,
 }
 ## What stacks on itself (a chimney, walls, pillars), not only on a cube.
 const STACKING := {
@@ -508,6 +457,7 @@ static func can_place(voxel: int) -> bool:
 		or ON_WATER.has(block)
 		or BuildShapes.is_beam(block)
 		or block == Tiles.Block.TABLE_CLOTHED
+		or Decor.places(block)
 	)
 
 
@@ -533,6 +483,9 @@ static func placement(
 	var block := Voxels.block_of(voxel)
 	if ShapedBlocks.is_shaped(block):
 		return ShapedBlocks.placement(cell, block, front, face, upper, voxel_at)
+	if Decor.places(block):
+		# A chandelier under a ceiling, a candle on a table.
+		return Decor.placement(cell, voxel, face, voxel_at)
 	var kind := ObjectShapes.kind_of(block)
 	if ObjectShapes.WALL_MOUNTED.has(kind):
 		return _hung(cell, kind, front, voxel_at)
@@ -695,12 +648,18 @@ static func minds_the_side(voxel: int) -> bool:
 
 
 ## Whether a voxel swings when used: a gate, a door, a trapdoor, curtains
-## or shutters (drawn or opened; see swung_cells).
+## or shutters (drawn or opened), a light or a shower (on or off; see
+## swung_cells).
 static func swings(voxel: int) -> bool:
 	if voxel == Voxels.UNKNOWN:
 		return false
 	var block := Voxels.block_of(voxel)
-	return ObjectShapes.is_gate(block) or ObjectShapes.is_curtain(block) or Openings.is_top(block)
+	return (
+		ObjectShapes.is_gate(block)
+		or ObjectShapes.is_curtain(block)
+		or Openings.is_top(block)
+		or Decor.is_switch(block)
+	)
 
 
 ## A gate in `cell` swung open or shut (curtains drawn or tied back): its
@@ -713,7 +672,8 @@ static func swung_cells(cell: Vector3i, voxel: int, voxel_at: Callable) -> Dicti
 	if not Openings.is_door(door):
 		for part in parts:
 			var block := Voxels.block_of(voxel_at.call(part))
-			cells[part] = Voxels.of_block(ObjectShapes.swung(block))
+			if ObjectShapes.swung(block) != block:
+				cells[part] = Voxels.of_block(ObjectShapes.swung(block))
 		return cells
 	var opening := not ObjectShapes.is_open(door)
 	var other := Openings.partner(door, parts[0], voxel_at)
@@ -876,6 +836,8 @@ static func tool_for(voxel: int) -> int:
 			return Items.Tool.NONE
 		return Items.Tool.PICKAXE if PICKAXE_GROUNDS.has(ground) else Items.Tool.SHOVEL
 	var kind := ObjectShapes.pair_of(ObjectShapes.base_kind(block))
+	if Glass.is_window(block):
+		return Items.Tool.PICKAXE if _iron_window(block) else Items.Tool.AXE
 	if ObjectShapes.is_tree(block) or AXE_BLOCKS.has(block) or AXE_BLOCKS.has(kind):
 		return Items.Tool.AXE
 	if Tiles.is_cube(block) or PICKAXE_BLOCKS.has(block) or PICKAXE_BLOCKS.has(kind):
@@ -898,11 +860,17 @@ static func hand_seconds(voxel: int) -> float:
 		return TREE_SECONDS
 	if BLOCK_SECONDS.has(block):
 		return BLOCK_SECONDS[block]
+	if Glass.is_window(block):
+		return IRON_WINDOW_SECONDS if _iron_window(block) else WINDOW_SECONDS
 	# By kind, open or shut (open gates and doors: their shut kind's).
 	var kind := ObjectShapes.pair_of(ObjectShapes.base_kind(block))
 	if BLOCK_SECONDS.has(kind):
 		return BLOCK_SECONDS[kind]
 	return OTHER_SECONDS if Tiles.is_block_solid(block) else PLANT_SECONDS
+
+
+static func _iron_window(block: int) -> bool:
+	return Glass.FRAMES[Glass.window_of(block).y][0] == "IRON"
 
 
 ## Distance from a player's eye (feet in world pixels, height in levels)

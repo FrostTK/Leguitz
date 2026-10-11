@@ -8,7 +8,13 @@ extends RefCounted
 ## are) and getting up at the spawn (in hardcore, never: they only watch
 ## the world, GameModes). Creative players are never hurt nor hungry.
 ## Dishes' effects (Effects) wear off with time; REGEN heals, FED slows
-## hunger. Stateless: each call is given the server.
+## hunger. The cold of winter makes hunger come COLD_HUNGER times faster
+## and stops healing; a fire's warmth heals WARM_HEAL times faster
+## (Warmth). Stateless: each call is given the server.
+
+## Satiety spent in the cold, and healing time by a fire.
+const COLD_HUNGER := 1.5
+const WARM_HEAL := 0.5
 
 
 ## A player landed after falling `fell` levels: over FALL_SAFE it hurts,
@@ -46,7 +52,7 @@ static func hurt(
 	session.health = maxi(session.health - lost, 0)
 	session.immune = Vitals.HURT_IMMUNITY
 	session.since_hurt = 0.0
-	_tell(session, true, cause)
+	tell(session, true, cause)
 	if session.health == 0:
 		_pass_out(server, session, cause)
 
@@ -97,7 +103,7 @@ static func get_up(server: GameServer, session: GameServer.PlayerSession) -> voi
 		session.position = Coords.tile_to_world_center(Vector2i(int(bed.x), int(bed.z)))
 		session.height = bed.y
 	session.transport.send(Msg.player_teleport(session.position, session.height))
-	_tell(session)
+	tell(session)
 
 
 ## A player spends effort (Vitals: walking, mining, healing): a point of
@@ -110,6 +116,8 @@ static func spend(server: GameServer, session: GameServer.PlayerSession, effort:
 	):
 		return
 	var slower := Effects.FED_SLOWER if Effects.has(session.effects, Effects.Kind.FED) else 1.0
+	if Effects.has(session.effects, Effects.Kind.COLD):
+		slower *= COLD_HUNGER
 	session.effort += effort * slower
 	if session.effort < 1.0:
 		return
@@ -117,7 +125,7 @@ static func spend(server: GameServer, session: GameServer.PlayerSession, effort:
 	session.effort -= spent
 	if session.food > 0:
 		session.food = maxi(session.food - spent, 0)
-		_tell(session)
+		tell(session)
 
 
 ## A player ate one of what a hotbar slot holds: food fills them up (not
@@ -143,7 +151,7 @@ static func eat(server: GameServer, session: GameServer.PlayerSession, slot: int
 	session.food = mini(session.food + Food.SATIETY[item], Vitals.MAX_FOOD)
 	Effects.take(session.effects, item, server.clock.scale_duration(1.0))
 	session.transport.send(Msg.inventory(session.inventory))
-	_tell(session)
+	tell(session)
 	if Vitals.POISONS.has(item):
 		hurt(server, session, Vitals.POISONS[item], Vitals.Cause.POISON)
 
@@ -170,8 +178,10 @@ static func update(server: GameServer, sessions: Array, delta: float) -> void:
 		_starve(server, session, delta)
 		_heal(server, session, delta)
 		_mend(server, session, delta)
+		if server.tick_count % Warmth.TICKS == 0:
+			Warmth.update(server, session)
 		if Effects.wear(session.effects, delta):
-			_tell(session)
+			tell(session)
 
 
 ## The eye under water uses air; without air, drowning hurts. Out of the
@@ -193,7 +203,7 @@ static func _breathe(server: GameServer, session: GameServer.PlayerSession, delt
 		absf(session.air - session.air_told) >= Vitals.AIR_STEP
 		or (full and session.air_told != Vitals.MAX_AIR)
 	):
-		_tell(session)
+		tell(session)
 
 
 ## Starving (no satiety left): a point of vitality every STARVE_SECONDS.
@@ -208,21 +218,25 @@ static func _starve(server: GameServer, session: GameServer.PlayerSession, delta
 
 
 ## Well fed, a point of vitality every REGEN_SECONDS once nothing hurt
-## for REGEN_DELAY; it costs satiety.
+## for REGEN_DELAY (by a fire, sooner; not in the cold); it costs satiety.
 static func _heal(server: GameServer, session: GameServer.PlayerSession, delta: float) -> void:
 	if (
 		session.health >= Vitals.MAX_HEALTH
 		or not session.alive()
 		or session.food < Vitals.FED
 		or session.since_hurt < server.clock.scale_duration(Vitals.REGEN_DELAY)
+		or Effects.has(session.effects, Effects.Kind.COLD)
 	):
 		session.healing = 0.0
 		return
 	session.healing += delta
-	if session.healing >= server.clock.scale_duration(Vitals.REGEN_SECONDS):
+	var every := server.clock.scale_duration(Vitals.REGEN_SECONDS)
+	if Effects.has(session.effects, Effects.Kind.WARM):
+		every *= WARM_HEAL
+	if session.healing >= every:
 		session.healing = 0.0
 		session.health += 1
-		_tell(session)
+		tell(session)
 		spend(server, session, Vitals.HEAL_EFFORT)
 
 
@@ -237,12 +251,12 @@ static func _mend(server: GameServer, session: GameServer.PlayerSession, delta: 
 		session.mending = 0.0
 		if session.health < Vitals.MAX_HEALTH:
 			session.health += 1
-			_tell(session)
+			tell(session)
 
 
 ## Tells a player their vitality, satiety and effects (`hurt`: vitality
 ## just went down, from `cause`).
-static func _tell(
+static func tell(
 	session: GameServer.PlayerSession, hurt := false, cause := Vitals.Cause.NONE
 ) -> void:
 	session.air_told = session.air

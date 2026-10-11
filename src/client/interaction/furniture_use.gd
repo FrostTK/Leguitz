@@ -5,8 +5,11 @@ extends Node
 ## seated, until they move or jump: back where they stood); on a bed asks
 ## to sleep in it (Msg.SLEEP; Msg.SLEEPING lays them down in it, the screen
 ## darkening, until they move: Msg.WAKE); on a shelf puts one of what is in
-## hand on it, or takes the last thing back (Msg.SHELF). Processed after
-## Helm and VitalsView (process_priority), whose poses it overrides.
+## hand on it, or takes the last thing back (Msg.SHELF), and so on a flower
+## pot (a plant); on a hearth puts in the fuel in hand or puts it out with
+## the watering can (Msg.STOKE); on a picture shows the next one
+## (Msg.TURN_PICTURE). Processed after Helm and VitalsView
+## (process_priority), whose poses it overrides.
 
 const VEIL := Color(0.02, 0.03, 0.09)
 const VEIL_SECONDS := 1.6
@@ -35,10 +38,19 @@ func _ready() -> void:
 	veil.set_anchors_preset(Control.PRESET_FULL_RECT)
 
 
-## Whether a voxel is used this way (BlockInteraction.usable_here).
-static func usable(voxel: int) -> bool:
+## Whether a voxel is used this way (BlockInteraction.usable_here) with
+## `held` in hand (the watering can fills at a bathtub, not sits in it).
+static func usable(voxel: int, held := Items.Id.NONE) -> bool:
 	var block := Voxels.block_of(voxel)
-	return Furniture.is_seat(block) or Furniture.is_bed(block) or Furniture.is_shelf(block)
+	if held == Items.Id.WATERING_CAN and Watering.fills_from(voxel):
+		return false
+	return (
+		Furniture.is_seat(block)
+		or Furniture.is_bed(block)
+		or Shelves.slots_of(block) > 0
+		or Hearths.is_hearth(block)
+		or Decor.is_picture(block)
+	)
 
 
 ## Uses the furniture in `cell`. Returns whether it did.
@@ -47,8 +59,16 @@ func use(cell: Vector3i, voxel: int) -> bool:
 	if Furniture.is_bed(block):
 		client.transport.send(Msg.sleep(cell))
 		return true
-	if Furniture.is_shelf(block):
+	if Shelves.slots_of(block) > 0:
 		client.transport.send(Msg.shelf(cell, client.inventory.selected))
+		client.player_model.swing()
+		return true
+	if Hearths.is_hearth(block):
+		client.transport.send(Msg.stoke(cell, client.inventory.selected))
+		client.player_model.swing()
+		return true
+	if Decor.is_picture(block):
+		client.transport.send(Msg.turn_picture(cell))
 		client.player_model.swing()
 		return true
 	if Furniture.is_seat(block) and seat == Vector3i.MAX and bed == Vector3i.MAX:

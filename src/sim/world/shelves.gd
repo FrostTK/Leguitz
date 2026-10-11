@@ -6,7 +6,8 @@ extends RefCounted
 ## chunk; ShelvesView draws them). A right click (Msg.SHELF) with something
 ## in hand puts one of it on the shelf, empty-handed takes the last back
 ## (Msg.SHELF_ITEMS tells the players having the chunk). Broken, a shelf's
-## things fall (`spill`).
+## things fall (`spill`). A flower pot is a shelf of one taking only plants
+## (Decor.POTTED; the pot's model shows it, Decor.pot_version).
 
 const SLOTS := 3
 const MESSAGES: Array[String] = [Msg.SHELF]
@@ -21,19 +22,24 @@ static func handle(
 	var slot := clampi(int(message.get("slot", 0)), 0, Inventory.HOTBAR - 1)
 	var block := Voxels.block_of(server.world.voxel_at(cell))
 	var near := Mining.reach_to(session.position, session.height, cell)
-	if not session.joined or not session.alive() or not Furniture.is_shelf(block):
+	var slots := slots_of(block)
+	if not session.joined or not session.alive() or slots == 0:
 		return true
 	if near > Mining.REACH + GameServer.REACH_LEEWAY:
 		return true
-	var items := items_at(server.world, cell)
+	var items := items_at(server.world, cell, slots)
 	var bag := session.inventory
 	var held := bag.items[slot]
 	var free := items.find(Items.Id.NONE)
+	var fits := not Decor.is_pot(block) or Decor.POTTED.has(held)
+	if held != Items.Id.NONE and free >= 0 and not fits:
+		session.transport.send(Msg.notice("HUD_POT_PLANTS"))
+		return true
 	if held != Items.Id.NONE and free >= 0:
 		items[free] = held
 		bag.take(slot, 1)
 	else:
-		var last := SLOTS - 1
+		var last := slots - 1
 		while last >= 0 and items[last] == Items.Id.NONE:
 			last -= 1
 		if last < 0:
@@ -46,13 +52,21 @@ static func handle(
 	return true
 
 
-## What a shelf holds (SLOTS items; NONE: empty).
-static func items_at(world: WorldState, cell: Vector3i) -> PackedInt32Array:
+## How many things a block holds: a shelf SLOTS, a flower pot one (0:
+## neither).
+static func slots_of(block: int) -> int:
+	if Furniture.is_shelf(block):
+		return SLOTS
+	return 1 if Decor.is_pot(block) else 0
+
+
+## What a shelf holds (`slots` items; NONE: empty).
+static func items_at(world: WorldState, cell: Vector3i, slots := SLOTS) -> PackedInt32Array:
 	var chunk: ChunkData = world.chunks.get(Coords.tile_to_chunk(Vector2i(cell.x, cell.z)))
 	if chunk != null and chunk.shelves.has(cell):
 		return chunk.shelves[cell].duplicate()
 	var empty := PackedInt32Array()
-	empty.resize(SLOTS)
+	empty.resize(slots)
 	empty.fill(Items.Id.NONE)
 	return empty
 

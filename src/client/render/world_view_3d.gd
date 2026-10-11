@@ -30,8 +30,10 @@ const FACE_ATLAS := preload("res://assets/textures/tiles/face_atlas.png")
 const FACE_NORMALS := preload("res://assets/textures/tiles/face_atlas_n.png")
 const FACE_EMISSION := preload("res://assets/textures/tiles/face_atlas_e.png")
 const MAX_POOLED_VIEWS := 48
-## Chimneys smoke this near the player (tiles).
+## Chimneys smoke this near the player (tiles); clocks, maps and showers
+## come to life nearer.
 const SMOKE_REACH := 40.0
+const LIVE_REACH := 24.0
 ## Ground area (tiles²) up to which props keep full detail, then half.
 const FULL_DETAIL_AREA := 2500.0
 const HALF_DETAIL_AREA := 12000.0
@@ -91,6 +93,8 @@ var face_material := ShaderMaterial.new()
 var water_material := ShaderMaterial.new()
 ## The smoke of the chimneys near the player.
 var smoke := ChimneySmoke.new()
+## Clocks' hands, framed maps, running showers near the player.
+var live := LiveProps.new()
 ## The see-through part of glass (GlassFaces), shared by the chunks: its
 ## tint, and its sheen in the next pass.
 var glass_material := ShaderMaterial.new()
@@ -147,6 +151,7 @@ func _ready() -> void:
 		material.set_shader_parameter("wall_atlas", TerrainRenderer.WALL_ATLAS)
 		material.set_shader_parameter("tint_colors", palette)
 	add_child(smoke)
+	add_child(live)
 	_variants.resize(Tiles.Block.size())
 	for block: int in Tiles.Block.values():
 		_variants[block] = props.variant_count(block)
@@ -395,6 +400,7 @@ func _process(delta: float) -> void:
 	_apply_results()
 	var time := Time.get_ticks_msec() / 1000.0
 	var spots: Array[Vector3] = []
+	var living: Array[Vector3i] = []
 	for view: ChunkView3D in _views.values():
 		view.flicker(time)
 		if view.visible and not view.smokes.is_empty():
@@ -402,7 +408,14 @@ func _process(delta: float) -> void:
 				var at := view.position + spot
 				if Vector2(at.x, at.z).distance_squared_to(focus_tile) < SMOKE_REACH * SMOKE_REACH:
 					spots.append(at)
+		if view.visible and not view.live.is_empty():
+			var origin := view.coord * GameConst.CHUNK_SIZE
+			for cell in view.live:
+				var at := Vector3i(origin.x + cell.x, cell.y, origin.y + cell.z)
+				if Vector2(at.x, at.z).distance_squared_to(focus_tile) < LIVE_REACH * LIVE_REACH:
+					living.append(at)
 	smoke.update(delta, spots)
+	live.update(delta, living, client_world)
 
 
 func _start_jobs() -> void:

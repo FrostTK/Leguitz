@@ -39,6 +39,8 @@ var built := false
 var far := false
 ## Where its chimneys smoke (local positions in the chunk).
 var smokes: Array[Vector3] = []
+## Its props brought to life (Decor.LIVE: cells in the chunk; LiveProps).
+var live: Array[Vector3i] = []
 
 var _data_image := Image.create(
 	TerrainRenderer.DATA_SIZE, TerrainRenderer.DATA_SIZE, false, Image.FORMAT_RGBAF
@@ -114,6 +116,7 @@ func apply(result: ChunkMesher.Result, library: PropLibrary, lod: int) -> void:
 	_sky_open = result.sky_open
 	_sky_levels = result.sky_levels
 	smokes = result.smokes
+	live = result.live
 	for i in _lava_spots.size():
 		var light := _lava_light(i)
 		light.light_energy = result.lava_strength[i]

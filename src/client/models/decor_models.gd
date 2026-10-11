@@ -50,6 +50,12 @@ static func build(block: int, variant: int) -> VoxelGrid:
 	var furniture := FurnitureModels.build(block, variant)
 	if furniture != null:
 		return furniture
+	var ambiance := AmbianceModels.build(block, variant)
+	if ambiance != null:
+		return ambiance
+	var walls := WallDecorModels.build(block, variant)
+	if walls != null:
+		return walls
 	if ObjectShapes.is_curtain(block):
 		var kind := ObjectShapes.kind_of(block)
 		var tied: int = ObjectShapes.DRAWN.find_key(kind) if ObjectShapes.is_drawn(block) else kind
@@ -138,6 +144,9 @@ static func color_of(kind: int) -> Color:
 	var furniture := FurnitureModels.color_of(kind)
 	if furniture.a > 0.0:
 		return furniture
+	for color: Color in [AmbianceModels.color_of(kind), WallDecorModels.color_of(kind)]:
+		if color.a > 0.0:
+			return color
 	if ObjectShapes.is_curtain(kind):
 		return Color(LINEN[2])
 	match kind:

@@ -168,6 +168,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	local_player.client_world = world
 	world_view.client_world = world
+	world_view.live.clock = clock
 	RenderingServer.global_shader_parameter_set(&"cut_mask", _cut_mask)
 	RenderingServer.global_shader_parameter_set(&"cut_local", 0.0)
 	_setup_world()

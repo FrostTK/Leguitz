@@ -522,6 +522,36 @@ enum Id {
 	NIGHTSTAND,
 	PEDESTAL_TABLE,
 	TABLECLOTH,
+	# Ambiance.
+	CANDLE,
+	CANDELABRA,
+	CHANDELIER,
+	BEDSIDE_LAMP,
+	WALL_SCONCE,
+	FIREPLACE,
+	STOVE,
+	PAINTING,
+	PORTRAIT,
+	WALL_CLOCK,
+	MIRROR,
+	FRAMED_MAP,
+	DEER_TROPHY,
+	BEAR_TROPHY,
+	TAPESTRY,
+	SPICE_RACK,
+	COAT_RACK,
+	CUSHION,
+	FLOWER_POT,
+	WINDOW_BOX,
+	HOUSEPLANT,
+	BATHTUB,
+	SHOWER,
+	WASHBASIN,
+	GRANDFATHER_CLOCK,
+	TOY_CHEST,
+	PIANO,
+	CRADLE,
+	FOLDING_SCREEN,
 }
 ## What a tool is made for (Mining.tool_for: what it breaks faster).
 enum Tool { NONE, PICKAXE, AXE, SHOVEL, SWORD, HOE }
@@ -785,4 +815,8 @@ static func _build_placed_by() -> Dictionary:
 	for kind: int in BuildShapes.BEAMS:
 		for lying: int in BuildShapes.BEAMS[kind].slice(0, 2):
 			lookup[lying] = lookup[kind]
+	# A light put out, a shower running, a hearth lit: what placed it.
+	for pairs: Dictionary in [Decor.SWITCHED, Hearths.LIT]:
+		for placed: int in pairs:
+			lookup[pairs[placed]] = lookup[placed]
 	return lookup
