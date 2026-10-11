@@ -1087,6 +1087,40 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   BuildModels (DecorModels hands them). tiles.gd is exempt from gdlint's max-file-lines (`#
   gdlint: disable=max-file-lines`: the id registry, only appended to). Recipes: in SHAPED,
   Recipes.WALLS, BEAMS, the parquets generated per wood. The book: Home and garden (Materials).
+- Bedroom and living room (phase 8, step 7; rules in `Furniture`, src/sim/world/furniture.gd,
+  static, shared; models in FurnitureModels, which DecorModels hands them): what stores things
+  (Furniture.STORAGES: the chest, WARDROBE, DRESSER, BOOKCASE, COMMODE, WALL_CUPBOARD, CRATE,
+  BASKET) is a chest (ObjectShapes.is_chest; Mining.opens; its Inventory in ChunkData.chests);
+  `Chests` (src/sim/items/chests.gd, static, given the server: Msg.OPEN_CHEST, CHEST_CLICK,
+  SLOT_CLICK, SLOT_SPREAD, SLOT_COLLECT; `opened`, `changed`) moved out of GameServer. TALL
+  furniture (wardrobe, dresser, bookcase) stands two levels, its second cell a FURNITURE_TOP (no
+  model, NON_SOLID; Mining.placement as a door's; never aimed at, VoxelRay skips it, object_box
+  rises to the furniture's TOPS 32; never broken itself, GameServer turns to the one below;
+  Mining.object_cells by `Furniture.cells`). The BED's foot is the cell aimed at, its head
+  (BED_HEAD, facing the same way; no model, Items._placed_by maps it to the bed) behind it
+  (`head_of`, `foot_cell`); ChunkProps draws its 32-deep model over both. `Beds`
+  (src/sim/survival/beds.gd, static, given the server): Msg.SLEEP on a bed makes it where the
+  player wakes up (PlayerSession.bed, saved; Survival.get_up puts them beside it, `wake_spot`)
+  and at night (not with a Monster within SAFE_RANGE, not when the clock is synced or frozen:
+  Msg.notice HUD_SLEEP_*) lays them down (PlayerSession.sleeping, Msg.SLEEPING); `update` (every
+  tick): when every joined player has slept SLEEP_SECONDS, `morning` sets the clock to the next
+  WAKE_HOUR and wakes them; a hurt, the bed gone or Msg.WAKE wakes one. SEATS (chair, ARMCHAIR,
+  SOFA: a wide object, BENCH, STOOL, ROCKING_CHAIR; `seat_height`). The SHELF (wall-mounted) shows
+  Shelves.SLOTS things (`Shelves`, src/sim/world/shelves.gd, static, given the server: Msg.SHELF
+  puts one of what is in hand, empty-handed takes the last back; ChunkData.shelves: cell -> the
+  items, saved with the region, sent with the chunk; Msg.SHELF_ITEMS; `spill` from
+  GameServer.spill_contents). The TABLECLOTH item places TABLE_CLOTHED into a table aimed at
+  (Mining.fills; it drops the table and the cloth). Tints.dyed: Furniture.DYED (beds, armchairs,
+  sofas, tablecloths; Tints.handle tints the cell holding the model). Client: `FurnitureUse`
+  (src/client/interaction; GameClient.furniture, process_priority after Helm and VitalsView):
+  BlockInteraction.usable_here and use_target hand it seats, beds and shelves; it holds the body
+  on a seat (LocalPlayer.aboard, PlayerModel.seated) or lying in the bed (set_down; a darkening
+  `veil`) until the player moves or jumps (back where they stood; Msg.WAKE). `ShelvesView`
+  (src/client/items; GameClient.shelves, in the world root) draws the shelves' things
+  (ItemLibrary meshes) from the chunks (ClientMessages: CHUNK_DATA, CHUNK_UNLOAD, SHELF_ITEMS;
+  ClientWorld.set_shelf). Items.PLACES_BLOCK is ItemBlocks.PLACES_BLOCK (its own file, for
+  room). Recipes in SHAPED (Recipes.CLOTH: wool or linen). The book: Home and garden (Bedroom and
+  living room).
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made

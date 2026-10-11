@@ -156,6 +156,8 @@ static func object_box(block: int, cell: Vector3i) -> AABB:
 	if not rect.has_area():
 		return AABB(Vector3(tile.x, level, tile.y), Vector3(1.0, PLANT_HEIGHT, 1.0))
 	var levels := float(ObjectShapes.blocking_levels(block, ObjectShapes.variant_at(block, tile)))
+	# Tall furniture rises into the cell over it.
+	levels = maxf(levels, ObjectShapes.stand_height(block))
 	var size := GameConst.TILE_SIZE
 	return AABB(
 		Vector3(rect.position.x / size, level, rect.position.y / size),
@@ -180,8 +182,12 @@ static func _object_in(
 	var row := cell.y
 	var below := voxel
 	while row > maxi(0, cell.y - PlayerBody.MAX_OBJECT_LEVELS - 1):
-		# A door's top has no body: its door below rises into it.
-		if Voxels.is_object(below) and not Openings.is_top(Voxels.block_of(below)):
+		# A door's top has no body: its door below rises into it (tall
+		# furniture's top too).
+		var top := (
+			Openings.is_top(Voxels.block_of(below)) or Furniture.is_top(Voxels.block_of(below))
+		)
+		if Voxels.is_object(below) and not top:
 			var base := Vector3i(cell.x, row, cell.z)
 			var box := object_box(Voxels.block_of(below), base)
 			if box.end.y <= level:

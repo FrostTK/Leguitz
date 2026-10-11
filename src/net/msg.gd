@@ -58,6 +58,10 @@ const BOAT_HIT := "boat_hit"
 const NET := "net"
 const BOAT_PAINT := "boat_paint"
 const TINT := "tint"
+## Furniture: to sleep in a bed or get up, to put on a shelf or take back.
+const SLEEP := "sleep"
+const WAKE := "wake"
+const SHELF := "shelf"
 
 ## map_request() row for a map of the surface.
 const MAP_SURFACE := -1
@@ -102,6 +106,9 @@ const BOAT_HURT := "boat_hurt"
 const NOTICE := "notice"
 const BOAT_SCREEN := "boat_screen"
 const TINTED := "tinted"
+## A player lies in their bed or gets up; what a shelf holds.
+const SLEEPING := "sleeping"
+const SHELF_ITEMS := "shelf_items"
 
 
 ## The player hits the creature `id` with the hotbar slot `slot` in hand
@@ -402,6 +409,33 @@ static func tint(cell: Vector3i, slot: int, frame: bool) -> Dictionary:
 
 
 ## The tint of a cell changed (Tints.pack; 0: none).
+## The player sleeps in the bed in `cell` (or makes it where they wake up).
+static func sleep(cell: Vector3i) -> Dictionary:
+	return {"t": SLEEP, "cell": cell}
+
+
+## The sleeping player gets up.
+static func wake() -> Dictionary:
+	return {"t": WAKE}
+
+
+## The player is lying in their bed (its foot in `cell`), or got up.
+static func sleeping(cell: Vector3i, on: bool) -> Dictionary:
+	return {"t": SLEEPING, "cell": cell, "on": on}
+
+
+## The player puts one of what hotbar slot `slot` holds on the shelf in
+## `cell` (empty-handed: takes the last back).
+static func shelf(cell: Vector3i, slot: int) -> Dictionary:
+	return {"t": SHELF, "cell": cell, "slot": slot}
+
+
+## What the shelf in `cell` holds (Shelves.SLOTS items, NONE: empty; none
+## at all: an empty array).
+static func shelf_items(cell: Vector3i, items: PackedInt32Array) -> Dictionary:
+	return {"t": SHELF_ITEMS, "cell": cell, "items": items}
+
+
 static func tinted(cell: Vector3i, packed: int) -> Dictionary:
 	return {"t": TINTED, "cell": cell, "tint": packed}
 

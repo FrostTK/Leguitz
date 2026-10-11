@@ -51,6 +51,9 @@ var tints: Dictionary[Vector3i, int] = {}
 ## rug puts it there; when that goes (the cell set to air), the rug comes
 ## back (set_voxel: the server and the client's guesses alike).
 var rugs: Dictionary[Vector3i, int] = {}
+## What the shelves hold (cell -> Shelves.SLOTS items), saved with the
+## region and sent with the chunk.
+var shelves: Dictionary[Vector3i, PackedInt32Array] = {}
 
 
 func _init(chunk_coord := Vector2i.ZERO) -> void:
@@ -178,6 +181,7 @@ func duplicate_chunk() -> ChunkData:
 	copy.raised = raised.duplicate()
 	copy.tints = tints.duplicate()
 	copy.rugs = rugs.duplicate()
+	copy.shelves = shelves.duplicate()
 	copy.modified = modified
 	return copy
 
@@ -193,6 +197,7 @@ func to_dict() -> Dictionary:
 		"raised": raised,
 		"tints": tints,
 		"rugs": rugs,
+		"shelves": shelves,
 	}
 
 
@@ -220,6 +225,10 @@ static func from_dict(data: Dictionary) -> ChunkData:
 		for cell: Variant in cells:
 			if cell is Vector3i:
 				into[cell] = int(cells[cell])
+	var shelves: Dictionary = data.get("shelves", {})
+	for cell: Variant in shelves:
+		if cell is Vector3i and shelves[cell] is PackedInt32Array:
+			chunk.shelves[cell] = shelves[cell]
 	return chunk
 
 

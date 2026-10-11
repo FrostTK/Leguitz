@@ -219,6 +219,9 @@ static func of(voxel: int, tile: Vector2i, rng: RandomNumberGenerator) -> Array[
 	elif ObjectShapes.base_kind(block) == Tiles.Block.TORCH_BRACKET_LIT:
 		result.append(Vector2i(Items.Id.TORCH_BRACKET, 1))
 		result.append(Vector2i(Items.Id.TORCH, 1))
+	elif block == Tiles.Block.TABLE_CLOTHED:
+		result.append(Vector2i(Items.Id.TABLE, 1))
+		result.append(Vector2i(Items.Id.TABLECLOTH, 1))
 	elif Items.item_placing(ObjectShapes.base_kind(block)) != Items.Id.NONE:
 		# What players place gives itself back, any way it faces, open or
 		# shut.

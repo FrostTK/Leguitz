@@ -152,7 +152,8 @@ Godot **4.7.2** (GDScript), rendu Forward+. 259 tests unitaires, lint propre.
 | 8.4 Portes, trappes, échelles, volets | Des **portes** de deux niveaux de haut, une par essence (six planches d'un même bois : chêne à quatre panneaux, bouleau à petite fenêtre, épicéa rustique à écharpe, chêne noir clouté, jungle à lattes, acacia à fenêtre cintrée), une **porte vitrée** (du verre sur du chêne, elle laisse entrer le jour) et une **porte en fer forgé** ; elles se posent face au joueur, au nu du mur, s'ouvrent et se ferment au clic droit (ou E) ; **côte à côte, deux portes font une porte double** (gonds de part et d'autre) qui s'ouvre d'un seul geste. Fermée, une porte ne laisse passer personne ni la lumière du jour. Des **trappes** (bois, fer) se posent contre le bord d'un trou dans le sol : fermées on marche dessus, ouvertes on descend. Des **échelles** au mur : on grimpe en sautant ou en avançant contre elle, Maj tient sur place, on glisse doucement sinon, sans jamais se faire mal ; une échelle sous une trappe mène à la cave et on en ressort sur le plancher. Des **volets** à l'extérieur des fenêtres, à persiennes, qui se ferment au clic droit (fermés ils arrêtent le jour) et **se peignent** au pot. Des **barreaux en fer forgé** et des **garde-corps** (bois, fer forgé) qui se raccordent entre eux et aux murs (et aux vitres pour les barreaux) : personne ne passe par-dessus, on voit au travers. Le livre : chapitre Maison, « Portes, échelles et volets » | `fb62623` |
 | Le verre montre l'eau | Demandé par le propriétaire (à travers le verre, on voyait le fond de la rivière, pas l'eau) : le verre ne recopie plus l'image de l'écran, faite avant que l'eau soit dessinée ; il se pose maintenant par-dessus ce qui est derrière lui, en deux passes (sa teinte, puis son reflet du ciel et l'éclat du soleil). L'eau se voit à travers le verre, les vitres et les fenêtres, et aussi le verre derrière du verre (deux épaisseurs se teintent l'une l'autre) et la pluie. Le verre ancien ne déforme plus ce qui est derrière lui : il ondule par des reflets en vagues. La brume lointaine efface la teinte comme avant | `5965810` |
 | 8.5 Toitures | Quatre **couvertures** : des **tuiles** en terre cuite (trois briques), des **ardoises** (trois ardoises des abîmes en font deux), des **bardeaux** de bois (deux bûches en font deux) et du **chaume** (quatre blés), en blocs pleins et en pièces de toit : la **pente** à 45° (elle monte en s'éloignant du joueur, Maj dans l'autre sens) qui tourne toute seule ses **coins** comme les escaliers (**arêtiers** dehors, **noues** dedans), le **faîtage** (le haut du toit : ses bouts se font en **croupe** là où le toit continue plus bas, jusqu'à la pyramide, et les faîtages côte à côte se raccordent et **se croisent** pour les toits en T et en croix ; une **faîtière** court dessus), la **pente douce** (un niveau sur deux cases, basse puis haute), la **rive** (des tuiles relevées le long d'un pignon ouvert, dont le triangle prend la texture du mur dessous). On **marche sur les toits**, ils arrêtent le jour et la pluie, la **neige** s'y pose en hiver, la vue en coupe les enlève au-dessus du joueur ; dessous, le grenier est en planches. Des **lucarnes** (une fenêtre dans un petit pignon, à la place d'une pente, qui éclaire le grenier) et une **cheminée** en briques qui s'empile à travers le toit, coiffée de deux pots, et qui **fume** quand un feu de camp ou un four allumé brûle dessous. Le livre : chapitre Maison, « Toitures » | `c483955` |
-| 8.6 Nouveaux matériaux | Vingt-cinq matières : des **pavés** (pierre et gravier), de la **pierre de taille**, des **pierres moussues**, du **plâtre** qui se **peint** au pot (l'arrosoir le lave), trois **colombages** (droit, en croix, en écharpe : seul leur plâtre prend la couleur, les poutres restent en bois), du **torchis**, du **parquet** de chaque bois, à lames ou à **chevrons**, un **carrelage en damier**, des **tomettes**, de la **terre cuite** (le four d'usine la cuit), de l'**ardoise polie** et des **briques de grès**. Les huit matières de maçonnerie ont leurs **escaliers et dalles** (le plâtre aussi peint). Des **quarts de bloc** (petites marches, rebords de fenêtre) en chêne, épicéa, pierre lisse, briques de pierre, briques et plâtre. Des **murets** (pavés, briques de pierre, briques, pierres moussues, grès) qui se raccordent comme les barrières, aux murs et aux portails, et s'empilent ; des **piliers** (colonne de pierre cannelée, pilier de briques, poteau de bois) avec leur base et leur chapiteau ; des **poutres** (chêne, épicéa, chêne noir) couchées dans le sens du côté visé ou debout. Le livre : chapitre Maison, « Matériaux » | « New materials » |
+| 8.6 Nouveaux matériaux | Vingt-cinq matières : des **pavés** (pierre et gravier), de la **pierre de taille**, des **pierres moussues**, du **plâtre** qui se **peint** au pot (l'arrosoir le lave), trois **colombages** (droit, en croix, en écharpe : seul leur plâtre prend la couleur, les poutres restent en bois), du **torchis**, du **parquet** de chaque bois, à lames ou à **chevrons**, un **carrelage en damier**, des **tomettes**, de la **terre cuite** (le four d'usine la cuit), de l'**ardoise polie** et des **briques de grès**. Les huit matières de maçonnerie ont leurs **escaliers et dalles** (le plâtre aussi peint). Des **quarts de bloc** (petites marches, rebords de fenêtre) en chêne, épicéa, pierre lisse, briques de pierre, briques et plâtre. Des **murets** (pavés, briques de pierre, briques, pierres moussues, grès) qui se raccordent comme les barrières, aux murs et aux portails, et s'empilent ; des **piliers** (colonne de pierre cannelée, pilier de briques, poteau de bois) avec leur base et leur chapiteau ; des **poutres** (chêne, épicéa, chêne noir) couchées dans le sens du côté visé ou debout. Le livre : chapitre Maison, « Matériaux » | `f698d06` |
+| 8.7 Chambre et salon | Un **lit** de deux cases (trois tissus sur trois planches), sa couverture **teintable** : un clic droit en fait l'endroit où l'on se **réveille** après avoir perdu connaissance, et la nuit on s'y **couche** (l'écran s'assombrit) : quand tous les joueurs dorment, **la nuit passe** (pas avec des monstres autour, ni en temps synchronisé ou figé). Des **rangements** qui s'ouvrent comme un coffre : **armoire** et **bibliothèque** (deux niveaux de haut), **vaisselier** et ses assiettes, **commode**, **placard mural**, **caisses** qui s'empilent, **panier**. Une **étagère** au mur où l'on **pose** jusqu'à trois objets **qui se voient**. Des **sièges** où l'on **s'assoit** (clic droit ; on se lève en bougeant) : chaise, **fauteuil** et **canapé** (deux cases) teintables, **banc**, **tabouret**, **rocking-chair**. Des **tables** : basse, **bureau**, **table de nuit**, **guéridon**, et une **nappe** teintable qui se pose sur une table. Le livre : chapitre Maison, « Chambre et salon » | « Bedroom and living room » |
 
 **Pas encore fait** (prévu) : nouveaux matériaux et décoration (phase 8),
 structures, menus de départ, sons, mode Arcade (en attente), mobile.
@@ -279,15 +280,16 @@ xvfb-run -a -s "-screen 0 960x540x24" godot --path . --audio-driver Dummy --reso
 
 ---
 
-## 5. Prochaine étape au « go » : Phase 8, étape 7 (chambre et salon)
+## 5. Prochaine étape au « go » : Phase 8, étape 8 (ambiance)
 
 **La phase 7 est terminée** (étapes 1 à 11 ci-dessous). La **phase 8, Construction et
 décoration**, est en cours : les étapes 1 (escaliers et dalles), 2 (verre et vitres, la teinte
 par case), 3 (rideaux et tapis), 4 (portes, trappes, échelles, volets, barreaux, garde-corps),
-5 (toitures) et 6 (nouveaux matériaux) sont faites ; au prochain « go », l'**étape 7** (chambre
-et salon : le lit où l'on dort, les rangements, les étagères qui montrent les objets posés, les
-assises et les tables ; voir la section 6, où sont les décisions du propriétaire et tout le
-découpage).
+5 (toitures), 6 (nouveaux matériaux) et 7 (chambre et salon) sont faites ; au prochain « go »,
+l'**étape 8** (ambiance : le lustre, les bougies, la lampe de chevet, l'applique ; la cheminée qui
+éclaire, fume et réchauffe, le poêle ; les tableaux, l'horloge, le miroir, la carte encadrée, les
+trophées, la tapisserie ; les pots de fleurs et plantes ; la salle de bain ; voir la section 6,
+où sont les décisions du propriétaire et tout le découpage).
 
 ### Phase 7 — Agriculture et élevage (terminée)
 
@@ -709,8 +711,17 @@ barrières et portails ; **pas encore de portes, d'escaliers ni de dalles**.
    les arches (demi-cercle sur deux cases), des escaliers et dalles de parquet, des murets en
    plâtre peints, des colonnes de bois sculptées, des poutres moulurées, des coins de quarts de
    bloc, un plâtre qui s'écaille avec le temps, de la mousse qui gagne les pierres.
-7. **Chambre et salon** : le lit (dormir), les rangements, les étagères d'exposition, les assises
-   et les tables.
+7. ✅ **Chambre et salon** (voir section 3, ligne 8.7). Fait comme prévu, avec ces choix : le lit
+   se pose pied devant le joueur, tête derrière ; un clic droit fixe toujours le réveil, et la
+   nuit fait dormir ; dormir saute la nuit pour tout le monde quand tous dorment (en solo,
+   2,5 secondes) ; tous les rangements gardent 27 places, comme le coffre ; armoire, vaisselier
+   et bibliothèque font deux niveaux ; l'étagère montre trois objets ; s'asseoir se fait côté
+   client (le serveur voit la position) ; les coussins restent à faire (textiles, étape 8). Pas
+   fait (à proposer) : des lits doubles et lits d'enfant, des draps et oreillers à teindre à
+   part, le rocking-chair qui se balance, s'asseoir à deux sur un canapé (en multijoueur), des
+   rangements aux tailles différentes (le panier plus petit, l'armoire plus grande), des
+   étagères sur pied et des vitrines, des livres qu'on écrit et qu'on range dans la
+   bibliothèque, se reposer pour guérir plus vite.
 8. **Ambiance** : lumières (lustre, bougies), cheminée, tableaux, horloge, miroir, plantes en pot,
    salle de bain.
 9. **Extérieur**.
@@ -773,8 +784,10 @@ pousse). Elle reprendra quand le propriétaire le dira.
 
 ## 7. Points en suspens et retours attendus
 
-- **Taille des fichiers** : `src/sim/game_server.gd` fait 992 lignes (limite 1000) : sortir du code
-  (par exemple les coffres ou l'envoi des chunks dans une classe à part) avant d'y ajouter.
+- **Taille des fichiers** : `src/client/interaction/block_interaction.gd` fait 983 lignes (limite
+  1000) : y sortir du code (par exemple ce que fait le clic droit sur les animaux, les machines,
+  la récolte) avant d'y ajouter ; `src/sim/game_server.gd` en fait 907 (les coffres en sont
+  sortis : Chests).
   `src/sim/world/tiles.gd` (la liste des numéros de blocs, qu'on ne fait qu'allonger) est exempté
   de la limite (commentaire `gdlint: disable=max-file-lines` en tête).
 - **Carte graphique** : mesuré sur le monde du propriétaire (ligne « Économies et Extrême ») : le

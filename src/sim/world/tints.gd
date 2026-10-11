@@ -81,9 +81,14 @@ static func painted(block: int) -> bool:
 	return PAINTED.has(block)
 
 
-## Whether a block's cloth takes the tint (dyed: curtains, a rug).
+## Whether a block's cloth takes the tint (dyed: curtains, a rug, a bed's
+## sheets, an armchair's or a sofa's cover, a tablecloth).
 static func dyed(block: int) -> bool:
-	return ObjectShapes.is_curtain(block) or block == Tiles.Block.RUG
+	return (
+		ObjectShapes.is_curtain(block)
+		or block == Tiles.Block.RUG
+		or Furniture.DYED.has(ObjectShapes.base_kind(block))
+	)
 
 
 ## A cell's tint (packed; 0: none) in the loaded world.
@@ -104,6 +109,10 @@ static func handle(
 	var frame := bool(message.get("frame", false))
 	var world := server.world
 	var block := Voxels.block_of(world.voxel_at(cell))
+	if dyed(block):
+		# Furniture in two cells: the one holding its model (a bed's foot).
+		cell = Mining.object_cells(cell, world.voxel_at(cell), world.voxel_at)[0]
+		block = Voxels.block_of(world.voxel_at(cell))
 	if not session.joined or not session.alive() or not tintable(block):
 		return true
 	if Mining.reach_to(session.position, session.height, cell) > Mining.REACH + 1.0:

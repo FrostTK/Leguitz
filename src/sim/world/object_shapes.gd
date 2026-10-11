@@ -245,8 +245,9 @@ const WIDE_KINDS := {
 	Tiles.Block.WORKBENCH: [Tiles.Block.WORKBENCH_END_X, Tiles.Block.WORKBENCH_END_Z],
 	Tiles.Block.BIG_GATE: [Tiles.Block.BIG_GATE_END_X, Tiles.Block.BIG_GATE_END_Z],
 	Tiles.Block.BIG_GATE_OPEN: [Tiles.Block.BIG_GATE_OPEN_END_X, Tiles.Block.BIG_GATE_OPEN_END_Z],
+	Tiles.Block.SOFA: [Tiles.Block.SOFA_END_X, Tiles.Block.SOFA_END_Z],
 }
-const WIDE_DEPTH := {Tiles.Block.WORKBENCH: 14, Tiles.Block.BIG_GATE: 6}
+const WIDE_DEPTH := {Tiles.Block.WORKBENCH: 14, Tiles.Block.BIG_GATE: 6, Tiles.Block.SOFA: 14}
 const BENCH_DEPTH := 14
 ## Chests and furnaces: so many voxels square, a level high.
 const BOX_SIZE := 14
@@ -267,6 +268,24 @@ const TOPS := {
 	Tiles.Block.TOILET: 8,
 	Tiles.Block.TABLE: 14,
 	Tiles.Block.CHAIR: 10,
+	Tiles.Block.BED: 9,
+	Tiles.Block.BED_HEAD: 9,
+	Tiles.Block.WARDROBE: 32,
+	Tiles.Block.DRESSER: 32,
+	Tiles.Block.BOOKCASE: 32,
+	Tiles.Block.COMMODE: 14,
+	Tiles.Block.CRATE: 16,
+	Tiles.Block.BASKET: 8,
+	Tiles.Block.ARMCHAIR: 9,
+	Tiles.Block.SOFA: 9,
+	Tiles.Block.BENCH: 8,
+	Tiles.Block.STOOL: 9,
+	Tiles.Block.ROCKING_CHAIR: 9,
+	Tiles.Block.COFFEE_TABLE: 7,
+	Tiles.Block.DESK: 13,
+	Tiles.Block.NIGHTSTAND: 10,
+	Tiles.Block.PEDESTAL_TABLE: 13,
+	Tiles.Block.TABLE_CLOTHED: 14,
 	Tiles.Block.COMPOSTER: 14,
 	Tiles.Block.PUMPKIN: 12,
 	Tiles.Block.MELON: 11,
@@ -319,6 +338,14 @@ const FOOTPRINTS := {
 	Tiles.Block.TOILET: 10,
 	Tiles.Block.TABLE: 14,
 	Tiles.Block.CHAIR: 12,
+	Tiles.Block.BED: 16,
+	Tiles.Block.BED_HEAD: 16,
+	Tiles.Block.CRATE: 16,
+	Tiles.Block.BASKET: 10,
+	Tiles.Block.STOOL: 8,
+	Tiles.Block.COFFEE_TABLE: 14,
+	Tiles.Block.PEDESTAL_TABLE: 10,
+	Tiles.Block.TABLE_CLOTHED: 14,
 	Tiles.Block.FENCE: 16,
 	Tiles.Block.GATE: 16,
 	Tiles.Block.CAMPFIRE: 12,
@@ -440,6 +467,8 @@ const WALL_MOUNTED := {
 	Tiles.Block.LADDER: true,
 	Tiles.Block.SHUTTERS: true,
 	Tiles.Block.SHUTTERS_CLOSED: true,
+	Tiles.Block.WALL_CUPBOARD: true,
+	Tiles.Block.SHELF: true,
 }
 ## What hangs from the cube above it (it falls with it, not with the
 ## floor).
@@ -524,6 +553,12 @@ const SINGLE := {
 	Tiles.Block.BEAVER_DAM: true,
 	Tiles.Block.TURTLE_EGGS: true,
 	Tiles.Block.TABLE: true,
+	Tiles.Block.CRATE: true,
+	Tiles.Block.BASKET: true,
+	Tiles.Block.STOOL: true,
+	Tiles.Block.COFFEE_TABLE: true,
+	Tiles.Block.PEDESTAL_TABLE: true,
+	Tiles.Block.TABLE_CLOTHED: true,
 	Tiles.Block.CAMPFIRE: true,
 	Tiles.Block.TORCH: true,
 	Tiles.Block.LANTERN: true,
@@ -652,9 +687,10 @@ static func is_bench_left(block: int) -> bool:
 	return kind_of(block) == Tiles.Block.WORKBENCH
 
 
-## A chest, whichever way it faces.
+## A chest or what stores things as one (Furniture.STORAGES), whichever
+## way it faces.
 static func is_chest(block: int) -> bool:
-	return kind_of(block) == Tiles.Block.CHEST
+	return Furniture.is_storage(block)
 
 
 static func is_shipyard(block: int) -> bool:
@@ -752,7 +788,9 @@ static func fence_joins(voxel: int) -> bool:
 ## share one; -1 for the blocks showing none (a wide object's right end, a
 ## door's top).
 static func model_block(block: int) -> int:
-	if _wide_ends.has(block) or Openings.is_top(block):
+	if _wide_ends.has(block) or Openings.is_top(block) or Furniture.is_top(block):
+		return -1
+	if kind_of(block) == Tiles.Block.BED_HEAD:
 		return -1
 	return kind_of(block) if _facing.has(block) else block
 
@@ -906,6 +944,7 @@ static func _named_kinds() -> Dictionary:
 	named.append(Tiles.Block.LADDER)
 	for covering: Array in RoofBlocks.COVERINGS:
 		named.append(covering[3])
+	named.append_array(Furniture.FACING)
 	for kind: int in named:
 		var name := String(Tiles.Block.find_key(kind))
 		if FACING_KINDS.has(kind) or not Tiles.Block.has(name + "_WEST"):

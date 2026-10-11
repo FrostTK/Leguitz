@@ -95,6 +95,15 @@ const CUBE_BLOCKS := {
 
 const NON_SOLID_BLOCKS := {
 	Tiles.Block.AIR: true,
+	Tiles.Block.FURNITURE_TOP: true,
+	Tiles.Block.SHELF: true,
+	Tiles.Block.SHELF_WEST: true,
+	Tiles.Block.SHELF_NORTH: true,
+	Tiles.Block.SHELF_EAST: true,
+	Tiles.Block.WALL_CUPBOARD: true,
+	Tiles.Block.WALL_CUPBOARD_WEST: true,
+	Tiles.Block.WALL_CUPBOARD_NORTH: true,
+	Tiles.Block.WALL_CUPBOARD_EAST: true,
 	Tiles.Block.MOLEHILL: true,
 	Tiles.Block.TURTLE_EGGS: true,
 	Tiles.Block.TURTLE_EGGS_1: true,

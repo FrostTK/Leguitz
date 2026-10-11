@@ -18,10 +18,12 @@ static func handle(client: GameClient, message: Dictionary) -> void:
 			var chunk := ChunkData.from_dict(message["chunk"])
 			client.world.store(chunk)
 			client.world_view.show_chunk(chunk)
+			client.shelves.show_chunk(chunk)
 			client.weather_effects.terrain_changed()
 		Msg.CHUNK_UNLOAD:
 			client.world.remove(message["coord"])
 			client.world_view.remove_chunk(message["coord"])
+			client.shelves.remove_chunk(message["coord"])
 		Msg.TIME_STATE:
 			client.clock.load_dict(message["clock"])
 			if client.pause_menu.visible:
@@ -40,6 +42,11 @@ static func handle(client: GameClient, message: Dictionary) -> void:
 		Msg.TINTED:
 			client.world.set_tint(message["cell"], message["tint"])
 			client.world_view.voxel_changed(message["cell"])
+		Msg.SHELF_ITEMS:
+			client.world.set_shelf(message["cell"], message["items"])
+			client.shelves.refresh(message["cell"])
+		Msg.SLEEPING:
+			client.furniture.on_sleeping(message["cell"], message["on"])
 		Msg.BLOCK_CHANGED:
 			client.interaction.on_block_changed(message["cell"], message["voxel"])
 			client.weather_effects.terrain_changed()

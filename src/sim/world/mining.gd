@@ -101,6 +101,26 @@ const BLOCK_SECONDS := {
 	Tiles.Block.SHINGLE_DORMER: 1.5,
 	Tiles.Block.THATCH_DORMER: 1.5,
 	Tiles.Block.CHIMNEY: 4.0,
+	Tiles.Block.BED: 1.0,
+	Tiles.Block.BED_HEAD: 1.0,
+	Tiles.Block.WARDROBE: 2.5,
+	Tiles.Block.DRESSER: 2.5,
+	Tiles.Block.BOOKCASE: 2.5,
+	Tiles.Block.COMMODE: 1.5,
+	Tiles.Block.WALL_CUPBOARD: 1.5,
+	Tiles.Block.CRATE: 1.5,
+	Tiles.Block.BASKET: 0.6,
+	Tiles.Block.SHELF: 1.0,
+	Tiles.Block.ARMCHAIR: 1.5,
+	Tiles.Block.SOFA: 1.5,
+	Tiles.Block.BENCH: 1.5,
+	Tiles.Block.STOOL: 1.0,
+	Tiles.Block.ROCKING_CHAIR: 1.5,
+	Tiles.Block.COFFEE_TABLE: 1.5,
+	Tiles.Block.DESK: 1.5,
+	Tiles.Block.NIGHTSTAND: 1.5,
+	Tiles.Block.PEDESTAL_TABLE: 1.5,
+	Tiles.Block.TABLE_CLOTHED: 1.5,
 	Tiles.Block.COBBLESTONE: 3.5,
 	Tiles.Block.ASHLAR: 4.0,
 	Tiles.Block.MOSSY_STONE: 3.5,
@@ -327,6 +347,26 @@ const AXE_BLOCKS := {
 	Tiles.Block.SLATE_DORMER: true,
 	Tiles.Block.SHINGLE_DORMER: true,
 	Tiles.Block.THATCH_DORMER: true,
+	Tiles.Block.BED: true,
+	Tiles.Block.BED_HEAD: true,
+	Tiles.Block.WARDROBE: true,
+	Tiles.Block.DRESSER: true,
+	Tiles.Block.BOOKCASE: true,
+	Tiles.Block.COMMODE: true,
+	Tiles.Block.WALL_CUPBOARD: true,
+	Tiles.Block.CRATE: true,
+	Tiles.Block.BASKET: true,
+	Tiles.Block.SHELF: true,
+	Tiles.Block.ARMCHAIR: true,
+	Tiles.Block.SOFA: true,
+	Tiles.Block.BENCH: true,
+	Tiles.Block.STOOL: true,
+	Tiles.Block.ROCKING_CHAIR: true,
+	Tiles.Block.COFFEE_TABLE: true,
+	Tiles.Block.DESK: true,
+	Tiles.Block.NIGHTSTAND: true,
+	Tiles.Block.PEDESTAL_TABLE: true,
+	Tiles.Block.TABLE_CLOTHED: true,
 	Tiles.Block.TIMBER_FRAME: true,
 	Tiles.Block.TIMBER_FRAME_CROSS: true,
 	Tiles.Block.TIMBER_FRAME_DIAGONAL: true,
@@ -414,6 +454,11 @@ const FLOOR_OBJECTS := {
 	Tiles.Block.STONE_COLUMN: true,
 	Tiles.Block.BRICK_PILLAR: true,
 	Tiles.Block.WOOD_POST: true,
+	Tiles.Block.CRATE: true,
+	Tiles.Block.BASKET: true,
+	Tiles.Block.STOOL: true,
+	Tiles.Block.COFFEE_TABLE: true,
+	Tiles.Block.PEDESTAL_TABLE: true,
 }
 ## What stacks on itself (a chimney, walls, pillars), not only on a cube.
 const STACKING := {
@@ -426,6 +471,7 @@ const STACKING := {
 	Tiles.Block.STONE_COLUMN: true,
 	Tiles.Block.BRICK_PILLAR: true,
 	Tiles.Block.WOOD_POST: true,
+	Tiles.Block.CRATE: true,
 }
 
 ## Objects set over still water (a fish trap), not on the ground.
@@ -440,6 +486,7 @@ static func can_break(voxel: int, row: int) -> bool:
 		and voxel != Voxels.UNKNOWN
 		and not Voxels.is_liquid(voxel)
 		and not Openings.is_top(Voxels.block_of(voxel))
+		and not Furniture.is_top(Voxels.block_of(voxel))
 	)
 
 
@@ -460,6 +507,7 @@ static func can_place(voxel: int) -> bool:
 		or block == Tiles.Block.TURTLE_EGGS
 		or ON_WATER.has(block)
 		or BuildShapes.is_beam(block)
+		or block == Tiles.Block.TABLE_CLOTHED
 	)
 
 
@@ -506,15 +554,25 @@ static func placement(
 		return {cell: Voxels.of_block(Tiles.Block.LANTERN_HANGING)}
 	if block == Tiles.Block.LANTERN and face.y == 0:
 		return _hung(cell, Tiles.Block.LANTERN_WALL, front, voxel_at)
-	if Openings.is_door(block):
+	if Openings.is_door(block) or Furniture.is_tall(block):
 		# Two levels: its cell and the one over it, both free.
 		var over: int = voxel_at.call(cell + Vector3i.UP)
 		if not _bench_room(cell, voxel_at) or not is_replaceable(over) or Voxels.is_liquid(over):
 			return {}
 		var door := ObjectShapes.facing(kind, front)
-		return {
-			cell: Voxels.of_block(door), cell + Vector3i.UP: Voxels.of_block(Openings.top_of(door))
-		}
+		var top := Tiles.Block.FURNITURE_TOP if Furniture.is_tall(block) else Openings.top_of(door)
+		return {cell: Voxels.of_block(door), cell + Vector3i.UP: Voxels.of_block(top)}
+	if kind == Tiles.Block.BED:
+		# Its foot in the cell aimed at, its head behind it.
+		var head := cell - Vector3i(front.x, 0, front.y)
+		if not _bench_room(cell, voxel_at) or not _bench_room(head, voxel_at):
+			return {}
+		var foot := ObjectShapes.facing(kind, front)
+		return {cell: Voxels.of_block(foot), head: Voxels.of_block(Furniture.head_of(foot))}
+	if block == Tiles.Block.TABLE_CLOTHED:
+		# A tablecloth on the table aimed at.
+		var table := Voxels.of_block(Tiles.Block.TABLE)
+		return {cell: voxel} if voxel_at.call(cell) == table else {}
 	if ObjectShapes.WIDE_KINDS.has(kind):
 		var left := ObjectShapes.facing(kind, front)
 		var right := ObjectShapes.wide_right(left)
@@ -617,6 +675,8 @@ static func fills(there: int, voxel: int) -> bool:
 		return not is_rug(voxel)
 	if Farming.bed_of(block) == Farming.Bed.TRELLIS and Farming.SOWN.has(block):
 		return Voxels.block_of(there) == Tiles.Block.TRELLIS
+	if block == Tiles.Block.TABLE_CLOTHED:
+		return Voxels.block_of(there) == Tiles.Block.TABLE
 	return (
 		block == Tiles.Block.TORCH
 		and ObjectShapes.kind_of(Voxels.block_of(there)) == Tiles.Block.TORCH_BRACKET
@@ -710,6 +770,10 @@ static func front_towards(cell: Vector3i, feet: Vector2) -> Vector2i:
 ## ends of a wide object (a workbench, a big gate), else the cell alone.
 static func object_cells(cell: Vector3i, voxel: int, voxel_at: Callable) -> Array[Vector3i]:
 	var block := Voxels.block_of(voxel)
+	# A bed's foot and head, tall furniture and its top.
+	var furniture := Furniture.cells(cell, block, voxel_at)
+	if not furniture.is_empty():
+		return furniture
 	# A door and its top, either aimed at.
 	if Openings.is_top(block):
 		var below := cell + Vector3i.DOWN

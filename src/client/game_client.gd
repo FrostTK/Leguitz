@@ -113,6 +113,9 @@ var angler := Angler.new()
 ## The boats, and the one the player is aboard.
 var boats := BoatsView.new()
 var helm := Helm.new()
+## Sitting, sleeping, a shelf's things put and taken; what lies on them.
+var furniture := FurnitureUse.new()
+var shelves := ShelvesView.new()
 var item_icons := ItemIcons.new()
 ## The arm and what is in hand in first person (a child of the camera).
 var held_view := HeldView.new()
@@ -190,6 +193,9 @@ func _ready() -> void:
 	dropped_items.library = items
 	dropped_items.local_player = local_player
 	world_root.add_child(dropped_items)
+	shelves.library = items
+	shelves.world = world
+	world_root.add_child(shelves)
 	world_root.add_child(creatures)
 	arrows.library = items
 	arrows.client_world = world
@@ -202,6 +208,8 @@ func _ready() -> void:
 	boats.client = self
 	world_root.add_child(boats)
 	helm.client = self
+	furniture.client = self
+	add_child(furniture)
 	add_child(helm)
 	hud_clock.clock = clock
 	pause_menu.clock = clock
@@ -221,6 +229,7 @@ func _ready() -> void:
 	_ui_root.add_child(modes.banner)
 	_ui_root.add_child(archer.meter)
 	_ui_root.add_child(helm.meter)
+	_ui_root.add_child(furniture.veil)
 	_ui_root.add_child(hotbar)
 	_ui_root.add_child(vitals.screen)
 	_ui_root.add_child(chat)

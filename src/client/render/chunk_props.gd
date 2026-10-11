@@ -84,6 +84,10 @@ static func _add(
 	if ObjectShapes.is_wide_left(block):
 		var right := ObjectShapes.wide_right(block)
 		foot += Vector3(right.x, 0.0, right.y) * 0.5
+	if ObjectShapes.kind_of(block) == Tiles.Block.BED:
+		# Over its foot and its head behind it.
+		var front := ObjectShapes.front_of(block)
+		foot -= Vector3(front.x, 0.0, front.y) * 0.5
 	var shade := 0.93 + ((h >> 16) & 15) / 15.0 * 0.14
 	var warmth := 0.97 + ((h >> 20) & 7) / 7.0 * 0.06
 	# Its wind phase, after the sky light it stands in (see voxel.gdshader).

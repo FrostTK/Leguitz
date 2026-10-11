@@ -1194,3 +1194,34 @@ BOOK_HOME_WALLS,"Walls (six stones make six): they join one another, the walls a
 BOOK_HOME_PILLARS,"Pillars (two blocks make two): a stone column, a brick pillar, a wooden post (two logs). Stacked, their base is at the foot and their capital at the head.","Piliers (deux blocs en font deux) : une colonne de pierre, un pilier de briques, un poteau de bois (deux bûches). Empilés, leur base est au pied et leur chapiteau en haut."
 BOOK_HOME_BEAMS,"Beams (three logs make three): they lie along the side you aim at, or stand up, and need nothing under them: frameworks, ceilings.","Poutres (trois bûches en font trois) : elles se couchent le long du côté visé, ou se dressent, et n'ont besoin de rien dessous : charpentes, plafonds."
 BOOK_CRAFT_QUARTERS,Quarter blocks,Quarts de bloc
+ITEM_BED,Bed,Lit
+ITEM_WARDROBE,Wardrobe,Armoire
+ITEM_DRESSER,Dresser,Vaisselier
+ITEM_BOOKCASE,Bookcase,Bibliothèque
+ITEM_COMMODE,Chest of drawers,Commode
+ITEM_WALL_CUPBOARD,Wall cupboard,Placard mural
+ITEM_CRATE,Crate,Caisse
+ITEM_BASKET,Basket,Panier
+ITEM_SHELF,Display shelf,Étagère
+ITEM_ARMCHAIR,Armchair,Fauteuil
+ITEM_SOFA,Sofa,Canapé
+ITEM_BENCH,Bench,Banc
+ITEM_STOOL,Stool,Tabouret
+ITEM_ROCKING_CHAIR,Rocking chair,Rocking-chair
+ITEM_COFFEE_TABLE,Coffee table,Table basse
+ITEM_DESK,Desk,Bureau
+ITEM_NIGHTSTAND,Nightstand,Table de nuit
+ITEM_PEDESTAL_TABLE,Pedestal table,Guéridon
+ITEM_TABLECLOTH,Tablecloth,Nappe
+HUD_BED_SPAWN,You will wake up here.,Tu te réveilleras ici.
+HUD_SLEEP_DAY,You can only sleep at night.,On ne dort que la nuit.
+HUD_SLEEP_CLOCK,Time does not run by itself here: no sleeping the night away.,Ici le temps ne passe pas tout seul : pas de nuit à dormir.
+HUD_SLEEP_MONSTERS,You cannot sleep: monsters are about.,Impossible de dormir : des monstres rôdent.
+HUD_GOOD_MORNING,Good morning!,Bonjour !
+HUD_SIT_HOW,Move or jump to get up.,Bouge ou saute pour te lever.
+BOOK_HOME_ROOMS,Bedroom and living room,Chambre et salon
+BOOK_HOME_BED,"Bed (three cloths over three planks): two tiles long, its foot where you place it. A right click (or {use}) makes it where you wake up if you pass out; at night, you sleep: when every player sleeps, the night passes. Not with monsters about. Its blanket takes a pot of paint.","Lit (trois tissus sur trois planches) : deux cases de long, son pied là où tu le poses. Un clic droit (ou {use}) en fait l'endroit où tu te réveilles si tu perds connaissance ; la nuit, tu dors : quand tous les joueurs dorment, la nuit passe. Pas avec des monstres autour. Sa couverture prend un pot de peinture."
+BOOK_HOME_STORAGE,"Storage, opened like a chest: a wardrobe (two chests, two levels high), a dresser with its plates, a bookcase (leather), a chest of drawers, a wall cupboard, a crate (they stack), a basket.","Rangements, qui s'ouvrent comme un coffre : une armoire (deux coffres, deux niveaux de haut), un vaisselier et ses assiettes, une bibliothèque (du cuir), une commode, un placard mural, une caisse (elles s'empilent), un panier."
+BOOK_HOME_SHELF,"Display shelf (on a wall): a right click puts one of what you hold on it, three at most; empty-handed, it gives you the last one back.","Étagère (au mur) : un clic droit y pose un de ce que tu tiens, trois au plus ; les mains vides, elle te rend le dernier."
+BOOK_HOME_SEATS,"Seats: a right click (or {use}) sits you down on a chair, an armchair, a sofa (two tiles), a bench, a stool, a rocking chair; move or jump to get up. Armchairs and sofas take a pot of paint.","Sièges : un clic droit (ou {use}) t'assoit sur une chaise, un fauteuil, un canapé (deux cases), un banc, un tabouret, un rocking-chair ; bouge ou saute pour te lever. Fauteuils et canapés prennent un pot de peinture."
+BOOK_HOME_TABLES,"Tables: a coffee table, a desk, a nightstand, a pedestal table. A tablecloth (three cloths make two) goes on a table, and takes a pot of paint.","Tables : une table basse, un bureau, une table de nuit, un guéridon. Une nappe (trois tissus en font deux) se pose sur une table, et prend un pot de peinture."

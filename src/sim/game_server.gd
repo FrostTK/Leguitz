@@ -102,6 +102,11 @@ class PlayerSession:
 	var seat := -1
 	var boat_open := -1
 	var yard_open := NO_CELL
+	## The bed they wake up beside after passing out (NO_CELL: none; Beds),
+	## whether they sleep in it, and for how long.
+	var bed := NO_CELL
+	var sleeping := false
+	var slept := 0.0
 
 	func alive() -> bool:
 		return health > 0
@@ -219,6 +224,7 @@ static func player_state(session: PlayerSession) -> Dictionary:
 		"food": session.food,
 		"effects": Effects.to_dict(session.effects),
 		"spectator": session.spectator,
+		"bed": session.bed,
 	}
 
 
@@ -290,6 +296,7 @@ func tick() -> void:
 	boats.update(self, GameConst.TICK_DELTA)
 	fluids.update(self)
 	Survival.update(self, sessions, GameConst.TICK_DELTA)
+	Beds.update(self, GameConst.TICK_DELTA)
 	if tick_count % FURNACE_TICKS == 0:
 		Furnaces.update(self, GameConst.TICK_DELTA * FURNACE_TICKS)
 	if tick_count % Machines.TICKS == 0:
@@ -367,37 +374,10 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 			session.inventory.selected = clampi(
 				int(message.get("slot", 0)), 0, Inventory.HOTBAR - 1
 			)
-		Msg.SLOT_CLICK:
-			if session.joined:
-				var slot := int(message.get("slot", -1))
-				var open := _open_chest(session)
-				var oven := Furnaces.opened(self, session)
-				session.inventory.click(
-					slot, message.get("right", false), message.get("shift", false), open, oven
-				)
-				session.transport.send(Msg.inventory(session.inventory))
-				if open != null:
-					_chest_changed(session.chest)
-				if oven != null:
-					Furnaces.changed(self, session.furnace)
-		Msg.SLOT_SPREAD:
-			_on_slot_spread(session, message)
-		Msg.SLOT_COLLECT:
-			_on_slot_collect(session)
 		Msg.RESPAWN:
 			Survival.get_up(self, session)
 		Msg.EAT:
 			Survival.eat(self, session, int(message.get("slot", -1)))
-		Msg.OPEN_CHEST:
-			_on_open_chest(session, message)
-		Msg.CHEST_CLICK:
-			var chest := _open_chest(session)
-			if chest != null:
-				var slot := int(message.get("slot", -1))
-				var right: bool = message.get("right", false)
-				session.inventory.click_chest(chest, slot, right, message.get("shift", false))
-				session.transport.send(Msg.inventory(session.inventory))
-				_chest_changed(session.chest)
 		Msg.OPEN_FURNACE:
 			Furnaces.open(self, session, message)
 		Msg.FURNACE_CLICK:
@@ -428,6 +408,9 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 			if (
 				not boats.handle(self, session, message)
 				and not Tints.handle(self, session, message)
+				and not Chests.handle(self, session, message)
+				and not Beds.handle(self, session, message)
+				and not Shelves.handle(self, session, message)
 			):
 				push_warning("Server: unknown message type %s" % other)
 
@@ -468,6 +451,7 @@ func _place_player(session: PlayerSession) -> void:
 	session.health = clampi(int(saved.get("health", Vitals.MAX_HEALTH)), 0, Vitals.MAX_HEALTH)
 	session.food = clampi(int(saved.get("food", Vitals.MAX_FOOD)), 0, Vitals.MAX_FOOD)
 	session.effects = Effects.from_dict(saved.get("effects", {}))
+	session.bed = saved.get("bed", NO_CELL)
 	session.spectator = saved.get("spectator", false) and GameModes.hardcore(self)
 	if session.spectator:
 		session.health = 0
@@ -501,8 +485,9 @@ func _on_block_break(session: PlayerSession, message: Dictionary) -> void:
 		return
 	var cell: Vector3i = message.get("cell", Vector3i.ZERO)
 	var voxel := world.voxel_at(cell)
-	if Openings.is_top(Voxels.block_of(voxel)):
-		# A door's top: the door below breaks (and gives itself).
+	if Openings.is_top(Voxels.block_of(voxel)) or Furniture.is_top(Voxels.block_of(voxel)):
+		# A door's top (tall furniture's): what is below breaks (and gives
+		# itself).
 		cell += Vector3i.DOWN
 		voxel = world.voxel_at(cell)
 	var near := Mining.reach_to(session.position, session.height, cell)
@@ -550,6 +535,7 @@ func spill_contents(cell: Vector3i) -> void:
 	var furnace := world.take_furnace(cell)
 	if furnace != null:
 		_spill(cell, furnace.slots, furnace.slot_count())
+	Shelves.spill(self, cell)
 	world.contents_changed(cell)
 	for other in sessions:
 		if other.chest == cell:
@@ -627,39 +613,6 @@ static func _set_alone(voxel: int) -> bool:
 	return Farming.SOWN.has(block) or Mining.ON_WATER.has(block)
 
 
-## A player shared the stack in hand between slots (a left drag): theirs,
-## the open chest's, the open furnace's.
-func _on_slot_spread(session: PlayerSession, message: Dictionary) -> void:
-	var targets: Variant = message.get("targets", [])
-	if not session.joined or not targets is Array:
-		return
-	var open := _open_chest(session)
-	var oven := Furnaces.opened(self, session)
-	session.inventory.spread(
-		(targets as Array).slice(0, Inventory.SIZE + Inventory.CHEST), open, oven
-	)
-	session.transport.send(Msg.inventory(session.inventory))
-	if open != null:
-		_chest_changed(session.chest)
-	if oven != null:
-		Furnaces.changed(self, session.furnace)
-
-
-## A player gathered the same items as their cursor's (a double click):
-## theirs, the open chest's, the open furnace's.
-func _on_slot_collect(session: PlayerSession) -> void:
-	if not session.joined:
-		return
-	var open := _open_chest(session)
-	var oven := Furnaces.opened(self, session)
-	session.inventory.collect(open, oven)
-	session.transport.send(Msg.inventory(session.inventory))
-	if open != null:
-		_chest_changed(session.chest)
-	if oven != null:
-		Furnaces.changed(self, session.furnace)
-
-
 ## A player opened a workbench (crafting uses its whole grid) or a
 ## kitchen counter (its grid makes the dishes), if there is one within
 ## reach.
@@ -676,44 +629,6 @@ func _on_open_workbench(session: PlayerSession, message: Dictionary) -> void:
 	elif ObjectShapes.is_kitchen(there):
 		session.craft_width = Inventory.OWN_GRID
 		session.kitchen = true
-
-
-## A player opened a chest within reach: they see what it holds, and
-## their clicks go to it until they close it.
-func _on_open_chest(session: PlayerSession, message: Dictionary) -> void:
-	if not session.joined:
-		return
-	var cell: Vector3i = message.get("cell", Vector3i.ZERO)
-	var near := Mining.reach_to(session.position, session.height, cell)
-	var there := Voxels.block_of(world.voxel_at(cell))
-	if not ObjectShapes.is_chest(there) or near > Mining.REACH + REACH_LEEWAY:
-		return
-	session.chest = cell
-	session.transport.send(Msg.chest(cell, world.chest_at(cell)))
-
-
-## The chest a player has open (null: none, or it is gone; a boat's: see
-## Boats.chest_cell).
-func _open_chest(session: PlayerSession) -> Inventory:
-	if not session.joined or session.chest == NO_CELL:
-		return null
-	if session.chest.y <= Boats.CHEST_ROW:
-		return boats.chest_at(session.chest)
-	if not ObjectShapes.is_chest(Voxels.block_of(world.voxel_at(session.chest))):
-		return null
-	return world.chest_at(session.chest)
-
-
-## A chest's items changed: saved with its chunk, shown to every player
-## who has it open.
-func _chest_changed(cell: Vector3i) -> void:
-	var boat_chest := cell.y <= Boats.CHEST_ROW
-	if not boat_chest:
-		world.contents_changed(cell)
-	var chest := boats.chest_at(cell) if boat_chest else world.chest_at(cell)
-	for other in sessions:
-		if other.joined and other.chest == cell and chest != null:
-			other.transport.send(Msg.chest(cell, chest))
 
 
 ## A player throws one item of a slot, or its whole stack.

@@ -117,6 +117,8 @@ func use_target() -> bool:
 		return true
 	if target != null and (_compost() or _pick() or _harvest_hive() or _use_machine()):
 		return true
+	if target != null and client.furniture.use(target.cell, target.voxel):
+		return true
 	if target == null or not Mining.opens(target.voxel):
 		return false
 	var block := Voxels.block_of(target.voxel)
@@ -154,7 +156,11 @@ func pick_block() -> void:
 func usable_here() -> bool:
 	return (
 		target != null
-		and (Mining.opens(target.voxel) or Mining.swings(target.voxel))
+		and (
+			Mining.opens(target.voxel)
+			or Mining.swings(target.voxel)
+			or FurnitureUse.usable(target.voxel)
+		)
 		and not Input.is_action_pressed(InputBindings.SPRINT)
 	)
 

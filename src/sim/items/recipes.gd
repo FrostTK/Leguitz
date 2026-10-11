@@ -24,6 +24,8 @@ const PLANKS: Array[int] = [
 ]
 ## Any stone.
 const STONES: Array[int] = [Items.Id.STONE, Items.Id.DEEPSLATE]
+## Any cloth.
+const CLOTH: Array[int] = [Items.Id.WOOL, Items.Id.LINEN]
 ## Kitchen groups: any cooked meat, any mushroom, the greens of a soup,
 ## the fruits of a pie and of a jam.
 const COOKED_MEATS: Array[int] = [
@@ -456,6 +458,82 @@ const SHAPED := [
 	},
 	{"pattern": ["M", "M"], "keys": {"M": Items.Id.BRICKS}, "result": [Items.Id.BRICK_PILLAR, 2]},
 	{"pattern": ["L", "L"], "keys": {"L": LOGS}, "result": [Items.Id.WOOD_POST, 2]},
+	# Bedroom and living room: a bed, what stores things, a shelf, seats,
+	# tables, a tablecloth.
+	{"pattern": ["WWW", "PPP"], "keys": {"W": CLOTH, "P": PLANKS}, "result": [Items.Id.BED, 1]},
+	{"pattern": ["C", "C"], "keys": {"C": Items.Id.CHEST}, "result": [Items.Id.WARDROBE, 1]},
+	{
+		"pattern": ["PGP", "PCP"],
+		"keys": {"P": PLANKS, "G": Items.Id.GLASS_PANE, "C": Items.Id.CHEST},
+		"result": [Items.Id.DRESSER, 1],
+	},
+	{
+		"pattern": ["PPP", "HHH", "PPP"],
+		"keys": {"P": PLANKS, "H": Items.Id.HIDE},
+		"result": [Items.Id.BOOKCASE, 1],
+	},
+	{
+		"pattern": ["PPP", "PCP"],
+		"keys": {"P": PLANKS, "C": Items.Id.CHEST},
+		"result": [Items.Id.COMMODE, 1],
+	},
+	{
+		"pattern": ["PCP"],
+		"keys": {"P": PLANKS, "C": Items.Id.CHEST},
+		"result": [Items.Id.WALL_CUPBOARD, 1],
+	},
+	{
+		"pattern": ["PSP", "S S", "PSP"],
+		"keys": {"P": PLANKS, "S": Items.Id.STICK},
+		"result": [Items.Id.CRATE, 1],
+	},
+	{"pattern": ["S S", "SSS"], "keys": {"S": Items.Id.STICK}, "result": [Items.Id.BASKET, 1]},
+	{
+		"pattern": ["PPP", "S S"],
+		"keys": {"P": PLANKS, "S": Items.Id.STICK},
+		"result": [Items.Id.SHELF, 2],
+	},
+	{
+		"pattern": ["W W", "WWW", "P P"],
+		"keys": {"W": CLOTH, "P": PLANKS},
+		"result": [Items.Id.ARMCHAIR, 1],
+	},
+	{
+		"pattern": ["WWW", "WWW", "P P"],
+		"keys": {"W": CLOTH, "P": PLANKS},
+		"result": [Items.Id.SOFA, 1],
+	},
+	{"pattern": ["PPP", "P P"], "keys": {"P": PLANKS}, "result": [Items.Id.BENCH, 1]},
+	{
+		"pattern": ["P", "S"],
+		"keys": {"P": PLANKS, "S": Items.Id.STICK},
+		"result": [Items.Id.STOOL, 1],
+	},
+	{
+		"ingredients": [Items.Id.CHAIR, Items.Id.STICK, Items.Id.STICK],
+		"result": [Items.Id.ROCKING_CHAIR, 1],
+	},
+	{
+		"pattern": ["SPS"],
+		"keys": {"P": PLANKS, "S": Items.Id.STICK},
+		"result": [Items.Id.COFFEE_TABLE, 1],
+	},
+	{
+		"pattern": ["PPP", "C S"],
+		"keys": {"P": PLANKS, "C": Items.Id.CHEST, "S": Items.Id.STICK},
+		"result": [Items.Id.DESK, 1],
+	},
+	{
+		"pattern": ["P", "C"],
+		"keys": {"P": PLANKS, "C": Items.Id.CHEST},
+		"result": [Items.Id.NIGHTSTAND, 1],
+	},
+	{
+		"pattern": ["PPP", " S ", " P "],
+		"keys": {"P": PLANKS, "S": Items.Id.STICK},
+		"result": [Items.Id.PEDESTAL_TABLE, 1],
+	},
+	{"pattern": ["WWW"], "keys": {"W": CLOTH}, "result": [Items.Id.TABLECLOTH, 2]},
 	# Glass: old glass (sand in it), leaded glass, panes of each.
 	{
 		"ingredients":

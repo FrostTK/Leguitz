@@ -91,6 +91,11 @@ static func get_up(server: GameServer, session: GameServer.PlayerSession) -> voi
 	session.since_hurt = INF
 	session.position = Coords.tile_to_world_center(server.spawn_tile) + Vector2(0, 4)
 	session.height = server.world.surface_height(server.spawn_tile)
+	# Beside their bed, if they slept in one and it is still there (Beds).
+	var bed := Beds.wake_spot(server, session)
+	if bed != Vector3.INF:
+		session.position = Coords.tile_to_world_center(Vector2i(int(bed.x), int(bed.z)))
+		session.height = bed.y
 	session.transport.send(Msg.player_teleport(session.position, session.height))
 	_tell(session)
 

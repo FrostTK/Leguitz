@@ -99,6 +99,17 @@ func set_voxel(cell: Vector3i, voxel: int) -> int:
 	return before
 
 
+## What a shelf holds changed (Msg.SHELF_ITEMS; empty: nothing).
+func set_shelf(cell: Vector3i, items: PackedInt32Array) -> void:
+	var chunk := chunk_at(Vector2i(cell.x, cell.z))
+	if chunk == null:
+		return
+	if items.is_empty() or items.count(Items.Id.NONE) == items.size():
+		chunk.shelves.erase(cell)
+	else:
+		chunk.shelves[cell] = items
+
+
 ## A cell's tint changed (Msg.TINTED; Tints.pack, 0: none).
 func set_tint(cell: Vector3i, packed: int) -> void:
 	var chunk := chunk_at(Vector2i(cell.x, cell.z))
