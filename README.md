@@ -354,6 +354,9 @@ Pour le multijoueur, il suffira de brancher un transport réseau.
 9. Finitions PC (menus, sauvegardes, sons, options graphiques, Steam)
 10. Mobile (iOS, Android)
 
+Prévu aussi (place à décider) : le multijoueur et les serveurs dédiés, qu'on rejoint par IP
+depuis le jeu, hébergeables sur un VPS Debian ou en egg Pterodactyl.
+
 En attente : le mode Arcade, scénario n°1 « Restauration » (restaurer une terre désolée avec
 éoliennes, irrigateurs et purificateurs, faire revenir forêts, rivières et animaux, puis recycler
 les bâtiments et continuer en survie).

@@ -43,7 +43,7 @@ Les questions de goût ou les choix lourds de conséquences sont posés avant de
 | Style (phase 5 et suite) | **Ne pas s'inspirer du style de Minecraft** : interface, présentation et mots à nous (jauge de vitalité au lieu des cœurs, « Tu as perdu connaissance… »), **monstres originaux** ; la logique de jeu reste à la Minecraft. |
 | Plateformes | PC d'abord (installable, Steam/Epic un jour), puis **iOS et Android**. Graphismes poussés au maximum, en tirant parti de la carte graphique… sans la faire tourner à 100 % pour rien (limite d'images par seconde). |
 | Graphismes | Claude crée tout lui-même, de façon procédurale (aucune ressource externe). |
-| Joueurs | Solo d'abord, avec un code prêt pour le multijoueur (serveur intégré, messages). |
+| Joueurs | Solo d'abord, avec un code prêt pour le multijoueur (serveur intégré, messages). Puis (décidé en octobre 2026) des **serveurs dédiés** qu'on rejoint **par IP depuis le jeu**, hébergeables sur un **VPS Debian** ou en **egg Pterodactyl**, avec une IP dédiée : voir la phase « Multijoueur et serveurs dédiés ». |
 | Modes de jeu | **Créatif, Survie, Hardcore**, et le nouveau mode **Arcade** (en attente, section 6). |
 | Priorités | Explorer, construire, admirer, survivre, combattre. |
 | Langues | Français et anglais, réglables dans le jeu. |
@@ -797,6 +797,43 @@ pousse). Elle reprendra quand le propriétaire le dira.
   graphismes, audio), succès, intégration Steam.
 - Performance : maillage des chunks sur des fils parallèles, niveaux de détail du terrain,
   modèles plus légers au besoin ; menu pause défilant sur petites fenêtres.
+
+### Phase « Multijoueur et serveurs dédiés » (demandée par le propriétaire en octobre 2026 ; place à décider : avant ou après la phase 9)
+
+Le propriétaire veut des serveurs dédiés que les joueurs rejoignent en tapant une IP dans le jeu,
+et pouvoir les héberger lui-même sur un **VPS Debian** ou en **egg Pterodactyl**, avec une **IP
+dédiée**. L'architecture est prête (le serveur, `src/sim`, ne dépend pas de l'affichage ; le
+client ne parle que par messages, Msg, à travers un Transport ; le solo tourne déjà avec un
+serveur intégré), mais rien du réseau n'est écrit. Découpage proposé :
+1. **Réseau et serveur dédié** : un transport ENet (UDP) avec la même interface que
+   LocalTransport (messages sérialisés, chunks compressés en zstd comme les sauvegardes) ; un mode
+   serveur sans fenêtre (le jeu lancé avec `--headless` et une option serveur : seulement
+   GameServer et l'écoute réseau) ; un fichier de réglages (IP d'écoute, port, monde, graine,
+   mode de jeu, joueurs au plus, mot de passe, distance de vue maximale) et des options de lancement
+   qui le remplacent ; le dossier des mondes au choix (le volume de Pterodactyl, `/srv/...` sur
+   un VPS) ; une console (les commandes du chat en administrateur, `stop` qui sauvegarde et
+   s'arrête : Pterodactyl l'envoie à l'arrêt) ; les journaux dans la sortie standard, une ligne
+   « prêt » quand le serveur écoute (Pterodactyl la guette) ; l'export Linux « serveur dédié » de
+   Godot (sans graphismes) construit par la CI.
+2. **Rejoindre et voir les autres** : un écran « Rejoindre un serveur » (IP ou nom de domaine,
+   port, pseudo, mot de passe ; les derniers serveurs gardés), les corps des autres joueurs (gestes,
+   objet en main, armure, nom au-dessus de la tête), leurs mouvements lissés, l'arrivée et le
+   départ des joueurs, la liste des joueurs, les coupures et la reconnexion.
+3. **Un serveur qui ne fait confiance à personne** : collisions des déplacements (PlayerBody côté
+   serveur), durée du minage, chutes, portées, sièges et lits vus par le serveur, limites de débit
+   des messages.
+4. **Comptes et administration** : un mot de passe par joueur (aujourd'hui un pseudo suffit à
+   prendre l'inventaire d'un autre) ou le compte Steam plus tard, liste blanche, `/expulse`,
+   `/bannis`, rôles, sauvegardes de secours et restauration.
+5. **Hébergement** : sur **Debian** une archive à décompresser, un utilisateur dédié, un service
+   systemd (redémarrage, arrêt propre), le port UDP à ouvrir dans le pare-feu, l'écoute sur l'IP
+   dédiée ; une image Docker ; un **egg Pterodactyl** (image Debian, script d'installation qui
+   télécharge la version du serveur, variables : port, monde, graine, mode, joueurs au plus, mot
+   de passe ; commande d'arrêt `stop`, ligne « prêt ») ; un guide d'installation en français. À
+   décider : où le script d'installation prend le serveur (le dépôt est privé : des versions du
+   serveur publiées à part, ou un jeton d'accès).
+6. **Performances** : plusieurs joueurs loin les uns des autres (génération, mémoire, débit),
+   mesurées sur un petit VPS, pour dire quelle machine il faut selon le nombre de joueurs.
 
 ### Phase 10 — Mobile (iOS, Android)
 - Contrôles tactiles (stick virtuel, toucher pour miner/poser, deux doigts pour tourner la
