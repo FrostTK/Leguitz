@@ -6,6 +6,9 @@ extends RefCounted
 
 # Client -> server
 const HELLO := "hello"
+## The messages' version: a client and a server of different ones do not
+## play together (Msg.REFUSED, REFUSED_VERSION). Raised when messages change.
+const PROTOCOL := 1
 const PLAYER_MOVE := "player_move"
 const SET_TIME := "set_time"
 const DEBUG_MOVE_DEPTH := "debug_move_depth"
@@ -71,6 +74,9 @@ const MAP_SURFACE := -1
 
 # Server -> client
 const WELCOME := "welcome"
+## The server will not have the player (`reason`: a translation key); it
+## lets them go.
+const REFUSED := "refused"
 const CHUNK_DATA := "chunk_data"
 const CHUNK_UNLOAD := "chunk_unload"
 const TIME_STATE := "time_state"
@@ -590,8 +596,19 @@ static func save_request() -> Dictionary:
 	return {"t": SAVE_REQUEST}
 
 
-static func hello(player_name: String, view_distance: int) -> Dictionary:
-	return {"t": HELLO, "name": player_name, "view_distance": view_distance}
+## The player joins (a dedicated server asks for its `password`).
+static func hello(player_name: String, view_distance: int, password := "") -> Dictionary:
+	return {
+		"t": HELLO,
+		"protocol": PROTOCOL,
+		"name": player_name,
+		"view_distance": view_distance,
+		"password": password,
+	}
+
+
+static func refused(reason: String) -> Dictionary:
+	return {"t": REFUSED, "reason": reason}
 
 
 ## `height` is the feet height in levels (jumps, falls).

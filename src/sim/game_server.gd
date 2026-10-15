@@ -3,9 +3,9 @@ extends RefCounted
 ## Authoritative simulation of one world.
 ##
 ## In solo play it runs in the same process as the client ("integrated
-## server", like Minecraft) and talks to it through a LocalTransport. Later,
-## the very same class will run on a host or dedicated server and talk to
-## remote clients through a network transport.
+## server", like Minecraft) and talks to it through a LocalTransport; on a
+## dedicated server (DedicatedServer) the very same class talks to remote
+## clients through NetTransports. Players come and go through Lobby.
 
 const CHUNKS_SENT_PER_TICK := 16
 const TIME_BROADCAST_TICKS := GameConst.TICKS_PER_SECOND * 5
@@ -86,6 +86,9 @@ class PlayerSession:
 	var drowning := 0.0
 	## Hardcore: they passed out, their one life is over; they only watch.
 	var spectator := false
+	## The dedicated server's console (ServerConsole): an admin, never in
+	## the world.
+	var console := false
 	## The creatures they are shown (Creatures.sync), and when they last hit
 	## one (seconds of play).
 	var seen_creatures: Dictionary[int, bool] = {}
@@ -146,6 +149,16 @@ var fluids := Fluids.new()
 ## they exist); `cheats_anywhere` (developer options) in every mode.
 var allow_debug_commands := true
 var cheats_anywhere := false
+## A dedicated server (DedicatedServer): arrivals and departures told, the
+## world's settings its admins'; what a player must give to join (""),
+## how many may play at once (0: any), how far a view may reach (chunks).
+var dedicated := false
+var password := ""
+var max_players := 0
+var view_limit := GameConst.MAX_VIEW_DISTANCE
+## What the dedicated server's console hears of what is told to everyone
+## (null: none).
+var console: Transport
 ## Draws what breaks drop and where things fly.
 var rng := RandomNumberGenerator.new()
 
@@ -268,9 +281,11 @@ func first_session() -> PlayerSession:
 ## Handles every pending client message. Runs even while the simulation is
 ## paused so that menus (e.g. time settings) keep working.
 func process_messages() -> void:
-	for session in sessions:
+	for session in sessions.duplicate():
 		for message in session.transport.poll():
 			_handle_message(session, message)
+		if not session.transport.is_open():
+			Lobby.leave(self, session)
 	_send_finished_maps()
 
 
@@ -317,7 +332,8 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 		Msg.PLAYER_MOVE:
 			_on_player_move(session, message)
 		Msg.SET_TIME:
-			_on_set_time(message)
+			if Lobby.may_change_world(self, session):
+				_on_set_time(message)
 		Msg.DEBUG_MOVE_DEPTH:
 			GameModes.move_depth(self, session, int(message.get("direction", 0)))
 		Msg.MAP_REQUEST:
@@ -327,7 +343,8 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 		Msg.DEBUG_GIVE_TOOLS:
 			GameModes.give_tools(self, session, int(message.get("tier", 0)))
 		Msg.SET_GAME_MODE:
-			GameModes.set_mode(self, session, int(message.get("mode", -1)))
+			if Lobby.may_change_world(self, session):
+				GameModes.set_mode(self, session, int(message.get("mode", -1)))
 		Msg.CATALOG_CLICK:
 			GameModes.catalog_click(self, session, message)
 		Msg.ATTACK:
@@ -422,6 +439,16 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 func _on_hello(session: PlayerSession, message: Dictionary) -> void:
 	if session.joined:
 		return
+	var refusal := Lobby.refusal(self, message)
+	if refusal != "":
+		if console != null:
+			var name := str(message.get("name", ""))
+			console.send(
+				Msg.chat_notice("SERVER_REFUSED", [name, Chat.word(refusal)], Chat.Tone.INFO)
+			)
+		session.transport.send(Msg.refused(refusal))
+		session.transport.close()
+		return
 	session.id = _next_player_id
 	_next_player_id += 1
 	session.player_name = str(message.get("name", "Player"))
@@ -431,6 +458,7 @@ func _on_hello(session: PlayerSession, message: Dictionary) -> void:
 	_place_player(session)
 	session.joined = true
 	Chat.on_join(self, session)
+	Lobby.joined(self, session)
 	session.transport.send(
 		Msg.welcome(session.id, session.position, session.height, settings.to_dict())
 	)
@@ -772,8 +800,8 @@ func _on_set_view_distance(session: PlayerSession, message: Dictionary) -> void:
 	_stream_chunks(session, CHUNKS_SENT_PER_TICK)
 
 
-static func _clamp_view_distance(value: Variant) -> int:
-	return clampi(int(value), GameConst.MIN_VIEW_DISTANCE, GameConst.MAX_VIEW_DISTANCE)
+func _clamp_view_distance(value: Variant) -> int:
+	return clampi(int(value), GameConst.MIN_VIEW_DISTANCE, view_limit)
 
 
 func _on_player_move(session: PlayerSession, message: Dictionary) -> void:
@@ -909,3 +937,5 @@ func broadcast(message: Dictionary) -> void:
 	for session in sessions:
 		if session.joined:
 			session.transport.send(message)
+	if console != null:
+		console.send(message)

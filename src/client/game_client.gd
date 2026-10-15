@@ -98,6 +98,8 @@ var inventory_screen := InventoryScreen.new()
 var book_screen := BookScreen.new()
 ## The chat (T; "/" for a command).
 var chat := ChatBox.new()
+## A dedicated server's connection: connecting, refused, lost.
+var connection := ConnectionScreen.new()
 ## The player's book is in hand (its slot: Settings.guide_book). Only the
 ## client knows: the server keeps the hotbar slot chosen before.
 var book_in_hand := false
@@ -239,6 +241,8 @@ func _ready() -> void:
 	_ui_root.add_child(inventory_screen)
 	_ui_root.add_child(book_screen)
 	_ui_root.add_child(pause_menu)
+	_ui_root.add_child(connection)
+	connection.quit_requested.connect(quit_requested.emit)
 
 	pause_menu.resume_requested.connect(resume)
 	pause_menu.quit_requested.connect(quit_requested.emit)
@@ -319,12 +323,16 @@ func _apply_quality() -> void:
 
 ## `min_view_distance` is the smallest radius (chunks) to load around the
 ## player; more is asked when the view needs it (see _update_view_distance).
-func connect_to_server(server_transport: Transport, min_view_distance: int) -> void:
+## Joins the server at the other end of `server_transport` as
+## `player_name` (solo: always Player, the save's name).
+func connect_to_server(
+	server_transport: Transport, min_view_distance: int, player_name := "Player", password := ""
+) -> void:
 	transport = server_transport
 	local_player.transport = server_transport
 	_min_view_distance = min_view_distance
 	view_distance = needed_view_distance()
-	transport.send(Msg.hello("Player", view_distance))
+	transport.send(Msg.hello(player_name, view_distance, password))
 
 
 ## Chunks needed around the player to fill the screen: the ground in view
@@ -358,6 +366,8 @@ func _process(delta: float) -> void:
 		return
 	for message in transport.poll():
 		ClientMessages.handle(self, message)
+	if not transport.is_open() and not connection.is_ended():
+		connection.show_ended((transport as NetClient).ending if transport is NetClient else "")
 	if not get_tree().paused:
 		clock.advance(delta)
 		_update_view_mode(delta)
@@ -775,7 +785,7 @@ func _cycle_hand(step: int) -> void:
 ## Whether a screen over the world takes the keys and the mouse: the
 ## inventory, the book, the chat while typing.
 func screen_open() -> bool:
-	return inventory_screen.visible or book_screen.visible or chat.typing
+	return inventory_screen.visible or book_screen.visible or chat.typing or connection.visible
 
 
 ## The camera goes straight to the player (after a teleport).

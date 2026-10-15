@@ -42,12 +42,15 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Saisons (réglage du monde) : cultures de saison et serres, arbres qui roussissent puis se dénudent, neige l'hiver, le calendrier à l'horloge, /saison | ✅ |
 | Verre et vitres refaits : verre clair continu, verre ancien, verre au plomb, vitres fines qui se raccordent, 28 fenêtres (4 dessins, 6 bois et fer forgé), teinte par case au pot de peinture (le cadre à part), lavée à l'arrosoir ; le soleil à travers le verre teinté colore le sol ; palette de 16 couleurs douces | ✅ |
 | Rideaux qui se tirent et se nouent (tirés, la pièce devient sombre), longs jusqu'au sol, tringle en bois ou en fer, teints au pot de peinture ; tapis qui se raccordent en un grand tapis, teints, sous les meubles | ✅ |
+| Multijoueur, étape 1 : serveur dédié (jeu lancé sans fenêtre, réglages dans server.cfg, console, arrêt propre, version Linux compilée), connexion par IP avec pseudo et mot de passe, écrans de connexion, de refus et de déconnexion | ✅ |
 | Catalogue créatif rangé en dix onglets (blocs, escaliers et toits, nature, portes et fenêtres, mobilier, décoration, ferme, nourriture, outils, matériaux) avec une recherche par nom, en français ou en anglais, sans accents ni majuscules | ✅ |
 | Ambiance : bougies, chandeliers, lustre, lampe de chevet et appliques qu'on allume et éteint, posés sur les meubles ; cheminée et poêle qui brûlent du bois, éclairent, fument et réchauffent (le froid de l'hiver) ; tableaux et portraits dessinés par le jeu, horloges à aiguilles, miroir, carte des alentours, trophées, tapisserie ; pots de fleurs, jardinières, plantes vertes, coussins ; baignoire, douche qui coule, lavabo ; horloge comtoise, coffre à jouets, piano, berceau, paravent | ✅ |
 | Chambre et salon : lit où l'on dort (la nuit passe, on s'y réveille), armoire, vaisselier, bibliothèque, commode, placard, caisses, panier, étagère qui montre ce qu'on y pose, sièges où l'on s'assoit (fauteuil et canapé teintables), tables, nappe | ✅ |
 | Nouveaux matériaux : pavés, pierre de taille, pierres moussues, plâtre qui se peint, colombages, torchis, parquets à lames et à chevrons, carrelage en damier, tomettes, terre cuite, ardoise polie, briques de grès ; leurs escaliers et dalles, quarts de bloc, murets, piliers, poutres | ✅ |
 | Toitures en tuiles, ardoises, bardeaux et chaume : pentes qui font leurs coins, faîtages en croupe et en croix, pentes douces, lucarnes, cheminée qui fume, neige en hiver | ✅ |
 | Portes de chaque bois, vitrée et en fer forgé (portes doubles), trappes, échelles où l'on grimpe, volets peints qui se ferment, barreaux et garde-corps qui se raccordent | ✅ |
+
+![Leguitz : multijoueur : un joueur connecté à un serveur dédié dans la forêt ; la connexion refusée pour un mauvais mot de passe ; la connexion perdue quand le serveur s'arrête ; un serveur injoignable](docs/screenshots/multijoueur-serveur.png)
 
 ![Leguitz : catalogue créatif : l'onglet des blocs de construction, celui de la décoration et des lumières, la recherche « chêne » et ses 30 résultats (planches, parquets, escaliers, fenêtres, portes, pousse et bûche de chêne), l'onglet du mobilier](docs/screenshots/catalogue-creatif.png)
 
@@ -293,6 +296,29 @@ du projet, puis appuyer sur F5.
 
 Les outils de debug seront réservés au mode Créatif quand les modes de jeu arriveront (phase 5).
 
+### Serveur dédié (multijoueur, en cours)
+
+Le serveur est le jeu lancé sans fenêtre. Version compilée pour Linux : artefact
+`LeguitzServer-linux` (à décompresser), puis :
+
+```bash
+./LeguitzServer.x86_64 --headless --data=/srv/leguitz
+```
+
+Au premier lancement, il écrit `server.cfg` dans son dossier de données (port 27420 en UDP, monde,
+graine, mode de jeu, joueurs au plus, mot de passe, distance de vue, langue de la console) : le
+modifier puis relancer. Les options de lancement passent par-dessus (`--port=27500`,
+`--password=secret`, `--max-players=6`...). Il écrit « Leguitz server ready » quand il écoute.
+Sa console comprend `stop` (sauvegarde et arrêt), `save`, `say message`, `list`, `help` et les
+commandes d'administrateur du chat ; un fichier `stop` posé dans son dossier l'arrête aussi
+proprement. Depuis les sources : `godot --headless --path . -- --server --data=DOSSIER`.
+
+Pour le rejoindre (en attendant l'écran prévu à l'étape 2) :
+
+```bash
+Leguitz.exe -- --connect=IP:27420 --name=Pseudo --password=secret
+```
+
 ## Développement
 
 ```bash
@@ -348,14 +374,16 @@ Pour le multijoueur, il suffira de brancher un transport réseau.
 6. Souterrain et structures (en pause : maison et jardin, torches et lanternes, lumière des grottes, coulées d'eau et de lave faits)
 7. ✅ Agriculture et élevage (végétation qui pousse, champs et cultures, arrosage et compost,
    nouvelles cultures et arbres fruitiers, élevage, cuisine, pêche et bateaux, compagnons, saisons)
-8. Construction et décoration (en cours : escaliers et dalles, verre et vitres teintables,
-   rideaux et tapis, portes, trappes et échelles, toitures, nouveaux matériaux, chambre et salon,
-   ambiance faits ; à venir : extérieur, vitraux)
+8. Construction et décoration (en pause après l'ambiance : escaliers et dalles, verre et vitres
+   teintables, rideaux et tapis, portes, trappes et échelles, toitures, nouveaux matériaux, chambre
+   et salon, ambiance faits ; à venir : extérieur, vitraux)
 9. Finitions PC (menus, sauvegardes, sons, options graphiques, Steam)
 10. Mobile (iOS, Android)
 
-Prévu aussi (place à décider) : le multijoueur et les serveurs dédiés, qu'on rejoint par IP
-depuis le jeu, hébergeables sur un VPS Debian ou en egg Pterodactyl.
+En cours : le multijoueur et les serveurs dédiés, qu'on rejoint par IP depuis le jeu,
+hébergeables sur un VPS Debian ou en egg Pterodactyl (réseau et serveur dédié faits ; à venir :
+rejoindre et voir les autres, un serveur qui vérifie tout, comptes et administration,
+hébergement, performances).
 
 En attente : le mode Arcade, scénario n°1 « Restauration » (restaurer une terre désolée avec
 éoliennes, irrigateurs et purificateurs, faire revenir forêts, rivières et animaux, puis recycler

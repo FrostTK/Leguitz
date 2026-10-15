@@ -1,8 +1,10 @@
 class_name Transport
 extends RefCounted
 ## One end of a bidirectional message channel between a client and a server.
-## Solo play uses LocalTransport; multiplayer will add a network transport
-## (ENet / Steam) with the same interface.
+## Solo play uses LocalTransport; multiplayer NetTransport (ENet, UDP), the
+## server's end of a player's connection, and NetClient, the player's: the
+## same interface. Messages are Dictionaries of plain values (no objects:
+## they cross the network as bytes, var_to_bytes).
 
 
 func send(_message: Dictionary) -> void:
@@ -17,3 +19,9 @@ func poll() -> Array[Dictionary]:
 
 func is_open() -> bool:
 	return true
+
+
+## Ends the connection (what was sent goes first): the other end sees it
+## closed.
+func close() -> void:
+	pass

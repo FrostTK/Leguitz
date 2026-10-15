@@ -149,25 +149,12 @@ func show_line(message: Dictionary) -> void:
 		)
 	else:
 		var color: String = TONE_COLORS.get(int(message.get("tone", 0)), SAID_COLOR)
-		text = "[color=#%s]%s[/color]" % [color, _escape(notice_text(message))]
+		text = "[color=#%s]%s[/color]" % [color, _escape(Chat.notice_text(message))]
 	_lines.append({"text": text, "age": 0.0})
 	if _lines.size() > KEPT_LINES:
 		_lines.pop_front()
 	_scroll = 0
 	_refresh()
-
-
-## A notice in the reader's language: its key with its args, the words
-## among them ({"key": ...}) translated too.
-static func notice_text(message: Dictionary) -> String:
-	var args := []
-	for arg: Variant in message.get("args", []):
-		if arg is Dictionary:
-			args.append(String(TranslationServer.translate(arg.get("key", ""))))
-		else:
-			args.append(arg)
-	var text := String(TranslationServer.translate(message.get("key", "")))
-	return text % args if not args.is_empty() else text
 
 
 ## Lines age and fade; the newest show, as many as fit over the hotbar

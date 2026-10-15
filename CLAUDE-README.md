@@ -155,7 +155,8 @@ Godot **4.7.2** (GDScript), rendu Forward+. 259 tests unitaires, lint propre.
 | 8.6 Nouveaux matériaux | Vingt-cinq matières : des **pavés** (pierre et gravier), de la **pierre de taille**, des **pierres moussues**, du **plâtre** qui se **peint** au pot (l'arrosoir le lave), trois **colombages** (droit, en croix, en écharpe : seul leur plâtre prend la couleur, les poutres restent en bois), du **torchis**, du **parquet** de chaque bois, à lames ou à **chevrons**, un **carrelage en damier**, des **tomettes**, de la **terre cuite** (le four d'usine la cuit), de l'**ardoise polie** et des **briques de grès**. Les huit matières de maçonnerie ont leurs **escaliers et dalles** (le plâtre aussi peint). Des **quarts de bloc** (petites marches, rebords de fenêtre) en chêne, épicéa, pierre lisse, briques de pierre, briques et plâtre. Des **murets** (pavés, briques de pierre, briques, pierres moussues, grès) qui se raccordent comme les barrières, aux murs et aux portails, et s'empilent ; des **piliers** (colonne de pierre cannelée, pilier de briques, poteau de bois) avec leur base et leur chapiteau ; des **poutres** (chêne, épicéa, chêne noir) couchées dans le sens du côté visé ou debout. Le livre : chapitre Maison, « Matériaux » | `f698d06` |
 | 8.7 Chambre et salon | Un **lit** de deux cases (trois tissus sur trois planches), sa couverture **teintable** : un clic droit en fait l'endroit où l'on se **réveille** après avoir perdu connaissance, et la nuit on s'y **couche** (l'écran s'assombrit) : quand tous les joueurs dorment, **la nuit passe** (pas avec des monstres autour, ni en temps synchronisé ou figé). Des **rangements** qui s'ouvrent comme un coffre : **armoire** et **bibliothèque** (deux niveaux de haut), **vaisselier** et ses assiettes, **commode**, **placard mural**, **caisses** qui s'empilent, **panier**. Une **étagère** au mur où l'on **pose** jusqu'à trois objets **qui se voient**. Des **sièges** où l'on **s'assoit** (clic droit ; on se lève en bougeant) : chaise, **fauteuil** et **canapé** (deux cases) teintables, **banc**, **tabouret**, **rocking-chair**. Des **tables** : basse, **bureau**, **table de nuit**, **guéridon**, et une **nappe** teintable qui se pose sur une table. Le livre : chapitre Maison, « Chambre et salon » | `bcb645f` |
 | 8.8 Ambiance | Des **lumières** qui s'allument et s'éteignent au clic droit : **bougies** (de la ficelle sur un rayon de miel), **chandelier** à trois branches, **lustre** qui pend au plafond, **lampe de chevet** à l'abat-jour teintable, **applique** murale ; bougies, chandeliers, lampes et pots se posent **sur une table ou un meuble**. Une **cheminée** de deux cases et un **poêle à bois** : une bûche ou du charbon les **allume**, ils brûlent longtemps puis s'éteignent (l'arrosoir les éteint), **éclairent**, **fument par la cheminée** au-dessus et **réchauffent** : en **hiver**, là où il neige, on a **froid** (la faim vient plus vite, on ne guérit plus) sauf au chaud près d'un feu (on guérit alors plus vite). Aux murs : **tableaux** (8 paysages) et **portraits** (8), dessinés par le jeu, qui défilent au clic droit, une **horloge** dont les **aiguilles donnent l'heure du jeu**, un **miroir**, une **carte encadrée** qui montre **le pays autour**, des **têtes de cerf et d'ours**, une **tapisserie** teintable, une étagère à épices, un portemanteau. Des **pots de fleurs** où l'on plante une fleur, une pousse, une fougère ou un champignon, une **jardinière**, des **plantes vertes**, des **coussins**. La **salle de bain** : **baignoire** (on s'y assoit), **douche** qui coule, **lavabo** (l'arrosoir s'y remplit). Et une **horloge comtoise** à balancier, un **coffre à jouets**, un **piano**, un **berceau**, un **paravent**. Le livre : chapitre Maison, « Ambiance » | `f2182bc` |
-| Catalogue créatif | Demandé par le propriétaire (en créatif, tous les objets étaient mélangés : impossible de trouver ce qu'on voulait) : le catalogue est rangé en **dix onglets** à icônes (blocs de construction ; escaliers, dalles et toits ; nature ; portes, fenêtres et clôtures ; mobilier ; décoration et lumières ; ferme et jardin ; nourriture ; outils, armes et équipement ; matériaux), le nom de l'onglet au survol et sous les onglets, et un **champ de recherche** (clic ou Ctrl+F) qui trouve les objets par leur nom en **français ou en anglais** (et dans toute autre langue ajoutée plus tard), sans tenir compte des majuscules ni des accents, avec plusieurs mots (« porte chêne »), ceux dont le nom commence par le mot en premier | « Creative catalog » |
+| Catalogue créatif | Demandé par le propriétaire (en créatif, tous les objets étaient mélangés : impossible de trouver ce qu'on voulait) : le catalogue est rangé en **dix onglets** à icônes (blocs de construction ; escaliers, dalles et toits ; nature ; portes, fenêtres et clôtures ; mobilier ; décoration et lumières ; ferme et jardin ; nourriture ; outils, armes et équipement ; matériaux), le nom de l'onglet au survol et sous les onglets, et un **champ de recherche** (clic ou Ctrl+F) qui trouve les objets par leur nom en **français ou en anglais** (et dans toute autre langue ajoutée plus tard), sans tenir compte des majuscules ni des accents, avec plusieurs mots (« porte chêne »), ceux dont le nom commence par le mot en premier | `1a7e995` |
+| M.1 Réseau et serveur dédié | Le jeu sait maintenant jouer **en réseau** (ENet, UDP) : un **serveur dédié**, le jeu lancé sans fenêtre (`--server`, ou la version « serveur » exportée pour Linux), avec ses **réglages** dans `server.cfg` (écrit la première fois avec ses explications : IP, port 27420, monde, graine, mode de jeu, joueurs au plus, mot de passe, distance de vue, langue) que les **options de lancement** remplacent (`--port=`...), son dossier de données au choix (`--data=`), une **console** (stop, save, say, list, help et les commandes d'administrateur du chat), une ligne « Leguitz server ready » quand il écoute, l'**arrêt propre** (la commande `stop`, ou un fichier `stop` posé dans son dossier) qui sauvegarde, et la sauvegarde toutes les deux minutes. On le **rejoint** avec `--connect=IP:port --name=Pseudo --password=...` ; un écran dit qu'on se connecte, qu'on est **refusé** (mot de passe, serveur plein, pseudo pris ou invalide, version différente), que la connexion est **perdue** ou le serveur **injoignable**. Le chat annonce les arrivées et les départs ; un joueur qui part est sauvegardé ; seuls les administrateurs changent l'heure, les saisons et le mode de jeu d'un serveur. La compilation automatique produit `LeguitzServer-linux` | « Network and dedicated server » |
 
 **Pas encore fait** (prévu) : nouveaux matériaux et décoration (phase 8),
 structures, menus de départ, sons, mode Arcade (en attente), mobile.
@@ -282,16 +283,22 @@ xvfb-run -a -s "-screen 0 960x540x24" godot --path . --audio-driver Dummy --reso
 
 ---
 
-## 5. Prochaine étape au « go » : Phase 8, étape 9 (extérieur)
+## 5. Prochaine étape au « go » : Multijoueur, étape 2 (rejoindre et voir les autres)
+
+**Décision du propriétaire (octobre 2026)** : on passe tout de suite au **multijoueur et aux
+serveurs dédiés** (phase « Multijoueur et serveurs dédiés », section 6) ; la **phase 8** est en
+pause après son étape 8 et reprendra à son **étape 9** (extérieur : les allées de gravier, de
+dalles et de pas japonais, le lampadaire, le puits, la fontaine, la boîte aux lettres, le banc de
+jardin, la pergola, le nichoir, la girouette, et les arches laissées à l'étape 6 avec les ponts).
+L'étape 1 du multijoueur (réseau et serveur dédié) est faite ; au prochain « go », l'**étape 2**
+(rejoindre et voir les autres : un écran « Rejoindre un serveur », les corps des autres joueurs,
+leurs gestes et ce qu'ils tiennent, leur nom, leurs mouvements lissés, la liste des joueurs ; voir
+la section 6).
 
 **La phase 7 est terminée** (étapes 1 à 11 ci-dessous). La **phase 8, Construction et
-décoration**, est en cours : les étapes 1 (escaliers et dalles), 2 (verre et vitres, la teinte
-par case), 3 (rideaux et tapis), 4 (portes, trappes, échelles, volets, barreaux, garde-corps),
-5 (toitures), 6 (nouveaux matériaux), 7 (chambre et salon) et 8 (ambiance) sont faites ; au
-prochain « go », l'**étape 9** (extérieur : les allées de gravier, de dalles et de pas japonais,
-le lampadaire, le puits, la fontaine, la boîte aux lettres, le banc de jardin, la pergola, le
-nichoir, la girouette, et les arches laissées à l'étape 6 avec les ponts ; voir la section 6, où
-sont les décisions du propriétaire et tout le découpage).
+décoration**, a fait ses étapes 1 (escaliers et dalles), 2 (verre et vitres, la teinte par case),
+3 (rideaux et tapis), 4 (portes, trappes, échelles, volets, barreaux, garde-corps), 5 (toitures),
+6 (nouveaux matériaux), 7 (chambre et salon) et 8 (ambiance).
 
 ### Phase 7 — Agriculture et élevage (terminée)
 
@@ -798,14 +805,30 @@ pousse). Elle reprendra quand le propriétaire le dira.
 - Performance : maillage des chunks sur des fils parallèles, niveaux de détail du terrain,
   modèles plus légers au besoin ; menu pause défilant sur petites fenêtres.
 
-### Phase « Multijoueur et serveurs dédiés » (demandée par le propriétaire en octobre 2026 ; place à décider : avant ou après la phase 9)
+### Phase « Multijoueur et serveurs dédiés » (demandée par le propriétaire en octobre 2026 ; en cours, avant la fin de la phase 8)
 
 Le propriétaire veut des serveurs dédiés que les joueurs rejoignent en tapant une IP dans le jeu,
 et pouvoir les héberger lui-même sur un **VPS Debian** ou en **egg Pterodactyl**, avec une **IP
 dédiée**. L'architecture est prête (le serveur, `src/sim`, ne dépend pas de l'affichage ; le
 client ne parle que par messages, Msg, à travers un Transport ; le solo tourne déjà avec un
-serveur intégré), mais rien du réseau n'est écrit. Découpage proposé :
-1. **Réseau et serveur dédié** : un transport ENet (UDP) avec la même interface que
+serveur intégré). Découpage :
+1. ✅ **Réseau et serveur dédié** (voir section 3, ligne M.1). Fait comme prévu, avec ces choix :
+   ENet sur un seul canal fiable et ordonné (tout arrive, dans l'ordre), compressé en zstd ; le
+   port par défaut est 27420 ; le serveur dédié est le jeu lui-même lancé sans fenêtre (rien du
+   client n'y est chargé) ; ses réglages vont dans `server.cfg` et les options de lancement passent
+   par-dessus ; les données (réglages, mondes) sont dans le dossier courant ou celui de `--data` ;
+   le mode de jeu et la graine ne servent qu'à créer le monde ; un pseudo fait 2 à 16 lettres,
+   chiffres, - ou _ ; un mot de passe unique pour le serveur (les comptes viennent à l'étape 4) ;
+   on attend la réponse du serveur 8 secondes ; la console est en anglais par défaut (`language`) ;
+   seuls les administrateurs changent l'heure, les saisons et le mode d'un serveur (le premier
+   joueur venu l'est, comme en solo) ; pas encore d'écran pour rejoindre : les options
+   `--connect`, `--name`, `--password`. Pas fait (à proposer) : un serveur qui démarre plus vite
+   (~20 s, la compilation des scripts du jeu, la même au lancement solo ; ~250 Mo), un arrêt
+   propre sur le signal SIGTERM (Godot ne le transmet pas : le fichier `stop` et la commande
+   `stop` le remplacent), un message du jour, le nom et la description du serveur affichés avant
+   d'entrer, un canal non fiable pour les mouvements (moins de latence sur une connexion qui
+   perd des paquets), un serveur en IPv6.
+   Le prévu : un transport ENet (UDP) avec la même interface que
    LocalTransport (messages sérialisés, chunks compressés en zstd comme les sauvegardes) ; un mode
    serveur sans fenêtre (le jeu lancé avec `--headless` et une option serveur : seulement
    GameServer et l'écoute réseau) ; un fichier de réglages (IP d'écoute, port, monde, graine,
@@ -845,8 +868,8 @@ serveur intégré), mais rien du réseau n'est écrit. Découpage proposé :
 
 - **Taille des fichiers** : `src/client/interaction/block_interaction.gd` fait 983 lignes (limite
   1000) : y sortir du code (par exemple ce que fait le clic droit sur les animaux, les machines,
-  la récolte) avant d'y ajouter ; `src/client/game_client.gd` en fait 947, `src/sim/game_server.gd`
-  911 ; `object_shapes.gd` (922) et `mining.gd` (902) ont été allégés à l'étape 8.8 (les blocs
+  la récolte) avant d'y ajouter ; `src/client/game_client.gd` en fait 957, `src/sim/game_server.gd`
+  941 ; `object_shapes.gd` (922) et `mining.gd` (902) ont été allégés à l'étape 8.8 (les blocs
   d'un objet tourné se construisent par leur nom, les temps et outils vont par sorte), les
   recettes de la maison sont dans `home_recipes.gd`.
   `src/sim/world/tiles.gd` (la liste des numéros de blocs, qu'on ne fait qu'allonger) est exempté

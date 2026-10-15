@@ -54,17 +54,27 @@ jobs:
       - name: Unit tests
         run: godot --headless --path . -s res://tests/run_tests.gd
 
-      - name: Export Windows, Linux and macOS
+      - name: Export Windows, Linux, macOS and the Linux dedicated server
         run: |
-          mkdir -p build/windows build/linux build/macos
+          mkdir -p build/windows build/linux build/macos build/server
           godot --headless --path . --export-release "Windows" build/windows/Leguitz.exe
           godot --headless --path . --export-release "Linux" build/linux/Leguitz.x86_64
           godot --headless --path . --export-release "macOS" build/macos/Leguitz.zip
+          godot --headless --path . --export-release "Linux Server" build/server/LeguitzServer.x86_64
           test -s build/windows/Leguitz.exe
           test -s build/linux/Leguitz.x86_64
           test -s build/macos/Leguitz.zip
+          test -s build/server/LeguitzServer.x86_64
           # Artifacts are zipped by GitHub and lose the executable bit.
           tar -czf build/Leguitz-linux.tar.gz -C build/linux Leguitz.x86_64
+          tar -czf build/LeguitzServer-linux.tar.gz -C build/server LeguitzServer.x86_64
+
+      - name: The dedicated server starts and stops
+        run: |
+          mkdir -p build/server-check
+          (sleep 90; echo stop) | timeout 180 build/server/LeguitzServer.x86_64 --headless --data=build/server-check --port=27421 | tee build/server-check/out.txt
+          grep -q "Leguitz server ready" build/server-check/out.txt
+          grep -q "Stopped." build/server-check/out.txt
 
       - uses: actions/upload-artifact@v4
         with:
@@ -76,6 +86,12 @@ jobs:
         with:
           name: Leguitz-linux
           path: build/Leguitz-linux.tar.gz
+          retention-days: 30
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LeguitzServer-linux
+          path: build/LeguitzServer-linux.tar.gz
           retention-days: 30
 
       - uses: actions/upload-artifact@v4

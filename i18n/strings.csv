@@ -1283,3 +1283,20 @@ CATALOG_TAB_FARM,Farm and garden,Ferme et jardin
 CATALOG_TAB_FOOD,Food,Nourriture
 CATALOG_TAB_TOOLS,"Tools, weapons and gear","Outils, armes et équipement"
 CATALOG_TAB_MATERIALS,Materials,Matériaux
+REFUSED_VERSION,This server runs another version of the game.,Ce serveur tourne avec une autre version du jeu.
+REFUSED_PASSWORD,Wrong password.,Mot de passe incorrect.
+REFUSED_FULL,The server is full.,Le serveur est plein.
+REFUSED_NAME,"That name cannot be used: 2 to 16 letters, digits, - or _.","Ce pseudo n'est pas valable : 2 à 16 lettres, chiffres, - ou _."
+REFUSED_NAME_TAKEN,A player of that name is already on the server.,Un joueur de ce nom est déjà sur le serveur.
+CONNECTION_TITLE_CONNECTING,Connecting…,Connexion…
+CONNECTION_CONNECTING,Joining the server at %s,Connexion au serveur %s
+CONNECTION_TITLE_REFUSED,Connection refused,Connexion refusée
+CONNECTION_TITLE_LOST,Disconnected,Déconnecté
+CONNECTION_LOST,The connection to the server was lost.,La connexion au serveur a été perdue.
+CONNECTION_UNREACHABLE,The server at %s could not be reached.,Impossible de joindre le serveur %s.
+CONNECTION_QUIT,Quit,Quitter
+CHAT_JOINED,%s joined the game.,%s a rejoint la partie.
+CHAT_LEFT,%s left the game.,%s a quitté la partie.
+CHAT_SERVER_STOPPING,The server is stopping.,Le serveur s'arrête.
+CONNECTION_TITLE_UNREACHABLE,Server unreachable,Serveur injoignable
+SERVER_REFUSED,%s was refused: %s,%s a été refusé : %s

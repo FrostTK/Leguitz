@@ -44,6 +44,19 @@ static func tell(
 	session.transport.send(Msg.chat_notice(key, args, tone))
 
 
+## A notice in the reader's language: its key with its args, the words
+## among them ({"key": ...}) translated too (the chat, a server's console).
+static func notice_text(message: Dictionary) -> String:
+	var args := []
+	for arg: Variant in message.get("args", []):
+		if arg is Dictionary:
+			args.append(String(TranslationServer.translate(arg.get("key", ""))))
+		else:
+			args.append(arg)
+	var text := String(TranslationServer.translate(message.get("key", "")))
+	return text % args if not args.is_empty() else text
+
+
 ## A word the reader translates (a key), among a notice's args.
 static func word(key: String) -> Dictionary:
 	return {"key": key}
@@ -56,7 +69,7 @@ static func on_join(server: GameServer, session: GameServer.PlayerSession) -> vo
 
 
 static func is_admin(server: GameServer, session: GameServer.PlayerSession) -> bool:
-	return session.player_name in server.settings.admins
+	return session.console or session.player_name in server.settings.admins
 
 
 ## The player called `name` (ignoring case), null if none is here.

@@ -31,6 +31,10 @@ G=/c/Users/guill/godot/Godot_v4.7.2-stable_win64_console.exe   # console build: 
 $G --headless --path . --import && $G --headless --path . -s res://tests/run_tests.gd
 py -m gdtoolkit.linter src tests && py -m gdtoolkit.formatter --check src tests
 $G --path . --audio-driver Dummy --resolution 1280x720 -- --seed=42 --screenshot="$SCRATCH/s.png"
+# A dedicated server (data in a scratch folder, never the owner's), and a game joining it:
+$G --headless --path . -- --server --data="$SCRATCH/srv" --seed=42     # "stop" on stdin, or a file "stop"
+$G --path . -- --connect=127.0.0.1 --name=Alex --screenshot-delay=120 --screenshot="$SCRATCH/s.png"
+LEGUITZ_SERIALIZE=1 $G --headless --path . -s res://tests/run_tests.gd  # messages as bytes, as on the network
 ```
 
 gdformat writes CRLF line endings on Windows: convert the files it touched back to LF.
@@ -39,7 +43,11 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
 
 - `src/sim` is the authoritative server. It must not depend on nodes, input or rendering.
 - The client (`src/client`) only learns about the world via `Msg` dictionaries from a `Transport`,
-  and only changes it by sending messages. Keep solo on the same path as future multiplayer.
+  and only changes it by sending messages. Keep solo on the same path as multiplayer. Messages are
+  plain values only (no objects: they cross the network as var_to_bytes; check with
+  LEGUITZ_SERIALIZE=1). The dedicated server (`src/server`) must never load a client script: the
+  entry (main.gd) loads Game (src/game.gd, solo or joining) by path, and nothing the server reaches
+  may name a class of src/client or src/ui in code (comments are fine).
 - World generation must be deterministic per seed: use `HashUtil` (never Godot's `hash()`/`randi()`)
   and derive sub-seeds with `HashUtil.derive_seed(world_seed, SALT)`.
 - Voxel ids (`src/sim/world/voxels.gd`, 16 bits: Voxels.ID_COUNT, stored as ints in
@@ -1165,6 +1173,34 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   tools by kind (windows by Glass: WINDOW_SECONDS); the house's recipes are HomeRecipes (ROOMS,
   AMBIANCE; the shelf's is "PPP / S": the boat bench's took the old one at the workbench). The
   book: Home and garden (Ambiance).
+- Multiplayer, step 1 (network and dedicated server; asked by the owner, before phase 8's step 9):
+  `Transport` has `close()`; LocalTransport (solo; `serialize`, set by the test runner from
+  LEGUITZ_SERIALIZE, sends as bytes), NetTransport (src/net: the server's end of a player's ENet
+  connection, one reliable channel, var_to_bytes, ENet's zstd; what comes over `most_bytes`,
+  CLIENT_MOST_BYTES, or is no message closes it), NetServer (`listen(address, port, most)`,
+  `service()` -> the new NetTransports, `flush`, `close`) and NetClient (a NetTransport owning its
+  host: `connect_to` a name or an IP, what is sent waits for the connection, `poll` services it,
+  `connect_seconds` then `ending` CONNECTION_UNREACHABLE, or CONNECTION_LOST). `Lobby`
+  (src/sim/lobby.gd, static): `refusal` (Msg.PROTOCOL, GameServer.password, NAME regex, a name
+  playing, GameServer.max_players) answered by Msg.REFUSED then closed; GameServer
+  .process_messages ends the sessions whose transport closed (`Lobby.leave`: off a boat, screens
+  closed, saved, CHAT_LEFT); `joined` (CHAT_JOINED); `may_change_world` (SET_TIME, SET_GAME_MODE
+  only from a dedicated server's admins). GameServer.dedicated, password, max_players,
+  view_limit (`_clamp_view_distance`), `console` (hears what is broadcast and the refusals,
+  SERVER_REFUSED). Main (src/main.gd) runs DedicatedServer (src/server, `wanted`: --server or the
+  "dedicated_server" feature of the "Linux Server" export) or Game (src/game.gd: the old main;
+  --connect=HOST[:PORT], --name, --password join with a NetClient). `DedicatedServer`: ServerConfig
+  (server.cfg in --data, TEMPLATE written first with its explanations; options --ip, --port
+  27420, --world, --seed, --game-mode, --max-players, --password, --view-distance, --language,
+  after "--" or not; `problems` warned), the world in <data>/worlds/<world>, Engine.max_fps
+  FRAMES, ticks as Game does, READY printed (Pterodactyl), ServerConsole (stdin on a thread: a
+  console's lines, a pipe's bytes; stop, save, say, list, help and the chat's COMMANDS as an
+  admin session, PlayerSession.console; Chat.notice_text, moved from ChatBox, prints notices),
+  STOP_FILE in the data folder stops it (systemd), stopping saves and lets the players go
+  (CHAT_SERVER_STOPPING). Client: ConnectionScreen (src/ui; GameClient.connection: connecting,
+  refused, lost or unreachable, a Quit button; in screen_open). CI exports "Linux Server" and
+  starts it once. The game's start is slow on both sides (~20 s: GDScript compiling the sim's
+  scripts and their big tables; a server ~250 MB).
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made

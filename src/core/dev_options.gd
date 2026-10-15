@@ -42,6 +42,11 @@ extends RefCounted
 ## --grid=ROW/ROW...   fill the crafting grid (5 x 5 at most), rows split
 ##                      by "/", cells by "," ("none" leaves a cell empty):
 ##                      oak_planks,oak_planks/stick,oak_planks/stick
+## --connect=HOST[:PORT] join a dedicated server (DedicatedServer; port 27420
+##                      by default) instead of playing solo
+## --name=NAME          the player's name there (Player by default)
+## --password=TEXT      the server's password
+## (--server runs the game as a dedicated server: see ServerConfig.)
 
 var seed_text := ""
 var new_world := false
@@ -84,6 +89,12 @@ var drop_held := false
 var book_spread := -1
 ## Items put in the crafting grid's cells: rows of items.
 var grid: Array[Array] = []
+## A dedicated server to join ("": play solo), the name and the password
+## given there.
+var connect_address := ""
+var connect_port := ServerConfig.DEFAULT_PORT
+var player_name := "Player"
+var password := ""
 
 
 static func parse(args: PackedStringArray) -> DevOptions:
@@ -187,6 +198,15 @@ static func parse(args: PackedStringArray) -> DevOptions:
 					options.grid.append(items)
 			"drop":
 				options.drop_held = true
+			"connect":
+				var host := value.rsplit(":", true, 1)
+				options.connect_address = host[0]
+				if host.size() > 1 and host[1].is_valid_int():
+					options.connect_port = host[1].to_int()
+			"name":
+				options.player_name = value
+			"password":
+				options.password = value
 			"place":
 				options.place_once = true
 			"camera":

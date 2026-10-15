@@ -3,12 +3,15 @@ extends SceneTree
 ##   godot --headless --path . --import          (once, builds the class cache)
 ##   godot --headless --path . -s res://tests/run_tests.gd
 ## Runs every test_* method of every tests/unit/test_*.gd file.
-## Exit code 0 = all tests passed.
+## Exit code 0 = all tests passed. With LEGUITZ_SERIALIZE=1 in the
+## environment, every message crosses LocalTransport as bytes, as over the
+## network (what does not survive var_to_bytes shows).
 
 const TEST_DIR := "res://tests/unit"
 
 
 func _initialize() -> void:
+	LocalTransport.serialize = OS.get_environment("LEGUITZ_SERIALIZE") == "1"
 	var passed := 0
 	var failed := 0
 	for file in _test_files():

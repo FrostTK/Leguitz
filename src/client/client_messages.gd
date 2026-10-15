@@ -6,7 +6,10 @@ extends RefCounted
 
 static func handle(client: GameClient, message: Dictionary) -> void:
 	match message.get("t"):
+		Msg.REFUSED:
+			client.connection.show_refused(str(message.get("reason", "")))
 		Msg.WELCOME:
+			client.connection.joined()
 			client.player_id = message["player_id"]
 			client.dropped_items.player_id = client.player_id
 			client.creatures.player_id = client.player_id
