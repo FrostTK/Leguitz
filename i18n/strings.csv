@@ -1270,3 +1270,16 @@ BOOK_HOME_CLOCKS,A wall clock and a grandfather clock tell the time of the day. 
 BOOK_HOME_PLANTS,"Flower pot (on the floor or a piece of furniture): a right click puts in the flower, the sapling, the fern or the mushroom you hold; empty-handed, you take it back. A window box under a window, a house plant, a cushion to sit on.","Pot de fleurs (au sol ou sur un meuble) : un clic droit y plante la fleur, la pousse, la fougère ou le champignon que tu tiens ; les mains vides, tu le reprends. Une jardinière sous une fenêtre, une plante verte, un coussin où s'asseoir."
 BOOK_HOME_BATHROOM,"Bathroom: a bathtub (two tiles; sit in it), a shower (a right click turns it on), a washbasin. The watering can fills at a bathtub or a washbasin.","Salle de bain : une baignoire (deux cases ; on s'y assoit), une douche (un clic droit l'ouvre), un lavabo. L'arrosoir se remplit à une baignoire ou à un lavabo."
 BOOK_HOME_MORE,"And more: a toy chest (it stores), a piano (two tiles), a cradle and a folding screen that take a pot of paint.","Et encore : un coffre à jouets (il range), un piano (deux cases), un berceau et un paravent qui prennent un pot de peinture."
+CATALOG_SEARCH,Search…,Rechercher…
+CATALOG_FOUND,Results: %d,Résultats : %d
+CATALOG_NOTHING,Nothing by that name,Aucun objet de ce nom
+CATALOG_TAB_BLOCKS,Building blocks,Blocs de construction
+CATALOG_TAB_SHAPES,"Stairs, slabs and roofs","Escaliers, dalles et toits"
+CATALOG_TAB_NATURE,Nature,Nature
+CATALOG_TAB_OPENINGS,"Doors, windows and fences","Portes, fenêtres et clôtures"
+CATALOG_TAB_FURNITURE,Furniture,Mobilier
+CATALOG_TAB_DECOR,Decoration and lights,Décoration et lumières
+CATALOG_TAB_FARM,Farm and garden,Ferme et jardin
+CATALOG_TAB_FOOD,Food,Nourriture
+CATALOG_TAB_TOOLS,"Tools, weapons and gear","Outils, armes et équipement"
+CATALOG_TAB_MATERIALS,Materials,Matériaux

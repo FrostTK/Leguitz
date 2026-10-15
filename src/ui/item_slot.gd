@@ -26,6 +26,9 @@ var selected := false
 var library: ItemLibrary
 ## Drawn as a dark shape while the slot is empty (Items.Id.NONE: nothing).
 var hint := Items.Id.NONE
+## What the mouse over it names instead of the item's name (a translation
+## key; "": the item's): a catalog's tab.
+var label := ""
 
 var _item := Items.Id.NONE
 var _count := 0
@@ -99,11 +102,14 @@ func _draw() -> void:
 ## Draws an item's name in a dark box beside `at` (the mouse) on any
 ## control, kept inside it.
 static func draw_name(canvas: Control, item: int, at: Vector2) -> void:
-	if item == Items.Id.NONE:
-		return
+	if item != Items.Id.NONE:
+		draw_label(canvas, canvas.tr(Items.name_key(item)), at)
+
+
+## Draws a text in a dark box beside `at` (the mouse), as draw_name does.
+static func draw_label(canvas: Control, text: String, at: Vector2) -> void:
 	var font := canvas.get_theme_default_font()
 	var font_size := UiTheme.BASE_FONT_SIZE
-	var text := canvas.tr(Items.name_key(item))
 	var text_size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
 	var box := (text_size + NAME_PADDING * 2.0).ceil()
 	var corner := (at + NAME_OFFSET).floor()

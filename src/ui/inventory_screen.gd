@@ -24,7 +24,8 @@ extends Control
 ## its stack lying elsewhere (Inventory.collect). With empty hands, the name of the
 ## item under the mouse shows beside it. In creative, the inventory shows
 ## the catalog of every item over the bag instead of the crafting grid
-## (CreativeCatalog; the wheel scrolls it). A boat's screen (a shipyard's)
+## (CreativeCatalog, in tabs; the wheel scrolls it), its search field and
+## tabs in the top, beside the armor. A boat's screen (a shipyard's)
 ## shows its BoatPanel over the bag instead.
 
 signal slot_clicked(slot: int, right: bool, shift: bool)
@@ -196,6 +197,7 @@ func _ready() -> void:
 		func(item: int, right: bool, shift: bool) -> void: catalog_clicked.emit(item, right, shift)
 	)
 	box.add_child(_catalog)
+	top.add_child(_catalog.head)
 	_bag_label.text = "INVENTORY_TITLE"
 	box.add_child(_bag_label)
 	var bag := GridContainer.new()
@@ -779,4 +781,7 @@ func _draw_cursor() -> void:
 		var worn := inventory.wear[Inventory.CURSOR]
 		ItemSlot.draw_stack(_cursor, library, item, count, at, worn)
 	elif _hovered != null and _hovered.is_visible_in_tree() and not (_spreading or _dragging):
-		ItemSlot.draw_name(_cursor, _hovered.shown_item(), at)
+		if _hovered.label != "":
+			ItemSlot.draw_label(_cursor, tr(_hovered.label), at)
+		else:
+			ItemSlot.draw_name(_cursor, _hovered.shown_item(), at)

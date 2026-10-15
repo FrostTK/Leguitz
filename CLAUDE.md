@@ -1271,7 +1271,13 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   where a flight ended), place without using up (server and prediction), break at once
   (BlockInteraction: Mining.BREAK_PAUSE between two) with no drops nor wear, are never hurt nor
   hungry (Survival), see no gauges and take any item from the catalog shown instead of the
-  inventory's crafting grid (CreativeCatalog; `GameModes.take_from_catalog`, shared, Msg.CATALOG_CLICK).
+  inventory's crafting grid (CreativeCatalog; `GameModes.take_from_catalog`, shared, Msg.CATALOG_CLICK;
+  asked by the owner: every item in one of ten tabs, CreativeCatalog.Tab, `tab_of` by rules and
+  small tables, the tools' tab sorted tools, bow, armor; its `head` in the screen's top beside the
+  armor: a search field, a click or Ctrl+F, Esc/Enter/Tab or a click elsewhere let it go, whose
+  words must all be in one of an item's names, any language loaded or its key, Chat.plain,
+  `search` ranks names beginning with it first; the tabs are ItemSlots whose `label` the mouse
+  names, ItemSlot.draw_label).
   Debug commands (map, Page Up/Down, F4, F6, F7: GameModeView.debug_key) are refused out of
   creative (`GameModes.cheats`; `GameServer.cheats_anywhere` for dev options). Msg.SET_GAME_MODE
   (pause menu) swaps survival and creative (creative makes players well again); a hardcore world
