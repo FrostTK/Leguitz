@@ -67,7 +67,7 @@ Les questions de goût ou les choix lourds de conséquences sont posés avant de
 
 ## 3. État actuel : ce qui est fait
 
-Godot **4.7.2** (GDScript), rendu Forward+. 416 tests unitaires, lint propre.
+Godot **4.7.2** (GDScript), rendu Forward+. 424 tests unitaires, lint propre.
 
 | Phase | Contenu | Commits |
 |---|---|---|
@@ -157,7 +157,8 @@ Godot **4.7.2** (GDScript), rendu Forward+. 416 tests unitaires, lint propre.
 | 8.8 Ambiance | Des **lumières** qui s'allument et s'éteignent au clic droit : **bougies** (de la ficelle sur un rayon de miel), **chandelier** à trois branches, **lustre** qui pend au plafond, **lampe de chevet** à l'abat-jour teintable, **applique** murale ; bougies, chandeliers, lampes et pots se posent **sur une table ou un meuble**. Une **cheminée** de deux cases et un **poêle à bois** : une bûche ou du charbon les **allume**, ils brûlent longtemps puis s'éteignent (l'arrosoir les éteint), **éclairent**, **fument par la cheminée** au-dessus et **réchauffent** : en **hiver**, là où il neige, on a **froid** (la faim vient plus vite, on ne guérit plus) sauf au chaud près d'un feu (on guérit alors plus vite). Aux murs : **tableaux** (8 paysages) et **portraits** (8), dessinés par le jeu, qui défilent au clic droit, une **horloge** dont les **aiguilles donnent l'heure du jeu**, un **miroir**, une **carte encadrée** qui montre **le pays autour**, des **têtes de cerf et d'ours**, une **tapisserie** teintable, une étagère à épices, un portemanteau. Des **pots de fleurs** où l'on plante une fleur, une pousse, une fougère ou un champignon, une **jardinière**, des **plantes vertes**, des **coussins**. La **salle de bain** : **baignoire** (on s'y assoit), **douche** qui coule, **lavabo** (l'arrosoir s'y remplit). Et une **horloge comtoise** à balancier, un **coffre à jouets**, un **piano**, un **berceau**, un **paravent**. Le livre : chapitre Maison, « Ambiance » | `f2182bc` |
 | Catalogue créatif | Demandé par le propriétaire (en créatif, tous les objets étaient mélangés : impossible de trouver ce qu'on voulait) : le catalogue est rangé en **dix onglets** à icônes (blocs de construction ; escaliers, dalles et toits ; nature ; portes, fenêtres et clôtures ; mobilier ; décoration et lumières ; ferme et jardin ; nourriture ; outils, armes et équipement ; matériaux), le nom de l'onglet au survol et sous les onglets, et un **champ de recherche** (clic ou Ctrl+F) qui trouve les objets par leur nom en **français ou en anglais** (et dans toute autre langue ajoutée plus tard), sans tenir compte des majuscules ni des accents, avec plusieurs mots (« porte chêne »), ceux dont le nom commence par le mot en premier | `1a7e995` |
 | M.1 Réseau et serveur dédié | Le jeu sait maintenant jouer **en réseau** (ENet, UDP) : un **serveur dédié**, le jeu lancé sans fenêtre (`--server`, ou la version « serveur » exportée pour Linux), avec ses **réglages** dans `server.cfg` (écrit la première fois avec ses explications : IP, port 27420, monde, graine, mode de jeu, joueurs au plus, mot de passe, distance de vue, langue) que les **options de lancement** remplacent (`--port=`...), son dossier de données au choix (`--data=`), une **console** (stop, save, say, list, help et les commandes d'administrateur du chat), une ligne « Leguitz server ready » quand il écoute, l'**arrêt propre** (la commande `stop`, ou un fichier `stop` posé dans son dossier) qui sauvegarde, et la sauvegarde toutes les deux minutes. On le **rejoint** avec `--connect=IP:port --name=Pseudo --password=...` ; un écran dit qu'on se connecte, qu'on est **refusé** (mot de passe, serveur plein, pseudo pris ou invalide, version différente), que la connexion est **perdue** ou le serveur **injoignable**. Le chat annonce les arrivées et les départs ; un joueur qui part est sauvegardé ; seuls les administrateurs changent l'heure, les saisons et le mode de jeu d'un serveur. La compilation automatique produit `LeguitzServer-linux` | `e5936da` |
-| M.2 Rejoindre et voir les autres | On **voit les autres joueurs** : leur corps en voxels, **leur nom au-dessus de la tête** (il s'efface au loin), ce qu'ils **tiennent en main** et l'**armure** qu'ils portent, leurs **gestes** (marcher, sauter, nager, piocher, frapper, manger, bander l'arc, lancer la ligne, ramer, s'asseoir, dormir ou être évanoui), leur **lanterne** la nuit ; leurs **mouvements sont lissés** (glissés d'une position à l'autre même quand le réseau les livre par paquets ; un saut de téléportation n'est pas glissé) et ils **apparaissent et disparaissent en fondu**. **P maintenu** : la **liste des joueurs** (le serveur, les noms, les admins, le ping de chacun). Le menu pause a une rubrique **Multijoueur** : « Rejoindre un serveur… » ouvre un **écran pour rejoindre** (adresse IP ou nom de domaine, port, pseudo, mot de passe ; les **serveurs rejoints récemment** se remplissent d'un clic, × les oublie ; jamais le mot de passe gardé) ; sur un serveur, « Quitter le serveur » ramène au monde solo, **sans relancer le jeu**. Connexion perdue ou refusée : **Réessayer**, **Autre serveur…**, **Jouer en solo**, Quitter. Un joueur dont le jeu s'est fermé brutalement **revient tout de suite** depuis la même machine (son ancienne connexion lui cède la place) ; un joueur silencieux est lâché en 10 s. Sur un serveur, seuls les admins voient les réglages du monde dans le menu pause | « Players see each other » |
+| M.2 Rejoindre et voir les autres | On **voit les autres joueurs** : leur corps en voxels, **leur nom au-dessus de la tête** (il s'efface au loin), ce qu'ils **tiennent en main** et l'**armure** qu'ils portent, leurs **gestes** (marcher, sauter, nager, piocher, frapper, manger, bander l'arc, lancer la ligne, ramer, s'asseoir, dormir ou être évanoui), leur **lanterne** la nuit ; leurs **mouvements sont lissés** (glissés d'une position à l'autre même quand le réseau les livre par paquets ; un saut de téléportation n'est pas glissé) et ils **apparaissent et disparaissent en fondu**. **P maintenu** : la **liste des joueurs** (le serveur, les noms, les admins, le ping de chacun). Le menu pause a une rubrique **Multijoueur** : « Rejoindre un serveur… » ouvre un **écran pour rejoindre** (adresse IP ou nom de domaine, port, pseudo, mot de passe ; les **serveurs rejoints récemment** se remplissent d'un clic, × les oublie ; jamais le mot de passe gardé) ; sur un serveur, « Quitter le serveur » ramène au monde solo, **sans relancer le jeu**. Connexion perdue ou refusée : **Réessayer**, **Autre serveur…**, **Jouer en solo**, Quitter. Un joueur dont le jeu s'est fermé brutalement **revient tout de suite** depuis la même machine (son ancienne connexion lui cède la place) ; un joueur silencieux est lâché en 10 s. Sur un serveur, seuls les admins voient les réglages du monde dans le menu pause | `20e73b7` |
+| M.3 Un serveur qui ne fait confiance à personne | Un serveur dédié **vérifie ce que disent les joueurs** (une partie solo fait confiance à son jeu). **Déplacements** : pas plus vite que la course (avec un plat SWIFT, 25 % de marge, une seconde d'élan au plus), pas à travers les murs ni les planchers, pas plus haut qu'un saut, pas en suspens en l'air ; sinon le joueur est **remis en place** (les déplacements envoyés avant la correction sont ignorés, et une correction ne redonne pas d'élan). Les **chutes** sont mesurées par le serveur (un jeu qui tait sa chute se blesse quand même). **Minage** : le jeu dit quand il commence un bloc, le serveur refuse qu'il casse plus vite que l'outil le permet. **Sièges et lits** : un joueur par siège et par lit (« Quelqu'un est déjà assis là »), les autres voient le serveur dire qui est assis ou couché. **Messages** : les messages incohérents sont ignorés (dont une case lointaine qui ferait générer des chunks), le chat trop rapide est freiné (« Tu parles trop vite »), les rafales sont coupées et un jeu qui inonde le serveur est **exclu** (« Exclu du serveur »). La **console du serveur** signale chaque triche (avec combien de fois). Essayé avec cinq joueurs honnêtes (course, sauts, nage, minage, forêts et rivières) sans fausse alerte | « A server that trusts nobody » |
 
 **Pas encore fait** (prévu) : nouveaux matériaux et décoration (phase 8),
 structures, menus de départ, sons, mode Arcade (en attente), mobile.
@@ -284,17 +285,18 @@ xvfb-run -a -s "-screen 0 960x540x24" godot --path . --audio-driver Dummy --reso
 
 ---
 
-## 5. Prochaine étape au « go » : Multijoueur, étape 3 (un serveur qui ne fait confiance à personne)
+## 5. Prochaine étape au « go » : Multijoueur, étape 4 (comptes et administration)
 
 **Décision du propriétaire (octobre 2026)** : on passe tout de suite au **multijoueur et aux
 serveurs dédiés** (phase « Multijoueur et serveurs dédiés », section 6) ; la **phase 8** est en
 pause après son étape 8 et reprendra à son **étape 9** (extérieur : les allées de gravier, de
 dalles et de pas japonais, le lampadaire, le puits, la fontaine, la boîte aux lettres, le banc de
 jardin, la pergola, le nichoir, la girouette, et les arches laissées à l'étape 6 avec les ponts).
-Les étapes 1 (réseau et serveur dédié) et 2 (rejoindre et voir les autres) du multijoueur sont
-faites ; au prochain « go », l'**étape 3** (un serveur qui ne fait confiance à personne : il refait
-les déplacements avec les collisions, vérifie la durée du minage, les chutes, les portées, les
-sièges et les lits, limite le débit des messages ; voir la section 6).
+Les étapes 1 (réseau et serveur dédié), 2 (rejoindre et voir les autres) et 3 (un serveur qui ne
+fait confiance à personne) du multijoueur sont faites ; au prochain « go », l'**étape 4** (comptes
+et administration : un mot de passe par joueur, liste blanche, `/expulse`, `/bannis`, rôles,
+sauvegardes de secours ; voir la section 6). Le propriétaire a demandé de **garder les
+propositions** faites en route : elles sont rassemblées dans l'étape 7 de la phase.
 
 **La phase 7 est terminée** (étapes 1 à 11 ci-dessous). La **phase 8, Construction et
 décoration**, a fait ses étapes 1 (escaliers et dalles), 2 (verre et vitres, la teinte par case),
@@ -858,9 +860,25 @@ serveur intégré). Découpage :
    automatique, un écran titre (choisir solo ou serveur au lancement), la liste des serveurs
    avec leur nombre de joueurs avant d'entrer, le mot de passe gardé, les pings sur la console du
    serveur.
-3. **Un serveur qui ne fait confiance à personne** : collisions des déplacements (PlayerBody côté
-   serveur), durée du minage, chutes, portées, sièges et lits vus par le serveur, limites de débit
-   des messages.
+3. ✅ **Un serveur qui ne fait confiance à personne** (voir section 3, ligne M.3). Fait avec ces
+   choix : seulement sur un serveur dédié (une partie solo fait confiance à son jeu ; la
+   numérotation des téléportations vaut partout) ; comme Minecraft, le jeu dit où il est et le
+   serveur vérifie (pas de simulation des touches côté serveur) : vitesse de course × 1,25 (et un
+   plat SWIFT), une seconde d'élan, murs le long du trajet en ligne droite (3 pixels de marge pour
+   les glissades le long des angles), montée d'une marche et d'un saut + 0,35 niveau, retomber
+   0,6 s après le haut du saut ; un corps à moins d'un demi-niveau du sol a pu le toucher (deux
+   sauts de suite tombent entre deux messages) ; créatif, spectateur, bateau, siège et lit non
+   vérifiés ; chutes mesurées par le serveur, celle du jeu ne fait qu'ajouter ; minage : 80 % du
+   temps prévu moins 0,1 s ; les cases d'un message à plus de 12 cases du joueur sont refusées ;
+   150 messages par seconde (300 d'un coup), chat 6 d'un coup puis un toutes les 1,6 s, poses 12
+   par seconde ; 600 messages refusés en 10 s font exclure ; la console signale (une fois par
+   10 s et par sorte, avec le compte) mais n'exclut pas pour les déplacements (une fausse alerte
+   ne coûte qu'une remise en place). Deux fausses alertes trouvées en jouant (atterrissage entre
+   deux messages, glissade dans un angle) et corrigées. Pas fait (à proposer) : voir les fissures
+   des blocs que les autres minent, empêcher de miner ou frapper à travers un mur (le serveur
+   vérifie la portée, pas la vue), cacher aux jeux les minerais enfouis (contre les tricheurs qui
+   voient à travers la roche), vérifier le type de chaque champ de chaque message (seuls les
+   champs communs le sont), exclure après trop de remises en place.
 4. **Comptes et administration** : un mot de passe par joueur (aujourd'hui un pseudo suffit à
    prendre l'inventaire d'un autre) ou le compte Steam plus tard, liste blanche, `/expulse`,
    `/bannis`, rôles, sauvegardes de secours et restauration.
@@ -873,6 +891,20 @@ serveur intégré). Découpage :
    serveur publiées à part, ou un jeton d'accès).
 6. **Performances** : plusieurs joueurs loin les uns des autres (génération, mémoire, débit),
    mesurées sur un petit VPS, pour dire quelle machine il faut selon le nombre de joueurs.
+7. **Finitions : les propositions gardées** (le propriétaire a demandé de les garder ; certaines
+   iront plus naturellement avec l'étape 5 ou 6) :
+   - **serveur** : un démarrage plus rapide (~20 s et ~250 Mo aujourd'hui : la compilation des
+     scripts, la même au lancement solo ; avec l'étape 6), un arrêt propre sur le signal SIGTERM
+     (avec l'étape 5), un message du jour, le nom et la description du serveur affichés avant
+     d'entrer, un canal non fiable pour les mouvements (moins de latence quand des paquets se
+     perdent), l'IPv6, les pings sur la console ;
+   - **les autres joueurs** : des apparences différentes (couleurs, tenues), la tête qui suit le
+     regard (haut/bas), la rougeur d'un coup reçu, les bulles de chat au-dessus des têtes, le nom
+     caché derrière les murs ou quand on s'accroupit, les fissures des blocs qu'ils minent ;
+   - **rejoindre** : un écran titre (solo ou serveur au lancement), la liste des serveurs avec leur
+     nombre de joueurs avant d'entrer, la reconnexion automatique, le mot de passe gardé ;
+   - **contre la triche** : ne pas miner ni frapper à travers un mur, cacher les minerais enfouis,
+     vérifier chaque champ de chaque message, exclure après trop de remises en place.
 
 ### Phase 10 — Mobile (iOS, Android)
 - Contrôles tactiles (stick virtuel, toucher pour miner/poser, deux doigts pour tourner la
@@ -884,8 +916,9 @@ serveur intégré). Découpage :
 
 - **Taille des fichiers** : `src/client/interaction/block_interaction.gd` fait 983 lignes (limite
   1000) : y sortir du code (par exemple ce que fait le clic droit sur les animaux, les machines,
-  la récolte) avant d'y ajouter ; `src/client/game_client.gd` en fait 940, `src/sim/game_server.gd`
-  954 (le multijoueur côté client est dans `src/client/peers/online.gd`) ; `object_shapes.gd` (922) et `mining.gd` (902) ont été allégés à l'étape 8.8 (les blocs
+  la récolte) avant d'y ajouter (985 après l'étape M.3) ; `src/client/game_client.gd` en fait 940,
+  `src/sim/game_server.gd` 982 (y sortir du code avant d'y ajouter : le multijoueur côté client est
+  dans `src/client/peers/online.gd`, les vérifications du serveur dans `src/sim/guard/`) ; `object_shapes.gd` (922) et `mining.gd` (902) ont été allégés à l'étape 8.8 (les blocs
   d'un objet tourné se construisent par leur nom, les temps et outils vont par sorte), les
   recettes de la maison sont dans `home_recipes.gd`.
   `src/sim/world/tiles.gd` (la liste des numéros de blocs, qu'on ne fait qu'allonger) est exempté

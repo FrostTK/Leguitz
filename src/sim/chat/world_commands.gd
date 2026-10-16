@@ -263,5 +263,5 @@ static func _landing(server: GameServer, tile: Vector2i) -> Vector2i:
 static func _go(session: GameServer.PlayerSession, tile: Vector2i, height: float) -> void:
 	session.position = Coords.tile_to_world_center(tile) + Vector2(0, 4)
 	session.height = height
-	session.transport.send(Msg.player_teleport(session.position, session.height))
+	MoveCheck.teleport(session)
 	Chat.tell(session, "CMD_TP_DONE", [tile.x, roundi(height), tile.y], Chat.Tone.DONE)

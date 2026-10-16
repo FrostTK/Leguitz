@@ -99,6 +99,10 @@ class PlayerSession:
 	## The other players they are shown: id -> their state as last sent
 	## (Peers).
 	var seen_peers: Dictionary[int, Dictionary] = {}
+	## What a dedicated server watches of them (Guard), the seat they sit
+	## on (Seats; NO_CELL: none).
+	var guard := Guard.Watch.new()
+	var sits_on := NO_CELL
 	var last_blow := -INF
 	## What armor let through below a whole point (it adds up), and when
 	## they last shot an arrow (seconds of play).
@@ -166,6 +170,8 @@ var view_limit := GameConst.MAX_VIEW_DISTANCE
 ## What the dedicated server's console hears of what is told to everyone
 ## (null: none).
 var console: Transport
+## Tests move the guard's clock on (seconds; see now).
+var time_shift := 0.0
 ## Draws what breaks drop and where things fly.
 var rng := RandomNumberGenerator.new()
 
@@ -290,7 +296,8 @@ func first_session() -> PlayerSession:
 func process_messages() -> void:
 	for session in sessions.duplicate():
 		for message in session.transport.poll():
-			_handle_message(session, message)
+			if Guard.admits(self, session, message):
+				_handle_message(session, message)
 		if not session.transport.is_open():
 			Lobby.leave(self, session)
 	_send_finished_maps()
@@ -314,6 +321,7 @@ func tick() -> void:
 	creatures.update(self, GameConst.TICK_DELTA)
 	creatures.sync(sessions)
 	Peers.sync(self)
+	Seats.update(self)
 	archery.update(self, GameConst.TICK_DELTA)
 	Fishing.update(self, GameConst.TICK_DELTA)
 	boats.update(self, GameConst.TICK_DELTA)
@@ -371,6 +379,8 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 			_on_set_view_distance(session, message)
 		Msg.BLOCK_BREAK:
 			_on_block_break(session, message)
+		Msg.DIG:
+			Digging.start(self, session, message.get("cell", Vector3i.MAX))
 		Msg.BLOCK_PLACE:
 			_on_block_place(session, message)
 		Msg.SWING_GATE:
@@ -443,6 +453,7 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 				and not Shelves.handle(self, session, message)
 				and not Hearths.handle(self, session, message)
 				and not Decor.handle(self, session, message)
+				and not Seats.handle(self, session, message)
 			):
 				push_warning("Server: unknown message type %s" % other)
 
@@ -529,6 +540,10 @@ func _on_block_break(session: PlayerSession, message: Dictionary) -> void:
 		return
 	var cell: Vector3i = message.get("cell", Vector3i.ZERO)
 	var voxel := world.voxel_at(cell)
+	var slot := int(message.get("slot", -1))
+	if not Digging.allows(self, session, cell, voxel, slot):
+		session.transport.send(Msg.block_changed(cell, voxel))
+		return
 	if Openings.is_top(Voxels.block_of(voxel)) or Furniture.is_top(Voxels.block_of(voxel)):
 		# A door's top (tall furniture's): what is below breaks (and gives
 		# itself).
@@ -541,7 +556,6 @@ func _on_block_break(session: PlayerSession, message: Dictionary) -> void:
 	# The tool in hand wears (and may break); in creative nothing wears nor
 	# drops.
 	var drops := not GameModes.creative(self)
-	var slot := int(message.get("slot", -1))
 	if drops and slot >= 0 and slot < Inventory.HOTBAR and Mining.wears(voxel):
 		var bag := session.inventory
 		if Items.durability(bag.items[slot]) > 0:
@@ -816,21 +830,30 @@ func _clamp_view_distance(value: Variant) -> int:
 	return clampi(int(value), GameConst.MIN_VIEW_DISTANCE, view_limit)
 
 
+## A player's move (MoveCheck: answering the last place they were put in;
+## on a dedicated server checked, and the falls measured there).
 func _on_player_move(session: PlayerSession, message: Dictionary) -> void:
 	if not session.joined or not (session.alive() or session.spectator):
 		return
+	if int(message.get("seq", 0)) != session.guard.move.seq:
+		return
 	var new_pos: Vector2 = message.get("pos", session.position)
-	if new_pos.distance_to(session.position) > MAX_MOVE_PER_UPDATE:
-		session.transport.send(Msg.player_correction(session.position, session.height))
+	var height := float(message.get("h", session.height))
+	var fell := float(message.get("fell", 0.0))
+	if dedicated:
+		fell = MoveCheck.check(self, session, new_pos, height, fell)
+		if fell < 0.0:
+			return
+	elif new_pos.distance_to(session.position) > MAX_MOVE_PER_UPDATE:
+		MoveCheck.teleport(session, false)
 		return
 	var walked := new_pos.distance_to(session.position) / GameConst.TILE_SIZE
 	if session.boat < 0:
 		Survival.spend(self, session, walked * Vitals.WALK_EFFORT)
 	session.position = new_pos
 	session.facing = message.get("facing", session.facing)
-	session.height = message.get("h", session.height)
+	session.height = height
 	Peers.take_look(session, message)
-	var fell := float(message.get("fell", 0.0))
 	if fell > 0.0:
 		Survival.landed(self, session, fell)
 
@@ -936,6 +959,11 @@ func _unload_unused_chunks() -> void:
 			for dx in range(-radius, radius + 1):
 				needed[center + Vector2i(dx, dy)] = true
 	world.unload_unused(needed)
+
+
+## Seconds of real time (the guard's clock: Guard, MoveCheck, Digging).
+func now() -> float:
+	return Time.get_ticks_msec() * 0.001 + time_shift
 
 
 ## A joined player by their id (null: none).

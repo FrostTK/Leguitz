@@ -8,6 +8,8 @@ static func handle(client: GameClient, message: Dictionary) -> void:
 	match message.get("t"):
 		Msg.REFUSED:
 			client.connection.show_refused(str(message.get("reason", "")))
+		Msg.KICKED:
+			client.connection.show_kicked(str(message.get("reason", "")))
 		Msg.WELCOME:
 			client.connection.joined()
 			client.player_id = message["player_id"]
@@ -33,9 +35,9 @@ static func handle(client: GameClient, message: Dictionary) -> void:
 			if client.pause_menu.visible:
 				client.pause_menu.refresh_from_state()
 		Msg.PLAYER_CORRECTION:
-			client.local_player.apply_correction(message["pos"], message["h"])
+			client.local_player.apply_correction(message["pos"], message["h"], message["seq"])
 		Msg.PLAYER_TELEPORT:
-			client.local_player.apply_correction(message["pos"], message["h"])
+			client.local_player.apply_correction(message["pos"], message["h"], message["seq"])
 			client.snap_camera()
 		Msg.MAP_DATA:
 			client.debug_map.show_map(message["png"], message["scale"])
@@ -54,6 +56,8 @@ static func handle(client: GameClient, message: Dictionary) -> void:
 				client.world_view.voxel_changed(message["cell"])
 		Msg.SLEEPING:
 			client.furniture.on_sleeping(message["cell"], message["on"])
+		Msg.STAND_UP:
+			client.furniture.on_stand_up()
 		Msg.BLOCK_CHANGED:
 			client.interaction.on_block_changed(message["cell"], message["voxel"])
 			client.weather_effects.terrain_changed()

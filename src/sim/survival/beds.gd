@@ -7,8 +7,8 @@ extends RefCounted
 ## Msg.SLEEPING). When every player is asleep for SLEEP_SECONDS, the night
 ## passes (the clock goes on to WAKE_HOUR) and they wake. Not with monsters
 ## about (within SAFE_RANGE), nor when the clock does not run by itself
-## (synced with the device, frozen). Msg.WAKE, a hurt or the bed broken
-## gets them up.
+## (synced with the device, frozen), nor in a bed another sleeps in
+## (HUD_BED_TAKEN). Msg.WAKE, a hurt or the bed broken gets them up.
 
 const MESSAGES: Array[String] = [Msg.SLEEP, Msg.WAKE]
 const SLEEP_SECONDS := 2.5
@@ -39,11 +39,15 @@ static func handle(
 		session.bed = foot
 		session.transport.send(Msg.notice("HUD_BED_SPAWN"))
 	var refusal := _refusal(server, session)
+	for other in server.sessions:
+		if other != session and other.sleeping and other.bed == foot:
+			refusal = "HUD_BED_TAKEN"
 	if refusal != "":
 		session.transport.send(Msg.notice(refusal))
 		return true
 	session.sleeping = true
 	session.slept = 0.0
+	session.sits_on = GameServer.NO_CELL
 	session.transport.send(Msg.sleeping(foot, true))
 	return true
 

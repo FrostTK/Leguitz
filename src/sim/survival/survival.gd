@@ -102,7 +102,7 @@ static func get_up(server: GameServer, session: GameServer.PlayerSession) -> voi
 	if bed != Vector3.INF:
 		session.position = Coords.tile_to_world_center(Vector2i(int(bed.x), int(bed.z)))
 		session.height = bed.y
-	session.transport.send(Msg.player_teleport(session.position, session.height))
+	MoveCheck.teleport(session)
 	tell(session)
 
 

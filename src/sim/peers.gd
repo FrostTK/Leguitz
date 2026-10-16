@@ -12,8 +12,25 @@ extends RefCounted
 ## pings, admins) is told to everyone when a player joins or leaves (Lobby)
 ## and every ROSTER_TICKS (the pings change).
 
+## What a body does, as the other players are told (bits: PlayerModel
+## `pose` and `take_pose`; the bow's draw in the bits from DRAW_SHIFT, in
+## DRAW_STEPS steps). The server adds what it knows: seated, lying down.
+enum Pose {
+	SWIM = 1,
+	AIR = 2,
+	SWING = 4,
+	EAT = 8,
+	AIM = 16,
+	CAST = 32,
+	SEATED = 64,
+	ROW = 128,
+	DOWN = 256,
+}
+
 const ROSTER_TICKS := GameConst.TICKS_PER_SECOND * 5
-## A pose and strokes are bits up to this (PlayerModel.Pose, the draw).
+const DRAW_SHIFT := 12
+const DRAW_STEPS := 15
+## A pose and strokes are bits up to this.
 const POSE_MASK := 0xFFFF
 
 
@@ -36,11 +53,17 @@ static func state(session: GameServer.PlayerSession) -> Dictionary:
 	var armor := []
 	for piece in Armor.PIECES:
 		armor.append(session.inventory.items[Inventory.ARMOR + piece])
+	# What the server knows: seated, lying in bed or passed out.
+	var pose := session.pose
+	if session.sits_on != GameServer.NO_CELL:
+		pose |= Pose.SEATED
+	if session.sleeping or not session.alive():
+		pose |= Pose.DOWN
 	return {
 		"pos": session.position,
 		"h": session.height,
 		"yaw": session.yaw,
-		"pose": session.pose,
+		"pose": pose,
 		"swings": session.swings,
 		"held": session.inventory.held(),
 		"armor": armor,

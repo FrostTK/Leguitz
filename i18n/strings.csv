@@ -1324,3 +1324,15 @@ PLAYERS_SOLO,solo,solo
 PLAYERS_ADMIN,(admin),(admin)
 PLAYERS_PING,%d ms,%d ms
 BOOK_PLAYER_LIST,Who plays (held down),Qui joue (maintenir)
+CHAT_TOO_FAST,You are talking too fast: wait a moment.,Tu parles trop vite : attends un peu.
+CONNECTION_TITLE_KICKED,Sent away from the server,Exclu du serveur
+KICKED_FLOOD,Your game sent far too many messages at once.,Ton jeu a envoyé beaucoup trop de messages à la fois.
+HUD_SEAT_TAKEN,Someone already sits there.,Quelqu'un est déjà assis là.
+HUD_BED_TAKEN,Someone already sleeps in this bed.,Quelqu'un dort déjà dans ce lit.
+GUARD_TOO_FAST,%s moved faster than one can (×%d): put back.,%s est allé plus vite que possible (×%d) : remis en place.
+GUARD_THROUGH_WALLS,%s went through something solid (×%d): put back.,%s est passé à travers quelque chose de solide (×%d) : remis en place.
+GUARD_FLYING,%s rose higher than a jump (×%d): put back on the ground.,%s est monté plus haut qu'un saut (×%d) : remis au sol.
+GUARD_HOVERING,%s stayed in the air (×%d): put back on the ground.,%s est resté en l'air (×%d) : remis au sol.
+GUARD_DIG,%s broke blocks faster than their tools allow (×%d): refused.,%s a cassé des blocs plus vite que ses outils le permettent (×%d) : refusé.
+GUARD_MALFORMED,%s sent messages that make no sense (×%d; the last: %s): dropped.,%s a envoyé des messages incohérents (×%d ; le dernier : %s) : ignorés.
+GUARD_KICKED,%s was sent away: %s,%s a été exclu : %s

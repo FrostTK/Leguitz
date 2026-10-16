@@ -2,7 +2,8 @@ class_name FurnitureUse
 extends Node
 ## Using furniture, on the client (phase 8, step 7): a right click or E on
 ## a seat sits the player on it (held there at its height, PlayerModel
-## seated, until they move or jump: back where they stood); on a bed asks
+## seated, until they move or jump: back where they stood; the server is
+## told, Msg.SIT and STAND, and may get them up: on_stand_up); on a bed asks
 ## to sleep in it (Msg.SLEEP; Msg.SLEEPING lays them down in it, the screen
 ## darkening, until they move: Msg.WAKE); on a shelf puts one of what is in
 ## hand on it, or takes the last thing back (Msg.SHELF), and so on a flower
@@ -74,9 +75,17 @@ func use(cell: Vector3i, voxel: int) -> bool:
 	if Furniture.is_seat(block) and seat == Vector3i.MAX and bed == Vector3i.MAX:
 		_remember()
 		seat = cell
+		client.transport.send(Msg.sit(cell))
 		client.hotbar.announce(tr("HUD_SIT_HOW"))
 		return true
 	return false
+
+
+## The server refused the seat (another sits there): up again.
+func on_stand_up() -> void:
+	if seat != Vector3i.MAX:
+		seat = Vector3i.MAX
+		_back()
 
 
 ## The server lays the player down in their bed, or gets them up.
@@ -151,6 +160,7 @@ func _remember() -> void:
 
 func _stand() -> void:
 	seat = Vector3i.MAX
+	client.transport.send(Msg.stand())
 	_back()
 
 

@@ -30,6 +30,12 @@ const STEP_UP := 0.55
 ## Tallest object (levels, see ObjectShapes.blocking_levels): how far down
 ## to look for a trunk rising into the body.
 const MAX_OBJECT_LEVELS := 8
+## A player's walking speed (world pixels per second: 5 tiles, Stardew's
+## pace), running, flying (creative flight, a spectator): LocalPlayer's,
+## and what a dedicated server allows (MoveCheck).
+const WALK_SPEED := 5.0 * GameConst.TILE_SIZE
+const SPRINT_MULTIPLIER := 1.45
+const FLY_MULTIPLIER := 2.5
 ## Minecraft's numbers, in levels: gravity 32 /s^2, jumps 1.25 high.
 const GRAVITY := 32.0
 const JUMP_HEIGHT := 1.25

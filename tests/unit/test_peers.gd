@@ -45,7 +45,7 @@ func test_players_see_each_other() -> void:
 	server.tick()
 	assert_true(_of(alex.poll(), Msg.PEER_MOVE).is_empty(), "nothing changed, nothing sent")
 	var walked := bea_session.position + Vector2(8.0, 0.0)
-	var pose := PlayerModel.Pose.SWING | PlayerModel.Pose.AIR
+	var pose := Peers.Pose.SWING | Peers.Pose.AIR
 	bea.send(Msg.player_move(walked, Vector2i.RIGHT, bea_session.height, 0.0, 1.5, pose, 3))
 	server.process_messages()
 	server.tick()
@@ -164,15 +164,15 @@ func test_a_body_tells_its_pose() -> void:
 	body.set_down(1.0)
 	var bits := body.pose(true)
 	for flag in [
-		PlayerModel.Pose.SWIM,
-		PlayerModel.Pose.AIR,
-		PlayerModel.Pose.SWING,
-		PlayerModel.Pose.AIM,
-		PlayerModel.Pose.SEATED,
-		PlayerModel.Pose.DOWN,
+		Peers.Pose.SWIM,
+		Peers.Pose.AIR,
+		Peers.Pose.SWING,
+		Peers.Pose.AIM,
+		Peers.Pose.SEATED,
+		Peers.Pose.DOWN,
 	]:
 		assert_true(bits & flag != 0, str(flag))
-	assert_false(bits & PlayerModel.Pose.EAT != 0)
+	assert_false(bits & Peers.Pose.EAT != 0)
 	var other := PlayerModel.new()
 	other.take_pose(bits)
 	assert_true(other.swimming and other.swinging and other.seated)

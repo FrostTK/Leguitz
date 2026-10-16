@@ -115,7 +115,9 @@ static func land_blow(server: GameServer, monster: Monster) -> void:
 	var away := session.position - monster.center()
 	if away.length() < 0.01:
 		away = monster.heading
-	session.transport.send(Msg.push(away.normalized() * PUSH.x * GameConst.TILE_SIZE, PUSH.y))
+	var push := away.normalized() * PUSH.x * GameConst.TILE_SIZE
+	session.transport.send(Msg.push(push, PUSH.y))
+	MoveCheck.pushed(session, push, PUSH.y)
 	if monster.species == Species.Id.LANTERN_MOTH:
 		session.transport.send(Msg.lantern_out(LANTERN_OUT))
 

@@ -4,15 +4,15 @@ extends RefCounted
 ## (instant response) and reported to the server, which may correct it.
 ## Logic only: PlayerModel draws it.
 
-## Walking speed in tiles per second (Stardew-like pace); in water and in
+## Walking speed (PlayerBody's: the server checks it); in water and in
 ## lava, so much slower.
-const WALK_SPEED := 5.0 * GameConst.TILE_SIZE
+const WALK_SPEED := PlayerBody.WALK_SPEED
 const WATER_SPEED := 0.6
 const LAVA_SPEED := 0.4
-const SPRINT_MULTIPLIER := 1.45
+const SPRINT_MULTIPLIER := PlayerBody.SPRINT_MULTIPLIER
 ## Flying (creative flight, a spectator's ghost, the debug ghost mode)
 ## goes this many times faster than walking.
-const FLY_MULTIPLIER := 2.5
+const FLY_MULTIPLIER := PlayerBody.FLY_MULTIPLIER
 ## Two presses of jump this close (seconds) start or stop flying.
 const DOUBLE_JUMP_SECONDS := 0.3
 const SEND_INTERVAL := GameConst.TICK_DELTA
@@ -56,6 +56,9 @@ var view_height := 0.0
 ## counted: swings), set every frame by GameClient; sent with the moves.
 var pose := 0
 var swings := 0
+## The number of the last place the server put the body in (sent back
+## with every move: MoveCheck drops moves made before it).
+var seq := 0
 
 ## Feet position in world pixels.
 var position: Vector2:
@@ -85,7 +88,8 @@ func spawn_at(world_position: Vector2, at_height: float) -> void:
 	active = true
 
 
-func apply_correction(world_position: Vector2, at_height: float) -> void:
+func apply_correction(world_position: Vector2, at_height: float, number := 0) -> void:
+	seq = number
 	body.place(world_position, at_height)
 	view_height = at_height
 	_last_sent_position = world_position
@@ -213,5 +217,5 @@ func _send_state() -> void:
 	_last_sent_facing = facing
 	_last_sent_height = height
 	_last_sent_look = look
-	transport.send(Msg.player_move(position, facing, height, _fell, yaw, pose, swings))
+	transport.send(Msg.player_move(position, facing, height, _fell, yaw, pose, swings, seq))
 	_fell = 0.0

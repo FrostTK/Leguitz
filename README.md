@@ -42,6 +42,7 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Saisons (réglage du monde) : cultures de saison et serres, arbres qui roussissent puis se dénudent, neige l'hiver, le calendrier à l'horloge, /saison | ✅ |
 | Verre et vitres refaits : verre clair continu, verre ancien, verre au plomb, vitres fines qui se raccordent, 28 fenêtres (4 dessins, 6 bois et fer forgé), teinte par case au pot de peinture (le cadre à part), lavée à l'arrosoir ; le soleil à travers le verre teinté colore le sol ; palette de 16 couleurs douces | ✅ |
 | Rideaux qui se tirent et se nouent (tirés, la pièce devient sombre), longs jusqu'au sol, tringle en bois ou en fer, teints au pot de peinture ; tapis qui se raccordent en un grand tapis, teints, sous les meubles | ✅ |
+| Multijoueur, étape 3 : un serveur dédié qui vérifie tout (déplacements, chutes, durée du minage, sièges et lits, messages incohérents ou en rafale), remet les tricheurs en place, exclut les jeux qui l'inondent et le signale sur sa console | ✅ |
 | Multijoueur, étape 2 : on voit les autres joueurs (corps, nom au-dessus de la tête, objet en main, armure, gestes, lanterne), mouvements lissés, liste des joueurs (P), écran « Rejoindre un serveur » dans le menu pause avec les serveurs récents, retour au solo sans relancer, reconnexion | ✅ |
 | Multijoueur, étape 1 : serveur dédié (jeu lancé sans fenêtre, réglages dans server.cfg, console, arrêt propre, version Linux compilée), connexion par IP avec pseudo et mot de passe, écrans de connexion, de refus et de déconnexion | ✅ |
 | Catalogue créatif rangé en dix onglets (blocs, escaliers et toits, nature, portes et fenêtres, mobilier, décoration, ferme, nourriture, outils, matériaux) avec une recherche par nom, en français ou en anglais, sans accents ni majuscules | ✅ |
@@ -50,6 +51,8 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Nouveaux matériaux : pavés, pierre de taille, pierres moussues, plâtre qui se peint, colombages, torchis, parquets à lames et à chevrons, carrelage en damier, tomettes, terre cuite, ardoise polie, briques de grès ; leurs escaliers et dalles, quarts de bloc, murets, piliers, poutres | ✅ |
 | Toitures en tuiles, ardoises, bardeaux et chaume : pentes qui font leurs coins, faîtages en croupe et en croix, pentes douces, lucarnes, cheminée qui fume, neige en hiver | ✅ |
 | Portes de chaque bois, vitrée et en fer forgé (portes doubles), trappes, échelles où l'on grimpe, volets peints qui se ferment, barreaux et garde-corps qui se raccordent | ✅ |
+
+![Leguitz : multijoueur : un tricheur remis en place ; la console du serveur qui signale les triches ; le chat trop rapide freiné ; un jeu exclu pour avoir inondé le serveur](docs/screenshots/multijoueur-garde.png)
 
 ![Leguitz : multijoueur : trois joueurs sur un serveur dédié, Chloé en armure de fer avec une épée, Béa casquée qui pioche, leurs noms au-dessus de la tête ; la nuit, leurs lanternes et la liste des joueurs avec leur ping ; l'écran « Rejoindre un serveur » et ses serveurs récents ; la connexion perdue et ses choix](docs/screenshots/multijoueur-joueurs.png)
 
@@ -323,7 +326,9 @@ mot de passe ; les serveurs rejoints récemment se remplissent d'un clic). Ou au
 Leguitz.exe -- --connect=IP:27420 --name=Pseudo --password=secret
 ```
 
-En jeu, **P** maintenu montre qui joue (et le ping de chacun).
+En jeu, **P** maintenu montre qui joue (et le ping de chacun). Le serveur vérifie ce que disent
+les jeux (déplacements, chutes, minage, messages) : sa console signale les tricheurs, remis en
+place, et exclut un jeu qui l'inonde de messages.
 
 ## Développement
 
@@ -388,8 +393,8 @@ Pour le multijoueur, il suffira de brancher un transport réseau.
 
 En cours : le multijoueur et les serveurs dédiés, qu'on rejoint par IP depuis le jeu,
 hébergeables sur un VPS Debian ou en egg Pterodactyl (réseau et serveur dédié, rejoindre et voir les
-autres faits ; à venir : un serveur qui vérifie tout, comptes et administration, hébergement,
-performances).
+autres, un serveur qui vérifie tout faits ; à venir : comptes et administration, hébergement,
+performances, finitions).
 
 En attente : le mode Arcade, scénario n°1 « Restauration » (restaurer une terre désolée avec
 éoliennes, irrigateurs et purificateurs, faire revenir forêts, rivières et animaux, puis recycler

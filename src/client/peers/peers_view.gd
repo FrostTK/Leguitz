@@ -183,10 +183,10 @@ func _animate(peer: Peer, at: float, delta: float) -> void:
 	peer.feet = feet
 	peer.speed = lerpf(peer.speed, speed, 1.0 - exp(-SPEED_EASE * delta))
 	var ease := 1.0 - exp(-EASE * delta)
-	var aiming := 1.0 if peer.pose & PlayerModel.Pose.AIM else 0.0
+	var aiming := 1.0 if peer.pose & Peers.Pose.AIM else 0.0
 	peer.aiming = lerpf(peer.aiming, aiming, ease)
 	peer.model.aiming = peer.aiming if peer.aiming > 0.02 else 0.0
-	var down := 1.0 if peer.pose & PlayerModel.Pose.DOWN else 0.0
+	var down := 1.0 if peer.pose & Peers.Pose.DOWN else 0.0
 	peer.down = move_toward(peer.down, down, delta * 2.0)
 	peer.model.set_down(smoothstep(0.0, 1.0, peer.down))
 	var tile := Coords.world_to_tile(pos - Vector2(0, 1))
@@ -195,7 +195,7 @@ func _animate(peer: Peer, at: float, delta: float) -> void:
 	peer.model.set_fade(peer.fade)
 	_light(peer, tile, height, feet)
 	var yaw: float = move[2]
-	var airborne := peer.pose & PlayerModel.Pose.AIR != 0
+	var airborne := peer.pose & Peers.Pose.AIR != 0
 	peer.model.animate(feet, Vector2(sin(yaw), cos(yaw)), peer.speed, airborne, delta)
 
 

@@ -84,7 +84,9 @@ static func land_blow(server: GameServer, creatures: Creatures, predator: Predat
 		var away := session.position - predator.center()
 		if away.length() < 0.01:
 			away = predator.heading
-		session.transport.send(Msg.push(away.normalized() * PUSH.x * GameConst.TILE_SIZE, PUSH.y))
+		var push := away.normalized() * PUSH.x * GameConst.TILE_SIZE
+		session.transport.send(Msg.push(push, PUSH.y))
+		MoveCheck.pushed(session, push, PUSH.y)
 		return
 	var prey: Creature = creatures.living.get(predator.target_id)
 	if prey == null or prey.bounds().get_center().distance_to(predator.middle()) > 2.0:

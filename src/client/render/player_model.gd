@@ -4,7 +4,7 @@ extends Node3D
 ## torso, arms and legs that swing while walking; it turns smoothly to face
 ## where it goes. Also carries the lantern (in world space: lights do not
 ## support the root's stretch). The other players' bodies are ones too
-## (`peer`, PeersView): what this one does is told to them as Pose bits
+## (`peer`, PeersView): what this one does is told to them as Peers.Pose bits
 ## (`pose`, Msg.player_move) and taken back on theirs (`take_pose`).
 
 ## What the right hand holds.
@@ -12,19 +12,6 @@ enum Holding { NOTHING, ITEM, TOOL, SWORD, BOW, ROD }
 ## A stroke of the right arm: a tool or the hand striking down (breaking,
 ## a blow), a sword slashing across, a quick jab (placing, using).
 enum Stroke { MINE, SLASH, JAB }
-## What the body does, as the other players are told (bits; the bow's draw
-## in the bits from DRAW_SHIFT, DRAW_STEPS steps).
-enum Pose {
-	SWIM = 1,
-	AIR = 2,
-	SWING = 4,
-	EAT = 8,
-	AIM = 16,
-	CAST = 32,
-	SEATED = 64,
-	ROW = 128,
-	DOWN = 256,
-}
 
 const SHADER := preload("res://src/client/shaders/voxel.gdshader")
 ## Render layer of the body: the lantern it carries must not shadow it
@@ -38,8 +25,6 @@ const CHEST := Vector3(0, 0.9, 0)
 ## Sitting lowers the body this much (body voxels).
 const SIT_DROP := 6.0
 const VOXEL := 1.0 / 16.0
-const DRAW_SHIFT := 12
-const DRAW_STEPS := 15
 ## Size of an item resting in the hand (local units, ItemLibrary.fit).
 const HELD_SIZE := 0.28
 const TURN_SHARPNESS := 14.0
@@ -366,35 +351,35 @@ func swing() -> void:
 func pose(airborne: bool) -> int:
 	var bits := 0
 	var flags := [
-		[swimming, Pose.SWIM],
-		[airborne, Pose.AIR],
-		[swinging, Pose.SWING],
-		[eating, Pose.EAT],
-		[aiming > 0.0, Pose.AIM],
-		[cast, Pose.CAST],
-		[seated, Pose.SEATED],
-		[rowing, Pose.ROW],
-		[down > 0.5, Pose.DOWN],
+		[swimming, Peers.Pose.SWIM],
+		[airborne, Peers.Pose.AIR],
+		[swinging, Peers.Pose.SWING],
+		[eating, Peers.Pose.EAT],
+		[aiming > 0.0, Peers.Pose.AIM],
+		[cast, Peers.Pose.CAST],
+		[seated, Peers.Pose.SEATED],
+		[rowing, Peers.Pose.ROW],
+		[down > 0.5, Peers.Pose.DOWN],
 	]
 	for flag: Array in flags:
 		if flag[0]:
 			bits |= flag[1]
 	if aiming > 0.0:
-		bits |= roundi(clampf(draw, 0.0, 1.0) * DRAW_STEPS) << DRAW_SHIFT
+		bits |= roundi(clampf(draw, 0.0, 1.0) * Peers.DRAW_STEPS) << Peers.DRAW_SHIFT
 	return bits
 
 
 ## Takes another player's pose (see pose) at once; the caller eases the bow
 ## raised and lying down.
 func take_pose(bits: int) -> void:
-	swimming = bits & Pose.SWIM != 0
-	swinging = bits & Pose.SWING != 0
-	eating = bits & Pose.EAT != 0
-	cast = bits & Pose.CAST != 0
-	seated = bits & Pose.SEATED != 0
+	swimming = bits & Peers.Pose.SWIM != 0
+	swinging = bits & Peers.Pose.SWING != 0
+	eating = bits & Peers.Pose.EAT != 0
+	cast = bits & Peers.Pose.CAST != 0
+	seated = bits & Peers.Pose.SEATED != 0
 	legs_out = true
-	rowing = bits & Pose.ROW != 0
-	draw = float((bits >> DRAW_SHIFT) & DRAW_STEPS) / DRAW_STEPS
+	rowing = bits & Peers.Pose.ROW != 0
+	draw = float((bits >> Peers.DRAW_SHIFT) & Peers.DRAW_STEPS) / Peers.DRAW_STEPS
 
 
 ## Puts `held` (an item; Items.Id.NONE: nothing) in the right hand as

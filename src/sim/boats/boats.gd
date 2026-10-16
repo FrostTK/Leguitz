@@ -245,7 +245,7 @@ func leave(server: GameServer, session: GameServer.PlayerSession, landing: bool)
 		var feet := Vector2(spot.x, spot.z) * GameConst.TILE_SIZE
 		session.position = feet
 		session.height = spot.y
-		session.transport.send(Msg.player_teleport(feet, spot.y))
+		MoveCheck.teleport(session)
 	for place: int in boat.seats.keys():
 		var animal := server.creatures.living.get(-boat.seats[place]) as Animal
 		if animal != null and animal.follows(session.id):

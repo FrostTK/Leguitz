@@ -86,6 +86,11 @@ func show_refused(reason: String) -> void:
 	_show_end("CONNECTION_TITLE_REFUSED", tr(reason))
 
 
+## The server sent the player away (`reason`: a translation key).
+func show_kicked(reason: String) -> void:
+	_show_end("CONNECTION_TITLE_KICKED", tr(reason))
+
+
 ## The connection ended (`why`: CONNECTION_LOST, CONNECTION_UNREACHABLE).
 func show_ended(why: String) -> void:
 	if _ended:

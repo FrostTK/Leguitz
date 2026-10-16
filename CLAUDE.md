@@ -35,7 +35,7 @@ $G --path . --audio-driver Dummy --resolution 1280x720 -- --seed=42 --screenshot
 $G --headless --path . -- --server --data="$SCRATCH/srv" --seed=42     # "stop" on stdin, or a file "stop"
 $G --path . -- --connect=127.0.0.1 --name=Alex --screenshot-delay=120 --screenshot="$SCRATCH/s.png"
 LEGUITZ_SERIALIZE=1 $G --headless --path . -s res://tests/run_tests.gd  # messages as bytes, as on the network
-# More players: more games with --connect (--name=Bea --mine --aim=60,10, --jump...); --players holds
+# More players: more games with --connect (--name=Bea --mine --aim=60,10, --jump, --run...); --players holds
 # the player list's key, --join-screen opens the join screen. Players' saves written beforehand in
 # <data>/worlds/world/players/ (WorldStorage.save_player) put them where and as wanted.
 ```
@@ -1232,6 +1232,35 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   ConnectionScreen: Try again, Another server, Play solo (Cancel while connecting), Quit. Game:
   `play_solo`, `join(address, port, name, password, remember)`, `_leave` (the client freed, the
   integrated server saved): from solo to a server and back without starting again.
+- Multiplayer, step 3 (a server that trusts nobody; only GameServer.dedicated, a solo game trusts
+  its client; src/sim/guard, static, given the server, their clock GameServer.now(), real seconds,
+  `time_shift` for tests). `Guard` (each session's Watch: PlayerSession.guard): `admits` (before
+  _handle_message) drops anything but a hello before joining, malformed fields (`well_formed`: a
+  cell a Vector3i in the world within MESSAGE_REACH of the feet, so a far one never makes the
+  server generate chunks; INTS; facing; pos and h finite), and floods (Bucket: RATE/BURST for all,
+  LIMITS per kind: chat with CHAT_TOO_FAST, places, digs, maps; KICK_DROPS within DROP_WINDOW:
+  `kick`, Msg.KICKED, KICKED_FLOOD, ConnectionScreen.show_kicked); `report` tells the console
+  (GUARD_* keys: name, how many since, args; once per REPORT_SECONDS a kind). `MoveCheck`: every
+  player_move answers the last place the server put them (`teleport`: Msg.PLAYER_TELEPORT or
+  CORRECTION numbered `seq`, LocalPlayer.seq sent back; in solo too: all the server's teleports go
+  through it); `check` (Track): free when creative, spectator, aboard, sitting or lying near their
+  seat or bed (`_resting`; moving off it frees the seat, `getting_up` skips the walls once); a
+  speed budget (top_speed: PlayerBody.WALK_SPEED, moved there from LocalPlayer, x SPRINT x a SWIFT
+  dish x LEEWAY; BURST seconds at most; a correction does not refill it, a teleport does: `refill`;
+  `pushed` from Monsters/Wildlife blows); walls along the straight way (`_sunk` under WALL_SLACK
+  every SWEEP_STEP) and floors (`_through_walls`); liquids and ladders reset; rise under ground +
+  STEP_UP + JUMP_HEIGHT + RISE_SLACK + hop; `NEAR_GROUND` counts as touching it (a landing and the
+  next jump fall between two moves); after the jump's top and HOVER_SLACK it must come down as it
+  falls (`GUARD_HOVERING`); refused: corrected, on the ground for rises. Falls are measured there
+  (peak to the ground; the client's `fell` only adds, SAME_LANDING not twice). `Digging`: Msg.DIG
+  (BlockInteraction sends it when progress starts on a cell) and `allows` before a break (SHARE of
+  Mining.break_seconds with the slot's tool and HASTE, SLACK; instant ones at once; creative
+  BREAK_PAUSE). `Seats` (src/sim/survival): Msg.SIT / STAND (FurnitureUse), PlayerSession.sits_on,
+  one sitter a seat (else Msg.STAND_UP and HUD_SEAT_TAKEN), freed when broken (`update`) or moved
+  off; Beds: one sleeper a bed (HUD_BED_TAKEN). Peers.Pose (moved from PlayerModel) and the
+  server adds SEATED and DOWN from what it knows (Peers.state). Msg.PROTOCOL 3. Tested live with
+  five honest players (running and jumping, swimming, walking into trees, mining) without a false
+  alarm.
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made

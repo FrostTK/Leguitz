@@ -111,7 +111,7 @@ static func move_depth(
 		return
 	session.position = Coords.tile_to_world_center(found[0]) + Vector2(0, 4)
 	session.height = found[1]
-	session.transport.send(Msg.player_teleport(session.position, session.height))
+	MoveCheck.teleport(session)
 
 
 ## Debug: a player gets the tools of a tier (what does not fit is thrown

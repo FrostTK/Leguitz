@@ -668,6 +668,8 @@ func _update_breaking(delta: float) -> void:
 	var seconds := Mining.break_seconds(target.voxel, client.held_item())
 	if Effects.has(client.vitals.effects, Effects.Kind.HASTE):
 		seconds /= Effects.HASTE_SPEED
+	if _progress == 0.0 and not creative and seconds > Mining.INSTANT_SECONDS:
+		client.transport.send(Msg.dig(target.cell))
 	_progress = 1.0 if creative else _progress + delta / seconds
 	if Voxels.is_cube(target.voxel):
 		_cracks.show_on(target.box, _progress)

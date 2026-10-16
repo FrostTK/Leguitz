@@ -8,8 +8,13 @@ extends RefCounted
 const HELLO := "hello"
 ## The messages' version: a client and a server of different ones do not
 ## play together (Msg.REFUSED, REFUSED_VERSION). Raised when messages change.
-const PROTOCOL := 2
+const PROTOCOL := 3
 const PLAYER_MOVE := "player_move"
+## The player starts breaking a block (Digging); sits down on a seat, gets
+## up (Seats).
+const DIG := "dig"
+const SIT := "sit"
+const STAND := "stand"
 const SET_TIME := "set_time"
 const DEBUG_MOVE_DEPTH := "debug_move_depth"
 const MAP_REQUEST := "map_request"
@@ -124,6 +129,10 @@ const PEER := "peer"
 const PEER_MOVE := "peer_move"
 const PEER_GONE := "peer_gone"
 const PLAYERS := "players"
+## The server gets the player up from the seat they sat on (refused); sends
+## them away (`reason`: a translation key; the connection closes).
+const STAND_UP := "stand_up"
+const KICKED := "kicked"
 
 
 ## The player hits the creature `id` with the hotbar slot `slot` in hand
@@ -617,6 +626,26 @@ static func refused(reason: String) -> Dictionary:
 	return {"t": REFUSED, "reason": reason}
 
 
+static func kicked(reason: String) -> Dictionary:
+	return {"t": KICKED, "reason": reason}
+
+
+static func dig(cell: Vector3i) -> Dictionary:
+	return {"t": DIG, "cell": cell}
+
+
+static func sit(cell: Vector3i) -> Dictionary:
+	return {"t": SIT, "cell": cell}
+
+
+static func stand() -> Dictionary:
+	return {"t": STAND}
+
+
+static func stand_up() -> Dictionary:
+	return {"t": STAND_UP}
+
+
 ## Another player comes into view: their name and their state (Peers.state:
 ## feet, height, yaw, pose, strokes, what they hold and wear) at the
 ## server's tick `tick` (the client glides them by it).
@@ -649,7 +678,8 @@ static func players(roster: Array) -> Dictionary:
 ## since the last move (PlayerBody.take_fall; 0: no landing). What the other
 ## players see of the body: where it looks (`yaw`, radians: atan2 of the
 ## heading), what it does (`pose`, PlayerModel.Pose bits) and the single
-## strokes it made (`swings`, counted).
+## strokes it made (`swings`, counted); `seq`: the number of the last place
+## the server put it in (MoveCheck.teleport: moves before it are dropped).
 static func player_move(
 	position: Vector2,
 	facing: Vector2i,
@@ -657,7 +687,8 @@ static func player_move(
 	fell := 0.0,
 	yaw := 0.0,
 	pose := 0,
-	swings := 0
+	swings := 0,
+	seq := 0
 ) -> Dictionary:
 	var message := {
 		"t": PLAYER_MOVE,
@@ -667,6 +698,7 @@ static func player_move(
 		"yaw": yaw,
 		"pose": pose,
 		"swings": swings,
+		"seq": seq,
 	}
 	if fell > 0.0:
 		message["fell"] = fell
@@ -776,12 +808,14 @@ static func time_state(clock: WorldClock) -> Dictionary:
 	return {"t": TIME_STATE, "clock": clock.to_dict()}
 
 
-static func player_correction(position: Vector2, height: float) -> Dictionary:
-	return {"t": PLAYER_CORRECTION, "pos": position, "h": height}
+## Where the server puts the player back (a correction) or sends them (a
+## teleport), numbered `seq` (MoveCheck).
+static func player_correction(position: Vector2, height: float, seq := 0) -> Dictionary:
+	return {"t": PLAYER_CORRECTION, "pos": position, "h": height, "seq": seq}
 
 
-static func player_teleport(position: Vector2, height: float) -> Dictionary:
-	return {"t": PLAYER_TELEPORT, "pos": position, "h": height}
+static func player_teleport(position: Vector2, height: float, seq := 0) -> Dictionary:
+	return {"t": PLAYER_TELEPORT, "pos": position, "h": height, "seq": seq}
 
 
 ## `png` is a PNG-encoded image.

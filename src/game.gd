@@ -186,6 +186,8 @@ func _start_dev_actions() -> void:
 		Input.action_press(InputBindings.MOVE_DOWN if dev.autowalk.y > 0 else InputBindings.MOVE_UP)
 	if dev.hold_jump:
 		Input.action_press(InputBindings.JUMP)
+	if dev.hold_run:
+		Input.action_press(InputBindings.SPRINT)
 	for i in absi(dev.descend):
 		client.transport.send(Msg.debug_move_depth(-signi(dev.descend)))
 	client.local_player.noclip = dev.noclip
