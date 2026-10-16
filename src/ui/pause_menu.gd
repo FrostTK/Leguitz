@@ -1,6 +1,8 @@
 class_name PauseMenu
 extends Control
-## Pause menu: resume, the world's game mode and time settings, the
+## Pause menu: resume, the world's game mode and time settings (on a
+## server only for its admins: `world_editable`), multiplayer (joining a
+## server, JoinScreen; on one, leaving it for the solo world), the
 ## player's own settings (SettingsPanel: display, graphics, game), quit.
 ## World settings are sent to the server (they belong to the world);
 ## user preferences go to the Settings autoload.
@@ -14,6 +16,9 @@ signal time_settings_requested(mode: int, value: float)
 signal game_mode_requested(mode: int)
 ## The world's seasons: `days` each (0: none).
 signal seasons_requested(days: int)
+## Multiplayer: the join screen; leaving the server for the solo world.
+signal join_screen_requested
+signal leave_server_requested
 
 const FROZEN_CHOICES := [
 	["FROZEN_SUNRISE", WorldClock.FROZEN_SUNRISE],
@@ -29,6 +34,10 @@ const SCREEN_MARGIN := 8.0
 var clock: WorldClock
 ## The world's game mode (WorldSettings.GameMode, set by GameModeView).
 var game_mode := WorldSettings.GameMode.SURVIVAL
+## Playing on a server; whether this player may change the world's
+## settings (solo, or a server's admin).
+var online := false
+var world_editable := true
 
 var _resume_button := Button.new()
 var _game_mode := OptionButton.new()
@@ -43,6 +52,8 @@ var _settings := SettingsPanel.new()
 var _scroll := ScrollContainer.new()
 var _box := VBoxContainer.new()
 var _updating := false
+var _world_rows: Array[Control] = []
+var _multiplayer := Button.new()
 
 
 func _ready() -> void:
@@ -77,37 +88,43 @@ func _ready() -> void:
 	_resume_button.pressed.connect(resume_requested.emit)
 	box.add_child(_resume_button)
 
-	box.add_child(_section("MENU_WORLD_SETTINGS"))
+	_world_rows.append(_section("MENU_WORLD_SETTINGS"))
 	for mode in WorldSettings.GameMode.size():
 		_game_mode.add_item(WorldSettings.GAME_MODE_KEYS[mode])
 	_game_mode.item_selected.connect(_on_game_mode_selected)
-	box.add_child(_row("SETTING_GAME_MODE", _game_mode))
+	_world_rows.append(_row("SETTING_GAME_MODE", _game_mode))
 
 	for key in ["TIME_MODE_NORMAL", "TIME_MODE_SYNCED", "TIME_MODE_FROZEN"]:
 		_time_mode.add_item(key)
 	_time_mode.item_selected.connect(_on_time_changed.unbind(1))
-	box.add_child(_row("SETTING_TIME_MODE", _time_mode))
+	_world_rows.append(_row("SETTING_TIME_MODE", _time_mode))
 
 	for minutes in WorldClock.DAY_MINUTES_PRESETS:
 		_day_length.add_item("")
 	_day_length.item_selected.connect(_on_time_changed.unbind(1))
 	_day_length_row = _row("SETTING_DAY_LENGTH", _day_length)
-	box.add_child(_day_length_row)
+	_world_rows.append(_day_length_row)
 
 	for choice in FROZEN_CHOICES:
 		_frozen_at.add_item(choice[0])
 	_frozen_at.item_selected.connect(_on_time_changed.unbind(1))
 	_frozen_row = _row("SETTING_FROZEN_AT", _frozen_at)
-	box.add_child(_frozen_row)
+	_world_rows.append(_frozen_row)
 
 	for days in WorldClock.SEASON_DAYS_PRESETS:
 		_seasons.add_item("")
 	_seasons.item_selected.connect(_on_seasons_selected)
-	box.add_child(_row("SETTING_SEASONS", _seasons))
+	_world_rows.append(_row("SETTING_SEASONS", _seasons))
 
 	_pace_info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_pace_info.add_theme_font_size_override("font_size", 6)
-	box.add_child(_pace_info)
+	_world_rows.append(_pace_info)
+	for row in _world_rows:
+		box.add_child(row)
+
+	box.add_child(_section("MENU_MULTIPLAYER"))
+	_multiplayer.pressed.connect(_on_multiplayer)
+	box.add_child(_multiplayer)
 
 	_settings.layout_changed.connect(_fit_height.call_deferred)
 	box.add_child(_settings)
@@ -152,6 +169,7 @@ func refresh_from_state() -> void:
 	_frozen_at.select(_closest_frozen_choice(clock.time_of_day()))
 	_seasons.select(_closest_seasons(clock.season_days))
 	_settings.refresh()
+	_multiplayer.text = "MENU_LEAVE_SERVER" if online else "MENU_JOIN_SERVER"
 	_updating = false
 	_refresh_dynamic_texts()
 
@@ -186,6 +204,13 @@ func _on_game_mode_selected(index: int) -> void:
 		game_mode_requested.emit(index)
 
 
+func _on_multiplayer() -> void:
+	if online:
+		leave_server_requested.emit()
+	else:
+		join_screen_requested.emit()
+
+
 func _on_seasons_selected(index: int) -> void:
 	if not _updating:
 		seasons_requested.emit(WorldClock.SEASON_DAYS_PRESETS[index])
@@ -198,8 +223,10 @@ func _refresh_dynamic_texts() -> void:
 		var days := WorldClock.SEASON_DAYS_PRESETS[i]
 		_seasons.set_item_text(i, tr("SEASONS_DAYS") % days if days > 0 else tr("SEASONS_OFF"))
 	var mode := _time_mode.selected
-	_day_length_row.visible = mode == WorldClock.Mode.NORMAL
-	_frozen_row.visible = mode == WorldClock.Mode.FROZEN
+	for row in _world_rows:
+		row.visible = world_editable
+	_day_length_row.visible = world_editable and mode == WorldClock.Mode.NORMAL
+	_frozen_row.visible = world_editable and mode == WorldClock.Mode.FROZEN
 	var minutes: float = WorldClock.DAY_MINUTES_PRESETS[maxi(0, _day_length.selected)]
 	var pace := 1.0
 	match mode:

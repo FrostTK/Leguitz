@@ -3,13 +3,28 @@ extends Node3D
 ## The player's 3D voxel body under the world root (local units): head,
 ## torso, arms and legs that swing while walking; it turns smoothly to face
 ## where it goes. Also carries the lantern (in world space: lights do not
-## support the root's stretch).
+## support the root's stretch). The other players' bodies are ones too
+## (`peer`, PeersView): what this one does is told to them as Pose bits
+## (`pose`, Msg.player_move) and taken back on theirs (`take_pose`).
 
 ## What the right hand holds.
 enum Holding { NOTHING, ITEM, TOOL, SWORD, BOW, ROD }
 ## A stroke of the right arm: a tool or the hand striking down (breaking,
 ## a blow), a sword slashing across, a quick jab (placing, using).
 enum Stroke { MINE, SLASH, JAB }
+## What the body does, as the other players are told (bits; the bow's draw
+## in the bits from DRAW_SHIFT, DRAW_STEPS steps).
+enum Pose {
+	SWIM = 1,
+	AIR = 2,
+	SWING = 4,
+	EAT = 8,
+	AIM = 16,
+	CAST = 32,
+	SEATED = 64,
+	ROW = 128,
+	DOWN = 256,
+}
 
 const SHADER := preload("res://src/client/shaders/voxel.gdshader")
 ## Render layer of the body: the lantern it carries must not shadow it
@@ -23,6 +38,10 @@ const CHEST := Vector3(0, 0.9, 0)
 ## Sitting lowers the body this much (body voxels).
 const SIT_DROP := 6.0
 const VOXEL := 1.0 / 16.0
+const DRAW_SHIFT := 12
+const DRAW_STEPS := 15
+## Size of an item resting in the hand (local units, ItemLibrary.fit).
+const HELD_SIZE := 0.28
 const TURN_SHARPNESS := 14.0
 ## Strides per tile walked, and how far the limbs swing (radians).
 const STRIDE := 0.9
@@ -99,6 +118,13 @@ var aiming := 0.0
 var hurt := 0.0
 ## What the right hand holds (see hold, hold_tool, hold_bow).
 var holding := Holding.NOTHING
+## Another player's body: it leaves the see-through hole and the shaders'
+## player position to the local one.
+var peer := false
+## Single strokes asked (swing), counted: the other players see each one.
+var swings := 0
+## Lying down (0..1: passed out, in bed).
+var down := 0.0
 
 var _body := Node3D.new()
 ## What the right hand holds (an item's model; see hold).
@@ -134,7 +160,9 @@ func _ready() -> void:
 	var material := _material
 	material.shader = SHADER
 	material.set_shader_parameter("use_instance_data", false)
-	material.set_shader_parameter("cut_out", false)
+	# Another player's body is cut with the world, and dithered away when it
+	# stands between the camera and the local player.
+	material.set_shader_parameter("cut_out", peer)
 	add_child(_body)
 	_part("torso", Vector3(0, 8, 0), _body, material)
 	_part("head", Vector3(0, 16, 0), _body, material)
@@ -165,6 +193,14 @@ func _ready() -> void:
 	lantern.shadow_caster_mask = ~PLAYER_LAYER & 0xFFFFF
 	lantern.light_energy = 0.0
 	add_child(lantern)
+
+
+## Never put in a tree (its parts were never added): they go with it.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_PREDELETE:
+		for part: Node in [_body, _held, lantern]:
+			if part.get_parent() == null:
+				part.free()
 
 
 ## Places and animates the body. `feet` is local, `heading` the ground
@@ -216,6 +252,8 @@ func animate(feet: Vector3, heading: Vector2, speed: float, airborne: bool, delt
 	if is_inside_tree():
 		var above := global_position + Vector3(0, LANTERN_HEIGHT, 0)
 		lantern.global_position = above if lantern_override == Vector3.INF else lantern_override
+		if peer:
+			return
 		# For the see-through hole (see see_through.gdshaderinc).
 		var root := get_parent_node_3d().global_transform
 		RenderingServer.global_shader_parameter_set(&"player_position", root * (feet + CHEST))
@@ -320,6 +358,66 @@ func hold_bow(stages: Array[Mesh], grip: Vector3) -> void:
 ## One stroke of the right arm (placing a block, using something).
 func swing() -> void:
 	_single = true
+	swings += 1
+
+
+## What the body does now (Pose bits and the bow's draw), for the other
+## players; `airborne` jumping or falling.
+func pose(airborne: bool) -> int:
+	var bits := 0
+	var flags := [
+		[swimming, Pose.SWIM],
+		[airborne, Pose.AIR],
+		[swinging, Pose.SWING],
+		[eating, Pose.EAT],
+		[aiming > 0.0, Pose.AIM],
+		[cast, Pose.CAST],
+		[seated, Pose.SEATED],
+		[rowing, Pose.ROW],
+		[down > 0.5, Pose.DOWN],
+	]
+	for flag: Array in flags:
+		if flag[0]:
+			bits |= flag[1]
+	if aiming > 0.0:
+		bits |= roundi(clampf(draw, 0.0, 1.0) * DRAW_STEPS) << DRAW_SHIFT
+	return bits
+
+
+## Takes another player's pose (see pose) at once; the caller eases the bow
+## raised and lying down.
+func take_pose(bits: int) -> void:
+	swimming = bits & Pose.SWIM != 0
+	swinging = bits & Pose.SWING != 0
+	eating = bits & Pose.EAT != 0
+	cast = bits & Pose.CAST != 0
+	seated = bits & Pose.SEATED != 0
+	legs_out = true
+	rowing = bits & Pose.ROW != 0
+	draw = float((bits >> DRAW_SHIFT) & DRAW_STEPS) / DRAW_STEPS
+
+
+## Puts `held` (an item; Items.Id.NONE: nothing) in the right hand as
+## `library` models it: tools, swords, the bow and the fishing rod by their
+## grip (ToolModels), anything else resting in the hand.
+func hold_item(held: int, library: ItemLibrary) -> void:
+	if held == Items.Id.NONE:
+		hold(null, 0.0)
+	elif held == Items.Id.BOW:
+		var stages: Array[Mesh] = []
+		for stage in ToolModels.DRAW_STAGES:
+			stages.append(library.held_mesh(held, stage))
+		hold_bow(stages, ToolModels.grip(held))
+	elif held == Items.Id.FISHING_ROD:
+		var stages: Array[Mesh] = []
+		for stage in ToolModels.ROD_STAGES:
+			stages.append(library.held_mesh(held, stage))
+		hold_rod(stages, ToolModels.grip(held))
+	elif ToolModels.has(held):
+		var sword := Items.tool_of(held) == Items.Tool.SWORD
+		hold_tool(library.held_mesh(held), ToolModels.grip(held), sword)
+	else:
+		hold(library.mesh(held), HELD_SIZE * library.fit(held))
 
 
 ## The arm's pose [pitch, roll inwards, wrist] for a stroke of `kind` at
@@ -444,6 +542,7 @@ func set_ghost(ghost: bool) -> void:
 
 ## Lays the body down on its back (1: passed out, 0: standing).
 func set_down(amount: float) -> void:
+	down = amount
 	_body.rotation.x = -PI * 0.5 * amount
 
 

@@ -18,6 +18,9 @@ const DOUBLE_JUMP_SECONDS := 0.3
 const SEND_INTERVAL := GameConst.TICK_DELTA
 ## A push fades this fast (per second).
 const PUSH_DRAG := 6.0
+## Where the body looks is told by this step (radians): turning a hair
+## sends nothing.
+const YAW_STEP := 0.05
 
 var client_world: ClientWorld
 var transport: Transport
@@ -49,6 +52,10 @@ var camera_yaw := 0.0
 ## Height the camera follows: the ground the player stands on, so jumps do
 ## not shake the view (it still follows falls).
 var view_height := 0.0
+## What the other players see the body do (PlayerModel.pose, its strokes
+## counted: swings), set every frame by GameClient; sent with the moves.
+var pose := 0
+var swings := 0
 
 ## Feet position in world pixels.
 var position: Vector2:
@@ -69,6 +76,7 @@ var _fell := 0.0
 var _last_sent_position := Vector2.INF
 var _last_sent_facing := Vector2i.ZERO
 var _last_sent_height := INF
+var _last_sent_look := []
 
 
 func spawn_at(world_position: Vector2, at_height: float) -> void:
@@ -191,15 +199,19 @@ func _update_facing(input: Vector2) -> void:
 
 
 func _send_state() -> void:
+	var yaw := snappedf(atan2(heading.x, heading.y), YAW_STEP)
+	var look := [yaw, pose, swings]
 	if (
 		position == _last_sent_position
 		and facing == _last_sent_facing
 		and height == _last_sent_height
 		and _fell == 0.0
+		and look == _last_sent_look
 	):
 		return
 	_last_sent_position = position
 	_last_sent_facing = facing
 	_last_sent_height = height
-	transport.send(Msg.player_move(position, facing, height, _fell))
+	_last_sent_look = look
+	transport.send(Msg.player_move(position, facing, height, _fell, yaw, pose, swings))
 	_fell = 0.0

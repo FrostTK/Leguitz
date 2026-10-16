@@ -35,6 +35,9 @@ $G --path . --audio-driver Dummy --resolution 1280x720 -- --seed=42 --screenshot
 $G --headless --path . -- --server --data="$SCRATCH/srv" --seed=42     # "stop" on stdin, or a file "stop"
 $G --path . -- --connect=127.0.0.1 --name=Alex --screenshot-delay=120 --screenshot="$SCRATCH/s.png"
 LEGUITZ_SERIALIZE=1 $G --headless --path . -s res://tests/run_tests.gd  # messages as bytes, as on the network
+# More players: more games with --connect (--name=Bea --mine --aim=60,10, --jump...); --players holds
+# the player list's key, --join-screen opens the join screen. Players' saves written beforehand in
+# <data>/worlds/world/players/ (WorldStorage.save_player) put them where and as wanted.
 ```
 
 gdformat writes CRLF line endings on Windows: convert the files it touched back to LF.
@@ -1201,6 +1204,34 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   refused, lost or unreachable, a Quit button; in screen_open). CI exports "Linux Server" and
   starts it once. The game's start is slow on both sides (~20 s: GDScript compiling the sim's
   scripts and their big tables; a server ~250 MB).
+- Multiplayer, step 2 (players see each other): Msg.player_move carries what the others see of
+  the body (`yaw`, `pose`: PlayerModel.Pose bits and the bow's draw from DRAW_SHIFT, `swings`:
+  PlayerModel.swing counted), set every frame by GameClient from its PlayerModel (`pose`,
+  `swings`; LocalPlayer sends them with the moves, YAW_STEP); Msg.PROTOCOL 2. `Peers`
+  (src/sim/peers.gd, static, given the server): `take_look` keeps them (numbers only, POSE_MASK),
+  `state` (pos, h, yaw, pose, swings, held, armor), `sync` every tick sends each player the others
+  standing in its sent chunks (Msg.PEER with the name, PEER_MOVE with what changed, PEER_GONE;
+  stamped with the server's `tick`; PlayerSession.seen_peers; spectators unseen), `roster` /
+  `tell_roster` (Msg.PLAYERS: id, name, ping from Transport.latency, admin; when someone joins or
+  leaves, Lobby, and every ROSTER_TICKS). The same name from the same machine (Transport.ip) takes
+  over its old session (Lobby.take_over: a game stopped short comes back at once); NetTransport
+  `watch` (ENet timeouts: a silent end is gone after TIMEOUT_MAX, 10 s). A dedicated server never
+  saves because a player paused. Client: `Online` (src/client/peers, GameClient.online: signals
+  join_requested, retry_requested, solo_requested, welcomed that Game answers), `PeersView` (world
+  root: a PlayerModel each, `peer` (no see-through hole, cut with the world, `cut_out`), drawn DELAY
+  behind the latest move between the two around that tick (`_origin` maps ticks to this machine's
+  time from the fastest delivery, CLOCK_DRIFT; `sample`), SNAP jumps not glided, take_pose,
+  hold_item (from GameClient's old _hold), set_armor, fading in and out, its lantern lit by
+  LightingController.dusk or its own sky light, low under cover), `PeerNames` (src/ui; names at
+  WorldViewport.screen_point, fading with the distance), `PlayerList` (src/ui; held P,
+  InputBindings.PLAYER_LIST; pings colored), `JoinScreen` (src/ui; from the pause menu's
+  Multiplayer section or the connection screen: address, port, name, password; the recent servers,
+  `ServerList`, src/core: user://servers.cfg, never the password, remembered once the server
+  welcomed a player who joined from the screen). PauseMenu: `online` (Leave the server), and
+  `world_editable` (the world's rows hidden on a server for non-admins, from the roster).
+  ConnectionScreen: Try again, Another server, Play solo (Cancel while connecting), Quit. Game:
+  `play_solo`, `join(address, port, name, password, remember)`, `_leave` (the client freed, the
+  integrated server saved): from solo to a server and back without starting again.
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made

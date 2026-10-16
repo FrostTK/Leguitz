@@ -67,7 +67,7 @@ Les questions de goût ou les choix lourds de conséquences sont posés avant de
 
 ## 3. État actuel : ce qui est fait
 
-Godot **4.7.2** (GDScript), rendu Forward+. 259 tests unitaires, lint propre.
+Godot **4.7.2** (GDScript), rendu Forward+. 416 tests unitaires, lint propre.
 
 | Phase | Contenu | Commits |
 |---|---|---|
@@ -156,7 +156,8 @@ Godot **4.7.2** (GDScript), rendu Forward+. 259 tests unitaires, lint propre.
 | 8.7 Chambre et salon | Un **lit** de deux cases (trois tissus sur trois planches), sa couverture **teintable** : un clic droit en fait l'endroit où l'on se **réveille** après avoir perdu connaissance, et la nuit on s'y **couche** (l'écran s'assombrit) : quand tous les joueurs dorment, **la nuit passe** (pas avec des monstres autour, ni en temps synchronisé ou figé). Des **rangements** qui s'ouvrent comme un coffre : **armoire** et **bibliothèque** (deux niveaux de haut), **vaisselier** et ses assiettes, **commode**, **placard mural**, **caisses** qui s'empilent, **panier**. Une **étagère** au mur où l'on **pose** jusqu'à trois objets **qui se voient**. Des **sièges** où l'on **s'assoit** (clic droit ; on se lève en bougeant) : chaise, **fauteuil** et **canapé** (deux cases) teintables, **banc**, **tabouret**, **rocking-chair**. Des **tables** : basse, **bureau**, **table de nuit**, **guéridon**, et une **nappe** teintable qui se pose sur une table. Le livre : chapitre Maison, « Chambre et salon » | `bcb645f` |
 | 8.8 Ambiance | Des **lumières** qui s'allument et s'éteignent au clic droit : **bougies** (de la ficelle sur un rayon de miel), **chandelier** à trois branches, **lustre** qui pend au plafond, **lampe de chevet** à l'abat-jour teintable, **applique** murale ; bougies, chandeliers, lampes et pots se posent **sur une table ou un meuble**. Une **cheminée** de deux cases et un **poêle à bois** : une bûche ou du charbon les **allume**, ils brûlent longtemps puis s'éteignent (l'arrosoir les éteint), **éclairent**, **fument par la cheminée** au-dessus et **réchauffent** : en **hiver**, là où il neige, on a **froid** (la faim vient plus vite, on ne guérit plus) sauf au chaud près d'un feu (on guérit alors plus vite). Aux murs : **tableaux** (8 paysages) et **portraits** (8), dessinés par le jeu, qui défilent au clic droit, une **horloge** dont les **aiguilles donnent l'heure du jeu**, un **miroir**, une **carte encadrée** qui montre **le pays autour**, des **têtes de cerf et d'ours**, une **tapisserie** teintable, une étagère à épices, un portemanteau. Des **pots de fleurs** où l'on plante une fleur, une pousse, une fougère ou un champignon, une **jardinière**, des **plantes vertes**, des **coussins**. La **salle de bain** : **baignoire** (on s'y assoit), **douche** qui coule, **lavabo** (l'arrosoir s'y remplit). Et une **horloge comtoise** à balancier, un **coffre à jouets**, un **piano**, un **berceau**, un **paravent**. Le livre : chapitre Maison, « Ambiance » | `f2182bc` |
 | Catalogue créatif | Demandé par le propriétaire (en créatif, tous les objets étaient mélangés : impossible de trouver ce qu'on voulait) : le catalogue est rangé en **dix onglets** à icônes (blocs de construction ; escaliers, dalles et toits ; nature ; portes, fenêtres et clôtures ; mobilier ; décoration et lumières ; ferme et jardin ; nourriture ; outils, armes et équipement ; matériaux), le nom de l'onglet au survol et sous les onglets, et un **champ de recherche** (clic ou Ctrl+F) qui trouve les objets par leur nom en **français ou en anglais** (et dans toute autre langue ajoutée plus tard), sans tenir compte des majuscules ni des accents, avec plusieurs mots (« porte chêne »), ceux dont le nom commence par le mot en premier | `1a7e995` |
-| M.1 Réseau et serveur dédié | Le jeu sait maintenant jouer **en réseau** (ENet, UDP) : un **serveur dédié**, le jeu lancé sans fenêtre (`--server`, ou la version « serveur » exportée pour Linux), avec ses **réglages** dans `server.cfg` (écrit la première fois avec ses explications : IP, port 27420, monde, graine, mode de jeu, joueurs au plus, mot de passe, distance de vue, langue) que les **options de lancement** remplacent (`--port=`...), son dossier de données au choix (`--data=`), une **console** (stop, save, say, list, help et les commandes d'administrateur du chat), une ligne « Leguitz server ready » quand il écoute, l'**arrêt propre** (la commande `stop`, ou un fichier `stop` posé dans son dossier) qui sauvegarde, et la sauvegarde toutes les deux minutes. On le **rejoint** avec `--connect=IP:port --name=Pseudo --password=...` ; un écran dit qu'on se connecte, qu'on est **refusé** (mot de passe, serveur plein, pseudo pris ou invalide, version différente), que la connexion est **perdue** ou le serveur **injoignable**. Le chat annonce les arrivées et les départs ; un joueur qui part est sauvegardé ; seuls les administrateurs changent l'heure, les saisons et le mode de jeu d'un serveur. La compilation automatique produit `LeguitzServer-linux` | « Network and dedicated server » |
+| M.1 Réseau et serveur dédié | Le jeu sait maintenant jouer **en réseau** (ENet, UDP) : un **serveur dédié**, le jeu lancé sans fenêtre (`--server`, ou la version « serveur » exportée pour Linux), avec ses **réglages** dans `server.cfg` (écrit la première fois avec ses explications : IP, port 27420, monde, graine, mode de jeu, joueurs au plus, mot de passe, distance de vue, langue) que les **options de lancement** remplacent (`--port=`...), son dossier de données au choix (`--data=`), une **console** (stop, save, say, list, help et les commandes d'administrateur du chat), une ligne « Leguitz server ready » quand il écoute, l'**arrêt propre** (la commande `stop`, ou un fichier `stop` posé dans son dossier) qui sauvegarde, et la sauvegarde toutes les deux minutes. On le **rejoint** avec `--connect=IP:port --name=Pseudo --password=...` ; un écran dit qu'on se connecte, qu'on est **refusé** (mot de passe, serveur plein, pseudo pris ou invalide, version différente), que la connexion est **perdue** ou le serveur **injoignable**. Le chat annonce les arrivées et les départs ; un joueur qui part est sauvegardé ; seuls les administrateurs changent l'heure, les saisons et le mode de jeu d'un serveur. La compilation automatique produit `LeguitzServer-linux` | `e5936da` |
+| M.2 Rejoindre et voir les autres | On **voit les autres joueurs** : leur corps en voxels, **leur nom au-dessus de la tête** (il s'efface au loin), ce qu'ils **tiennent en main** et l'**armure** qu'ils portent, leurs **gestes** (marcher, sauter, nager, piocher, frapper, manger, bander l'arc, lancer la ligne, ramer, s'asseoir, dormir ou être évanoui), leur **lanterne** la nuit ; leurs **mouvements sont lissés** (glissés d'une position à l'autre même quand le réseau les livre par paquets ; un saut de téléportation n'est pas glissé) et ils **apparaissent et disparaissent en fondu**. **P maintenu** : la **liste des joueurs** (le serveur, les noms, les admins, le ping de chacun). Le menu pause a une rubrique **Multijoueur** : « Rejoindre un serveur… » ouvre un **écran pour rejoindre** (adresse IP ou nom de domaine, port, pseudo, mot de passe ; les **serveurs rejoints récemment** se remplissent d'un clic, × les oublie ; jamais le mot de passe gardé) ; sur un serveur, « Quitter le serveur » ramène au monde solo, **sans relancer le jeu**. Connexion perdue ou refusée : **Réessayer**, **Autre serveur…**, **Jouer en solo**, Quitter. Un joueur dont le jeu s'est fermé brutalement **revient tout de suite** depuis la même machine (son ancienne connexion lui cède la place) ; un joueur silencieux est lâché en 10 s. Sur un serveur, seuls les admins voient les réglages du monde dans le menu pause | « Players see each other » |
 
 **Pas encore fait** (prévu) : nouveaux matériaux et décoration (phase 8),
 structures, menus de départ, sons, mode Arcade (en attente), mobile.
@@ -283,17 +284,17 @@ xvfb-run -a -s "-screen 0 960x540x24" godot --path . --audio-driver Dummy --reso
 
 ---
 
-## 5. Prochaine étape au « go » : Multijoueur, étape 2 (rejoindre et voir les autres)
+## 5. Prochaine étape au « go » : Multijoueur, étape 3 (un serveur qui ne fait confiance à personne)
 
 **Décision du propriétaire (octobre 2026)** : on passe tout de suite au **multijoueur et aux
 serveurs dédiés** (phase « Multijoueur et serveurs dédiés », section 6) ; la **phase 8** est en
 pause après son étape 8 et reprendra à son **étape 9** (extérieur : les allées de gravier, de
 dalles et de pas japonais, le lampadaire, le puits, la fontaine, la boîte aux lettres, le banc de
 jardin, la pergola, le nichoir, la girouette, et les arches laissées à l'étape 6 avec les ponts).
-L'étape 1 du multijoueur (réseau et serveur dédié) est faite ; au prochain « go », l'**étape 2**
-(rejoindre et voir les autres : un écran « Rejoindre un serveur », les corps des autres joueurs,
-leurs gestes et ce qu'ils tiennent, leur nom, leurs mouvements lissés, la liste des joueurs ; voir
-la section 6).
+Les étapes 1 (réseau et serveur dédié) et 2 (rejoindre et voir les autres) du multijoueur sont
+faites ; au prochain « go », l'**étape 3** (un serveur qui ne fait confiance à personne : il refait
+les déplacements avec les collisions, vérifie la durée du minage, les chutes, les portées, les
+sièges et les lits, limite le débit des messages ; voir la section 6).
 
 **La phase 7 est terminée** (étapes 1 à 11 ci-dessous). La **phase 8, Construction et
 décoration**, a fait ses étapes 1 (escaliers et dalles), 2 (verre et vitres, la teinte par case),
@@ -838,10 +839,25 @@ serveur intégré). Découpage :
    s'arrête : Pterodactyl l'envoie à l'arrêt) ; les journaux dans la sortie standard, une ligne
    « prêt » quand le serveur écoute (Pterodactyl la guette) ; l'export Linux « serveur dédié » de
    Godot (sans graphismes) construit par la CI.
-2. **Rejoindre et voir les autres** : un écran « Rejoindre un serveur » (IP ou nom de domaine,
-   port, pseudo, mot de passe ; les derniers serveurs gardés), les corps des autres joueurs (gestes,
-   objet en main, armure, nom au-dessus de la tête), leurs mouvements lissés, l'arrivée et le
-   départ des joueurs, la liste des joueurs, les coupures et la reconnexion.
+2. ✅ **Rejoindre et voir les autres** (voir section 3, ligne M.2). Fait comme prévu, avec ces
+   choix : chaque client dit au serveur, avec ses déplacements, où son corps regarde et ce qu'il
+   fait (des bits de pose, et ses coups comptés) ; le serveur y ajoute ce qu'il sait (objet en
+   main, armure) et l'envoie, à chaque tick où ça change, aux joueurs qui ont le chunk où il se
+   tient ; chaque nouvelle porte le tick du serveur, et les autres sont dessinés 0,1 s en retard
+   pour glisser entre deux positions ; un spectateur (hardcore) n'est vu de personne ; le nom
+   s'affiche en lettres de l'interface (net à tout zoom), s'estompe de 28 à 40 cases ; la liste des
+   joueurs est sur **P maintenu** (Tab est l'inventaire) ; « Rejoindre un serveur » est dans le
+   menu pause (il n'y a pas encore d'écran titre) ; les serveurs récents sont dans
+   `user://servers.cfg` (8 au plus, sans mot de passe) et seulement ceux rejoints par l'écran ; un
+   même pseudo depuis la même adresse IP prend la place de l'ancienne connexion (reconnexion
+   immédiate ; depuis une autre machine il reste refusé) ; ENet lâche un joueur silencieux en
+   10 s ; le serveur dédié ne sauvegarde plus quand un joueur met en pause. Pas fait (à proposer) :
+   des apparences différentes (couleurs, tenues : tous les joueurs ont le même corps), la tête qui
+   suit le regard (haut/bas), la rougeur d'un coup reçu chez les autres, les bulles de chat
+   au-dessus des têtes, le nom caché derrière les murs ou quand on s'accroupit, la reconnexion
+   automatique, un écran titre (choisir solo ou serveur au lancement), la liste des serveurs
+   avec leur nombre de joueurs avant d'entrer, le mot de passe gardé, les pings sur la console du
+   serveur.
 3. **Un serveur qui ne fait confiance à personne** : collisions des déplacements (PlayerBody côté
    serveur), durée du minage, chutes, portées, sièges et lits vus par le serveur, limites de débit
    des messages.
@@ -868,8 +884,8 @@ serveur intégré). Découpage :
 
 - **Taille des fichiers** : `src/client/interaction/block_interaction.gd` fait 983 lignes (limite
   1000) : y sortir du code (par exemple ce que fait le clic droit sur les animaux, les machines,
-  la récolte) avant d'y ajouter ; `src/client/game_client.gd` en fait 957, `src/sim/game_server.gd`
-  941 ; `object_shapes.gd` (922) et `mining.gd` (902) ont été allégés à l'étape 8.8 (les blocs
+  la récolte) avant d'y ajouter ; `src/client/game_client.gd` en fait 940, `src/sim/game_server.gd`
+  954 (le multijoueur côté client est dans `src/client/peers/online.gd`) ; `object_shapes.gd` (922) et `mining.gd` (902) ont été allégés à l'étape 8.8 (les blocs
   d'un objet tourné se construisent par leur nom, les temps et outils vont par sorte), les
   recettes de la maison sont dans `home_recipes.gd`.
   `src/sim/world/tiles.gd` (la liste des numéros de blocs, qu'on ne fait qu'allonger) est exempté

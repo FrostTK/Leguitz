@@ -17,6 +17,7 @@ static func handle(client: GameClient, message: Dictionary) -> void:
 			client.local_player.spawn_at(message["spawn"], message["h"])
 			client.joined = true
 			client.snap_camera()
+			client.online.welcomed.emit()
 		Msg.CHUNK_DATA:
 			var chunk := ChunkData.from_dict(message["chunk"])
 			client.world.store(chunk)
@@ -132,5 +133,13 @@ static func _handle_world(client: GameClient, message: Dictionary) -> void:
 			client.lighting.lantern_out(message["seconds"])
 		Msg.CHAT_LINE:
 			client.chat.show_line(message)
+		Msg.PEER:
+			client.online.peers.on_peer(message)
+		Msg.PEER_MOVE:
+			client.online.peers.on_move(message)
+		Msg.PEER_GONE:
+			client.online.peers.gone(int(message["id"]))
+		Msg.PLAYERS:
+			client.online.set_roster(message["players"])
 		var unknown:
 			push_warning("Client: unknown message type %s" % unknown)

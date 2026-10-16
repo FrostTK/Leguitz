@@ -96,8 +96,11 @@ var view_depth := 80.0
 var first_person := 0.0
 var quality: Quality = Quality.HIGH
 
-## 0 in daylight, 1 in the dark (read by the particles and the lantern).
+## 0 in daylight, 1 in the dark (read by the particles and the lantern);
+## `dusk` the same from the sky alone, wherever one stands (the other
+## players' lanterns: PeersView).
 var darkness := 0.0
+var dusk := 0.0
 ## Seconds the lantern stays out (lantern_out).
 var _lantern_out := 0.0
 
@@ -180,6 +183,11 @@ static func sky_direction(angle: float) -> Vector3:
 	return Vector3(horizontal.x * cos(elevation), sin(elevation), horizontal.y * cos(elevation))
 
 
+## How bright a lantern burns in `dark` (0 daylight .. 1 the dark).
+static func lantern_energy(dark: float) -> float:
+	return clampf(dark * 2.0 - 0.4, 0.0, 1.6)
+
+
 ## A lantern moth's blow: the lantern goes out for `seconds`, sputtering
 ## back at the end.
 func lantern_out(seconds: float) -> void:
@@ -209,15 +217,15 @@ func _process(delta: float) -> void:
 	environment.adjustment_enabled = not is_equal_approx(Settings.brightness, 1.0)
 	environment.adjustment_brightness = Settings.brightness
 	sky_seen = lerpf(sky_seen, sky_here, 1.0 - exp(-SKY_SHARPNESS * delta))
-	darkness = clampf(1.0 - daylight * (1.0 - storm * 0.4), 0.0, 1.0)
-	darkness = maxf(darkness, 1.0 - smoothstep(0.0, 1.0, sky_seen))
+	dusk = clampf(1.0 - daylight * (1.0 - storm * 0.4), 0.0, 1.0)
+	darkness = maxf(dusk, 1.0 - smoothstep(0.0, 1.0, sky_seen))
 	weather.darkness = darkness
 
 	_update_sky_light(angle, moon, storm, underground)
 	_update_fog(hours, daylight, twilight, storm, underground)
 	environment.background_color = environment.fog_light_color.darkened(0.2)
 	_update_sky(daylight, twilight, storm, underground, angle)
-	lantern.light_energy = clampf(darkness * 2.0 - 0.4, 0.0, 1.6)
+	lantern.light_energy = lantern_energy(darkness)
 	if _lantern_out > 0.0:
 		# Out; in its last second it sputters back.
 		var sputter := 1.0 - _lantern_out if _lantern_out < 1.0 else 0.0

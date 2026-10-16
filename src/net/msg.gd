@@ -8,7 +8,7 @@ extends RefCounted
 const HELLO := "hello"
 ## The messages' version: a client and a server of different ones do not
 ## play together (Msg.REFUSED, REFUSED_VERSION). Raised when messages change.
-const PROTOCOL := 1
+const PROTOCOL := 2
 const PLAYER_MOVE := "player_move"
 const SET_TIME := "set_time"
 const DEBUG_MOVE_DEPTH := "debug_move_depth"
@@ -118,6 +118,12 @@ const TINTED := "tinted"
 ## A player lies in their bed or gets up; what a shelf holds.
 const SLEEPING := "sleeping"
 const SHELF_ITEMS := "shelf_items"
+## Another player comes into view, moves or changes what they hold or wear,
+## goes out of view (Peers); who plays on the server (the roster).
+const PEER := "peer"
+const PEER_MOVE := "peer_move"
+const PEER_GONE := "peer_gone"
+const PLAYERS := "players"
 
 
 ## The player hits the creature `id` with the hotbar slot `slot` in hand
@@ -611,13 +617,57 @@ static func refused(reason: String) -> Dictionary:
 	return {"t": REFUSED, "reason": reason}
 
 
+## Another player comes into view: their name and their state (Peers.state:
+## feet, height, yaw, pose, strokes, what they hold and wear) at the
+## server's tick `tick` (the client glides them by it).
+static func peer(id: int, player_name: String, state: Dictionary, tick: int) -> Dictionary:
+	var message := state.duplicate()
+	message.merge({"t": PEER, "id": id, "name": player_name, "tick": tick}, true)
+	return message
+
+
+## What changed of another player in view (some of Peers.state's keys) at
+## the server's tick `tick`.
+static func peer_move(id: int, changes: Dictionary, tick: int) -> Dictionary:
+	var message := changes.duplicate()
+	message.merge({"t": PEER_MOVE, "id": id, "tick": tick}, true)
+	return message
+
+
+## Another player went out of view (or left).
+static func peer_gone(id: int) -> Dictionary:
+	return {"t": PEER_GONE, "id": id}
+
+
+## Who plays: [{id, name, ping (ms), admin}] (Peers.roster).
+static func players(roster: Array) -> Dictionary:
+	return {"t": PLAYERS, "players": roster}
+
+
 ## `height` is the feet height in levels (jumps, falls).
 ## Where the player is; `fell`: how far they fell (levels) when they landed
-## since the last move (PlayerBody.take_fall; 0: no landing).
+## since the last move (PlayerBody.take_fall; 0: no landing). What the other
+## players see of the body: where it looks (`yaw`, radians: atan2 of the
+## heading), what it does (`pose`, PlayerModel.Pose bits) and the single
+## strokes it made (`swings`, counted).
 static func player_move(
-	position: Vector2, facing: Vector2i, height := 0.0, fell := 0.0
+	position: Vector2,
+	facing: Vector2i,
+	height := 0.0,
+	fell := 0.0,
+	yaw := 0.0,
+	pose := 0,
+	swings := 0
 ) -> Dictionary:
-	var message := {"t": PLAYER_MOVE, "pos": position, "facing": facing, "h": height}
+	var message := {
+		"t": PLAYER_MOVE,
+		"pos": position,
+		"facing": facing,
+		"h": height,
+		"yaw": yaw,
+		"pose": pose,
+		"swings": swings,
+	}
 	if fell > 0.0:
 		message["fell"] = fell
 	return message

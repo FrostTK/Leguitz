@@ -3,10 +3,15 @@ extends Control
 ## The connection to a dedicated server, over the game (GameClient): while
 ## it connects (`show_connecting`), when the server refuses the player
 ## (`show_refused`: Msg.REFUSED's reason) and when it is lost or was never
-## made (`show_ended`: NetClient.ending). Ended, a button quits the game.
-## The world takes no input while it shows (GameClient.screen_open).
+## made (`show_ended`: NetClient.ending). Ended, its buttons try the same
+## server again, open the join screen for another, go back to the solo
+## world or quit the game; connecting, one goes back to solo. The world
+## takes no input while it shows (GameClient.screen_open).
 
 signal quit_requested
+signal retry_requested
+signal other_requested
+signal solo_requested
 
 const SHADE := Color(0.02, 0.02, 0.05, 0.82)
 const WIDTH := 220.0
@@ -14,6 +19,9 @@ const WIDTH := 220.0
 var _title := Label.new()
 var _text := Label.new()
 var _quit := Button.new()
+var _retry := Button.new()
+var _other := Button.new()
+var _solo := Button.new()
 ## Where the server is ("address:port").
 var _address := ""
 ## A refusal or an end was shown: what comes after keeps it.
@@ -36,10 +44,22 @@ func _ready() -> void:
 	_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(_text)
-	_quit.text = "CONNECTION_QUIT"
-	_quit.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	_quit.pressed.connect(quit_requested.emit)
-	box.add_child(_quit)
+	var buttons := GridContainer.new()
+	buttons.columns = 2
+	buttons.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	box.add_child(buttons)
+	var choices := [
+		[_retry, "CONNECTION_RETRY", retry_requested],
+		[_other, "CONNECTION_OTHER", other_requested],
+		[_solo, "CONNECTION_SOLO", solo_requested],
+		[_quit, "CONNECTION_QUIT", quit_requested],
+	]
+	for choice: Array in choices:
+		var button: Button = choice[0]
+		button.text = choice[1]
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.pressed.connect((choice[2] as Signal).emit)
+		buttons.add_child(button)
 	visible = false
 
 
@@ -50,7 +70,8 @@ func show_connecting(address: String) -> void:
 		return
 	_title.text = "CONNECTION_TITLE_CONNECTING"
 	_text.text = tr("CONNECTION_CONNECTING") % address
-	_quit.visible = false
+	_show_buttons(false)
+	_solo.text = "CONNECTION_CANCEL"
 	visible = true
 
 
@@ -82,9 +103,17 @@ func _show_end(title: String, text: String) -> void:
 	_ended = true
 	_title.text = title
 	_text.text = text
-	_quit.visible = true
+	_show_buttons(true)
+	_solo.text = "CONNECTION_SOLO"
 	visible = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
+## Ended: every choice; connecting: back to solo only.
+func _show_buttons(ended: bool) -> void:
+	for button: Button in [_retry, _other, _quit]:
+		button.visible = ended
+	_solo.visible = true
 
 
 func _draw() -> void:

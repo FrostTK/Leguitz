@@ -11,6 +11,11 @@ const CHANNEL := 0
 ## A player's messages are small; a server's (chunks) larger.
 const CLIENT_MOST_BYTES := 64 * 1024
 const SERVER_MOST_BYTES := 32 * 1024 * 1024
+## The other end silent this long (milliseconds; ENet pings twice a
+## second) is gone: a game or a server stopped short is noticed soon.
+const TIMEOUT_LIMIT := 32
+const TIMEOUT_MIN := 4000
+const TIMEOUT_MAX := 10000
 
 var peer: ENetPacketPeer
 ## The largest message taken (bytes, as it came).
@@ -66,3 +71,19 @@ func address() -> String:
 	if peer == null:
 		return ""
 	return "%s:%d" % [peer.get_remote_address(), peer.get_remote_port()]
+
+
+func ip() -> String:
+	return peer.get_remote_address() if peer != null else ""
+
+
+func latency() -> int:
+	if peer == null or not _open:
+		return 0
+	return int(peer.get_statistic(ENetPacketPeer.PEER_ROUND_TRIP_TIME))
+
+
+## Notices a silent other end soon (see TIMEOUT_MAX).
+func watch() -> void:
+	if peer != null:
+		peer.set_timeout(TIMEOUT_LIMIT, TIMEOUT_MIN, TIMEOUT_MAX)

@@ -49,8 +49,12 @@ class PlayerSession:
 	var joined := false
 	var position := Vector2.ZERO
 	var facing := Vector2i.DOWN
-	## Feet height in levels (as reported by the client).
+	## Feet height in levels (as reported by the client), and what the
+	## others see of the body (Msg.player_move: yaw, pose, swings).
 	var height := 0.0
+	var yaw := 0.0
+	var pose := 0
+	var swings := 0
 	var view_distance := GameConst.DEFAULT_VIEW_DISTANCE
 	var sent_chunks: Dictionary[Vector2i, bool] = {}
 	var inventory := Inventory.new()
@@ -92,6 +96,9 @@ class PlayerSession:
 	## The creatures they are shown (Creatures.sync), and when they last hit
 	## one (seconds of play).
 	var seen_creatures: Dictionary[int, bool] = {}
+	## The other players they are shown: id -> their state as last sent
+	## (Peers).
+	var seen_peers: Dictionary[int, Dictionary] = {}
 	var last_blow := -INF
 	## What armor let through below a whole point (it adds up), and when
 	## they last shot an arrow (seconds of play).
@@ -306,6 +313,7 @@ func tick() -> void:
 	_update_items(GameConst.TICK_DELTA)
 	creatures.update(self, GameConst.TICK_DELTA)
 	creatures.sync(sessions)
+	Peers.sync(self)
 	archery.update(self, GameConst.TICK_DELTA)
 	Fishing.update(self, GameConst.TICK_DELTA)
 	boats.update(self, GameConst.TICK_DELTA)
@@ -421,7 +429,10 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 				session.inventory.craft(session.craft_width, shift, session.kitchen)
 				session.transport.send(Msg.inventory(session.inventory))
 		Msg.SAVE_REQUEST:
-			if session.joined and Time.get_ticks_msec() - _last_save_msec >= SAVE_REQUEST_MSEC:
+			# A dedicated server saves on its own (players pausing is no
+			# reason).
+			var due := Time.get_ticks_msec() - _last_save_msec >= SAVE_REQUEST_MSEC
+			if session.joined and due and not dedicated:
 				save()
 		var other:
 			if (
@@ -439,7 +450,7 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 func _on_hello(session: PlayerSession, message: Dictionary) -> void:
 	if session.joined:
 		return
-	var refusal := Lobby.refusal(self, message)
+	var refusal := Lobby.refusal(self, session, message)
 	if refusal != "":
 		if console != null:
 			var name := str(message.get("name", ""))
@@ -449,6 +460,7 @@ func _on_hello(session: PlayerSession, message: Dictionary) -> void:
 		session.transport.send(Msg.refused(refusal))
 		session.transport.close()
 		return
+	Lobby.take_over(self, session, str(message.get("name", "")))
 	session.id = _next_player_id
 	_next_player_id += 1
 	session.player_name = str(message.get("name", "Player"))
@@ -458,7 +470,6 @@ func _on_hello(session: PlayerSession, message: Dictionary) -> void:
 	_place_player(session)
 	session.joined = true
 	Chat.on_join(self, session)
-	Lobby.joined(self, session)
 	session.transport.send(
 		Msg.welcome(session.id, session.position, session.height, settings.to_dict())
 	)
@@ -470,6 +481,7 @@ func _on_hello(session: PlayerSession, message: Dictionary) -> void:
 	for dropped: DroppedItem in items.values():
 		session.transport.send(Msg.item_spawn(dropped))
 	boats.welcome(session)
+	Lobby.joined(self, session)
 	# Start generating the whole initial view right away.
 	_stream_chunks(session, CHUNKS_SENT_PER_TICK)
 	_collect_generated()
@@ -817,6 +829,7 @@ func _on_player_move(session: PlayerSession, message: Dictionary) -> void:
 	session.position = new_pos
 	session.facing = message.get("facing", session.facing)
 	session.height = message.get("h", session.height)
+	Peers.take_look(session, message)
 	var fell := float(message.get("fell", 0.0))
 	if fell > 0.0:
 		Survival.landed(self, session, fell)

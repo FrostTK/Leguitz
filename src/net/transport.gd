@@ -25,3 +25,13 @@ func is_open() -> bool:
 ## closed.
 func close() -> void:
 	pass
+
+
+## The other end's IP address ("": not over the network).
+func ip() -> String:
+	return ""
+
+
+## How long a message takes there and back (milliseconds; 0: no network).
+func latency() -> int:
+	return 0

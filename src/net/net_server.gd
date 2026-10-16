@@ -37,6 +37,7 @@ func service() -> Array[NetTransport]:
 			ENetConnection.EVENT_CONNECT:
 				var transport := NetTransport.new()
 				transport.peer = peer
+				transport.watch()
 				_peers[peer] = transport
 				joined.append(transport)
 			ENetConnection.EVENT_DISCONNECT:

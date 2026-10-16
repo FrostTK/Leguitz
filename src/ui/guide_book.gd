@@ -98,6 +98,7 @@ static func _controls() -> Array:
 		_combo("BOOK_HAND", "BOOK_HAND_KEYS"),
 		_keys("BOOK_INVENTORY", InputNames.keys(InputBindings.INVENTORY)),
 		_keys("BOOK_CHAT", InputNames.keys(InputBindings.CHAT) + PackedStringArray(["/"])),
+		_keys("BOOK_PLAYER_LIST", InputNames.keys(InputBindings.PLAYER_LIST)),
 		_keys("BOOK_DROP", InputNames.keys(InputBindings.DROP_ITEM)),
 		_keys("BOOK_VIEW", InputNames.keys(InputBindings.TOGGLE_VIEW)),
 		_keys("BOOK_ZOOM_VIEW", InputNames.keys(InputBindings.ZOOM_VIEW)),

@@ -42,6 +42,7 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Saisons (réglage du monde) : cultures de saison et serres, arbres qui roussissent puis se dénudent, neige l'hiver, le calendrier à l'horloge, /saison | ✅ |
 | Verre et vitres refaits : verre clair continu, verre ancien, verre au plomb, vitres fines qui se raccordent, 28 fenêtres (4 dessins, 6 bois et fer forgé), teinte par case au pot de peinture (le cadre à part), lavée à l'arrosoir ; le soleil à travers le verre teinté colore le sol ; palette de 16 couleurs douces | ✅ |
 | Rideaux qui se tirent et se nouent (tirés, la pièce devient sombre), longs jusqu'au sol, tringle en bois ou en fer, teints au pot de peinture ; tapis qui se raccordent en un grand tapis, teints, sous les meubles | ✅ |
+| Multijoueur, étape 2 : on voit les autres joueurs (corps, nom au-dessus de la tête, objet en main, armure, gestes, lanterne), mouvements lissés, liste des joueurs (P), écran « Rejoindre un serveur » dans le menu pause avec les serveurs récents, retour au solo sans relancer, reconnexion | ✅ |
 | Multijoueur, étape 1 : serveur dédié (jeu lancé sans fenêtre, réglages dans server.cfg, console, arrêt propre, version Linux compilée), connexion par IP avec pseudo et mot de passe, écrans de connexion, de refus et de déconnexion | ✅ |
 | Catalogue créatif rangé en dix onglets (blocs, escaliers et toits, nature, portes et fenêtres, mobilier, décoration, ferme, nourriture, outils, matériaux) avec une recherche par nom, en français ou en anglais, sans accents ni majuscules | ✅ |
 | Ambiance : bougies, chandeliers, lustre, lampe de chevet et appliques qu'on allume et éteint, posés sur les meubles ; cheminée et poêle qui brûlent du bois, éclairent, fument et réchauffent (le froid de l'hiver) ; tableaux et portraits dessinés par le jeu, horloges à aiguilles, miroir, carte des alentours, trophées, tapisserie ; pots de fleurs, jardinières, plantes vertes, coussins ; baignoire, douche qui coule, lavabo ; horloge comtoise, coffre à jouets, piano, berceau, paravent | ✅ |
@@ -49,6 +50,8 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Nouveaux matériaux : pavés, pierre de taille, pierres moussues, plâtre qui se peint, colombages, torchis, parquets à lames et à chevrons, carrelage en damier, tomettes, terre cuite, ardoise polie, briques de grès ; leurs escaliers et dalles, quarts de bloc, murets, piliers, poutres | ✅ |
 | Toitures en tuiles, ardoises, bardeaux et chaume : pentes qui font leurs coins, faîtages en croupe et en croix, pentes douces, lucarnes, cheminée qui fume, neige en hiver | ✅ |
 | Portes de chaque bois, vitrée et en fer forgé (portes doubles), trappes, échelles où l'on grimpe, volets peints qui se ferment, barreaux et garde-corps qui se raccordent | ✅ |
+
+![Leguitz : multijoueur : trois joueurs sur un serveur dédié, Chloé en armure de fer avec une épée, Béa casquée qui pioche, leurs noms au-dessus de la tête ; la nuit, leurs lanternes et la liste des joueurs avec leur ping ; l'écran « Rejoindre un serveur » et ses serveurs récents ; la connexion perdue et ses choix](docs/screenshots/multijoueur-joueurs.png)
 
 ![Leguitz : multijoueur : un joueur connecté à un serveur dédié dans la forêt ; la connexion refusée pour un mauvais mot de passe ; la connexion perdue quand le serveur s'arrête ; un serveur injoignable](docs/screenshots/multijoueur-serveur.png)
 
@@ -313,11 +316,14 @@ Sa console comprend `stop` (sauvegarde et arrêt), `save`, `say message`, `list`
 commandes d'administrateur du chat ; un fichier `stop` posé dans son dossier l'arrête aussi
 proprement. Depuis les sources : `godot --headless --path . -- --server --data=DOSSIER`.
 
-Pour le rejoindre (en attendant l'écran prévu à l'étape 2) :
+Pour le rejoindre : menu pause, **Multijoueur**, « Rejoindre un serveur… » (adresse, port, pseudo,
+mot de passe ; les serveurs rejoints récemment se remplissent d'un clic). Ou au lancement :
 
 ```bash
 Leguitz.exe -- --connect=IP:27420 --name=Pseudo --password=secret
 ```
+
+En jeu, **P** maintenu montre qui joue (et le ping de chacun).
 
 ## Développement
 
@@ -381,9 +387,9 @@ Pour le multijoueur, il suffira de brancher un transport réseau.
 10. Mobile (iOS, Android)
 
 En cours : le multijoueur et les serveurs dédiés, qu'on rejoint par IP depuis le jeu,
-hébergeables sur un VPS Debian ou en egg Pterodactyl (réseau et serveur dédié faits ; à venir :
-rejoindre et voir les autres, un serveur qui vérifie tout, comptes et administration,
-hébergement, performances).
+hébergeables sur un VPS Debian ou en egg Pterodactyl (réseau et serveur dédié, rejoindre et voir les
+autres faits ; à venir : un serveur qui vérifie tout, comptes et administration, hébergement,
+performances).
 
 En attente : le mode Arcade, scénario n°1 « Restauration » (restaurer une terre désolée avec
 éoliennes, irrigateurs et purificateurs, faire revenir forêts, rivières et animaux, puis recycler

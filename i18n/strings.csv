@@ -1300,3 +1300,27 @@ CHAT_LEFT,%s left the game.,%s a quitté la partie.
 CHAT_SERVER_STOPPING,The server is stopping.,Le serveur s'arrête.
 CONNECTION_TITLE_UNREACHABLE,Server unreachable,Serveur injoignable
 SERVER_REFUSED,%s was refused: %s,%s a été refusé : %s
+CONNECTION_RETRY,Try again,Réessayer
+CONNECTION_OTHER,Another server…,Autre serveur…
+CONNECTION_SOLO,Play solo,Jouer en solo
+CONNECTION_CANCEL,Cancel,Annuler
+MENU_MULTIPLAYER,Multiplayer,Multijoueur
+MENU_JOIN_SERVER,Join a server…,Rejoindre un serveur…
+MENU_LEAVE_SERVER,Leave the server (back to solo),Quitter le serveur (retour au solo)
+JOIN_TITLE,Join a server,Rejoindre un serveur
+JOIN_RECENT,Joined lately,Rejoints récemment
+JOIN_ADDRESS,Address,Adresse
+JOIN_ADDRESS_HINT,IP or domain name,IP ou nom de domaine
+JOIN_PORT,Port,Port
+JOIN_NAME,Your name,Ton pseudo
+JOIN_PASSWORD,Password,Mot de passe
+JOIN_PASSWORD_HINT,if the server has one,si le serveur en a un
+JOIN_BACK,Back,Retour
+JOIN_GO,Join,Rejoindre
+JOIN_BAD_ADDRESS,"Type the server's IP or domain name (a port may follow after "":"").","Tape l'IP ou le nom de domaine du serveur (un port peut suivre après « : »)."
+JOIN_FORGET,Forget this server,Oublier ce serveur
+PLAYERS_TITLE,Players (%d) — %s,Joueurs (%d) — %s
+PLAYERS_SOLO,solo,solo
+PLAYERS_ADMIN,(admin),(admin)
+PLAYERS_PING,%d ms,%d ms
+BOOK_PLAYER_LIST,Who plays (held down),Qui joue (maintenir)

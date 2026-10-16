@@ -61,6 +61,8 @@ const HOTBAR_BOOK := &"hotbar_book"
 const CHAT := &"chat"
 ## Aboard: casts the boat's net or hauls it in (Nets).
 const NET := &"net"
+## Held: who plays (PlayerList).
+const PLAYER_LIST := &"player_list"
 # Debug (creative-only later).
 const DEPTH_UP := &"depth_up"
 const DEPTH_DOWN := &"depth_down"
@@ -117,6 +119,7 @@ static func register_defaults() -> void:
 	_bind(ZOOM_VIEW, [_letter(KEY_C)])
 	_bind(CHAT, [_letter(KEY_T)])
 	_bind(NET, [_letter(KEY_R)])
+	_bind(PLAYER_LIST, [_letter(KEY_P)])
 	_bind(BREAK, [_axis(JOY_AXIS_TRIGGER_RIGHT, 1.0)])
 	_bind(PLACE, [_axis(JOY_AXIS_TRIGGER_LEFT, 1.0)])
 	_bind(TOGGLE_MAP, [_letter(KEY_M), _button(JOY_BUTTON_Y)])

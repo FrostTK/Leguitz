@@ -44,9 +44,6 @@ const LANTERN_TOWARDS_CAMERA := 0.45
 ## A right click moving less than this (screen pixels) places a block; more
 ## is a drag turning the camera.
 const CLICK_SLOP := 6.0
-## Size (local units) of what the player holds in the hand of the body
-## (not tools, swords nor the bow: ToolModels).
-const HELD_SIZE := 0.28
 ## A food furnace breaking is told to players within this many tiles.
 const FURNACE_NEWS_RANGE := 12.0
 ## The hand's "slot" of the player's book (beside the hotbar's 9).
@@ -100,6 +97,8 @@ var book_screen := BookScreen.new()
 var chat := ChatBox.new()
 ## A dedicated server's connection: connecting, refused, lost.
 var connection := ConnectionScreen.new()
+## The others, who plays, joining a server (multiplayer).
+var online := Online.new()
 ## The player's book is in hand (its slot: Settings.guide_book). Only the
 ## client knows: the server keeps the hotbar slot chosen before.
 var book_in_hand := false
@@ -243,6 +242,9 @@ func _ready() -> void:
 	_ui_root.add_child(pause_menu)
 	_ui_root.add_child(connection)
 	connection.quit_requested.connect(quit_requested.emit)
+	online.client = self
+	add_child(online)
+	online.setup(_ui_root)
 
 	pause_menu.resume_requested.connect(resume)
 	pause_menu.quit_requested.connect(quit_requested.emit)
@@ -372,6 +374,9 @@ func _process(delta: float) -> void:
 		clock.advance(delta)
 		_update_view_mode(delta)
 		_update_orbit(delta)
+		# What the others see the body do, sent with its moves.
+		local_player.pose = player_model.pose(not local_player.body.on_ground)
+		local_player.swings = player_model.swings
 		local_player.step(delta)
 		_update_view(delta)
 		player_model.set_armor(_worn())
@@ -785,7 +790,8 @@ func _cycle_hand(step: int) -> void:
 ## Whether a screen over the world takes the keys and the mouse: the
 ## inventory, the book, the chat while typing.
 func screen_open() -> bool:
-	return inventory_screen.visible or book_screen.visible or chat.typing or connection.visible
+	var screens := [inventory_screen, book_screen, connection, online.join_screen]
+	return chat.typing or screens.any(func(screen: Control) -> bool: return screen.visible)
 
 
 ## The camera goes straight to the player (after a teleport).
@@ -845,7 +851,8 @@ func _update_held(delta: float) -> void:
 	var held := held_item()
 	if held != _shown_held:
 		_shown_held = held
-		_hold(held)
+		held_view.show_item(held)
+		player_model.hold_item(held, items)
 	# Zooming in, the hand goes down (it would fill the narrowed view); a
 	# spectator has none.
 	held_view.visible = (
@@ -862,30 +869,6 @@ func _update_held(delta: float) -> void:
 			lighting.sky_seen,
 			player_model.hurt
 		)
-
-
-## Gives the body's hand and the first-person view what is in hand: tools,
-## swords, the bow and the fishing rod by their grip (ToolModels), anything
-## else resting in the hand.
-func _hold(held: int) -> void:
-	held_view.show_item(held)
-	if held == Items.Id.NONE:
-		player_model.hold(null, 0.0)
-	elif held == Items.Id.BOW:
-		var stages: Array[Mesh] = []
-		for stage in ToolModels.DRAW_STAGES:
-			stages.append(items.held_mesh(held, stage))
-		player_model.hold_bow(stages, ToolModels.grip(held))
-	elif held == Items.Id.FISHING_ROD:
-		var stages: Array[Mesh] = []
-		for stage in ToolModels.ROD_STAGES:
-			stages.append(items.held_mesh(held, stage))
-		player_model.hold_rod(stages, ToolModels.grip(held))
-	elif ToolModels.has(held):
-		var sword := Items.tool_of(held) == Items.Tool.SWORD
-		player_model.hold_tool(items.held_mesh(held), ToolModels.grip(held), sword)
-	else:
-		player_model.hold(items.mesh(held), HELD_SIZE * items.fit(held))
 
 
 ## Mouse drag (right or middle button) orbits the camera around the

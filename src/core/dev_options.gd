@@ -66,6 +66,9 @@ var screenshot_delay := 10
 var autowalk := Vector2i.ZERO
 var hold_jump := false
 var open_pause_menu := false
+## The join screen opened; the player list shown (its key held down).
+var open_join_screen := false
+var show_players := false
 var descend := 0
 var noclip := false
 var open_map := false
@@ -148,6 +151,10 @@ static func parse(args: PackedStringArray) -> DevOptions:
 				options.hold_jump = true
 			"pause-menu":
 				options.open_pause_menu = true
+			"join-screen":
+				options.open_join_screen = true
+			"players":
+				options.show_players = true
 			"descend":
 				options.descend = value.to_int()
 			"noclip":

@@ -6,8 +6,10 @@ extends Node
 ## for a dev seed (see DevOptions.saves_world). It creates the integrated
 ## server, connects the client through a local transport, drives the fixed
 ## 20 TPS simulation and saves the world when the game closes. With
-## --connect the client joins a dedicated server instead (NetClient, no
-## server here).
+## --connect, or from the join screen (Online's signals), the client joins
+## a dedicated server instead (NetClient, no server here): the world played
+## is left first (saved), and it can be joined again or left for the solo
+## world without starting the game again.
 
 ## Loaded when a client starts (never on a dedicated server).
 const GAME_CLIENT_SCENE := "res://scenes/game_client.tscn"
@@ -24,6 +26,10 @@ var _screenshot_taken := false
 var _ready_frames := 0
 var _seen_chunks := 0
 var _dev_actions_started := false
+## The server joined last [address, port, name, password] (try again), and
+## whether it goes into the recent servers once it welcomes the player.
+var _joining := []
+var _remember := false
 
 
 func _ready() -> void:
@@ -31,15 +37,21 @@ func _ready() -> void:
 	dev = DevOptions.parse(OS.get_cmdline_user_args())
 	_apply_dev_preferences()
 	if not dev.connect_address.is_empty():
-		_join(dev.connect_address, dev.connect_port)
-		return
+		join(dev.connect_address, dev.connect_port, dev.player_name, dev.password)
+	else:
+		play_solo()
 
+
+## Plays the solo world (left from a server: back to it).
+func play_solo() -> void:
+	_leave()
 	var storage: WorldStorage = null
 	var saved := {}
 	if dev.saves_world():
 		storage = WorldStorage.of_world(dev.world_folder)
 		if dev.new_world:
 			storage.erase()
+			dev.new_world = false
 		saved = storage.read_world()
 	var settings := WorldSettings.new()
 	var clock := WorldClock.new()
@@ -64,24 +76,39 @@ func _ready() -> void:
 	var transports := LocalTransport.create_pair()
 	server.connect_client(transports[1])
 
-	_start_client(transports[0])
+	_start_client(transports[0], "Player")
 	client.debug_overlay.server_stats = _server_stats
 	# Answer the handshake right away so the first frame has terrain.
 	server.process_messages()
 
 
-## Joins a dedicated server: the client alone, through the network.
-func _join(address: String, port: int) -> void:
+## Leaves the world played (solo: saved) and joins a dedicated server: the
+## client alone, through the network. `remember`: into the recent servers
+## once it welcomes the player.
+func join(
+	address: String, port: int, player_name: String, password: String, remember := false
+) -> void:
+	_leave()
+	_joining = [address, port, player_name, password]
+	_remember = remember
 	var net := NetClient.new()
 	net.connect_to(address, port)
-	_start_client(net, "%s:%d" % [address, port])
+	_start_client(net, player_name, password, "%s:%d" % [address, port])
 
 
-func _start_client(transport: Transport, address := "") -> void:
+func _start_client(
+	transport: Transport, player_name: String, password := "", address := ""
+) -> void:
 	client = (load(GAME_CLIENT_SCENE) as PackedScene).instantiate()
 	add_child(client)
 	client.quit_requested.connect(_quit)
-	client.connect_to_server(transport, Settings.view_distance, dev.player_name, dev.password)
+	var online := client.online
+	online.join_requested.connect(_on_join_requested, CONNECT_DEFERRED)
+	online.retry_requested.connect(_retry, CONNECT_DEFERRED)
+	online.solo_requested.connect(play_solo, CONNECT_DEFERRED)
+	online.welcomed.connect(_on_welcomed)
+	online.play_on(address)
+	client.connect_to_server(transport, Settings.view_distance, player_name, password)
 	if not address.is_empty():
 		client.connection.show_connecting(address)
 	client.world_viewport.set_orbit_degrees(dev.camera_angles.x, dev.camera_angles.y)
@@ -197,6 +224,11 @@ func _open_dev_screens() -> void:
 		client.debug_map.cycle(client.local_player.current_tile(), client.map_row())
 	if dev.open_pause_menu:
 		client.pause()
+	if dev.open_join_screen:
+		client.pause()
+		client.online.join_screen.open()
+	if dev.show_players:
+		Input.action_press(InputBindings.PLAYER_LIST)
 
 
 func _update_screenshot() -> void:
@@ -229,11 +261,39 @@ func _quit() -> void:
 	get_tree().quit()
 
 
-func _exit_tree() -> void:
+func _on_join_requested(address: String, port: int, player_name: String, password: String) -> void:
+	join(address, port, player_name, password, true)
+
+
+## The same server again (its connection ended).
+func _retry() -> void:
+	if not _joining.is_empty():
+		join(_joining[0], _joining[1], _joining[2], _joining[3], _remember)
+
+
+func _on_welcomed() -> void:
+	if _remember and not _joining.is_empty():
+		_remember = false
+		client.online.join_screen.servers.remember(_joining[0], _joining[1], _joining[2])
+
+
+## Leaves the world played: the client goes, the integrated server saves.
+func _leave() -> void:
+	get_tree().paused = false
 	if client != null:
 		client.transport.close()
-	if server == null:
-		return
-	# Let worker threads finish before the engine shuts down.
-	server.shutdown()
-	server.save()
+		remove_child(client)
+		client.queue_free()
+		client = null
+	if server != null:
+		# Let worker threads finish first.
+		server.shutdown()
+		server.save()
+		server = null
+	_tick_accumulator = 0.0
+	_ready_frames = 0
+	_seen_chunks = 0
+
+
+func _exit_tree() -> void:
+	_leave()

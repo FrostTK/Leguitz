@@ -127,6 +127,15 @@ func ground_size() -> Vector2:
 	return Vector2(size.x, depth)
 
 
+## Where a point of the 3D world (global) shows on the screen, in the UI's
+## units (INF: behind the camera).
+func screen_point(point: Vector3) -> Vector2:
+	if camera.is_position_behind(point):
+		return Vector2.INF
+	var pixel := camera.unproject_position(point)
+	return display.get_global_transform() * (pixel - Vector2(viewport.size) / 2.0)
+
+
 ## While the game is paused the world does not move: keep showing the
 ## last frame instead of drawing it again and again.
 func set_paused(paused: bool) -> void:

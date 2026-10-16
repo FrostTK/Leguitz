@@ -89,6 +89,7 @@ func _service() -> void:
 		match kind:
 			ENetConnection.EVENT_CONNECT:
 				state = State.CONNECTED
+				watch()
 				for message in _waiting:
 					super.send(message)
 				_waiting.clear()
