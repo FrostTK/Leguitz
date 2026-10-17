@@ -397,6 +397,9 @@ Pour le multijoueur, il suffira de brancher un transport réseau.
 9. Finitions PC (menus, sauvegardes, sons, options graphiques, Steam)
 10. Mobile (iOS, Android)
 
+Prochaine : la refonte de l'interface (style « Ardoise » : panneaux sombres et sobres, accent
+ambre, nouvelle disposition de l'inventaire), avant de reprendre le multijoueur.
+
 En cours : le multijoueur et les serveurs dédiés, qu'on rejoint par IP depuis le jeu,
 hébergeables sur un VPS Debian ou en egg Pterodactyl (réseau et serveur dédié, rejoindre et voir les
 autres, un serveur qui vérifie tout, comptes et administration faits ; à venir : hébergement,

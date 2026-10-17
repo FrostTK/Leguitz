@@ -40,7 +40,7 @@ Les questions de goût ou les choix lourds de conséquences sont posés avant de
 |---|---|
 | Concept | Monde ouvert inspiré de **Minecraft** pour la logique (blocs, construction, craft, survie, combat, génération procédurale comme Minecraft) et de **Stardew Valley** pour le visuel (vue de dessus inclinée, pixel art chaleureux). |
 | Rendu | D'abord en 2D, puis **vraie 3D pixel art** (phase 2), puis **full 3D** : le terrain en cubes texturés en pixel art, et **tout le reste en modèles 3D voxel** (1 voxel = 1 pixel du dessin) : joueur, arbres, plantes, rochers… **Tous les futurs objets (items) aussi en 3D voxel.** Viser les meilleurs graphismes possibles. |
-| Style (phase 5 et suite) | **Ne pas s'inspirer du style de Minecraft** : interface, présentation et mots à nous (jauge de vitalité au lieu des cœurs, « Tu as perdu connaissance… »), **monstres originaux** ; la logique de jeu reste à la Minecraft. |
+| Style (phase 5 et suite) | **Ne pas s'inspirer du style de Minecraft** : interface, présentation et mots à nous (jauge de vitalité au lieu des cœurs, « Tu as perdu connaissance… »), **monstres originaux** ; la logique de jeu reste à la Minecraft. **Interface (octobre 2026)** : refonte dans le style **« Ardoise »**, choisi parmi trois maquettes (Ardoise, Papier et encre, Pixel net) : sobre et moderne, à nous, ni les biseaux gris de Minecraft ni le bois de Stardew ; la police reste la police nette d'aujourd'hui ; nouvelle disposition de l'inventaire acceptée (voir la phase « Refonte de l'interface »). |
 | Plateformes | PC d'abord (installable, Steam/Epic un jour), puis **iOS et Android**. Graphismes poussés au maximum, en tirant parti de la carte graphique… sans la faire tourner à 100 % pour rien (limite d'images par seconde). |
 | Graphismes | Claude crée tout lui-même, de façon procédurale (aucune ressource externe). |
 | Joueurs | Solo d'abord, avec un code prêt pour le multijoueur (serveur intégré, messages). Puis (décidé en octobre 2026) des **serveurs dédiés** qu'on rejoint **par IP depuis le jeu**, hébergeables sur un **VPS Debian** ou en **egg Pterodactyl**, avec une IP dédiée : voir la phase « Multijoueur et serveurs dédiés ». |
@@ -286,7 +286,15 @@ xvfb-run -a -s "-screen 0 960x540x24" godot --path . --audio-driver Dummy --reso
 
 ---
 
-## 5. Prochaine étape au « go » : Multijoueur, étape 5 (hébergement)
+## 5. Prochaine étape au « go » : Refonte de l'interface, étape 1 (thème et briques communes)
+
+**Décision du propriétaire (octobre 2026)** : avant de continuer le multijoueur, **refondre le
+style de toute l'interface** (inventaires, menus, écrans des blocs, affichage tête haute) pour
+quelque chose de plus moderne et sobre, propre au jeu : le style **« Ardoise »**, la police
+d'aujourd'hui, la nouvelle disposition de l'inventaire (phase « Refonte de l'interface »,
+section 6). Au prochain « go », son **étape 1** (le thème et les briques communes : panneaux,
+boutons, cases, info-bulles, jauges). Le multijoueur reprendra ensuite à son étape 5
+(hébergement).
 
 **Décision du propriétaire (octobre 2026)** : on passe tout de suite au **multijoueur et aux
 serveurs dédiés** (phase « Multijoueur et serveurs dédiés », section 6) ; la **phase 8** est en
@@ -812,7 +820,47 @@ pousse). Elle reprendra quand le propriétaire le dira.
 - Performance : maillage des chunks sur des fils parallèles, niveaux de détail du terrain,
   modèles plus légers au besoin ; menu pause défilant sur petites fenêtres.
 
-### Phase « Multijoueur et serveurs dédiés » (demandée par le propriétaire en octobre 2026 ; en cours, avant la fin de la phase 8)
+### Phase « Refonte de l'interface » (demandée par le propriétaire en octobre 2026 ; avant l'étape 5 du multijoueur)
+
+Le propriétaire trouve l'interface trop proche de Minecraft (sa disposition : armure en colonne,
+grille 3×3 et flèche, sac 9×3, barre de 9) et veut un style **plus moderne et sobre, unique au
+jeu**. Trois directions lui ont été montrées en maquettes ; il a choisi :
+- **le style « Ardoise »** : des panneaux sombres et légèrement translucides (≈ #181B20 à 90 %),
+  un filet clair d'un pixel (blanc à 8 %), des coins arrondis, des cases plates aux coins
+  arrondis sans relief, **une seule couleur d'accent, l'ambre** (≈ #E0A84E : sélection, focus,
+  action principale), le texte blanc cassé (≈ #E8E4DC) et un gris pour le secondaire
+  (≈ #9AA0A6) ; des couleurs franches seulement pour ce qui a un sens (vitalité rouge, satiété
+  ambre, souffle bleu, armure acier) ; le monde en pixel art reste la vedette ;
+- **la police** : celle d'aujourd'hui (nette et lisible), pas de police pixel ;
+- **la nouvelle disposition de l'inventaire** : le personnage à gauche avec son équipement autour,
+  le sac au centre avec des filtres (Tout, Outils, Blocs, Nourriture…) et un bouton « Ranger », la
+  fabrication à droite dans une carte compacte (la grille et les règles de craft ne changent pas),
+  une ligne de détails sur l'objet survolé en bas (nom, usure, à quoi il sert).
+
+Découpage (chaque étape montrée au propriétaire avant la suivante) :
+1. **Thème et briques communes** : UiTheme refait (panneaux, boutons, listes déroulantes, cases à
+   cocher, champs, barres de défilement, onglets, info-bulles), ItemSlot redessiné (tuiles plates
+   arrondies, anneau de sélection ambre, nombre et barre d'usure), les briques réutilisées (jauge,
+   pastille, titre de section, en-tête de carte), toutes les couleurs à un seul endroit ; chaque
+   écran actuel passe au nouveau style d'un coup (premier passage, avant les dispositions).
+2. **Affichage tête haute** : la barre d'objets (case choisie soulignée), des jauges compactes
+   au-dessus (vitalité, satiété ; armure et souffle seulement quand ils comptent), les effets en
+   pastilles, l'horloge et la saison dans une pastille, les annonces et le chat en bulles légères,
+   le viseur, la liste des joueurs, les noms au-dessus des têtes, l'écran F3.
+3. **Inventaire et créatif** : la nouvelle disposition (aperçu du personnage, filtres, « Ranger »
+   vérifié par le serveur, carte de fabrication, ligne de détails), le catalogue créatif dans le
+   même cadre (onglets en pastilles, recherche).
+4. **Écrans des blocs** : un même cadre partout (en-tête avec l'icône et le nom du bloc, la partie
+   du bloc en haut, le sac du joueur toujours au même endroit en bas) : coffres et meubles de
+   rangement, établi et cuisine, fours (alimentaire, d'usine avec ses voies et ses coffres),
+   machines, chantier naval et bateau, étagères ; barres de progression et flammes sobres.
+5. **Menus et écrans multijoueur** : le menu pause en colonne à gauche (Reprendre, Paramètres,
+   Multijoueur, Quitter), les paramètres en onglets (Affichage, Graphismes, Jeu, Commandes) au lieu
+   d'une longue liste, « Rejoindre un serveur », la connexion, le mot de passe, l'écran de perte de
+   connaissance ; le livre du joueur reste un livre (c'est un objet du monde) mais ses couleurs et
+   ses onglets s'accordent au reste.
+
+### Phase « Multijoueur et serveurs dédiés » (demandée par le propriétaire en octobre 2026 ; en cours, avant la fin de la phase 8 ; en pause avant l'étape 5 pour la refonte de l'interface)
 
 Le propriétaire veut des serveurs dédiés que les joueurs rejoignent en tapant une IP dans le jeu,
 et pouvoir les héberger lui-même sur un **VPS Debian** ou en **egg Pterodactyl**, avec une **IP
