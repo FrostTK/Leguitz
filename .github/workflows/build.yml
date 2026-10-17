@@ -173,7 +173,7 @@ jobs:
           (cd www && python3 -m http.server 8765 --bind 127.0.0.1 >/dev/null 2>&1 &)
           sleep 2
           docker run --rm --network host -v "$PWD/ptero:/mnt/server" -v "$PWD/egg-install.sh:/install.sh:ro" \
-            -e SERVER_URL=http://127.0.0.1:8765/server.tar.gz ghcr.io/pterodactyl/installers:debian bash /install.sh
+            -e SERVER_URL=http://127.0.0.1:8765/server.tar.gz "$(jq -r '.scripts.installation.container' "$egg")" bash /install.sh
           test -x ptero/LeguitzServer.x86_64
           test -f ptero/server.cfg
           sudo chown -R 988:988 ptero

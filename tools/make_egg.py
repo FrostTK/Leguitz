@@ -78,7 +78,7 @@ def main():
         "scripts": {
             "installation": {
                 "script": script,
-                "container": "ghcr.io/pterodactyl/installers:debian",
+                "container": "debian:bookworm-slim",
                 "entrypoint": "bash",
             }
         },

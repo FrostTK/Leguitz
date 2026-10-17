@@ -6,8 +6,8 @@
 # for a private repository), and unpacks it. Running it again (Reinstall)
 # updates the server; the worlds and settings stay.
 set -euo pipefail
-# Only what the installer's image lacks: it is an old Debian whose packages
-# the mirrors may no longer hold (apt then fails to update what is there).
+# Only what the installer's image lacks (the egg's, debian:bookworm-slim, has
+# none of them; Pterodactyl's own, Debian 11, finds no packages any more).
 missing=()
 for tool in curl jq tar; do
 	command -v "$tool" >/dev/null || missing+=("$tool")
