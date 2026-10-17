@@ -112,10 +112,12 @@ func _draw_meter() -> void:
 	if not aboard.powered():
 		var words := tr("HUD_BOAT_ROWING")
 		var width := font.get_string_size(words, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
-		meter.draw_string_outline(
-			font, at - Vector2(width * 0.5, 0.0), words, 0, -1, size, 3, TRACK
-		)
-		meter.draw_string(font, at - Vector2(width * 0.5, 0.0), words, 0, -1, size)
+		var line := at - Vector2(width * 0.5, 0.0)
+		var plate := Rect2(line + Vector2(-4.0, -font.get_ascent(size) - 2.0), Vector2.ZERO)
+		plate.size = Vector2(width + 8.0, font.get_height(size) + 4.0)
+		plate.position = plate.position.floor()
+		UiTheme.draw_box(meter, plate, UiTheme.PANEL, UiTheme.LINE, UiTheme.RADIUS)
+		meter.draw_string(font, line, words, 0, -1, size, UiTheme.TEXT)
 		return
 	var rect := Rect2((at - GAUGE * 0.5).floor(), GAUGE)
 	UiTheme.draw_gauge(meter, rect, aboard.burn / Boats.COAL_SECONDS, COAL)

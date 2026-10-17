@@ -90,6 +90,7 @@ const _ARROW_DOWN := (
 
 ## Boxes made for drawing (draw_box), by their look.
 static var _boxes: Dictionary[String, StyleBoxFlat] = {}
+static var _halo: GradientTexture2D
 
 
 ## A rounded box: `fill`, a `line` around it (transparent: none), its
@@ -131,6 +132,25 @@ static func draw_gauge(
 	if width >= 1.0:
 		var filled := Rect2(rect.position, Vector2(maxf(width, rect.size.y), rect.size.y))
 		draw_box(canvas, filled, fill, Color.TRANSPARENT, radius)
+
+
+## A soft round glow, white in the middle fading out (drawn modulated:
+## behind dark icons, ItemSlot.draw_stack).
+static func halo() -> Texture2D:
+	if _halo == null:
+		var fading := Gradient.new()
+		fading.offsets = PackedFloat32Array([0.0, 0.5, 1.0])
+		fading.colors = PackedColorArray(
+			[Color.WHITE, Color(1.0, 1.0, 1.0, 0.45), Color(1.0, 1.0, 1.0, 0.0)]
+		)
+		_halo = GradientTexture2D.new()
+		_halo.gradient = fading
+		_halo.fill = GradientTexture2D.FILL_RADIAL
+		_halo.fill_from = Vector2(0.5, 0.5)
+		_halo.fill_to = Vector2(1.0, 0.5)
+		_halo.width = 64
+		_halo.height = 64
+	return _halo
 
 
 ## The shade behind a screen (fills its parent).
@@ -217,7 +237,7 @@ static func _buttons(theme: Theme) -> void:
 	# The main action: amber.
 	theme.set_type_variation("AccentButton", "Button")
 	_button_look(theme, "AccentButton", ACCENT, ACCENT_HOVER, ACCENT_PRESSED, ON_ACCENT)
-	theme.set_icon("arrow", "OptionButton", _svg(_ARROW_DOWN))
+	theme.set_icon("arrow", "OptionButton", svg(_ARROW_DOWN))
 	theme.set_constant("arrow_margin", "OptionButton", 4)
 	theme.set_constant("h_separation", "Button", 4)
 
@@ -254,16 +274,16 @@ static func _toggles(theme: Theme) -> void:
 		theme.set_color("font_hover_pressed_color", type, TEXT)
 		theme.set_color("font_disabled_color", type, FAINT)
 		theme.set_constant("h_separation", type, 5)
-	theme.set_icon("checked", "CheckBox", _svg(_CHECKED))
-	theme.set_icon("unchecked", "CheckBox", _svg(_UNCHECKED))
-	theme.set_icon("checked_disabled", "CheckBox", _svg(_CHECKED, 0.45))
-	theme.set_icon("unchecked_disabled", "CheckBox", _svg(_UNCHECKED, 0.45))
-	theme.set_icon("radio_checked", "CheckBox", _svg(_RADIO_ON))
-	theme.set_icon("radio_unchecked", "CheckBox", _svg(_RADIO_OFF))
-	theme.set_icon("checked", "CheckButton", _svg(_SWITCH_ON))
-	theme.set_icon("unchecked", "CheckButton", _svg(_SWITCH_OFF))
-	theme.set_icon("checked_disabled", "CheckButton", _svg(_SWITCH_ON, 0.45))
-	theme.set_icon("unchecked_disabled", "CheckButton", _svg(_SWITCH_OFF, 0.45))
+	theme.set_icon("checked", "CheckBox", svg(_CHECKED))
+	theme.set_icon("unchecked", "CheckBox", svg(_UNCHECKED))
+	theme.set_icon("checked_disabled", "CheckBox", svg(_CHECKED, 0.45))
+	theme.set_icon("unchecked_disabled", "CheckBox", svg(_UNCHECKED, 0.45))
+	theme.set_icon("radio_checked", "CheckBox", svg(_RADIO_ON))
+	theme.set_icon("radio_unchecked", "CheckBox", svg(_RADIO_OFF))
+	theme.set_icon("checked", "CheckButton", svg(_SWITCH_ON))
+	theme.set_icon("unchecked", "CheckButton", svg(_SWITCH_OFF))
+	theme.set_icon("checked_disabled", "CheckButton", svg(_SWITCH_ON, 0.45))
+	theme.set_icon("unchecked_disabled", "CheckButton", svg(_SWITCH_OFF, 0.45))
 
 
 static func _fields(theme: Theme) -> void:
@@ -287,10 +307,10 @@ static func _lists(theme: Theme) -> void:
 	theme.set_color("font_hover_color", "PopupMenu", TEXT)
 	theme.set_color("font_disabled_color", "PopupMenu", FAINT)
 	theme.set_color("font_separator_color", "PopupMenu", MUTED)
-	theme.set_icon("radio_checked", "PopupMenu", _svg(_RADIO_ON))
-	theme.set_icon("radio_unchecked", "PopupMenu", _svg(_RADIO_OFF))
-	theme.set_icon("checked", "PopupMenu", _svg(_CHECKED))
-	theme.set_icon("unchecked", "PopupMenu", _svg(_UNCHECKED))
+	theme.set_icon("radio_checked", "PopupMenu", svg(_RADIO_ON))
+	theme.set_icon("radio_unchecked", "PopupMenu", svg(_RADIO_OFF))
+	theme.set_icon("checked", "PopupMenu", svg(_CHECKED))
+	theme.set_icon("unchecked", "PopupMenu", svg(_UNCHECKED))
 	theme.set_constant("v_separation", "PopupMenu", 4)
 	for type in ["VScrollBar", "HScrollBar"]:
 		# A scroll bar is as wide as its track's margins (not its grabber).
@@ -336,7 +356,7 @@ static func _over(under: Color, over: Color) -> Color:
 
 
 ## An icon from SVG text (`alpha`: dimmed), sharp at every UI scale.
-static func _svg(source: String, alpha := 1.0) -> Texture2D:
+static func svg(source: String, alpha := 1.0) -> Texture2D:
 	var text := source
 	if alpha < 1.0:
 		text = text.replace("<svg ", '<svg opacity="%.2f" ' % alpha)

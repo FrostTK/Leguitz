@@ -1,30 +1,32 @@
 class_name VitalsBar
 extends Control
-## The player's vitality over the hotbar's left half (a life crystal and a
-## gauge in a dark rounded track, a notch every two points; what a hurt took shows
-## pale for a moment and melts away; nearly empty, it throbs) and their
-## satiety over the right half (a loaf and an amber gauge, throbbing when
-## hungry); over it, while the eye is under water, the air left (a bubble
-## and a slim pale blue gauge, blinking when nearly out). Over the
-## vitality, while armor is worn, its protection (a shield and a slim steel
-## gauge, Armor.defense out of MAX_DEFENSE).
+## The player's vitality and satiety over the hotbar, two compact gauges
+## facing each other: on the left the vitality (a life crystal, red; what
+## a hurt took shows pale for a moment and melts away; nearly empty, it
+## throbs), on the right the satiety (a loaf, amber, emptying towards it;
+## throbbing when hungry); both in dark rounded tracks, in segments of two
+## points. Over them, slim gauges show only when they count: the armor's
+## protection over the vitality (a shield, steel, Armor.defense out of
+## MAX_DEFENSE) and the air left over the satiety while the eye is under
+## water (a bubble, blue, blinking when nearly out).
 
-## Gauge and crystal sizes (UI units).
-const HEIGHT := 15.0
-## The gauges' row (the air's is over it).
-const ROW := 6.0
+const HEIGHT := 16.0
+## The slim gauges' row and the main ones' (UI units from the top).
+const SLIM_TOP := 2.0
+const SLIM_HEIGHT := 2.0
+const BAR_TOP := 10.0
 const BAR_HEIGHT := 5.0
+## Room for an icon beside its gauge, and between the two gauges.
+const ICON_ROOM := 11.0
+const MIDDLE_GAP := 6.0
+## A notch every this many points.
+const SEGMENT := 2
 const CRYSTAL := ["#5e0e1a", "#a01e2c", "#d8404a", "#ff9a8a"]
-const FILL := ["#7c1622", "#b82634", "#e2524e"]
-const FOOD_FILL := ["#9a5512", "#d0861e", "#f2b84a"]
 const LOAF := ["#5c3412", "#a8641e", "#d89a40", "#f2c878"]
-const AIR_FILL := Color("bfe8f6")
-const AIR_DARK := Color("5aa8cc")
 const BUBBLE := ["#2a6a8c", "#8fd0ec", "#ecfbff"]
-const TRAIL := Color("f2d6a6")
 const SHIELD := ["#3a4652", "#8a9aa8", "#d4e0ea"]
-const STEEL_FILL := Color("c8d4de")
-const STEEL_DARK := Color("6e7e8e")
+## The pale trail of a hurt.
+const TRAIL := Color(UiTheme.TEXT, 0.7)
 ## The gauge's full (a whole diamond armor).
 const MAX_DEFENSE := 20
 ## How fast the pale trail of a hurt melts (points per second), after
@@ -108,87 +110,66 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	var slots := Inventory.HOTBAR * ItemSlot.SIZE + (Inventory.HOTBAR - 1)
 	var left := floorf((size.x - slots) * 0.5)
-	var width := floorf(slots * 0.5) - 2.0
-	var top := ROW + floorf((HEIGHT - ROW - BAR_HEIGHT) * 0.5)
-	# The frame and the track, from the crystal's middle on.
-	var bar := Rect2(left + 4.0, top, width - 4.0, BAR_HEIGHT)
-	_draw_health(bar)
-	_draw_crystal(Vector2(left, ROW))
-	var food_left := left + slots - width
-	_draw_food(Rect2(food_left + 4.0, top, width - 4.0, BAR_HEIGHT))
-	_draw_loaf(Vector2(food_left, ROW + 1.0))
-	if air < Vitals.MAX_AIR:
-		_draw_air(Rect2(food_left + 7.0, 1.0, width - 7.0, 3.0))
-		_draw_bubble(Vector2(food_left + 1.0, 0.0))
-	if defense > 0:
-		_draw_defense(Rect2(left + 9.0, 1.0, width - 9.0, 3.0))
-		draw_shield(self, Vector2(left, -1.0))
-
-
-## The protection worn: a slim steel gauge, a notch every two points.
-func _draw_defense(bar: Rect2) -> void:
-	_track(bar.grow(1.0))
-	var per_point := bar.size.x / MAX_DEFENSE
-	var filled := roundf(per_point * mini(defense, MAX_DEFENSE))
-	draw_rect(Rect2(bar.position, Vector2(filled, 2.0)), STEEL_FILL)
-	draw_rect(Rect2(bar.position + Vector2(0.0, 2.0), Vector2(filled, 1.0)), STEEL_DARK)
-	for point in range(2, MAX_DEFENSE, 2):
-		var x := bar.position.x + roundf(per_point * point)
-		draw_rect(Rect2(x, bar.position.y, 1.0, 3.0), Color(0, 0, 0, 0.25))
-
-
-func _draw_health(bar: Rect2) -> void:
-	_track(bar)
-	var inner := bar.grow(-1.0)
-	var per_point := inner.size.x / Vitals.MAX_HEALTH
-	var filled := roundf(per_point * health)
-	var trail := roundf(per_point * _trail)
-	if trail > filled:
-		draw_rect(Rect2(inner.position.x + filled, inner.position.y, trail - filled, 3.0), TRAIL)
+	var right := left + slots
+	var half := floorf((slots - MIDDLE_GAP) * 0.5)
+	var length := half - ICON_ROOM
+	var life := Rect2(left + ICON_ROOM, BAR_TOP, length, BAR_HEIGHT)
+	var satiety := Rect2(right - half, BAR_TOP, length, BAR_HEIGHT)
 	var throb := 1.0
 	if health <= LOW and health > 0:
 		throb = 0.75 + 0.25 * sin(_time * 7.0)
-	for row in 3:
-		var color := Color(FILL[row]) * throb
-		color.a = 1.0
-		draw_rect(Rect2(inner.position.x, inner.position.y + row, filled, 1.0), color)
-	# A notch every two points.
-	for point in range(2, Vitals.MAX_HEALTH, 2):
-		var x := inner.position.x + roundf(per_point * point)
-		draw_rect(Rect2(x, inner.position.y, 1.0, 3.0), Color(0, 0, 0, 0.25))
+	_gauge(life, health, _trail, Vitals.MAX_HEALTH, UiTheme.LIFE * throb, false)
+	_draw_crystal(Vector2(left, BAR_TOP - 2.0))
+	throb = 0.75 + 0.25 * sin(_time * 5.0) if food < Vitals.HUNGRY else 1.0
+	_gauge(satiety, food, food, Vitals.MAX_FOOD, UiTheme.FOOD * throb, true)
+	_draw_loaf(Vector2(right - 9.0, BAR_TOP - 0.5))
+	if defense > 0:
+		var worn := mini(defense, MAX_DEFENSE)
+		_slim(Rect2(life.position.x, SLIM_TOP, length, SLIM_HEIGHT), worn, MAX_DEFENSE, false)
+		draw_shield(self, Vector2(left, 0.0))
+	if air < Vitals.MAX_AIR:
+		var out := air < Vitals.MAX_AIR * 0.25 and fmod(_time, 0.5) < 0.25
+		var breath := Rect2(satiety.position.x, SLIM_TOP, length, SLIM_HEIGHT)
+		_slim(breath, 0.0 if out else air, Vitals.MAX_AIR, true)
+		_draw_bubble(Vector2(right - 6.0, 0.5))
 
 
-## The satiety gauge: amber, a notch every two points, throbbing hungry.
-func _draw_food(bar: Rect2) -> void:
-	_track(bar)
+## A main gauge: its track, `points` of `most` filled in `color` (from the
+## right when `mirrored`), what a hurt took (`trail`) pale, a lighter top
+## row, a notch every SEGMENT points.
+func _gauge(
+	bar: Rect2, points: float, trail: float, most: float, color: Color, mirrored: bool
+) -> void:
+	color.a = 1.0
+	UiTheme.draw_box(self, bar, UiTheme.TRACK, UiTheme.LINE_STRONG, 2)
 	var inner := bar.grow(-1.0)
-	var per_point := inner.size.x / Vitals.MAX_FOOD
-	var filled := roundf(per_point * food)
-	var throb := 1.0
-	if food < Vitals.HUNGRY:
-		throb = 0.75 + 0.25 * sin(_time * 5.0)
-	for row in 3:
-		var color := Color(FOOD_FILL[row]) * throb
-		color.a = 1.0
-		draw_rect(Rect2(inner.position.x, inner.position.y + row, filled, 1.0), color)
-	for point in range(2, Vitals.MAX_FOOD, 2):
-		var x := inner.position.x + roundf(per_point * point)
-		draw_rect(Rect2(x, inner.position.y, 1.0, 3.0), Color(0, 0, 0, 0.25))
+	var trail_rect := _part(inner, trail / most, mirrored)
+	var filled := _part(inner, points / most, mirrored)
+	if trail_rect.size.x > filled.size.x:
+		UiTheme.draw_box(self, trail_rect, TRAIL, Color.TRANSPARENT, 1)
+	if filled.size.x >= 1.0:
+		UiTheme.draw_box(self, filled, color, Color.TRANSPARENT, 1)
+		var top := Rect2(filled.position + Vector2(1.0, 0.0), Vector2(filled.size.x - 2.0, 1.0))
+		draw_rect(top, color.lightened(0.3))
+	for point in range(SEGMENT, int(most), SEGMENT):
+		var x := inner.position.x + roundf(inner.size.x * point / most)
+		draw_rect(Rect2(x, inner.position.y, 1.0, inner.size.y), Color(UiTheme.TRACK, 0.85))
 
 
-## The air left: a slim pale blue gauge, blinking when nearly out.
-func _draw_air(bar: Rect2) -> void:
-	_track(bar.grow(1.0))
-	var filled := roundf(bar.size.x * air / Vitals.MAX_AIR)
-	if air < Vitals.MAX_AIR * 0.25 and fmod(_time, 0.5) < 0.25:
-		return
-	draw_rect(Rect2(bar.position, Vector2(filled, 2.0)), AIR_FILL)
-	draw_rect(Rect2(bar.position + Vector2(0.0, 2.0), Vector2(filled, 1.0)), AIR_DARK)
+## A slim gauge: armor (steel) or air (blue, `mirrored`).
+func _slim(bar: Rect2, points: float, most: float, mirrored: bool) -> void:
+	UiTheme.draw_box(self, bar.grow(1.0), UiTheme.TRACK, UiTheme.LINE_STRONG, 2)
+	var filled := _part(bar, points / most, mirrored)
+	if filled.size.x >= 1.0:
+		var color := UiTheme.AIR if mirrored else UiTheme.STEEL
+		UiTheme.draw_box(self, filled, color, Color.TRANSPARENT, 1)
 
 
-## A gauge's dark rounded track.
-func _track(rect: Rect2) -> void:
-	UiTheme.draw_box(self, rect, UiTheme.TRACK, UiTheme.LINE_STRONG, 2)
+## The share `fraction` of `rect`, from its left (its right: `mirrored`).
+static func _part(rect: Rect2, fraction: float, mirrored: bool) -> Rect2:
+	var width := roundf(rect.size.x * clampf(fraction, 0.0, 1.0))
+	var x := rect.end.x - width if mirrored else rect.position.x
+	return Rect2(x, rect.position.y, width, rect.size.y)
 
 
 ## A bubble, lit from the top left.

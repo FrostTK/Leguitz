@@ -160,7 +160,8 @@ Godot **4.7.2** (GDScript), rendu Forward+. 434 tests unitaires, lint propre.
 | M.2 Rejoindre et voir les autres | On **voit les autres joueurs** : leur corps en voxels, **leur nom au-dessus de la tête** (il s'efface au loin), ce qu'ils **tiennent en main** et l'**armure** qu'ils portent, leurs **gestes** (marcher, sauter, nager, piocher, frapper, manger, bander l'arc, lancer la ligne, ramer, s'asseoir, dormir ou être évanoui), leur **lanterne** la nuit ; leurs **mouvements sont lissés** (glissés d'une position à l'autre même quand le réseau les livre par paquets ; un saut de téléportation n'est pas glissé) et ils **apparaissent et disparaissent en fondu**. **P maintenu** : la **liste des joueurs** (le serveur, les noms, les admins, le ping de chacun). Le menu pause a une rubrique **Multijoueur** : « Rejoindre un serveur… » ouvre un **écran pour rejoindre** (adresse IP ou nom de domaine, port, pseudo, mot de passe ; les **serveurs rejoints récemment** se remplissent d'un clic, × les oublie ; jamais le mot de passe gardé) ; sur un serveur, « Quitter le serveur » ramène au monde solo, **sans relancer le jeu**. Connexion perdue ou refusée : **Réessayer**, **Autre serveur…**, **Jouer en solo**, Quitter. Un joueur dont le jeu s'est fermé brutalement **revient tout de suite** depuis la même machine (son ancienne connexion lui cède la place) ; un joueur silencieux est lâché en 10 s. Sur un serveur, seuls les admins voient les réglages du monde dans le menu pause | `20e73b7` |
 | M.3 Un serveur qui ne fait confiance à personne | Un serveur dédié **vérifie ce que disent les joueurs** (une partie solo fait confiance à son jeu). **Déplacements** : pas plus vite que la course (avec un plat SWIFT, 25 % de marge, une seconde d'élan au plus), pas à travers les murs ni les planchers, pas plus haut qu'un saut, pas en suspens en l'air ; sinon le joueur est **remis en place** (les déplacements envoyés avant la correction sont ignorés, et une correction ne redonne pas d'élan). Les **chutes** sont mesurées par le serveur (un jeu qui tait sa chute se blesse quand même). **Minage** : le jeu dit quand il commence un bloc, le serveur refuse qu'il casse plus vite que l'outil le permet. **Sièges et lits** : un joueur par siège et par lit (« Quelqu'un est déjà assis là »), les autres voient le serveur dire qui est assis ou couché. **Messages** : les messages incohérents sont ignorés (dont une case lointaine qui ferait générer des chunks), le chat trop rapide est freiné (« Tu parles trop vite »), les rafales sont coupées et un jeu qui inonde le serveur est **exclu** (« Exclu du serveur »). La **console du serveur** signale chaque triche (avec combien de fois). Essayé avec cinq joueurs honnêtes (course, sauts, nage, minage, forêts et rivières) sans fausse alerte | `9f4c03b` |
 | M.4 Comptes et administration | Sur un serveur dédié, **chaque pseudo appartient à son premier joueur** : il choisit un **mot de passe** la première fois (le jeu n'envoie qu'une empreinte, jamais le mot de passe ; le serveur garde une empreinte salée), puis seul ce mot de passe joue sous ce pseudo ; 5 essais faux en 10 minutes verrouillent le pseudo 10 minutes. L'écran « Rejoindre » a « Ton mot de passe » et « **Se souvenir de moi** » ; le menu pause, « **Changer mon mot de passe** ». **Rôles** : visiteur (se promène, ouvre portes et barrières, s'assoit, ne change rien d'autre), joueur, modérateur (expulse, voyage), admin (tout) ; la liste des joueurs (P) les montre. Commandes : **`/expulse`**, **`/bannis`** (un temps ou pour toujours, une raison, l'adresse IP si demandé ; `/bannis liste`), **`/gracie`**, **`/listeblanche`**, **`/role`**, **`/compte oublie`**, **`/sauvegarde`** ; un refus ou une exclusion dit pourquoi et pour combien de temps. **Sauvegardes de secours** : un zip du monde au démarrage, toutes les 6 heures et à la demande, les 10 plus récentes gardées ; la console sait les lister (`backups`) et en **remettre une** (`restore 2` : les joueurs partent, le monde actuel est d'abord sauvegardé, le serveur s'arrête). Nouveaux réglages de `server.cfg` : `accounts`, `default_role`, `backup_hours`, `backup_on_start`, `backups_kept` | `5d66e0b` |
-| I.1 Thème « Ardoise » | Toute l'interface passe au **nouveau style**, choisi par le propriétaire parmi trois maquettes : des **panneaux sombres** légèrement translucides aux **coins arrondis**, un filet clair, des **cases plates arrondies** (plus claires sous la souris, un **anneau ambre** autour de celle qu'on a en main), une seule couleur d'accent, l'**ambre**, pour l'action principale (Reprendre, Rejoindre, Se relever…), le texte blanc cassé et un gris pour le secondaire. Les **listes déroulantes**, **cases à cocher** et interrupteurs sont dessinés nets à toutes les tailles d'interface ; les titres de section du menu pause en petites capitales grises ; des **barres de défilement** fines. La **barre d'objets** est posée sur un panneau arrondi, les **jauges** de vitalité et de satiété dans des rails arrondis (le cristal et le pain restent), les **effets** en pastilles, l'**horloge** dans une pastille ; le **chat**, le catalogue créatif, l'écran de perte de connaissance, les noms au-dessus des têtes, la liste des joueurs, les fours (voies et flamme), l'arc et le bateau (jauges) suivent. Le **livre du joueur** garde son papier (c'est un objet du monde). Les dispositions ne changent pas encore (étapes 3 à 5) | « Ardoise theme » |
+| I.1 Thème « Ardoise » | Toute l'interface passe au **nouveau style**, choisi par le propriétaire parmi trois maquettes : des **panneaux sombres** légèrement translucides aux **coins arrondis**, un filet clair, des **cases plates arrondies** (plus claires sous la souris, un **anneau ambre** autour de celle qu'on a en main), une seule couleur d'accent, l'**ambre**, pour l'action principale (Reprendre, Rejoindre, Se relever…), le texte blanc cassé et un gris pour le secondaire. Les **listes déroulantes**, **cases à cocher** et interrupteurs sont dessinés nets à toutes les tailles d'interface ; les titres de section du menu pause en petites capitales grises ; des **barres de défilement** fines. La **barre d'objets** est posée sur un panneau arrondi, les **jauges** de vitalité et de satiété dans des rails arrondis (le cristal et le pain restent), les **effets** en pastilles, l'**horloge** dans une pastille ; le **chat**, le catalogue créatif, l'écran de perte de connaissance, les noms au-dessus des têtes, la liste des joueurs, les fours (voies et flamme), l'arc et le bateau (jauges) suivent. Le **livre du joueur** garde son papier (c'est un objet du monde). Les dispositions ne changent pas encore (étapes 3 à 5) | `1cc2dd2` |
+| I.2 Affichage tête haute | La **barre d'objets** : un **anneau ambre glisse** d'une case à l'autre quand on change d'objet ; le nom de l'objet en main et les **annonces** dans une petite pastille. Les **jauges** se font face au-dessus : la vitalité à gauche (le cristal, rouge, la trace pâle d'une blessure), la satiété à droite (le pain, ambre, qui se vide vers lui), en **segments de deux points** ; l'armure et le souffle en fines jauges au-dessus, seulement quand ils comptent. Les **effets** en pastilles rondes, le temps restant en arc autour. L'**horloge** : un soleil ou une lune, « Printemps 3 » en gris et l'heure. Le **chat** en **bulles légères** à la largeur de chaque ligne. Le **viseur** : un point et quatre petits traits, cernés de sombre. La **liste des joueurs** (P) : une carte, le rôle sur une petite étiquette colorée, le ping en barres de signal. L'**écran F3** dans une pastille sombre, ses parties séparées par des points gris. Demandé par le propriétaire : un **léger halo** derrière les icônes très sombres (charbon, pierre, ardoise). Les icônes dont on a besoin (barre d'objets, écran ouvert) sont calculées **en premier** au démarrage | « HUD » |
 
 **Pas encore fait** (prévu) : nouveaux matériaux et décoration (phase 8),
 structures, menus de départ, sons, mode Arcade (en attente), mobile.
@@ -287,16 +288,19 @@ xvfb-run -a -s "-screen 0 960x540x24" godot --path . --audio-driver Dummy --reso
 
 ---
 
-## 5. Prochaine étape au « go » : Refonte de l'interface, étape 2 (affichage tête haute)
+## 5. Prochaine étape au « go » : Refonte de l'interface, étape 3 (inventaire et créatif)
 
 **Décision du propriétaire (octobre 2026)** : avant de continuer le multijoueur, **refondre le
 style de toute l'interface** (inventaires, menus, écrans des blocs, affichage tête haute) pour
 quelque chose de plus moderne et sobre, propre au jeu : le style **« Ardoise »**, la police
 d'aujourd'hui, la nouvelle disposition de l'inventaire (phase « Refonte de l'interface »,
-section 6). Son **étape 1** (le thème et les briques communes ; chaque écran passé au nouveau
-style) est faite ; au prochain « go », l'**étape 2** (l'affichage tête haute : la barre d'objets,
-des jauges compactes, les effets, l'horloge, les annonces, le chat, le viseur, la liste des
-joueurs, les noms, l'écran F3). Le multijoueur reprendra ensuite à son étape 5 (hébergement).
+section 6). Ses **étapes 1** (le thème et les briques communes ; chaque écran passé au nouveau
+style) et **2** (l'affichage tête haute) sont faites ; au prochain « go », l'**étape 3** (la
+nouvelle disposition de l'inventaire : le personnage à gauche, le sac au centre avec ses filtres
+et « Ranger », la fabrication dans une carte, la ligne de détails ; le catalogue créatif dans le
+même cadre), avec la **petite animation à l'ouverture des écrans** que le propriétaire a
+retenue (elle servira ensuite aux écrans des étapes 4 et 5). Le multijoueur reprendra ensuite à
+son étape 5 (hébergement).
 
 **Décision du propriétaire (octobre 2026)** : on passe tout de suite au **multijoueur et aux
 serveurs dédiés** (phase « Multijoueur et serveurs dédiés », section 6) ; la **phase 8** est en
@@ -856,18 +860,35 @@ Découpage (chaque étape montrée au propriétaire avant la suivante) :
    en pastilles arrondies, horloge et « Sauvegardé » en pastilles, chat (fond en panneau, champ
    souligné d'ambre, couleurs du thème), noms au-dessus des têtes sur des plaques arrondies,
    infobulle du « ! » d'Extrême sombre bordée de rouge. Le livre garde son papier et son bois.
-   **Pas fait (à proposer)** : les icônes très sombres (charbon, pierre, ardoise) restent peu
-   contrastées sur les cases (un léger halo derrière les icônes sombres ?) ; une petite animation
-   à l'ouverture des écrans (fondu, glissement) ; des sons d'interface (clic, survol) avec la
-   phase 9 ; un thème clair au choix pour qui le préfère ; des tailles de texte au choix
-   (accessibilité).
-2. **Affichage tête haute** : la barre d'objets (case choisie soulignée), des jauges compactes
+   **Pas fait (à proposer)** : des sons d'interface (clic, survol) avec la phase 9 ; un thème
+   clair au choix pour qui le préfère ; des tailles de texte au choix (accessibilité). **Retenu
+   par le propriétaire** : un léger halo derrière les icônes très sombres (fait à l'étape 2) et
+   une petite animation à l'ouverture des écrans (à l'étape 3).
+2. ✅ **Affichage tête haute** : la barre d'objets (case choisie soulignée), des jauges compactes
    au-dessus (vitalité, satiété ; armure et souffle seulement quand ils comptent), les effets en
    pastilles, l'horloge et la saison dans une pastille, les annonces et le chat en bulles légères,
    le viseur, la liste des joueurs, les noms au-dessus des têtes, l'écran F3.
+   **Fait** : la case en main entourée d'un anneau ambre qui **glisse** d'une case à l'autre
+   (plutôt qu'un soulignement : plus lisible) ; le nom de l'objet et les annonces dans une
+   pastille ; les jauges de vitalité et de satiété **face à face** (la satiété se vide vers son
+   pain, à droite), en segments de deux points, l'armure et le souffle en fines jauges au-dessus
+   seulement quand ils comptent ; les effets en pastilles rondes avec le temps en arc ; l'horloge
+   avec un soleil ou une lune et « Printemps 3 » en gris (comme la maquette) ; le chat en bulles
+   à la largeur de chaque ligne ; un viseur à quatre traits et un point ; la liste des joueurs en
+   carte (étiquettes de rôle, barres de signal) ; l'écran F3 en pastille ; le bandeau de
+   spectateur et « à la rame » en pastilles. Le **halo** derrière les icônes très sombres
+   (retenu par le propriétaire) ; les icônes nécessaires calculées en premier (avant, celles de
+   la barre d'objets pouvaient manquer une demi-minute au démarrage). Le lanceur de tests compte
+   un fichier qui ne compile pas comme un échec.
+   **Pas fait (à proposer)** : les chiffres 1 à 9 discrets sur les cases de la barre ; une
+   petite secousse des jauges quand on est blessé ou qu'on a faim ; l'horloge qui montre aussi
+   le temps qu'il fait (pluie, neige) ; une boussole ou les coordonnées en option ; les noms
+   au-dessus des têtes colorés selon le rôle.
 3. **Inventaire et créatif** : la nouvelle disposition (aperçu du personnage, filtres, « Ranger »
    vérifié par le serveur, carte de fabrication, ligne de détails), le catalogue créatif dans le
-   même cadre (onglets en pastilles, recherche).
+   même cadre (onglets en pastilles, recherche). Avec la **petite animation à l'ouverture des
+   écrans** retenue par le propriétaire (un fondu et un léger glissement, commune à tous les
+   écrans : ceux des étapes 4 et 5 la reprennent).
 4. **Écrans des blocs** : un même cadre partout (en-tête avec l'icône et le nom du bloc, la partie
    du bloc en haut, le sac du joueur toujours au même endroit en bas) : coffres et meubles de
    rangement, établi et cuisine, fours (alimentaire, d'usine avec ses voies et ses coffres),

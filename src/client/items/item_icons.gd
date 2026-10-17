@@ -3,9 +3,14 @@ extends Node
 ## Renders the icon of every item off screen, one per frame, into the
 ## ItemLibrary: its 3D model seen from above at an angle (flat items, like
 ## tools, turned to face it), lit from the upper left, on a transparent
-## background.
+## background. The icons already asked for (ItemLibrary.take_wanted: the
+## hotbar's, an open screen's) come first; a dark one is marked so
+## (DARK_LUMA).
 
 const SIZE := 32
+## An icon whose pixels are this dark on average (luma, 0..1) gets a halo
+## on slots (ItemSlot.draw_stack): coal, stone, deepslate...
+const DARK_LUMA := 0.3
 ## The view: turned and tilted like the icons of block games.
 const VIEW_YAW := deg_to_rad(45.0)
 const VIEW_PITCH := deg_to_rad(-32.0)
@@ -48,7 +53,11 @@ func _ready() -> void:
 
 func _render_queue() -> void:
 	while not _queue.is_empty():
-		var item: int = _queue.pop_front()
+		var item: int = library.take_wanted()
+		if item != Items.Id.NONE and _queue.has(item):
+			_queue.erase(item)
+		else:
+			item = _queue.pop_front()
 		_model.mesh = library.mesh(item)
 		var flat := ItemModels.is_flat(item)
 		_model.rotation.y = VIEW_YAW if flat else 0.0
@@ -64,7 +73,7 @@ func _render_queue() -> void:
 		_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
 		await RenderingServer.frame_post_draw
 		var image := _viewport.get_texture().get_image()
-		library.set_icon(item, ImageTexture.create_from_image(image))
+		library.set_icon(item, ImageTexture.create_from_image(image), luma(image) < DARK_LUMA)
 	_viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
 
 
@@ -82,3 +91,17 @@ func _outline_size(box: AABB, turn: Basis) -> float:
 		high = high.max(seen)
 	var size := high - low
 	return maxf(size.x, size.y)
+
+
+## How light an icon's drawn pixels are on average (luma, 0..1; every
+## other pixel is enough).
+static func luma(image: Image) -> float:
+	var total := 0.0
+	var seen := 0
+	for y in range(0, image.get_height(), 2):
+		for x in range(0, image.get_width(), 2):
+			var pixel := image.get_pixel(x, y)
+			if pixel.a > 0.5:
+				total += pixel.r * 0.2126 + pixel.g * 0.7152 + pixel.b * 0.0722
+				seen += 1
+	return total / seen if seen > 0 else 1.0

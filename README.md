@@ -42,6 +42,7 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Saisons (réglage du monde) : cultures de saison et serres, arbres qui roussissent puis se dénudent, neige l'hiver, le calendrier à l'horloge, /saison | ✅ |
 | Verre et vitres refaits : verre clair continu, verre ancien, verre au plomb, vitres fines qui se raccordent, 28 fenêtres (4 dessins, 6 bois et fer forgé), teinte par case au pot de peinture (le cadre à part), lavée à l'arrosoir ; le soleil à travers le verre teinté colore le sol ; palette de 16 couleurs douces | ✅ |
 | Rideaux qui se tirent et se nouent (tirés, la pièce devient sombre), longs jusqu'au sol, tringle en bois ou en fer, teints au pot de peinture ; tapis qui se raccordent en un grand tapis, teints, sous les meubles | ✅ |
+| Affichage tête haute refait : anneau ambre qui glisse sur la barre d'objets, jauges de vitalité et de satiété face à face en segments, effets en pastilles rondes, horloge avec soleil ou lune, chat en bulles, viseur fin, liste des joueurs en carte, écran F3 sobre, halo derrière les icônes sombres | ✅ |
 | Interface au style « Ardoise » : panneaux sombres aux coins arrondis, cases plates, une seule couleur d'accent (l'ambre), listes, cases à cocher et barres de défilement nettes, barre d'objets et jauges sobres (le livre du joueur garde son papier) | ✅ |
 | Multijoueur, étape 4 : comptes (un mot de passe par pseudo, « Se souvenir de moi », changer son mot de passe), rôles (visiteur, joueur, modérateur, admin), `/expulse`, `/bannis`, `/gracie`, liste blanche, sauvegardes de secours automatiques et restauration | ✅ |
 | Multijoueur, étape 3 : un serveur dédié qui vérifie tout (déplacements, chutes, durée du minage, sièges et lits, messages incohérents ou en rafale), remet les tricheurs en place, exclut les jeux qui l'inondent et le signale sur sa console | ✅ |
@@ -53,6 +54,8 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Nouveaux matériaux : pavés, pierre de taille, pierres moussues, plâtre qui se peint, colombages, torchis, parquets à lames et à chevrons, carrelage en damier, tomettes, terre cuite, ardoise polie, briques de grès ; leurs escaliers et dalles, quarts de bloc, murets, piliers, poutres | ✅ |
 | Toitures en tuiles, ardoises, bardeaux et chaume : pentes qui font leurs coins, faîtages en croupe et en croix, pentes douces, lucarnes, cheminée qui fume, neige en hiver | ✅ |
 | Portes de chaque bois, vitrée et en fer forgé (portes doubles), trappes, échelles où l'on grimpe, volets peints qui se ferment, barreaux et garde-corps qui se raccordent | ✅ |
+
+![Leguitz : l'affichage tête haute avant et après : la barre d'objets, les jauges face à face, les effets, l'horloge, le chat en bulles ; la liste des joueurs avant et après](docs/screenshots/interface-hud.png)
 
 ![Leguitz : l'interface au style « Ardoise » : l'inventaire, le four d'usine avec ses coffres, le menu pause et l'écran « Rejoindre un serveur »](docs/screenshots/interface-ardoise.png)
 
@@ -401,7 +404,7 @@ Pour le multijoueur, il suffira de brancher un transport réseau.
 10. Mobile (iOS, Android)
 
 En cours : la refonte de l'interface (style « Ardoise » : panneaux sombres et sobres, accent
-ambre ; le thème est fait ; à venir : l'affichage tête haute, la nouvelle disposition de
+ambre ; le thème et l'affichage tête haute sont faits ; à venir : la nouvelle disposition de
 l'inventaire, les écrans des blocs, les menus), avant de reprendre le multijoueur.
 
 En pause : le multijoueur et les serveurs dédiés, qu'on rejoint par IP depuis le jeu,

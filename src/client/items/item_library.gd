@@ -18,6 +18,11 @@ var _held: Dictionary[int, Mesh] = {}
 ## Per item: the factor bringing its model to a 1-unit box.
 var _fits: Dictionary[int, float] = {}
 var _icons: Dictionary[int, Texture2D] = {}
+## The icons too dark to stand out on a slot (ItemSlot puts a halo behind
+## them), and the icons asked for before they were rendered (ItemIcons
+## renders them first).
+var _dark: Dictionary[int, bool] = {}
+var _wanted: Dictionary[int, bool] = {}
 
 
 func _init() -> void:
@@ -104,13 +109,35 @@ static func in_hand(
 	return Transform3D(basis, fist - basis * grip)
 
 
-## The item's icon (null until ItemIcons rendered it).
+## The item's icon (null until ItemIcons rendered it: then it is wanted
+## first).
 func icon(item: int) -> Texture2D:
-	return _icons.get(item)
+	var made: Texture2D = _icons.get(item)
+	if made == null and item > 0:
+		_wanted[item] = true
+	return made
 
 
-func set_icon(item: int, texture: Texture2D) -> void:
+## An icon rendered; `dark`: too dark to stand out on a slot.
+func set_icon(item: int, texture: Texture2D, dark := false) -> void:
 	_icons[item] = texture
+	_wanted.erase(item)
+	if dark:
+		_dark[item] = true
+
+
+func is_dark(item: int) -> bool:
+	return _dark.has(item)
+
+
+## An icon asked for and not rendered yet, taken off the list (Items.Id
+## .NONE: none; asked again while still missing, it comes back).
+func take_wanted() -> int:
+	if _wanted.is_empty():
+		return Items.Id.NONE
+	var item: int = _wanted.keys()[0]
+	_wanted.erase(item)
+	return item
 
 
 func _build(item: int) -> void:

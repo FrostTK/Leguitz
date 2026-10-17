@@ -7,10 +7,11 @@ extends Control
 ## completes a command and its words (ChatCompletion: what it could be
 ## shows under the lines; Tab again goes through them, Shift back). The
 ## lines the server sends (Msg.CHAT_LINE: what players said, the answers
-## to commands, in the reader's language) fade LINE_SECONDS after they
-## came; while typing, the last TYPING_LINES show on a dark wooden board
-## and the wheel scrolls back through them. The world takes no key nor
-## click while the player types (GameClient.screen_open).
+## to commands, in the reader's language) float over the world in light
+## bubbles and fade LINE_SECONDS after they came; while typing, the last
+## TYPING_LINES show on a dark panel and the wheel scrolls back through
+## them. The world takes no key nor click while the player types
+## (GameClient.screen_open).
 
 ## How long a line stays, then fades (seconds); how many show.
 const LINE_SECONDS := 10.0
@@ -27,6 +28,11 @@ const BOTTOM := 52.0
 const INPUT_HEIGHT := 14.0
 ## Kept free at the top of the screen (the board stops under it).
 const TOP_ROOM := 28.0
+## Between two lines, and how far a line's bubble reaches around its text
+## and how dark it is.
+const LINE_GAP := 3.0
+const BUBBLE_REACH := Vector2(4.0, 1.0)
+const BUBBLE_ALPHA := 0.62
 ## The colors of the lines (UiTheme's: the accent for names, text, success,
 ## danger; a soft violet for whispers).
 const NAME_COLOR := "e0a84e"
@@ -65,6 +71,8 @@ var _option_start := 0
 var _option_at := -1
 var _completed := ""
 var _hint := Label.new()
+## The bubbles' box, its color set before each is drawn.
+var _bubble := UiTheme.box(UiTheme.PANEL, Color.TRANSPARENT, UiTheme.SMALL_RADIUS, 0.0)
 
 
 func _ready() -> void:
@@ -76,7 +84,8 @@ func _ready() -> void:
 	_board.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	_board.add_child(_log)
 	_log.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_log.add_theme_constant_override("separation", 1)
+	_log.add_theme_constant_override("separation", int(LINE_GAP))
+	_log.draw.connect(_draw_bubbles)
 	add_child(_board)
 	for i in TYPING_LINES:
 		var label := RichTextLabel.new()
@@ -85,9 +94,6 @@ func _ready() -> void:
 		label.scroll_active = false
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.85))
-		label.add_theme_constant_override("shadow_offset_x", 1)
-		label.add_theme_constant_override("shadow_offset_y", 1)
 		_log.add_child(label)
 		_labels.append(label)
 		_shown.append(-1)
@@ -103,7 +109,6 @@ func _ready() -> void:
 	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_hint.add_theme_color_override("font_color", HINT_COLOR)
-	_hint.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.85))
 	_hint.visible = false
 	_log.add_child(_hint)
 	_entry.focus_exited.connect(_keep_focus)
@@ -165,7 +170,7 @@ func _process(delta: float) -> void:
 		line["age"] += delta
 	var room := size.y - BOTTOM - INPUT_HEIGHT - TOP_ROOM
 	if _hint.visible:
-		room -= _hint.get_combined_minimum_size().y + 1.0
+		room -= _hint.get_combined_minimum_size().y + LINE_GAP
 	var full := false
 	for i in range(_labels.size() - 1, -1, -1):
 		var index := _shown[i]
@@ -175,11 +180,12 @@ func _process(delta: float) -> void:
 		if not typing:
 			var left: float = LINE_SECONDS + FADE_SECONDS - _lines[index]["age"]
 			faded = clampf(left / FADE_SECONDS, 0.0, 1.0)
-		var height := _labels[i].get_combined_minimum_size().y + 1.0
+		var height := _labels[i].get_combined_minimum_size().y + LINE_GAP
 		full = full or height > room
 		room -= height
 		_labels[i].modulate.a = faded
 		_labels[i].visible = faded > 0.0 and not full
+	_log.queue_redraw()
 
 
 ## While typing: Esc closes, Up and Down go through what was sent, the
@@ -353,6 +359,20 @@ func _layout() -> void:
 	_entry.offset_right = MARGIN + width
 	_entry.offset_bottom = -BOTTOM
 	_entry.offset_top = -BOTTOM - INPUT_HEIGHT
+
+
+## Over the world, each line on a light bubble as wide as its text, fading
+## with it (drawn by the log, under the lines).
+func _draw_bubbles() -> void:
+	if typing:
+		return
+	for label in _labels:
+		if not label.visible or label.modulate.a <= 0.0:
+			continue
+		var text := Rect2(label.position, Vector2(label.get_content_width(), label.size.y))
+		_bubble.bg_color = Color(UiTheme.PANEL, BUBBLE_ALPHA * label.modulate.a)
+		var reach := BUBBLE_REACH
+		_log.draw_style_box(_bubble, text.grow_individual(reach.x, reach.y, reach.x, reach.y))
 
 
 ## The board shows (a dark panel behind the lines) while typing; otherwise

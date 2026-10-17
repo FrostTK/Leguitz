@@ -220,7 +220,7 @@ func _ready() -> void:
 
 	_ui_root.theme = UiTheme.build()
 	_loading_label.text = "LOADING_WORLD"
-	_loading_label.add_theme_color_override("font_color", Color.WHITE)
+	_loading_label.theme_type_variation = "TitleLabel"
 	_loading_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	_ui_root.add_child(_loading_label)
 	_ui_root.add_child(crosshair)

@@ -11,6 +11,10 @@ signal clicked(slot: int, right: bool, shift: bool)
 
 const SIZE := 20.0
 const ICON := 16.0
+## A dark icon's halo (ItemLibrary.is_dark: coal, stone...): its size and
+## how bright (asked by the owner: they hardly showed on the slots).
+const HALO := 22.0
+const HALO_COLOR := Color(1.0, 1.0, 1.0, 0.38)
 ## The name of the item under the mouse (draw_name): the room around the
 ## text, and where it sits from the mouse (above on the right).
 const NAME_PADDING := Vector2(4.0, 2.0)
@@ -131,13 +135,17 @@ static func draw_label(canvas: Control, text: String, at: Vector2) -> void:
 
 
 ## Draws a stack (icon and count, a worn tool's bar, the water left in a
-## watering can) centered at `center` on any control.
+## watering can) centered at `center` on any control; a soft light halo
+## behind a dark icon.
 static func draw_stack(
 	canvas: Control, items: ItemLibrary, item: int, count: int, center: Vector2, wear := 0
 ) -> void:
 	if item == Items.Id.NONE or items == null:
 		return
 	var icon := items.icon(item)
+	if icon != null and items.is_dark(item):
+		var halo := Rect2(center - Vector2.ONE * HALO * 0.5, Vector2.ONE * HALO)
+		canvas.draw_texture_rect(UiTheme.halo(), halo, false, HALO_COLOR)
 	if icon != null:
 		canvas.draw_texture_rect(
 			icon, Rect2(center - Vector2.ONE * ICON * 0.5, Vector2.ONE * ICON), false

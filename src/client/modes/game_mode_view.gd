@@ -21,22 +21,20 @@ var mode := WorldSettings.GameMode.SURVIVAL
 var spectator := false
 var watching := false
 ## Says the player only watches (added to the UI by GameClient).
-var banner := Label.new()
+var banner := PanelContainer.new()
 
 ## The material whose tools the debug key gives next (Items.Tier).
 var _tools_tier := 0
 
 
 func _ready() -> void:
-	banner.text = "SPECTATOR_BANNER"
-	banner.add_theme_color_override("font_color", Color.WHITE)
-	banner.add_theme_color_override("font_outline_color", Color(0.1, 0.05, 0.02))
-	banner.add_theme_constant_override("font_outline_size", 2)
-	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	banner.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	banner.theme_type_variation = "HudPanel"
+	banner.add_child(UiTheme.label("SPECTATOR_BANNER"))
+	banner.set_anchors_and_offsets_preset(
+		Control.PRESET_CENTER_BOTTOM, Control.PRESET_MODE_MINSIZE, BANNER_MARGIN
+	)
+	banner.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	banner.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	banner.offset_top = -BANNER_MARGIN
-	banner.offset_bottom = -BANNER_MARGIN
 	banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	banner.visible = false
 

@@ -39,7 +39,7 @@ SETTING_HD,HD rendering,Rendu HD
 SETTING_MAX_FPS,Max frame rate,Images par seconde max
 SETTING_CAVE_FIRST_PERSON,First person in caves,1re personne dans les grottes
 FPS_SCREEN,Screen (%d Hz),Écran (%d Hz)
-HUD_DAY_TIME,Day %d - %s,Jour %d - %s
+HUD_DAY,Day %d,Jour %d
 HUD_FROZEN,(frozen),(figé)
 HUD_SYNCED,(synced),(synchro)
 HUD_TOOLS_WOOD,Wooden tools,Outils en bois
@@ -957,7 +957,7 @@ SETTING_SEASONS,Seasons,Saisons
 SEASONS_OFF,None,Aucune
 SEASONS_DAYS,%d days each,%d jours chacune
 SEASONS_SYNCED_INFO,Seasons follow the device's date.,Les saisons suivent la date de l'appareil.
-HUD_SEASON_TIME,"%s, day %d - %s","%s, jour %d - %s"
+HUD_SEASON_DAY,%s %d,%s %d
 HUD_YEAR,(year %d),(an %d)
 CMD_SEASON_USAGE,/season spring | summer | autumn | winter [day] | <days a season> | off,/saison printemps | été | automne | hiver [jour] | <jours par saison> | aucune
 CMD_SEASON_HELP,"Sets the season (and its day), how many days a season lasts, or takes the seasons away.","Change la saison (et son jour), le nombre de jours d'une saison, ou enlève les saisons."
@@ -1318,9 +1318,9 @@ JOIN_BACK,Back,Retour
 JOIN_GO,Join,Rejoindre
 JOIN_BAD_ADDRESS,"Type the server's IP or domain name (a port may follow after "":"").","Tape l'IP ou le nom de domaine du serveur (un port peut suivre après « : »)."
 JOIN_FORGET,Forget this server,Oublier ce serveur
-PLAYERS_TITLE,Players (%d) — %s,Joueurs (%d) — %s
+PLAYERS_TITLE,Players · %d,Joueurs · %d
 PLAYERS_SOLO,solo,solo
-PLAYERS_ADMIN,(admin),(admin)
+PLAYERS_ADMIN,admin,admin
 PLAYERS_PING,%d ms,%d ms
 BOOK_PLAYER_LIST,Who plays (held down),Qui joue (maintenir)
 CHAT_TOO_FAST,You are talking too fast: wait a moment.,Tu parles trop vite : attends un peu.
@@ -1339,8 +1339,8 @@ ROLE_VISITOR,visitor,visiteur
 ROLE_PLAYER,player,joueur
 ROLE_MODERATOR,moderator,modérateur
 ROLE_ADMIN,admin,admin
-PLAYERS_MODERATOR,(moderator),(modérateur)
-PLAYERS_VISITOR,(visitor),(visiteur)
+PLAYERS_MODERATOR,moderator,modérateur
+PLAYERS_VISITOR,visitor,visiteur
 CHAT_FOR_MODERATORS,For moderators and admins,Pour les modérateurs et les admins
 CHAT_NOT_ALLOWED,%s is not yours to use (%s).,%s ne t'est pas permise (%s).
 HUD_VISITOR,You are a visitor here: you may look around and change nothing.,"Tu es visiteur ici : tu peux te promener, mais tu ne peux rien changer."

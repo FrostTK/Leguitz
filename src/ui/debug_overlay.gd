@@ -1,27 +1,32 @@
 class_name DebugOverlay
 extends PanelContainer
-## F3 debug screen (like Minecraft): performance, position, world and time.
-## Without it, a small frame rate counter if the settings ask for one
-## (Settings.show_fps).
+## F3 debug screen (like Minecraft): performance, position, world and time,
+## in a small dark panel, the parts of a line set apart by grey dots, the
+## game's version in amber. Without it, a small frame rate counter if the
+## settings ask for one (Settings.show_fps).
 
 const REFRESH_INTERVAL := 0.25
+const FONT_SIZE := 6
+## Between the parts of a line.
+const SEPARATOR := "  |  "
 
 var client: GameClient
 ## Optional: extra lines supplied by the integrated server (solo only).
 var server_stats: Callable
 
-var _label := Label.new()
+var _label := RichTextLabel.new()
 var _refresh_timer := 0.0
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.05, 0.05, 0.08, 0.72)
-	style.set_content_margin_all(4)
-	add_theme_stylebox_override("panel", style)
-	_label.add_theme_font_size_override("font_size", 6)
-	_label.add_theme_color_override("font_color", Color(0.95, 0.95, 0.95))
+	theme_type_variation = "HudPanel"
+	_label.bbcode_enabled = true
+	_label.fit_content = true
+	_label.scroll_active = false
+	_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_label.add_theme_font_size_override("normal_font_size", FONT_SIZE)
 	add_child(_label)
 	set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT, Control.PRESET_MODE_MINSIZE, 4)
 	visible = Settings.show_debug or Settings.show_fps
@@ -45,7 +50,10 @@ func _process(delta: float) -> void:
 	if not visible or client == null:
 		return
 	if not Settings.show_debug:
-		_label.text = "%d FPS" % Engine.get_frames_per_second()
+		var rate := "%d FPS" % Engine.get_frames_per_second()
+		if _label.text != rate:
+			_label.text = rate
+			reset_size()
 		return
 	# Measure the 3D world's GPU time (from the first time the overlay shows).
 	RenderingServer.viewport_set_measure_render_time(
@@ -55,7 +63,8 @@ func _process(delta: float) -> void:
 	if _refresh_timer > 0.0:
 		return
 	_refresh_timer = REFRESH_INTERVAL
-	_label.text = "\n".join(_lines())
+	_label.text = _styled(_lines())
+	reset_size()
 
 
 func _lines() -> PackedStringArray:
@@ -161,6 +170,20 @@ func _lines() -> PackedStringArray:
 	if server_stats.is_valid():
 		lines.append_array(server_stats.call())
 	return lines
+
+
+## The lines in bbcode: their parts set apart by grey dots, the first
+## part (the game's version) in amber.
+static func _styled(lines: PackedStringArray) -> String:
+	var dot := "[color=#%s]  ·  [/color]" % UiTheme.FAINT.to_html(false)
+	var styled := PackedStringArray()
+	for line in lines:
+		styled.append(line.replace("[", "[lb]").replace(SEPARATOR, dot))
+	if not styled.is_empty():
+		var first := styled[0].split(dot, true, 1)
+		first[0] = "[color=#%s]%s[/color]" % [UiTheme.ACCENT.to_html(false), first[0]]
+		styled[0] = dot.join(first)
+	return "\n".join(styled)
 
 
 ## What is aimed at, how long breaking it takes with what is in hand, and

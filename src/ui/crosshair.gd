@@ -1,10 +1,14 @@
 class_name Crosshair
 extends Control
-## The small cross in the middle of the screen in first person.
+## The crosshair in the middle of the screen in first person: a dot and
+## four short arms set apart from it, light, each outlined in dark so it
+## reads on snow as in a cave.
 
-const ARM := 3
-const COLOR := Color(1.0, 1.0, 1.0, 0.8)
-const SHADOW := Color(0.0, 0.0, 0.0, 0.35)
+## An arm's length and its gap from the middle (UI units).
+const ARM := 2
+const GAP := 2
+const COLOR := Color(1.0, 1.0, 1.0, 0.9)
+const OUTLINE := Color(0.0, 0.0, 0.0, 0.45)
 
 
 func _ready() -> void:
@@ -15,8 +19,14 @@ func _ready() -> void:
 
 func _draw() -> void:
 	var middle := (size / 2.0).floor()
-	for pass_offset: Vector2 in [Vector2.ONE, Vector2.ZERO]:
-		var color := SHADOW if pass_offset != Vector2.ZERO else COLOR
-		var at := middle + pass_offset
-		draw_rect(Rect2(at + Vector2(-ARM, 0), Vector2(ARM * 2 + 1, 1)), color)
-		draw_rect(Rect2(at + Vector2(0, -ARM), Vector2(1, ARM * 2 + 1)), color)
+	var parts: Array[Rect2] = [
+		Rect2(middle, Vector2.ONE),
+		Rect2(middle + Vector2(-GAP - ARM, 0), Vector2(ARM, 1)),
+		Rect2(middle + Vector2(GAP + 1, 0), Vector2(ARM, 1)),
+		Rect2(middle + Vector2(0, -GAP - ARM), Vector2(1, ARM)),
+		Rect2(middle + Vector2(0, GAP + 1), Vector2(1, ARM)),
+	]
+	for part in parts:
+		draw_rect(part.grow(1.0), OUTLINE)
+	for part in parts:
+		draw_rect(part, COLOR)

@@ -257,7 +257,7 @@ func test_seasons_are_set_from_the_menu_and_by_command() -> void:
 		"SETTING_SEASONS",
 		"SEASONS_OFF",
 		"SEASONS_DAYS",
-		"HUD_SEASON_TIME",
+		"HUD_SEASON_DAY",
 		"CMD_SEASON_USAGE",
 		"CMD_SEASON_HELP",
 		"CMD_SEASON_DONE",

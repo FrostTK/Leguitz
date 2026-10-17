@@ -1313,6 +1313,32 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   recolored before each name: a style box's colors are read as it draws); WarningSign's tooltip
   dark, lined in red. The player's book keeps its paper and wood (BookScreen's own INK, WOOD,
   WOOD_DARK, BUTTON). Layouts are unchanged (steps 3 to 5 redo them).
+- Interface redesign, step 2 (the HUD). Hotbar: the slots never show themselves chosen there; the
+  row draws, under them, an amber ring (RING) around the slot in hand that glides to the next one
+  (`_glide`, RING_EASE; `_ring_x` NAN until laid out or when the book shows); the name of what
+  is in hand and `announce`'s messages in a small HudPanel plate (`_plate`, fading NAME_FADE).
+  VitalsBar: two compact gauges facing each other over the hotbar (`_gauge`: a rounded track,
+  the fill and a lighter top row, a notch every SEGMENT points; the vitality from the left after
+  its crystal, with its pale trail; the satiety mirrored, emptying towards its loaf on the
+  right), the slim armor and air gauges over them only when they count (`_slim`, the shield and
+  the bubble kept). EffectsRow: round badges, dark in the effect's color, its sign, ringed by an
+  arc running out with its time (draw_arc). HudClock: a sun or a moon (WorldClock.is_night; SVG
+  through UiTheme.svg, public now), the day in grey (HUD_DAY; with seasons HUD_SEASON_DAY
+  "Printemps 3", the year), the time, frozen/synced in grey. ChatBox: lines float on light bubbles
+  as wide as their text (`_draw_bubbles`, drawn by the log under them, BUBBLE_ALPHA, fading with
+  the line; LINE_GAP), no shadow; while typing the dark panel as before. Crosshair: a dot and
+  four short arms set apart (GAP), outlined in dark. PlayerList: a card, the count and the
+  server in its header, a role's small tag (`_tag`, TAGS: admin amber, moderator steel, visitor
+  grey), signal bars and the ping (`_ping`, `_draw_bars`). DebugOverlay: a HudPanel and a
+  RichTextLabel, its lines' parts set apart by grey dots (`_styled`, SEPARATOR), the version in
+  amber; text set only when it changes. The spectator's banner (GameModeView.banner) and the
+  boat's "rowing" (Helm) on plates; the loading text a TitleLabel. Dark icons (asked by the
+  owner): ItemIcons measures each icon (`luma`, DARK_LUMA) and ItemLibrary keeps it `is_dark`;
+  ItemSlot.draw_stack puts a soft halo (UiTheme.halo, a radial GradientTexture2D; HALO,
+  HALO_COLOR) behind them. Icons asked for before they are rendered (ItemLibrary.icon) are
+  rendered first (`take_wanted`): the hotbar's and an open screen's no longer wait for every
+  other item's (one icon a frame). tests/run_tests.gd counts a test file that does not compile as
+  a failure.
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made

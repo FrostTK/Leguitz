@@ -1,14 +1,18 @@
 class_name EffectsRow
 extends Control
-## What the dishes eaten do (Effects), over the vitality (Hotbar): a badge
-## for each, in its color with its sign (a cross healing, a bowl keeping
-## hunger off, chevrons for speed, a sword for strength, a pickaxe for
-## haste, a flame for warmth, a snowflake for the cold), a bar under it
-## running out with its time (none for what lasts as long as its cause).
+## What the dishes eaten do (Effects), over the vitality (Hotbar): a round
+## badge for each, dark in its color with its sign (a cross healing, a bowl
+## keeping hunger off, chevrons for speed, a sword for strength, a pickaxe
+## for haste, a flame for warmth, a snowflake for the cold), ringed by an
+## arc running out with its time (whole for what lasts as long as its
+## cause).
 
-const BADGE := 9.0
+## A badge's size, the room between two, the row's height (UI units).
+const BADGE := 11.0
 const GAP := 3.0
 const HEIGHT := 13.0
+## The arcs' smoothness.
+const ARC_POINTS := 32
 ## The signs, 5 x 5 ("#": drawn).
 const SIGNS := {
 	Effects.Kind.REGEN: ["..#..", "..#..", "#####", "..#..", "..#.."],
@@ -45,21 +49,31 @@ func _draw() -> void:
 	var width := kinds.size() * BADGE + (kinds.size() - 1) * GAP
 	var x := floorf((size.x - width) * 0.5)
 	for kind: int in kinds:
-		var at := Vector2(x, 0.0)
+		var middle := Vector2(x + BADGE * 0.5, BADGE * 0.5)
+		var radius := BADGE * 0.5
 		var color: Color = Effects.COLORS[kind]
-		var badge := Rect2(at, Vector2.ONE * BADGE)
-		UiTheme.draw_box(self, badge, color.darkened(0.55), Color(color, 0.7), UiTheme.SMALL_RADIUS)
+		draw_circle(middle, radius - 0.5, color.darkened(0.6), true, -1.0, true)
+		var left := 1.0
+		if not Effects.LASTING.has(kind):
+			left = _effects[kind] / maxf(_full.get(kind, _effects[kind]), 0.01)
+		draw_arc(middle, radius - 0.5, 0.0, TAU, ARC_POINTS, Color(color, 0.25), 1.0, true)
+		if left > 0.0:
+			var start := -PI * 0.5
+			draw_arc(
+				middle,
+				radius - 0.5,
+				start,
+				start + TAU * clampf(left, 0.0, 1.0),
+				ARC_POINTS,
+				color,
+				1.0,
+				true
+			)
+		var corner := (middle - Vector2(2.5, 2.5)).floor()
 		var rows: Array = SIGNS[kind]
 		for y in rows.size():
 			var row: String = rows[y]
 			for column in row.length():
 				if row[column] == "#":
-					draw_rect(
-						Rect2(at + Vector2(column + 2, y + 2), Vector2.ONE), color.lightened(0.6)
-					)
+					draw_rect(Rect2(corner + Vector2(column, y), Vector2.ONE), color.lightened(0.6))
 		x += BADGE + GAP
-		if Effects.LASTING.has(kind):
-			continue
-		var left: float = _effects[kind] / maxf(_full.get(kind, _effects[kind]), 0.01)
-		var bar := Rect2(at + Vector2(0.0, BADGE + 1.0), Vector2(BADGE, 2.0))
-		UiTheme.draw_gauge(self, bar, left, color)

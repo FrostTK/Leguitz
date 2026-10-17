@@ -16,6 +16,11 @@ func _initialize() -> void:
 	var failed := 0
 	for file in _test_files():
 		var script: GDScript = load(TEST_DIR.path_join(file))
+		# A file that does not compile (itself or what it uses) fails.
+		if script == null or not script.can_instantiate():
+			failed += 1
+			print("FAIL %s (does not compile)" % file)
+			continue
 		for method in script.get_script_method_list():
 			var method_name: String = method["name"]
 			if not method_name.begins_with("test_"):
