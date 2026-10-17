@@ -6,8 +6,17 @@
 # for a private repository), and unpacks it. Running it again (Reinstall)
 # updates the server; the worlds and settings stay.
 set -euo pipefail
-apt-get update -qq >/dev/null
-apt-get install -y -qq curl jq ca-certificates tar >/dev/null
+# Only what the installer's image lacks: it is an old Debian whose packages
+# the mirrors may no longer hold (apt then fails to update what is there).
+missing=()
+for tool in curl jq tar; do
+	command -v "$tool" >/dev/null || missing+=("$tool")
+done
+[ -f /etc/ssl/certs/ca-certificates.crt ] || missing+=(ca-certificates)
+if [ "${#missing[@]}" -gt 0 ]; then
+	apt-get update -qq >/dev/null || true
+	apt-get install -y -qq --no-upgrade "${missing[@]}" >/dev/null
+fi
 mkdir -p /mnt/server
 cd /mnt/server
 archive=/tmp/leguitz-server.tar.gz
