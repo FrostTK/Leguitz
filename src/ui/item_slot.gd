@@ -1,6 +1,7 @@
 class_name ItemSlot
 extends Control
-## One inventory slot: a small frame, the item's icon and how many there
+## One inventory slot: a flat rounded tile (lighter under the mouse, an
+## amber ring when chosen; UiTheme), the item's icon and how many there
 ## are, or for a worn tool what is left of it (a bar going from green to
 ## red), for a watering can the water it holds (blue). Draws itself (see
 ## show_stack); clicks are reported by `clicked`. Empty, it may show the
@@ -10,16 +11,12 @@ signal clicked(slot: int, right: bool, shift: bool)
 
 const SIZE := 20.0
 const ICON := 16.0
-const FRAME := Color(0.36, 0.2, 0.08, 0.95)
-const FILL := Color(0.16, 0.1, 0.06, 0.55)
-const SELECTED := Color(1.0, 0.92, 0.6)
-## The name of the item under the mouse (draw_name): its box, the room
-## around the text, and where it sits from the mouse (above on the right).
-const NAME_FILL := Color(0.13, 0.07, 0.03, 0.94)
+## The name of the item under the mouse (draw_name): the room around the
+## text, and where it sits from the mouse (above on the right).
 const NAME_PADDING := Vector2(4.0, 2.0)
 const NAME_OFFSET := Vector2(9.0, -15.0)
-const HINT := Color(0.0, 0.0, 0.0, 0.35)
-const CAN_WATER_COLOR := Color("4aa8e8")
+const HINT := Color(1.0, 1.0, 1.0, 0.16)
+const CAN_WATER_COLOR := UiTheme.AIR
 
 var slot := 0
 var selected := false
@@ -36,12 +33,15 @@ var _wear := 0
 ## The icon drawn (icons are rendered after the game starts: redraw once
 ## the item's arrives).
 var _icon: Texture2D
+var _hovered := false
 
 
 func _init() -> void:
 	custom_minimum_size = Vector2.ONE * SIZE
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	set_process(false)
+	mouse_entered.connect(_hover.bind(true))
+	mouse_exited.connect(_hover.bind(false))
 
 
 ## Waits for the hint's icon (icons come after the start; asking for a
@@ -84,10 +84,17 @@ func _gui_input(event: InputEvent) -> void:
 		accept_event()
 
 
+func _hover(over: bool) -> void:
+	_hovered = over
+	queue_redraw()
+
+
 func _draw() -> void:
 	var rect := Rect2(Vector2.ZERO, size)
-	draw_rect(rect, FILL)
-	draw_rect(rect, SELECTED if selected else FRAME, false, 2.0 if selected else 1.0)
+	var fill := UiTheme.SLOT_HOVER if _hovered else UiTheme.SLOT
+	UiTheme.draw_box(self, rect, fill, Color.TRANSPARENT, UiTheme.SMALL_RADIUS)
+	if selected:
+		UiTheme.draw_box(self, rect, Color.TRANSPARENT, UiTheme.ACCENT, UiTheme.SMALL_RADIUS)
 	draw_stack(self, library, _item, _count, size * 0.5, _wear)
 	if _item == Items.Id.NONE and hint != Items.Id.NONE and library != null:
 		var shape := library.icon(hint)
@@ -99,8 +106,8 @@ func _draw() -> void:
 			set_process(true)
 
 
-## Draws an item's name in a dark box beside `at` (the mouse) on any
-## control, kept inside it.
+## Draws an item's name in a dark rounded box beside `at` (the mouse) on
+## any control, kept inside it.
 static func draw_name(canvas: Control, item: int, at: Vector2) -> void:
 	if item != Items.Id.NONE:
 		draw_label(canvas, canvas.tr(Items.name_key(item)), at)
@@ -116,11 +123,10 @@ static func draw_label(canvas: Control, text: String, at: Vector2) -> void:
 	corner.x = clampf(corner.x, 0.0, maxf(canvas.size.x - box.x, 0.0))
 	corner.y = clampf(corner.y, 0.0, maxf(canvas.size.y - box.y, 0.0))
 	var rect := Rect2(corner, box)
-	canvas.draw_rect(rect, NAME_FILL)
-	canvas.draw_rect(rect, UiTheme.WOOD, false, 1.0)
+	UiTheme.draw_box(canvas, rect, UiTheme.PANEL_SOLID, UiTheme.LINE_STRONG, UiTheme.SMALL_RADIUS)
 	var baseline := corner + Vector2(NAME_PADDING.x, NAME_PADDING.y + font.get_ascent(font_size))
 	canvas.draw_string(
-		font, baseline.round(), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, UiTheme.PARCHMENT
+		font, baseline.round(), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, UiTheme.TEXT
 	)
 
 
@@ -138,19 +144,13 @@ static func draw_stack(
 		)
 	var durability := Items.durability(item)
 	var bar := Rect2(
-		center + Vector2(-ICON * 0.5 + 2.0, ICON * 0.5 - 2.0), Vector2(ICON - 4.0, 2.0)
+		center + Vector2(-ICON * 0.5 + 2.0, ICON * 0.5 - 1.0), Vector2(ICON - 4.0, 2.0)
 	)
 	if wear > 0 and durability > 0:
 		var left := 1.0 - float(wear) / durability
-		canvas.draw_rect(bar, Color(0.05, 0.05, 0.05))
-		var fill := Rect2(bar.position, Vector2(maxf(roundf(bar.size.x * left), 1.0), 1.0))
-		canvas.draw_rect(fill, Color.from_hsv(left / 3.0, 0.9, 0.95))
+		UiTheme.draw_gauge(canvas, bar, left, Color.from_hsv(left / 3.0, 0.75, 0.9))
 	elif item == Items.Id.WATERING_CAN:
-		canvas.draw_rect(bar, Color(0.05, 0.05, 0.05))
-		if wear > 0:
-			var full := float(wear) / Items.CAN_WATER
-			var water := Rect2(bar.position, Vector2(maxf(roundf(bar.size.x * full), 1.0), 1.0))
-			canvas.draw_rect(water, CAN_WATER_COLOR)
+		UiTheme.draw_gauge(canvas, bar, float(wear) / Items.CAN_WATER, CAN_WATER_COLOR)
 	if count > 1:
 		var font := canvas.get_theme_default_font()
 		var text := str(count)
@@ -170,4 +170,4 @@ static func draw_stack(
 			6,
 			Color(0, 0, 0, 0.8)
 		)
-		canvas.draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, Color.WHITE)
+		canvas.draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, UiTheme.TEXT)

@@ -14,7 +14,7 @@ const FULL_DRAW := 1.0
 const MIN_DRAW := 0.15
 ## The gauge (UI units), and how high over the feet it shows (local
 ## units).
-const GAUGE := Vector2(18.0, 3.0)
+const GAUGE := Vector2(18.0, 4.0)
 const OVER_HEAD := 2.2
 ## With a gamepad, arrows leave ahead and this much up.
 const PAD_LIFT := 0.12
@@ -114,8 +114,8 @@ func _direction(strength: float) -> Vector3:
 	return ballistic(start, goal, Archery.ARROW_SPEED * strength)
 
 
-## The gauge: a dark track, filling up as the bow is drawn, golden when
-## full.
+## The gauge: a dark track, filling up in amber as the bow is drawn,
+## brighter when full.
 func _draw_meter() -> void:
 	if drawn <= 0.0:
 		return
@@ -125,11 +125,8 @@ func _draw_meter() -> void:
 		var feet := player.position / GameConst.TILE_SIZE
 		at = _screen_point(Vector3(feet.x, player.height + OVER_HEAD, feet.y))
 	var rect := Rect2((at - GAUGE * 0.5).floor(), GAUGE)
-	meter.draw_rect(rect.grow(1.0), UiTheme.WOOD_DARK)
-	meter.draw_rect(rect, Color("2a1410"))
-	var full := power() >= 1.0
-	var fill := Rect2(rect.position, Vector2(roundf(rect.size.x * power()), rect.size.y))
-	meter.draw_rect(fill, Color("f2c84a") if full else Color("c08a4a"))
+	var fill := UiTheme.ACCENT_HOVER if power() >= 1.0 else UiTheme.ACCENT_PRESSED
+	UiTheme.draw_gauge(meter, rect, power(), fill)
 
 
 ## Where a point of the world (local units) shows on the screen (UI units).

@@ -319,13 +319,11 @@ func _build_head() -> void:
 	_field.placeholder_text = "CATALOG_SEARCH"
 	_field.custom_minimum_size.x = SEARCH_WIDTH
 	_field.clear_button_enabled = true
-	_field.add_theme_stylebox_override("normal", _box(UiTheme.WOOD))
-	_field.add_theme_stylebox_override("focus", _box(UiTheme.WOOD_DARK))
-	_field.add_theme_color_override("font_color", UiTheme.INK)
-	_field.add_theme_color_override("caret_color", UiTheme.INK)
-	_field.add_theme_color_override("font_placeholder_color", UiTheme.WOOD)
-	_field.add_theme_color_override("clear_button_color", UiTheme.WOOD)
-	_field.add_theme_color_override("clear_button_color_pressed", UiTheme.WOOD_DARK)
+	var frame := UiTheme.box(UiTheme.TRACK, UiTheme.LINE_STRONG, 2, 2.0)
+	_field.add_theme_stylebox_override("normal", frame)
+	_field.add_theme_stylebox_override(
+		"focus", UiTheme.box(Color.TRANSPARENT, UiTheme.ACCENT, 2, 2.0)
+	)
 	_field.add_theme_icon_override("clear", _cross())
 	_field.text_changed.connect(func(_text: String) -> void: _refresh())
 	head.add_child(_field)
@@ -344,7 +342,7 @@ func _build_head() -> void:
 		)
 		tabs.add_child(button)
 		_tab_slots.append(button)
-	_caption.add_theme_color_override("font_color", UiTheme.WOOD_DARK)
+	_caption.add_theme_color_override("font_color", UiTheme.MUTED)
 	head.add_child(_caption)
 
 
@@ -472,12 +470,12 @@ func _on_bar_input(event: InputEvent) -> void:
 ## The bar: its track, and over it the part in view.
 func _draw_bar() -> void:
 	var height := _bar.size.y
-	_bar.draw_rect(Rect2(1.0, 0.0, BAR_WIDTH - 2.0, height), Color(UiTheme.WOOD, 0.3))
+	UiTheme.draw_box(_bar, Rect2(0.0, 0.0, BAR_WIDTH, height), UiTheme.TRACK, UiTheme.LINE, 2)
 	var rows := maxi(ceili(_shown.size() / float(Inventory.HOTBAR)), 1)
 	var thumb := roundf(height * minf(float(ROWS) / rows, 1.0))
 	var last := _last_first_row()
 	var top := roundf((height - thumb) * _first_row / last) if last > 0 else 0.0
-	_bar.draw_rect(Rect2(0.0, top, BAR_WIDTH, thumb), UiTheme.WOOD)
+	UiTheme.draw_box(_bar, Rect2(0.0, top, BAR_WIDTH, thumb), UiTheme.MUTED, Color.TRANSPARENT, 2)
 
 
 ## The search field's little cross that clears it (white: its color is
@@ -488,15 +486,3 @@ static func _cross() -> ImageTexture:
 		image.set_pixel(i, i, Color.WHITE)
 		image.set_pixel(CROSS - 1 - i, i, Color.WHITE)
 	return ImageTexture.create_from_image(image)
-
-
-## The search field's frame (`border`: brown, darker with the keys).
-static func _box(border: Color) -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
-	box.bg_color = UiTheme.PARCHMENT.lightened(0.4)
-	box.border_color = border
-	box.set_border_width_all(1)
-	box.set_corner_radius_all(2)
-	box.set_content_margin_all(2.0)
-	box.anti_aliasing = false
-	return box

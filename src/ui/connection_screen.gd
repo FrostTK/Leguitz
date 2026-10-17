@@ -13,7 +13,7 @@ signal retry_requested
 signal other_requested
 signal solo_requested
 
-const SHADE := Color(0.02, 0.02, 0.05, 0.82)
+const SHADE := Color(UiTheme.SHADE, 0.85)
 const WIDTH := 220.0
 
 var _title := Label.new()
@@ -40,9 +40,11 @@ func _ready() -> void:
 	box.custom_minimum_size.x = WIDTH
 	panel.add_child(box)
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_title.theme_type_variation = "TitleLabel"
 	box.add_child(_title)
 	_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_text.add_theme_color_override("font_color", UiTheme.MUTED)
 	box.add_child(_text)
 	var buttons := GridContainer.new()
 	buttons.columns = 2
@@ -60,6 +62,7 @@ func _ready() -> void:
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.pressed.connect((choice[2] as Signal).emit)
 		buttons.add_child(button)
+	_retry.theme_type_variation = "AccentButton"
 	visible = false
 
 

@@ -37,10 +37,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	visible = false
-	var dim := ColorRect.new()
-	dim.color = Color(0.05, 0.03, 0.08, 0.7)
-	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(dim)
+	add_child(UiTheme.shade())
 	var center := CenterContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
@@ -52,10 +49,10 @@ func _ready() -> void:
 	var title := Label.new()
 	title.text = "JOIN_TITLE"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 12)
+	title.theme_type_variation = "TitleLabel"
 	box.add_child(title)
 	_recent_title.text = "JOIN_RECENT"
-	_recent_title.add_theme_color_override("font_color", UiTheme.WOOD)
+	_recent_title.add_theme_color_override("font_color", UiTheme.MUTED)
 	box.add_child(_recent_title)
 	box.add_child(_recent)
 	_address.placeholder_text = "JOIN_ADDRESS_HINT"
@@ -88,6 +85,7 @@ func _ready() -> void:
 	buttons.add_child(back)
 	var join := Button.new()
 	join.text = "JOIN_GO"
+	join.theme_type_variation = "AccentButton"
 	join.pressed.connect(_join)
 	buttons.add_child(join)
 	box.add_child(buttons)

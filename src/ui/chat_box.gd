@@ -27,15 +27,17 @@ const BOTTOM := 52.0
 const INPUT_HEIGHT := 14.0
 ## Kept free at the top of the screen (the board stops under it).
 const TOP_ROOM := 28.0
-const NAME_COLOR := "f3c86b"
+## The colors of the lines (UiTheme's: the accent for names, text, success,
+## danger; a soft violet for whispers).
+const NAME_COLOR := "e0a84e"
 const TONE_COLORS := {
-	Chat.Tone.INFO: "f5e6c8",
-	Chat.Tone.DONE: "b8e08a",
-	Chat.Tone.ERROR: "f09a86",
-	Chat.Tone.WHISPER: "d6b8f0",
+	Chat.Tone.INFO: "e8e4dc",
+	Chat.Tone.DONE: "7bc96f",
+	Chat.Tone.ERROR: "e0645a",
+	Chat.Tone.WHISPER: "c9b2ec",
 }
-const SAID_COLOR := "ffffff"
-const HINT_COLOR := Color("d8c39a")
+const SAID_COLOR := "f4f1ea"
+const HINT_COLOR := UiTheme.MUTED
 ## Options of a completion shown at most.
 const HINTS := 8
 const SLASH := 47
@@ -92,11 +94,9 @@ func _ready() -> void:
 	_entry.max_length = Chat.MAX_LENGTH
 	_entry.visible = false
 	_entry.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
-	_entry.add_theme_stylebox_override("normal", _box(UiTheme.PARCHMENT, UiTheme.WOOD, 1.0))
-	_entry.add_theme_stylebox_override("focus", _box(UiTheme.PARCHMENT, UiTheme.WOOD_DARK, 1.0))
-	_entry.add_theme_color_override("font_color", UiTheme.INK)
-	_entry.add_theme_color_override("caret_color", UiTheme.INK)
-	_entry.add_theme_color_override("font_placeholder_color", UiTheme.WOOD)
+	var field := UiTheme.box(UiTheme.PANEL_SOLID, UiTheme.ACCENT, UiTheme.SMALL_RADIUS, 3.0)
+	_entry.add_theme_stylebox_override("normal", field)
+	_entry.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	_entry.placeholder_text = "CHAT_PLACEHOLDER"
 	_entry.text_submitted.connect(_on_submitted)
 	_entry.text_changed.connect(_on_typed)
@@ -355,25 +355,14 @@ func _layout() -> void:
 	_entry.offset_top = -BOTTOM - INPUT_HEIGHT
 
 
-## The board shows (a dark wooden plank behind the lines) while typing;
-## otherwise the lines float over the world.
+## The board shows (a dark panel behind the lines) while typing; otherwise
+## the lines float over the world.
 func _set_board(shown: bool) -> void:
 	if shown:
-		var board := _box(Color(UiTheme.WOOD_DARK, 0.72), UiTheme.WOOD, 1.0)
+		var board := UiTheme.box(UiTheme.PANEL, UiTheme.LINE, UiTheme.RADIUS, 3.0)
 		_board.add_theme_stylebox_override("panel", board)
 	else:
 		_board.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
-
-
-static func _box(color: Color, border: Color, margin: float) -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
-	box.bg_color = color
-	box.border_color = border
-	box.set_border_width_all(1)
-	box.set_corner_radius_all(2)
-	box.set_content_margin_all(margin + 2.0)
-	box.anti_aliasing = false
-	return box
 
 
 ## Text shown as typed, not as bbcode.

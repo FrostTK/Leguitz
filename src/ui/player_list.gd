@@ -8,9 +8,9 @@ extends Control
 ## A ping under these (milliseconds) is good, fair; slower is poor.
 const GOOD_PING := 80
 const FAIR_PING := 200
-const GOOD := Color("7bc96f")
-const FAIR := Color("e9b86a")
-const POOR := Color("d9603b")
+const GOOD := UiTheme.SUCCESS
+const FAIR := UiTheme.ACCENT
+const POOR := UiTheme.DANGER
 
 ## Who plays: [{id, name, ping, admin}].
 var roster: Array = []
@@ -84,7 +84,7 @@ func _fill() -> void:
 		if tag.has(role):
 			name.text += "  " + tr(tag[role])
 		if entry.get("id") == player_id:
-			name.add_theme_color_override("font_color", UiTheme.WOOD)
+			name.add_theme_color_override("font_color", UiTheme.ACCENT)
 		name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		_grid.add_child(name)
 		var ping := Label.new()

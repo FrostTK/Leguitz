@@ -47,8 +47,8 @@ func _draw() -> void:
 	for kind: int in kinds:
 		var at := Vector2(x, 0.0)
 		var color: Color = Effects.COLORS[kind]
-		draw_rect(Rect2(at, Vector2.ONE * BADGE), UiTheme.WOOD_DARK)
-		draw_rect(Rect2(at + Vector2.ONE, Vector2.ONE * (BADGE - 2.0)), color.darkened(0.25))
+		var badge := Rect2(at, Vector2.ONE * BADGE)
+		UiTheme.draw_box(self, badge, color.darkened(0.55), Color(color, 0.7), UiTheme.SMALL_RADIUS)
 		var rows: Array = SIGNS[kind]
 		for y in rows.size():
 			var row: String = rows[y]
@@ -62,5 +62,4 @@ func _draw() -> void:
 			continue
 		var left: float = _effects[kind] / maxf(_full.get(kind, _effects[kind]), 0.01)
 		var bar := Rect2(at + Vector2(0.0, BADGE + 1.0), Vector2(BADGE, 2.0))
-		draw_rect(bar, UiTheme.WOOD_DARK)
-		draw_rect(Rect2(bar.position, Vector2(roundf(BADGE * clampf(left, 0.0, 1.0)), 2.0)), color)
+		UiTheme.draw_gauge(self, bar, left, color)

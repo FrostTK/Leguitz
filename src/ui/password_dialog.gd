@@ -20,10 +20,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	visible = false
-	var dim := ColorRect.new()
-	dim.color = Color(0.05, 0.03, 0.08, 0.7)
-	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(dim)
+	add_child(UiTheme.shade())
 	var center := CenterContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
@@ -35,7 +32,7 @@ func _ready() -> void:
 	var title := Label.new()
 	title.text = "PASSWORD_TITLE"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 12)
+	title.theme_type_variation = "TitleLabel"
 	box.add_child(title)
 	for row: Array in [["PASSWORD_OLD", _old], ["PASSWORD_NEW", _new], ["PASSWORD_AGAIN", _again]]:
 		var field: LineEdit = row[1]
@@ -53,6 +50,7 @@ func _ready() -> void:
 	buttons.add_child(back)
 	var change := Button.new()
 	change.text = "PASSWORD_CHANGE"
+	change.theme_type_variation = "AccentButton"
 	change.pressed.connect(_change)
 	buttons.add_child(change)
 	box.add_child(buttons)
@@ -98,5 +96,5 @@ func _change() -> void:
 func _say(key: String, wrong: bool) -> void:
 	_problem.text = key
 	_problem.visible = true
-	var color := Color("c0392b") if wrong else UiTheme.INK
+	var color := UiTheme.DANGER if wrong else UiTheme.MUTED
 	_problem.add_theme_color_override("font_color", color)

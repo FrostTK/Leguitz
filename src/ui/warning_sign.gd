@@ -2,8 +2,8 @@ class_name WarningSign
 extends Control
 ## A small warning sign: a dark red triangle holding a "!", beside a
 ## setting. Hovered, it shows its tooltip: a title and lines of text
-## (translation keys: what the setting does, its pros, its cons), on
-## parchment.
+## (translation keys: what the setting does, its pros, its cons), on a
+## dark panel lined in red.
 
 const SIZE := Vector2(11, 10)
 const RED := Color("7b1e2b")
@@ -41,20 +41,14 @@ func _draw() -> void:
 
 func _make_custom_tooltip(_for_text: String) -> Object:
 	var panel := PanelContainer.new()
-	var box := StyleBoxFlat.new()
-	box.bg_color = UiTheme.PARCHMENT
-	box.border_color = RED
-	box.set_border_width_all(1)
-	box.set_corner_radius_all(2)
-	box.set_content_margin_all(5.0)
-	box.anti_aliasing = false
+	var box := UiTheme.box(UiTheme.PANEL_SOLID, UiTheme.DANGER, UiTheme.SMALL_RADIUS, 5.0)
 	panel.add_theme_stylebox_override("panel", box)
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 3)
 	panel.add_child(column)
-	column.add_child(_label(title, RED))
+	column.add_child(_label(title, UiTheme.DANGER))
 	for key in lines:
-		column.add_child(_label(key, UiTheme.INK))
+		column.add_child(_label(key, UiTheme.TEXT))
 	return panel
 
 

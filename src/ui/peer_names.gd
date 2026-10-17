@@ -2,12 +2,12 @@ class_name PeerNames
 extends Control
 ## The other players' names over their heads (multiplayer, step 2), drawn
 ## in the UI's letters where PeersView.labels puts them on the screen
-## (WorldViewport.screen_point), on a dark plate; they fade with the body
+## (WorldViewport.screen_point), on a dark rounded plate; they fade with the body
 ## and with the distance from the local player (FADE_FROM to RANGE tiles).
 
 const RANGE := 40.0
 const FADE_FROM := 28.0
-const PLATE := Color(0.05, 0.03, 0.08, 0.55)
+const PLATE := Color(UiTheme.PANEL, 0.7)
 const PADDING := Vector2(3.0, 1.0)
 
 var peers: PeersView
@@ -16,6 +16,9 @@ var viewport: WorldViewport
 var player_feet: Callable
 
 var _drawn := false
+## The plate, its color set before each name is drawn (a style box's
+## colors are read as it draws).
+var _plate := UiTheme.box(PLATE, Color.TRANSPARENT, UiTheme.SMALL_RADIUS, 0.0)
 
 
 func _ready() -> void:
@@ -45,8 +48,9 @@ func _draw() -> void:
 		var text_size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
 		var box := (text_size + PADDING * 2.0).ceil()
 		var corner := (at - Vector2(box.x * 0.5, box.y)).floor()
-		draw_rect(Rect2(corner, box), Color(PLATE, PLATE.a * alpha))
+		_plate.bg_color = Color(PLATE, PLATE.a * alpha)
+		draw_style_box(_plate, Rect2(corner, box))
 		var baseline := corner + Vector2(PADDING.x, PADDING.y + font.get_ascent(font_size))
-		var ink := Color(UiTheme.PARCHMENT, alpha)
+		var ink := Color(UiTheme.TEXT, alpha)
 		draw_string(font, baseline.round(), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, ink)
 		_drawn = true

@@ -14,10 +14,10 @@ extends Node
 
 const SEND_INTERVAL := GameConst.TICK_DELTA
 ## The gauge (UI units), and how high over the feet it shows (local units).
-const GAUGE := Vector2(24.0, 3.0)
+const GAUGE := Vector2(24.0, 4.0)
 const OVER_HEAD := 2.3
 const COAL := Color("e8792a")
-const TRACK := Color("2a1410")
+const TRACK := UiTheme.TRACK
 
 var client: GameClient
 ## Draws the gauge (added to the UI by GameClient).
@@ -118,10 +118,7 @@ func _draw_meter() -> void:
 		meter.draw_string(font, at - Vector2(width * 0.5, 0.0), words, 0, -1, size)
 		return
 	var rect := Rect2((at - GAUGE * 0.5).floor(), GAUGE)
-	meter.draw_rect(rect.grow(1.0), UiTheme.WOOD_DARK)
-	meter.draw_rect(rect, TRACK)
-	var left := clampf(aboard.burn / Boats.COAL_SECONDS, 0.0, 1.0)
-	meter.draw_rect(Rect2(rect.position, Vector2(roundf(rect.size.x * left), rect.size.y)), COAL)
+	UiTheme.draw_gauge(meter, rect, aboard.burn / Boats.COAL_SECONDS, COAL)
 	var count := "x%d" % aboard.fuel()
 	var spot := rect.position + Vector2(rect.size.x + 4.0, rect.size.y + 2.0)
 	meter.draw_string_outline(font, spot, count, 0, -1, size, 3, TRACK)

@@ -1,7 +1,7 @@
 class_name DeathScreen
 extends Control
 ## What shows when the player passes out (their vitality ran out): the
-## world darkens, a parchment says what happened and that their things
+## world darkens, a panel says what happened and that their things
 ## lie where they fell, and a button gets them up again (at the spawn). In
 ## hardcore their adventure is over: the button lets them watch the world.
 ## Also draws the red pulse at the screen's edges when they are hurt
@@ -39,19 +39,17 @@ func _ready() -> void:
 	box.alignment = BoxContainer.ALIGNMENT_CENTER
 	_panel.add_child(box)
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_title.add_theme_font_size_override("font_size", 12)
-	_title.add_theme_color_override("font_color", UiTheme.WOOD_DARK)
+	_title.theme_type_variation = "TitleLabel"
 	box.add_child(_title)
 	_cause.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_cause.add_theme_color_override("font_color", UiTheme.INK)
 	box.add_child(_cause)
 	_things.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_things.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_things.custom_minimum_size.x = 150.0
-	_things.add_theme_font_size_override("font_size", 7)
-	_things.add_theme_color_override("font_color", UiTheme.WOOD)
+	_things.theme_type_variation = "HintLabel"
 	box.add_child(_things)
 	_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_button.theme_type_variation = "AccentButton"
 	_button.pressed.connect(func() -> void: respawn_requested.emit())
 	box.add_child(_button)
 	_panel.visible = false

@@ -16,6 +16,7 @@ var _left := 0.0
 func _ready() -> void:
 	# It also fades over the pause menu (the world saves when pausing).
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	theme_type_variation = "HudPanel"
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_label.text = "HUD_SAVED"
 	add_child(_label)

@@ -356,7 +356,7 @@ func _draw_shield() -> void:
 	var text := str(points)
 	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 6).x
 	var baseline := Vector2(floorf((_shield.size.x - width) * 0.5), 9.0 + font.get_ascent(6))
-	_shield.draw_string(font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, UiTheme.WOOD)
+	_shield.draw_string(font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, UiTheme.MUTED)
 
 
 ## The crafting grid, an arrow and what the grid makes.
@@ -364,7 +364,7 @@ func _crafting() -> Control:
 	var area := VBoxContainer.new()
 	area.add_theme_constant_override("separation", 2)
 	_craft_label.text = "CRAFTING_TITLE"
-	_craft_label.add_theme_color_override("font_color", UiTheme.WOOD)
+	_craft_label.add_theme_color_override("font_color", UiTheme.MUTED)
 	area.add_child(_craft_label)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 3)
@@ -421,7 +421,7 @@ func _furnace() -> Control:
 	row.add_child(output)
 	_furnace_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_furnace_hint.custom_minimum_size.x = 76.0
-	_furnace_hint.add_theme_color_override("font_color", UiTheme.WOOD)
+	_furnace_hint.add_theme_color_override("font_color", UiTheme.MUTED)
 	_furnace_hint.add_theme_font_size_override("font_size", 6)
 	area.add_child(_furnace_hint)
 	return area
@@ -454,7 +454,7 @@ func _factory() -> Control:
 	_factory_flame.custom_minimum_size = Vector2(ItemSlot.SIZE, FLAME_ROWS.size() + 2.0)
 	_factory_flame.draw.connect(_draw_flame.bind(_factory_flame))
 	fire.add_child(_factory_flame)
-	_burn_rate.add_theme_color_override("font_color", UiTheme.WOOD)
+	_burn_rate.add_theme_color_override("font_color", UiTheme.MUTED)
 	_burn_rate.add_theme_font_size_override("font_size", 6)
 	fire.add_child(_burn_rate)
 	var hint := Label.new()
@@ -462,7 +462,7 @@ func _factory() -> Control:
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.custom_minimum_size.x = 84.0
-	hint.add_theme_color_override("font_color", UiTheme.WOOD)
+	hint.add_theme_color_override("font_color", UiTheme.MUTED)
 	hint.add_theme_font_size_override("font_size", 6)
 	area.add_child(hint)
 	return area
@@ -506,7 +506,7 @@ func _draw_flame(on: Control = null) -> void:
 	for row in FLAME_ROWS.size():
 		var width := float(FLAME_ROWS[row])
 		var rect := Rect2(floorf((on.size.x - width) * 0.5), bottom - row - 1.0, width, 1.0)
-		var color := Color(UiTheme.WOOD, 0.3)
+		var color := UiTheme.LINE_STRONG
 		if row < lit_rows:
 			color = FLAME_COLORS[mini(row * FLAME_COLORS.size() / FLAME_ROWS.size(), 2)]
 		on.draw_rect(rect, color)
@@ -515,9 +515,7 @@ func _draw_flame(on: Control = null) -> void:
 ## Under a factory furnace's lane: a bar filling up as it cooks.
 func _draw_lane(bar: Control, lane: int) -> void:
 	var progress := furnace.lane_progress[lane] if furnace != null else 0.0
-	var width := bar.size.x - 2.0
-	bar.draw_rect(Rect2(1.0, 1.0, width, 3.0), Color(UiTheme.WOOD, 0.3))
-	bar.draw_rect(Rect2(1.0, 1.0, floorf(width * progress), 3.0), UiTheme.WOOD)
+	UiTheme.draw_gauge(bar, Rect2(1.0, 1.0, bar.size.x - 2.0, 3.0), progress, UiTheme.ACCENT)
 
 
 ## The arrow from the furnace to what it made, filling up as it cooks.
@@ -529,19 +527,19 @@ func _draw_cooking() -> void:
 	for x in int(length):
 		var half := 1.0 if x < length - head else ceilf((length - x) * 5.0 / head)
 		var filled := x < progress * length
-		var color := UiTheme.WOOD if filled else Color(UiTheme.WOOD, 0.3)
+		var color := UiTheme.ACCENT if filled else UiTheme.LINE_STRONG
 		_cooking.draw_rect(Rect2(1.0 + x, middle - half, 1.0, half * 2.0), color)
 
 
 ## An arrow pointing from the grid to what it makes.
 func _draw_arrow(arrow: Control) -> void:
 	var middle := floorf(arrow.size.y * 0.5)
-	arrow.draw_rect(Rect2(1.0, middle - 1.0, 6.0, 2.0), UiTheme.WOOD)
+	arrow.draw_rect(Rect2(1.0, middle - 1.0, 6.0, 2.0), UiTheme.MUTED)
 	arrow.draw_colored_polygon(
 		PackedVector2Array(
 			[Vector2(6.0, middle - 4.0), Vector2(11.0, middle), Vector2(6.0, middle + 4.0)]
 		),
-		UiTheme.WOOD
+		UiTheme.MUTED
 	)
 
 
@@ -757,7 +755,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 0.35))
+	draw_rect(Rect2(Vector2.ZERO, size), UiTheme.SHADE)
 
 
 func _on_slot_entered(slot: ItemSlot) -> void:

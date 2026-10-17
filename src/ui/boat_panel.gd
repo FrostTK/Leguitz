@@ -78,7 +78,7 @@ func _ready() -> void:
 		open.pressed.connect(func() -> void: acted.emit(Boats.Act.OPEN_CHEST, place))
 		_deck.add_child(open)
 		_opens.append(open)
-	_info.add_theme_color_override("font_color", UiTheme.WOOD)
+	_info.add_theme_color_override("font_color", UiTheme.MUTED)
 	_info.add_theme_font_size_override("font_size", 6)
 	_info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(_info)
@@ -196,7 +196,7 @@ func _describe(boat: Boat) -> String:
 func _label(key: String) -> Label:
 	var label := Label.new()
 	label.text = key
-	label.add_theme_color_override("font_color", UiTheme.WOOD)
+	label.add_theme_color_override("font_color", UiTheme.MUTED)
 	label.add_theme_font_size_override("font_size", 6)
 	label.custom_minimum_size.x = 34.0
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER

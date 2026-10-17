@@ -63,10 +63,7 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	visible = false
 
-	var dim := ColorRect.new()
-	dim.color = Color(0.05, 0.03, 0.08, 0.55)
-	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(dim)
+	add_child(UiTheme.shade())
 
 	var center := CenterContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -83,10 +80,11 @@ func _ready() -> void:
 	var title := Label.new()
 	title.text = "MENU_PAUSE_TITLE"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 12)
+	title.theme_type_variation = "TitleLabel"
 	box.add_child(title)
 
 	_resume_button.text = "MENU_RESUME"
+	_resume_button.theme_type_variation = "AccentButton"
 	_resume_button.pressed.connect(resume_requested.emit)
 	box.add_child(_resume_button)
 
@@ -119,7 +117,7 @@ func _ready() -> void:
 	_world_rows.append(_row("SETTING_SEASONS", _seasons))
 
 	_pace_info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_pace_info.add_theme_font_size_override("font_size", 6)
+	_pace_info.theme_type_variation = "HintLabel"
 	_world_rows.append(_pace_info)
 	for row in _world_rows:
 		box.add_child(row)
@@ -282,9 +280,8 @@ func _closest_frozen_choice(time_of_day: float) -> int:
 
 
 func _section(key: String) -> Label:
-	var label := Label.new()
-	label.text = key
-	label.add_theme_color_override("font_color", UiTheme.WOOD)
+	var label := UiTheme.label(key, "SectionLabel")
+	label.uppercase = true
 	return label
 
 

@@ -4,12 +4,15 @@ extends VBoxContainer
 ## highlighted, and the player's book in a 10th slot set apart (when
 ## shown: the 9 slots stay centered); the name of what is in hand shows
 ## above for a moment when it changes, and so do short messages
-## (announce). The player's vitality shows over the slots (vitals).
+## (announce). The player's vitality shows over the slots (vitals). The
+## slots sit on a dark rounded panel, the book's on one of its own.
 
 const NAME_SECONDS := 1.6
 const ANNOUNCE_SECONDS := 2.5
 ## Between the 9th slot and the book.
-const BOOK_GAP := 4.0
+const BOOK_GAP := 6.0
+## How far the panels reach around the slots.
+const PANEL_REACH := 2.0
 
 var inventory: Inventory
 var library: ItemLibrary
@@ -22,6 +25,7 @@ var book_shown := false
 var book_selected := false
 
 var _slots: Array[ItemSlot] = []
+var _row := HBoxContainer.new()
 var _book := ItemSlot.new()
 ## The book's slot and the spaces around the row keeping it centered.
 var _book_parts: Array[Control] = []
@@ -44,9 +48,10 @@ func _ready() -> void:
 	add_child(_name)
 	add_child(effects)
 	add_child(vitals)
-	var row := HBoxContainer.new()
+	var row := _row
 	row.add_theme_constant_override("separation", 1)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.draw.connect(_draw_panels)
 	add_child(row)
 	# As wide on the left as the gap and the book on the right.
 	var balance := Control.new()
@@ -79,6 +84,7 @@ func _process(delta: float) -> void:
 	if _book.visible != book_shown:
 		for part in _book_parts:
 			part.visible = book_shown
+		_row.queue_redraw()
 	var selected := inventory.selected if not book_selected else Inventory.HOTBAR
 	for i in Inventory.HOTBAR:
 		_slots[i].show_stack(
@@ -104,3 +110,12 @@ func announce(text: String) -> void:
 	_name.text = text
 	_name_left = ANNOUNCE_SECONDS
 	_announce_left = ANNOUNCE_SECONDS
+
+
+## The panels behind the slots (drawn by the row, under them).
+func _draw_panels() -> void:
+	var first := _slots[0].get_rect()
+	var slots := Rect2(first.position, _slots[-1].get_rect().end - first.position)
+	UiTheme.draw_box(_row, slots.grow(PANEL_REACH), UiTheme.PANEL)
+	if _book.visible:
+		UiTheme.draw_box(_row, _book.get_rect().grow(PANEL_REACH), UiTheme.PANEL)

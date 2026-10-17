@@ -1,7 +1,7 @@
 class_name VitalsBar
 extends Control
 ## The player's vitality over the hotbar's left half (a life crystal and a
-## gauge framed in wood, a notch every two points; what a hurt took shows
+## gauge in a dark rounded track, a notch every two points; what a hurt took shows
 ## pale for a moment and melts away; nearly empty, it throbs) and their
 ## satiety over the right half (a loaf and an amber gauge, throbbing when
 ## hungry); over it, while the eye is under water, the air left (a bubble
@@ -18,7 +18,6 @@ const CRYSTAL := ["#5e0e1a", "#a01e2c", "#d8404a", "#ff9a8a"]
 const FILL := ["#7c1622", "#b82634", "#e2524e"]
 const FOOD_FILL := ["#9a5512", "#d0861e", "#f2b84a"]
 const LOAF := ["#5c3412", "#a8641e", "#d89a40", "#f2c878"]
-const TRACK := Color("2a1410")
 const AIR_FILL := Color("bfe8f6")
 const AIR_DARK := Color("5aa8cc")
 const BUBBLE := ["#2a6a8c", "#8fd0ec", "#ecfbff"]
@@ -128,8 +127,7 @@ func _draw() -> void:
 
 ## The protection worn: a slim steel gauge, a notch every two points.
 func _draw_defense(bar: Rect2) -> void:
-	draw_rect(bar.grow(1.0), UiTheme.WOOD_DARK)
-	draw_rect(bar, TRACK)
+	_track(bar.grow(1.0))
 	var per_point := bar.size.x / MAX_DEFENSE
 	var filled := roundf(per_point * mini(defense, MAX_DEFENSE))
 	draw_rect(Rect2(bar.position, Vector2(filled, 2.0)), STEEL_FILL)
@@ -140,8 +138,7 @@ func _draw_defense(bar: Rect2) -> void:
 
 
 func _draw_health(bar: Rect2) -> void:
-	draw_rect(bar.grow(1.0), UiTheme.WOOD_DARK)
-	draw_rect(bar, TRACK)
+	_track(bar)
 	var inner := bar.grow(-1.0)
 	var per_point := inner.size.x / Vitals.MAX_HEALTH
 	var filled := roundf(per_point * health)
@@ -163,8 +160,7 @@ func _draw_health(bar: Rect2) -> void:
 
 ## The satiety gauge: amber, a notch every two points, throbbing hungry.
 func _draw_food(bar: Rect2) -> void:
-	draw_rect(bar.grow(1.0), UiTheme.WOOD_DARK)
-	draw_rect(bar, TRACK)
+	_track(bar)
 	var inner := bar.grow(-1.0)
 	var per_point := inner.size.x / Vitals.MAX_FOOD
 	var filled := roundf(per_point * food)
@@ -182,13 +178,17 @@ func _draw_food(bar: Rect2) -> void:
 
 ## The air left: a slim pale blue gauge, blinking when nearly out.
 func _draw_air(bar: Rect2) -> void:
-	draw_rect(bar.grow(1.0), UiTheme.WOOD_DARK)
-	draw_rect(bar, TRACK)
+	_track(bar.grow(1.0))
 	var filled := roundf(bar.size.x * air / Vitals.MAX_AIR)
 	if air < Vitals.MAX_AIR * 0.25 and fmod(_time, 0.5) < 0.25:
 		return
 	draw_rect(Rect2(bar.position, Vector2(filled, 2.0)), AIR_FILL)
 	draw_rect(Rect2(bar.position + Vector2(0.0, 2.0), Vector2(filled, 1.0)), AIR_DARK)
+
+
+## A gauge's dark rounded track.
+func _track(rect: Rect2) -> void:
+	UiTheme.draw_box(self, rect, UiTheme.TRACK, UiTheme.LINE_STRONG, 2)
 
 
 ## A bubble, lit from the top left.

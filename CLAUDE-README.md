@@ -159,7 +159,8 @@ Godot **4.7.2** (GDScript), rendu Forward+. 434 tests unitaires, lint propre.
 | M.1 Réseau et serveur dédié | Le jeu sait maintenant jouer **en réseau** (ENet, UDP) : un **serveur dédié**, le jeu lancé sans fenêtre (`--server`, ou la version « serveur » exportée pour Linux), avec ses **réglages** dans `server.cfg` (écrit la première fois avec ses explications : IP, port 27420, monde, graine, mode de jeu, joueurs au plus, mot de passe, distance de vue, langue) que les **options de lancement** remplacent (`--port=`...), son dossier de données au choix (`--data=`), une **console** (stop, save, say, list, help et les commandes d'administrateur du chat), une ligne « Leguitz server ready » quand il écoute, l'**arrêt propre** (la commande `stop`, ou un fichier `stop` posé dans son dossier) qui sauvegarde, et la sauvegarde toutes les deux minutes. On le **rejoint** avec `--connect=IP:port --name=Pseudo --password=...` ; un écran dit qu'on se connecte, qu'on est **refusé** (mot de passe, serveur plein, pseudo pris ou invalide, version différente), que la connexion est **perdue** ou le serveur **injoignable**. Le chat annonce les arrivées et les départs ; un joueur qui part est sauvegardé ; seuls les administrateurs changent l'heure, les saisons et le mode de jeu d'un serveur. La compilation automatique produit `LeguitzServer-linux` | `e5936da` |
 | M.2 Rejoindre et voir les autres | On **voit les autres joueurs** : leur corps en voxels, **leur nom au-dessus de la tête** (il s'efface au loin), ce qu'ils **tiennent en main** et l'**armure** qu'ils portent, leurs **gestes** (marcher, sauter, nager, piocher, frapper, manger, bander l'arc, lancer la ligne, ramer, s'asseoir, dormir ou être évanoui), leur **lanterne** la nuit ; leurs **mouvements sont lissés** (glissés d'une position à l'autre même quand le réseau les livre par paquets ; un saut de téléportation n'est pas glissé) et ils **apparaissent et disparaissent en fondu**. **P maintenu** : la **liste des joueurs** (le serveur, les noms, les admins, le ping de chacun). Le menu pause a une rubrique **Multijoueur** : « Rejoindre un serveur… » ouvre un **écran pour rejoindre** (adresse IP ou nom de domaine, port, pseudo, mot de passe ; les **serveurs rejoints récemment** se remplissent d'un clic, × les oublie ; jamais le mot de passe gardé) ; sur un serveur, « Quitter le serveur » ramène au monde solo, **sans relancer le jeu**. Connexion perdue ou refusée : **Réessayer**, **Autre serveur…**, **Jouer en solo**, Quitter. Un joueur dont le jeu s'est fermé brutalement **revient tout de suite** depuis la même machine (son ancienne connexion lui cède la place) ; un joueur silencieux est lâché en 10 s. Sur un serveur, seuls les admins voient les réglages du monde dans le menu pause | `20e73b7` |
 | M.3 Un serveur qui ne fait confiance à personne | Un serveur dédié **vérifie ce que disent les joueurs** (une partie solo fait confiance à son jeu). **Déplacements** : pas plus vite que la course (avec un plat SWIFT, 25 % de marge, une seconde d'élan au plus), pas à travers les murs ni les planchers, pas plus haut qu'un saut, pas en suspens en l'air ; sinon le joueur est **remis en place** (les déplacements envoyés avant la correction sont ignorés, et une correction ne redonne pas d'élan). Les **chutes** sont mesurées par le serveur (un jeu qui tait sa chute se blesse quand même). **Minage** : le jeu dit quand il commence un bloc, le serveur refuse qu'il casse plus vite que l'outil le permet. **Sièges et lits** : un joueur par siège et par lit (« Quelqu'un est déjà assis là »), les autres voient le serveur dire qui est assis ou couché. **Messages** : les messages incohérents sont ignorés (dont une case lointaine qui ferait générer des chunks), le chat trop rapide est freiné (« Tu parles trop vite »), les rafales sont coupées et un jeu qui inonde le serveur est **exclu** (« Exclu du serveur »). La **console du serveur** signale chaque triche (avec combien de fois). Essayé avec cinq joueurs honnêtes (course, sauts, nage, minage, forêts et rivières) sans fausse alerte | `9f4c03b` |
-| M.4 Comptes et administration | Sur un serveur dédié, **chaque pseudo appartient à son premier joueur** : il choisit un **mot de passe** la première fois (le jeu n'envoie qu'une empreinte, jamais le mot de passe ; le serveur garde une empreinte salée), puis seul ce mot de passe joue sous ce pseudo ; 5 essais faux en 10 minutes verrouillent le pseudo 10 minutes. L'écran « Rejoindre » a « Ton mot de passe » et « **Se souvenir de moi** » ; le menu pause, « **Changer mon mot de passe** ». **Rôles** : visiteur (se promène, ouvre portes et barrières, s'assoit, ne change rien d'autre), joueur, modérateur (expulse, voyage), admin (tout) ; la liste des joueurs (P) les montre. Commandes : **`/expulse`**, **`/bannis`** (un temps ou pour toujours, une raison, l'adresse IP si demandé ; `/bannis liste`), **`/gracie`**, **`/listeblanche`**, **`/role`**, **`/compte oublie`**, **`/sauvegarde`** ; un refus ou une exclusion dit pourquoi et pour combien de temps. **Sauvegardes de secours** : un zip du monde au démarrage, toutes les 6 heures et à la demande, les 10 plus récentes gardées ; la console sait les lister (`backups`) et en **remettre une** (`restore 2` : les joueurs partent, le monde actuel est d'abord sauvegardé, le serveur s'arrête). Nouveaux réglages de `server.cfg` : `accounts`, `default_role`, `backup_hours`, `backup_on_start`, `backups_kept` | « Accounts and administration » |
+| M.4 Comptes et administration | Sur un serveur dédié, **chaque pseudo appartient à son premier joueur** : il choisit un **mot de passe** la première fois (le jeu n'envoie qu'une empreinte, jamais le mot de passe ; le serveur garde une empreinte salée), puis seul ce mot de passe joue sous ce pseudo ; 5 essais faux en 10 minutes verrouillent le pseudo 10 minutes. L'écran « Rejoindre » a « Ton mot de passe » et « **Se souvenir de moi** » ; le menu pause, « **Changer mon mot de passe** ». **Rôles** : visiteur (se promène, ouvre portes et barrières, s'assoit, ne change rien d'autre), joueur, modérateur (expulse, voyage), admin (tout) ; la liste des joueurs (P) les montre. Commandes : **`/expulse`**, **`/bannis`** (un temps ou pour toujours, une raison, l'adresse IP si demandé ; `/bannis liste`), **`/gracie`**, **`/listeblanche`**, **`/role`**, **`/compte oublie`**, **`/sauvegarde`** ; un refus ou une exclusion dit pourquoi et pour combien de temps. **Sauvegardes de secours** : un zip du monde au démarrage, toutes les 6 heures et à la demande, les 10 plus récentes gardées ; la console sait les lister (`backups`) et en **remettre une** (`restore 2` : les joueurs partent, le monde actuel est d'abord sauvegardé, le serveur s'arrête). Nouveaux réglages de `server.cfg` : `accounts`, `default_role`, `backup_hours`, `backup_on_start`, `backups_kept` | `5d66e0b` |
+| I.1 Thème « Ardoise » | Toute l'interface passe au **nouveau style**, choisi par le propriétaire parmi trois maquettes : des **panneaux sombres** légèrement translucides aux **coins arrondis**, un filet clair, des **cases plates arrondies** (plus claires sous la souris, un **anneau ambre** autour de celle qu'on a en main), une seule couleur d'accent, l'**ambre**, pour l'action principale (Reprendre, Rejoindre, Se relever…), le texte blanc cassé et un gris pour le secondaire. Les **listes déroulantes**, **cases à cocher** et interrupteurs sont dessinés nets à toutes les tailles d'interface ; les titres de section du menu pause en petites capitales grises ; des **barres de défilement** fines. La **barre d'objets** est posée sur un panneau arrondi, les **jauges** de vitalité et de satiété dans des rails arrondis (le cristal et le pain restent), les **effets** en pastilles, l'**horloge** dans une pastille ; le **chat**, le catalogue créatif, l'écran de perte de connaissance, les noms au-dessus des têtes, la liste des joueurs, les fours (voies et flamme), l'arc et le bateau (jauges) suivent. Le **livre du joueur** garde son papier (c'est un objet du monde). Les dispositions ne changent pas encore (étapes 3 à 5) | « Ardoise theme » |
 
 **Pas encore fait** (prévu) : nouveaux matériaux et décoration (phase 8),
 structures, menus de départ, sons, mode Arcade (en attente), mobile.
@@ -286,15 +287,16 @@ xvfb-run -a -s "-screen 0 960x540x24" godot --path . --audio-driver Dummy --reso
 
 ---
 
-## 5. Prochaine étape au « go » : Refonte de l'interface, étape 1 (thème et briques communes)
+## 5. Prochaine étape au « go » : Refonte de l'interface, étape 2 (affichage tête haute)
 
 **Décision du propriétaire (octobre 2026)** : avant de continuer le multijoueur, **refondre le
 style de toute l'interface** (inventaires, menus, écrans des blocs, affichage tête haute) pour
 quelque chose de plus moderne et sobre, propre au jeu : le style **« Ardoise »**, la police
 d'aujourd'hui, la nouvelle disposition de l'inventaire (phase « Refonte de l'interface »,
-section 6). Au prochain « go », son **étape 1** (le thème et les briques communes : panneaux,
-boutons, cases, info-bulles, jauges). Le multijoueur reprendra ensuite à son étape 5
-(hébergement).
+section 6). Son **étape 1** (le thème et les briques communes ; chaque écran passé au nouveau
+style) est faite ; au prochain « go », l'**étape 2** (l'affichage tête haute : la barre d'objets,
+des jauges compactes, les effets, l'horloge, les annonces, le chat, le viseur, la liste des
+joueurs, les noms, l'écran F3). Le multijoueur reprendra ensuite à son étape 5 (hébergement).
 
 **Décision du propriétaire (octobre 2026)** : on passe tout de suite au **multijoueur et aux
 serveurs dédiés** (phase « Multijoueur et serveurs dédiés », section 6) ; la **phase 8** est en
@@ -838,11 +840,27 @@ jeu**. Trois directions lui ont été montrées en maquettes ; il a choisi :
   une ligne de détails sur l'objet survolé en bas (nom, usure, à quoi il sert).
 
 Découpage (chaque étape montrée au propriétaire avant la suivante) :
-1. **Thème et briques communes** : UiTheme refait (panneaux, boutons, listes déroulantes, cases à
+1. ✅ **Thème et briques communes** : UiTheme refait (panneaux, boutons, listes déroulantes, cases à
    cocher, champs, barres de défilement, onglets, info-bulles), ItemSlot redessiné (tuiles plates
    arrondies, anneau de sélection ambre, nombre et barre d'usure), les briques réutilisées (jauge,
    pastille, titre de section, en-tête de carte), toutes les couleurs à un seul endroit ; chaque
    écran actuel passe au nouveau style d'un coup (premier passage, avant les dispositions).
+   **Fait** : les couleurs des maquettes (panneau #181B20 à 92 %, cases #353A42, plus claires que
+   dans la maquette pour que le charbon et la pierre se voient, accent #E0A84E, texte #E8E4DC, gris
+   #9AA0A6, rouge #E0645A, vert #7BC96F) ; boutons, listes déroulantes (flèche), cases à cocher,
+   boutons radio et interrupteurs dessinés en SVG (nets à toutes les tailles) ; un bouton
+   principal ambre par écran (Reprendre, Rejoindre, Changer, Se relever, Réessayer) ; titres de
+   section en petites capitales grises ; filets posés sur le fond (sinon le monde se voyait au
+   travers et des points apparaissaient aux coins) ; barres de défilement fines ; la barre
+   d'objets sur un panneau arrondi (le livre sur le sien), jauges dans des rails arrondis, effets
+   en pastilles arrondies, horloge et « Sauvegardé » en pastilles, chat (fond en panneau, champ
+   souligné d'ambre, couleurs du thème), noms au-dessus des têtes sur des plaques arrondies,
+   infobulle du « ! » d'Extrême sombre bordée de rouge. Le livre garde son papier et son bois.
+   **Pas fait (à proposer)** : les icônes très sombres (charbon, pierre, ardoise) restent peu
+   contrastées sur les cases (un léger halo derrière les icônes sombres ?) ; une petite animation
+   à l'ouverture des écrans (fondu, glissement) ; des sons d'interface (clic, survol) avec la
+   phase 9 ; un thème clair au choix pour qui le préfère ; des tailles de texte au choix
+   (accessibilité).
 2. **Affichage tête haute** : la barre d'objets (case choisie soulignée), des jauges compactes
    au-dessus (vitalité, satiété ; armure et souffle seulement quand ils comptent), les effets en
    pastilles, l'horloge et la saison dans une pastille, les annonces et le chat en bulles légères,
@@ -989,9 +1007,11 @@ serveur intégré). Découpage :
 
 ## 7. Points en suspens et retours attendus
 
-- **Taille des fichiers** : `src/client/interaction/block_interaction.gd` fait 983 lignes (limite
+- **Taille des fichiers** : `src/client/interaction/block_interaction.gd` fait 987 lignes (limite
   1000) : y sortir du code (par exemple ce que fait le clic droit sur les animaux, les machines,
-  la récolte) avant d'y ajouter (985 après l'étape M.3) ; `src/client/game_client.gd` en fait 940,
+  la récolte) avant d'y ajouter ; `src/client/game_client.gd` en fait 945,
+  `src/ui/inventory_screen.gd` 785 (l'étape 3 de la refonte de l'interface le refait : le
+  découper alors, par exemple les fours et les coffres à part),
   `src/sim/game_server.gd` 988 (y sortir du code avant d'y ajouter : le multijoueur côté client est
   dans `src/client/peers/online.gd`, les vérifications du serveur dans `src/sim/guard/`) ; `object_shapes.gd` (922) et `mining.gd` (902) ont été allégés à l'étape 8.8 (les blocs
   d'un objet tourné se construisent par leur nom, les temps et outils vont par sorte), les

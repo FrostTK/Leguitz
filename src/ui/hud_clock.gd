@@ -9,6 +9,7 @@ var _label := Label.new()
 
 
 func _ready() -> void:
+	theme_type_variation = "HudPanel"
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_label)
 	set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, 4)

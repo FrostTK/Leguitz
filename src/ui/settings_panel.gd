@@ -250,9 +250,8 @@ func _times_text(value: float) -> String:
 
 
 func _section(key: String) -> Label:
-	var label := Label.new()
-	label.text = key
-	label.add_theme_color_override("font_color", UiTheme.WOOD)
+	var label := UiTheme.label(key, "SectionLabel")
+	label.uppercase = true
 	return label
 
 

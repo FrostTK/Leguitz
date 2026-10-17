@@ -43,6 +43,11 @@ const GOLD := Color("d8a640")
 const PAPER := Color("f4e4c0")
 const PAPER_SHADE := Color("dcc79d")
 const KEY_FILL := Color("fbf1da")
+## The book's own ink and wood (it stays a book, whatever the interface).
+const INK := Color("4a2410")
+const WOOD := Color("8a4b1f")
+const WOOD_DARK := Color("5b2c0f")
+const BUTTON := Color("e9b86a")
 
 var library: ItemLibrary
 
@@ -324,7 +329,7 @@ func _draw_tabs(font: Font, book: Rect2) -> void:
 			HORIZONTAL_ALIGNMENT_CENTER,
 			reach,
 			SMALL_SIZE,
-			UiTheme.INK
+			INK
 		)
 
 
@@ -349,7 +354,7 @@ func _draw_page(font: Font, index: int, side: int) -> void:
 			HORIZONTAL_ALIGNMENT_CENTER,
 			page.size.x,
 			SMALL_SIZE,
-			UiTheme.WOOD
+			WOOD
 		)
 
 
@@ -363,7 +368,7 @@ func _draw_title_page(font: Font, area: Rect2) -> void:
 		HORIZONTAL_ALIGNMENT_CENTER,
 		area.size.x,
 		size_big,
-		UiTheme.INK
+		INK
 	)
 	y += font.get_height(size_big) + 8.0
 	var icon := library.icon(Items.Id.GUIDE_BOOK) if library != null else null
@@ -380,7 +385,7 @@ func _draw_title_page(font: Font, area: Rect2) -> void:
 		area.size.x,
 		BODY_SIZE,
 		-1,
-		UiTheme.INK
+		INK
 	)
 
 
@@ -399,7 +404,7 @@ func _draw_contents(font: Font, area: Rect2) -> void:
 	for chapter in count:
 		var rect := Rect2(area.position.x - 2.0, y - 1.0, area.size.x + 4.0, line + 2.0)
 		if _hit(rect, "chapter", chapter):
-			draw_rect(rect, Color(UiTheme.BUTTON, 0.6))
+			draw_rect(rect, Color(BUTTON, 0.6))
 		var baseline := y + font.get_ascent(size)
 		var chapter_name := tr(GuideBook.CHAPTERS[chapter])
 		var number := str(_starts[chapter] + 1) if chapter < _starts.size() else ""
@@ -410,7 +415,7 @@ func _draw_contents(font: Font, area: Rect2) -> void:
 			HORIZONTAL_ALIGNMENT_LEFT,
 			-1,
 			size,
-			UiTheme.INK
+			INK
 		)
 		draw_string(
 			font,
@@ -419,14 +424,14 @@ func _draw_contents(font: Font, area: Rect2) -> void:
 			HORIZONTAL_ALIGNMENT_RIGHT,
 			area.size.x,
 			size,
-			UiTheme.WOOD
+			WOOD
 		)
 		# Dots from the name to its page.
 		var from := area.position.x + _string_width(font, chapter_name, size) + 3.0
 		var to := area.end.x - _string_width(font, number, size) - 3.0
 		var x := ceilf(from)
 		while x < to:
-			draw_rect(Rect2(x, baseline - 1.0, 1.0, 1.0), UiTheme.WOOD)
+			draw_rect(Rect2(x, baseline - 1.0, 1.0, 1.0), WOOD)
 			x += 3.0
 		y += step
 
@@ -474,30 +479,28 @@ func _draw_entry(font: Font, entry: Dictionary, at: Vector2, width: float) -> vo
 				HORIZONTAL_ALIGNMENT_LEFT,
 				width,
 				TITLE_SIZE,
-				UiTheme.INK
+				INK
 			)
-			draw_rect(
-				Rect2(at.x, at.y + font.get_height(TITLE_SIZE) + 1.0, width, 1.0), UiTheme.WOOD
-			)
+			draw_rect(Rect2(at.x, at.y + font.get_height(TITLE_SIZE) + 1.0, width, 1.0), WOOD)
 		GuideBook.Kind.HEADING:
-			_paragraph(font, text, at + Vector2(0.0, 2.0), width, HEADING_SIZE, UiTheme.WOOD)
+			_paragraph(font, text, at + Vector2(0.0, 2.0), width, HEADING_SIZE, WOOD)
 		GuideBook.Kind.TEXT:
-			_paragraph(font, text, at, width, BODY_SIZE, UiTheme.INK)
+			_paragraph(font, text, at, width, BODY_SIZE, INK)
 		GuideBook.Kind.TIP:
 			var dot := Vector2(at.x + 1.0, at.y + floorf(font.get_ascent(BODY_SIZE) * 0.6))
-			draw_rect(Rect2(dot, Vector2(2.0, 2.0)), UiTheme.WOOD)
-			_paragraph(font, text, at + Vector2(6.0, 0.0), width - 6.0, BODY_SIZE, UiTheme.INK)
+			draw_rect(Rect2(dot, Vector2(2.0, 2.0)), WOOD)
+			_paragraph(font, text, at + Vector2(6.0, 0.0), width - 6.0, BODY_SIZE, INK)
 		GuideBook.Kind.KEYS:
 			var keys: PackedStringArray = entry["keys"]
 			var keys_width := _keys_width(font, keys)
 			var label_height := font.get_height(BODY_SIZE)
-			_paragraph(font, text, at, width - keys_width - 4.0, BODY_SIZE, UiTheme.INK)
+			_paragraph(font, text, at, width - keys_width - 4.0, BODY_SIZE, INK)
 			var key_top := at.y + floorf((label_height - _key_height(font)) * 0.5)
 			_draw_keys(font, keys, Vector2(at.x + width - keys_width, key_top))
 		GuideBook.Kind.COMBO:
-			_paragraph(font, text, at, width, BODY_SIZE, UiTheme.INK)
+			_paragraph(font, text, at, width, BODY_SIZE, INK)
 			var below := Vector2(6.0, _text_height(font, text, width, BODY_SIZE))
-			_paragraph(font, entry["how"], at + below, width - 6.0, SMALL_SIZE, UiTheme.WOOD)
+			_paragraph(font, entry["how"], at + below, width - 6.0, SMALL_SIZE, WOOD)
 		GuideBook.Kind.ICON:
 			var icon := library.icon(entry["item"]) if library != null else null
 			if icon != null:
@@ -506,7 +509,7 @@ func _draw_entry(font: Font, entry: Dictionary, at: Vector2, width: float) -> vo
 			var text_width := width - ICON - 4.0
 			var text_height := _text_height(font, text, text_width, BODY_SIZE)
 			var beside := Vector2(ICON + 4.0, maxf(0.0, floorf((ICON - text_height) * 0.5)))
-			_paragraph(font, text, at + beside, text_width, BODY_SIZE, UiTheme.INK)
+			_paragraph(font, text, at + beside, text_width, BODY_SIZE, INK)
 		GuideBook.Kind.RECIPE:
 			_draw_recipe(font, entry, at, width)
 
@@ -525,7 +528,7 @@ func _draw_recipe(font: Font, entry: Dictionary, at: Vector2, width: float) -> v
 			_draw_cell(cell, _item_of(ingredient, tick))
 	var middle := at.y + floorf(grid.y * RECIPE_CELL * 0.5)
 	var arrow_x := at.x + grid.x * RECIPE_CELL + 2.0
-	draw_rect(Rect2(arrow_x, middle - 1.0, 4.0, 2.0), UiTheme.WOOD)
+	draw_rect(Rect2(arrow_x, middle - 1.0, 4.0, 2.0), WOOD)
 	draw_colored_polygon(
 		PackedVector2Array(
 			[
@@ -534,7 +537,7 @@ func _draw_recipe(font: Font, entry: Dictionary, at: Vector2, width: float) -> v
 				Vector2(arrow_x + 4.0, middle + 3.0)
 			]
 		),
-		UiTheme.WOOD
+		WOOD
 	)
 	var result: Array = recipe["result"]
 	var result_at := Vector2(arrow_x + 9.0, middle - floorf(RECIPE_CELL * 0.5))
@@ -543,7 +546,7 @@ func _draw_recipe(font: Font, entry: Dictionary, at: Vector2, width: float) -> v
 	var text: String = entry["text"]
 	var text_width := at.x + width - text_x
 	var text_top := middle - floorf(_text_height(font, text, text_width, BODY_SIZE) * 0.5)
-	_paragraph(font, text, Vector2(text_x, text_top), text_width, BODY_SIZE, UiTheme.INK)
+	_paragraph(font, text, Vector2(text_x, text_top), text_width, BODY_SIZE, INK)
 
 
 ## A cell of a recipe: a frame and the item's icon.
@@ -626,7 +629,7 @@ func _draw_keys(font: Font, keys: PackedStringArray, at: Vector2) -> void:
 		draw_rect(
 			Rect2(rect.position.x, rect.end.y - 1.0, rect.size.x, 1.0), PAPER_SHADE.darkened(0.2)
 		)
-		draw_rect(rect, UiTheme.WOOD_DARK, false, 1.0)
+		draw_rect(rect, WOOD_DARK, false, 1.0)
 		var baseline := at.y + 1.5 + font.get_ascent(SMALL_SIZE)
 		draw_string(
 			font,
@@ -635,7 +638,7 @@ func _draw_keys(font: Font, keys: PackedStringArray, at: Vector2) -> void:
 			HORIZONTAL_ALIGNMENT_LEFT,
 			-1,
 			SMALL_SIZE,
-			UiTheme.INK
+			INK
 		)
 		x += rect.size.x + 2.0
 
@@ -649,9 +652,9 @@ func _draw_arrows() -> void:
 		var page := _page_rect(side)
 		var x := page.position.x + 11.0 if side == 0 else page.end.x - 11.0
 		var center := Vector2(x, page.end.y - 8.0)
-		var color := UiTheme.WOOD
+		var color := WOOD
 		if _hit(Rect2(center - Vector2(7.0, 6.0), Vector2(14.0, 12.0)), "turn", step):
-			color = UiTheme.WOOD_DARK
+			color = WOOD_DARK
 		var tip := Vector2(4.0 * step, 0.0)
 		var back := Vector2(-3.0 * step, 0.0)
 		draw_colored_polygon(

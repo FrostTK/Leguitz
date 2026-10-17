@@ -1288,6 +1288,31 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   nothing saved, a backup of the world first, unpacked, the server stops). ServerConfig: accounts,
   default_role, backup_hours, backup_on_start, backups_kept (`_yes`). tests/unit/test_translations
   checks every CSV line has its three columns (a comma out of quotes cut a text) and no key twice.
+- Interface redesign, step 1 (the « Ardoise » theme; asked by the owner: modern, sober, the game's
+  own, not Minecraft's; before multiplayer step 5): `UiTheme` holds every color (PANEL, PANEL_SOLID,
+  CARD, SLOT, SLOT_HOVER, TRACK; LINE, LINE_STRONG; TEXT, MUTED, FAINT; ACCENT amber, its hover and
+  pressed, ON_ACCENT; DANGER, SUCCESS, LIFE, FOOD, AIR, STEEL; SHADE behind a screen) and `build`s
+  the Theme on the UI root: dark rounded panels with a faint line (variations HudPanel, small
+  panels over the world: HudClock, SaveNotice; CardPanel), buttons (AccentButton, the main action
+  in amber: Resume, Join, Change, Get up, Try again), option buttons with an SVG arrow, check
+  boxes, radio items and switches drawn as SVG (`_svg`: DPITexture, sharp at every UI scale),
+  fields (focused: an amber line), pop-up menus, slim scroll bars (a ScrollBar is as wide as its
+  track's margins, never its grabber: margins 0 hid the pause menu's), tabs, tooltips, labels
+  (TitleLabel; SectionLabel small and grey, upper case in the pause menu and the settings;
+  HintLabel). Helpers: `box` (a see-through line is laid over the fill first, `_over`: a
+  StyleBoxFlat's border replaces its fill, it showed the world through and dots at the corners),
+  `draw_box` (cached by look), `draw_gauge` (a rounded track and its part filled: the bow's draw,
+  the boat's coal, the factory furnace's lanes, wear, water, effects), `shade`, `label`, `header`
+  (for steps 3 and 4). ItemSlot: a flat rounded tile, lighter under the mouse (`_hovered`), an amber
+  ring when chosen; the name under the mouse in a dark rounded box. Hotbar: the slots on a rounded
+  panel, the book's on its own (`_draw_panels`, drawn by the row under the slots; BOOK_GAP 6);
+  VitalsBar's gauges in rounded tracks (`_track`; the pixel crystal, loaf, bubble and shield kept);
+  EffectsRow's badges rounded in their color; ChatBox's board a panel, its field lined in amber,
+  the lines in the theme's colors; CreativeCatalog's field and bar; DeathScreen (TitleLabel,
+  HintLabel, AccentButton; its red shade kept); PeerNames on rounded plates (one StyleBoxFlat
+  recolored before each name: a style box's colors are read as it draws); WarningSign's tooltip
+  dark, lined in red. The player's book keeps its paper and wood (BookScreen's own INK, WOOD,
+  WOOD_DARK, BUTTON). Layouts are unchanged (steps 3 to 5 redo them).
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made
