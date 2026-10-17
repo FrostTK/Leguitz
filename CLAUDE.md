@@ -1339,6 +1339,35 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   rendered first (`take_wanted`): the hotbar's and an open screen's no longer wait for every
   other item's (one icon a frame). tests/run_tests.gd counts a test file that does not compile as
   a failure.
+- Interface redesign, step 3 (the inventory's new layout, asked by the owner). InventoryScreen (785
+  lines split): one panel, its title (TitleLabel), then on the left `EquipmentCard` (CardPanel:
+  `CharacterPreview`, a PlayerModel of its own in a SubViewport of its own world drawn only while
+  it shows, UPDATE_WHEN_PARENT_VISIBLE, lit from the front, the armor worn and what is in hand,
+  `show_player` only on changes, turned by a drag; the armor's four slots; the protection,
+  INVENTORY_DEFENSE), in the middle (`_center`) the catalog, a chest, a furnace or a boat over
+  the bag's tools (`_bag_tools`: a ChipBar of ItemGroups.Filter, FILTERS, and Sort) and the bag,
+  the hotbar and the book, on the right `CraftCard` (the grid, its width and kitchen title,
+  `show_result`: what it makes and CRAFT_MAKES under it), along the bottom `ItemDetails` (the
+  hovered item's name, then `facts_of` in grey: what is left (DETAILS_LEFT, DETAILS_WATER), a
+  tool's use (TOOL_USES), protection, satiety, effects, sickness, burning; cut with an ellipsis;
+  INVENTORY_HINT with nothing hovered). `_show_parts` picks a mode's parts; `_show` opens with
+  UiTheme.appear (asked by the owner: fading in and rising APPEAR_RISE over APPEAR_SECONDS, for
+  every screen of steps 4 and 5 too; `_draw`'s shade reaches under the rise). The furnaces' parts
+  moved to `FurnaceParts` (src/ui, RefCounted: `area`, `factory_area`, `left`/`right` chests,
+  `slots`, `factory_slots`, `drop_slots`, `given_slots`, `owns`). Filters fade what they leave out
+  (ItemSlot.faded, FADED; draw_stack's `alpha`: no bars) in the bag, the hotbar and a chest; they
+  stay chosen while the game runs. `ChipBar` (src/ui): toggle Buttons in a ButtonGroup, theme
+  variation ChipButton (UiTheme._chips: pills, amber chosen, icon_max_width 10), an item's icon
+  (put on once rendered) or a name, the name as tooltip; `select` without telling. The creative
+  catalog's tabs are a ChipBar too, its caption a SectionLabel. `ItemGroups` (src/sim/items,
+  shared, moved out of CreativeCatalog: the dedicated server sorts too): Tab, its tables,
+  `tab_of`, `items_of`, `order`, `place_of`; Filter (ALL, TOOLS, BLOCKS with shapes and
+  openings, FOOD, NATURE with the farm, HOME furniture and decor, MATERIALS; FILTER_OF,
+  `filter_of`, `matches`). `BagSort` (src/sim/items, shared; Inventory is at the lint's 20 public
+  methods): `sort` joins the bag's stacks of an item (as full as they go; worn ones apart) and
+  lays them from the bag's first slot by ItemGroups.place_of, fullest first, then by wear; the
+  hotbar, cursor, grid and armor stay. Msg.SORT_BAG (Chests.handle: sorted, Msg.INVENTORY sent;
+  the client sorts its copy at once, InventoryActions._on_sort_requested). Msg.PROTOCOL 5.
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made
@@ -1377,9 +1406,9 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   slots (FACTORY_SLOTS 64, `slot_count`) are three chests too: TO_COOK 18, FUELS 12, COOKED 30,
   CHEST_COLUMNS 6 across; `shift_places` (what cooks, else what burns) for shift-clicks from the
   bag. A factory furnace saved with the old three slots moves its fuel and what it made into the
-  chests (load_dict). InventoryScreen: the lanes with bars filling up, the flame and its "xN",
+  chests (load_dict). FurnaceParts: the lanes with bars filling up, the flame and its "xN",
   in the panel; the chests in panels beside it (`_side`: to cook and fuel on the left, cooked
-  on the right; `_factory_slots` by furnace slot). The food furnace keeps its three slots.
+  on the right; `factory_slots` by furnace slot). The food furnace keeps its three slots.
 - Vitality (`src/sim/survival/`; phase 5 must not copy Minecraft's style: its own HUD, words
   and monsters): `Vitals` holds the rules (MAX_HEALTH 20 points, falls over FALL_SAFE 3 levels
   cost a point a level unless the player lands on water, lava burns LAVA_DAMAGE every
@@ -1446,12 +1475,11 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   (BlockInteraction: Mining.BREAK_PAUSE between two) with no drops nor wear, are never hurt nor
   hungry (Survival), see no gauges and take any item from the catalog shown instead of the
   inventory's crafting grid (CreativeCatalog; `GameModes.take_from_catalog`, shared, Msg.CATALOG_CLICK;
-  asked by the owner: every item in one of ten tabs, CreativeCatalog.Tab, `tab_of` by rules and
+  asked by the owner: every item in one of ten tabs, ItemGroups.Tab, `tab_of` by rules and
   small tables, the tools' tab sorted tools, bow, armor; its `head` in the screen's top beside the
   armor: a search field, a click or Ctrl+F, Esc/Enter/Tab or a click elsewhere let it go, whose
   words must all be in one of an item's names, any language loaded or its key, Chat.plain,
-  `search` ranks names beginning with it first; the tabs are ItemSlots whose `label` the mouse
-  names, ItemSlot.draw_label).
+  `search` ranks names beginning with it first; the tabs are a ChipBar, named by tooltips).
   Debug commands (map, Page Up/Down, F4, F6, F7: GameModeView.debug_key) are refused out of
   creative (`GameModes.cheats`; `GameServer.cheats_anywhere` for dev options). Msg.SET_GAME_MODE
   (pause menu) swaps survival and creative (creative makes players well again); a hardcore world
@@ -1520,8 +1548,8 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   falls, lava, drowning, hunger; MAX_REDUCTION), keeps the fraction in PlayerSession.hurt_carry
   and wears every piece once (`wear_out`); passing out drops it too. Client: ArmorModels (worn:
   shells a voxel off the body parts, `worn(item)` -> [part, grid, offset], PlayerModel.set_armor
-  from GameClient._worn(); icons: flat front outlines, ICON_SHAPES), InventoryScreen's armor
-  column under the title (ItemSlot.hint draws the empty slot's piece, a shield with the points;
+  from GameClient._worn(); icons: flat front outlines, ICON_SHAPES), EquipmentCard's armor
+  column beside the body (ItemSlot.hint draws the empty slot's piece, a shield with the points;
   hidden beside a chest or a furnace), VitalsBar's steel gauge over the vitality
   (`set_defense`, MAX_DEFENSE 20, `draw_shield`). The book's Combat chapter
   (GuideBook._combat) and Crafting (armor grouped by piece); the book's tabs run down its right

@@ -3,23 +3,23 @@ extends TestCase
 ## one tab, where things go, names found in either language, case and
 ## accents aside, several words at once.
 
-const TAB := CreativeCatalog.Tab
+const TAB := ItemGroups.Tab
 
 
 func test_every_item_is_in_one_tab() -> void:
 	var seen := {}
 	for tab: int in TAB.values():
-		var items := CreativeCatalog.items_of(tab)
+		var items := ItemGroups.items_of(tab)
 		assert_false(items.is_empty(), "%s has items" % TAB.find_key(tab))
 		for item in items:
 			assert_false(seen.has(item), "%d in one tab only" % item)
 			seen[item] = true
-			assert_eq(CreativeCatalog.tab_of(item), tab)
+			assert_eq(ItemGroups.tab_of(item), tab)
 	assert_eq(seen.size(), Items.Id.size() - 2, "every item but the book")
 	assert_false(seen.has(Items.Id.GUIDE_BOOK))
 	for tab: int in CreativeCatalog.TABS:
 		var on_it: int = CreativeCatalog.TABS[tab][1]
-		assert_eq(CreativeCatalog.tab_of(on_it), tab, "a tab shows one of its own")
+		assert_eq(ItemGroups.tab_of(on_it), tab, "a tab shows one of its own")
 		var key: String = CreativeCatalog.TABS[tab][0]
 		assert_ne(tr(key), key, "%s named" % key)
 
@@ -58,8 +58,8 @@ func test_where_things_go() -> void:
 		Items.Id.OAK_LOG: TAB.MATERIALS,
 	}
 	for item: int in expected:
-		assert_eq(CreativeCatalog.tab_of(item), expected[item], String(Items.Id.find_key(item)))
-	var tools := CreativeCatalog.items_of(TAB.TOOLS)
+		assert_eq(ItemGroups.tab_of(item), expected[item], String(Items.Id.find_key(item)))
+	var tools := ItemGroups.items_of(TAB.TOOLS)
 	assert_true(tools.find(Items.Id.DIAMOND_HOE) < tools.find(Items.Id.BOW), "tools first")
 	assert_true(tools.find(Items.Id.ARROW) < tools.find(Items.Id.HIDE_HELMET), "then the bow")
 

@@ -8,7 +8,7 @@ extends RefCounted
 const HELLO := "hello"
 ## The messages' version: a client and a server of different ones do not
 ## play together (Msg.REFUSED, REFUSED_VERSION). Raised when messages change.
-const PROTOCOL := 4
+const PROTOCOL := 5
 const PLAYER_MOVE := "player_move"
 ## The player changes their account's password (Access; old and new
 ## secrets: Access.secret_of).
@@ -41,6 +41,7 @@ const SELECT_SLOT := "select_slot"
 const SLOT_CLICK := "slot_click"
 const SLOT_SPREAD := "slot_spread"
 const SLOT_COLLECT := "slot_collect"
+const SORT_BAG := "sort_bag"
 const RESPAWN := "respawn"
 const EAT := "eat"
 const ITEM_DROP := "item_drop"
@@ -520,6 +521,11 @@ static func slot_spread(targets: Array) -> Dictionary:
 ## (Inventory.collect).
 static func slot_collect() -> Dictionary:
 	return {"t": SLOT_COLLECT}
+
+
+## The player sorts their bag (BagSort).
+static func sort_bag() -> Dictionary:
+	return {"t": SORT_BAG}
 
 
 ## The player throws one item of a slot (Inventory.CURSOR: what the cursor

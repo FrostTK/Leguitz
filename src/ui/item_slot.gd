@@ -20,6 +20,8 @@ const HALO_COLOR := Color(1.0, 1.0, 1.0, 0.38)
 const NAME_PADDING := Vector2(4.0, 2.0)
 const NAME_OFFSET := Vector2(9.0, -15.0)
 const HINT := Color(1.0, 1.0, 1.0, 0.16)
+## How much shows of an item a filter leaves out (see faded).
+const FADED := 0.22
 const CAN_WATER_COLOR := UiTheme.AIR
 
 var slot := 0
@@ -30,6 +32,12 @@ var hint := Items.Id.NONE
 ## What the mouse over it names instead of the item's name (a translation
 ## key; "": the item's): a catalog's tab.
 var label := ""
+## Its item hardly shows: the bag's filter leaves it out (InventoryScreen).
+var faded := false:
+	set(value):
+		if value != faded:
+			faded = value
+			queue_redraw()
 
 var _item := Items.Id.NONE
 var _count := 0
@@ -74,9 +82,13 @@ func show_stack(item: int, count: int, is_selected := false, wear := 0) -> void:
 	queue_redraw()
 
 
-## The item shown (Items.Id.NONE: empty).
+## The item shown (Items.Id.NONE: empty), and its wear.
 func shown_item() -> int:
 	return _item
+
+
+func shown_wear() -> int:
+	return _wear
 
 
 func _gui_input(event: InputEvent) -> void:
@@ -99,7 +111,7 @@ func _draw() -> void:
 	UiTheme.draw_box(self, rect, fill, Color.TRANSPARENT, UiTheme.SMALL_RADIUS)
 	if selected:
 		UiTheme.draw_box(self, rect, Color.TRANSPARENT, UiTheme.ACCENT, UiTheme.SMALL_RADIUS)
-	draw_stack(self, library, _item, _count, size * 0.5, _wear)
+	draw_stack(self, library, _item, _count, size * 0.5, _wear, FADED if faded else 1.0)
 	if _item == Items.Id.NONE and hint != Items.Id.NONE and library != null:
 		var shape := library.icon(hint)
 		if shape != null:
@@ -138,26 +150,34 @@ static func draw_label(canvas: Control, text: String, at: Vector2) -> void:
 ## watering can) centered at `center` on any control; a soft light halo
 ## behind a dark icon.
 static func draw_stack(
-	canvas: Control, items: ItemLibrary, item: int, count: int, center: Vector2, wear := 0
+	canvas: Control,
+	items: ItemLibrary,
+	item: int,
+	count: int,
+	center: Vector2,
+	wear := 0,
+	alpha := 1.0
 ) -> void:
 	if item == Items.Id.NONE or items == null:
 		return
 	var icon := items.icon(item)
+	var tint := Color(1.0, 1.0, 1.0, alpha)
 	if icon != null and items.is_dark(item):
 		var halo := Rect2(center - Vector2.ONE * HALO * 0.5, Vector2.ONE * HALO)
-		canvas.draw_texture_rect(UiTheme.halo(), halo, false, HALO_COLOR)
+		canvas.draw_texture_rect(UiTheme.halo(), halo, false, HALO_COLOR * tint)
 	if icon != null:
-		canvas.draw_texture_rect(
-			icon, Rect2(center - Vector2.ONE * ICON * 0.5, Vector2.ONE * ICON), false
-		)
+		var spot := Rect2(center - Vector2.ONE * ICON * 0.5, Vector2.ONE * ICON)
+		canvas.draw_texture_rect(icon, spot, false, tint)
 	var durability := Items.durability(item)
 	var bar := Rect2(
 		center + Vector2(-ICON * 0.5 + 2.0, ICON * 0.5 - 1.0), Vector2(ICON - 4.0, 2.0)
 	)
-	if wear > 0 and durability > 0:
+	# A faded item (left out by a filter) shows no bar.
+	var bars := alpha >= 1.0
+	if bars and wear > 0 and durability > 0:
 		var left := 1.0 - float(wear) / durability
 		UiTheme.draw_gauge(canvas, bar, left, Color.from_hsv(left / 3.0, 0.75, 0.9))
-	elif item == Items.Id.WATERING_CAN:
+	elif bars and item == Items.Id.WATERING_CAN:
 		UiTheme.draw_gauge(canvas, bar, float(wear) / Items.CAN_WATER, CAN_WATER_COLOR)
 	if count > 1:
 		var font := canvas.get_theme_default_font()
@@ -169,13 +189,8 @@ static func draw_stack(
 				ICON * 0.5 + 1.0
 			)
 		)
+		var shadow := Color(0, 0, 0, 0.8 * alpha)
 		canvas.draw_string(
-			font,
-			at + Vector2.ONE * 0.5,
-			text,
-			HORIZONTAL_ALIGNMENT_LEFT,
-			-1,
-			6,
-			Color(0, 0, 0, 0.8)
+			font, at + Vector2.ONE * 0.5, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, shadow
 		)
-		canvas.draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, UiTheme.TEXT)
+		canvas.draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, UiTheme.TEXT * tint)

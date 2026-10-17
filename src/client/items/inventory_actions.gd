@@ -44,6 +44,7 @@ func connect_screen(screen: InventoryScreen) -> void:
 	screen.catalog_clicked.connect(_on_catalog_clicked)
 	screen.boat_clicked.connect(_on_boat_clicked)
 	screen.boat_acted.connect(_on_boat_acted)
+	screen.sort_requested.connect(_on_sort_requested)
 
 
 func open_inventory() -> void:
@@ -114,6 +115,12 @@ func _on_boat_acted(act: int, place: int) -> void:
 		chest = Inventory.new()
 		chest_cell = Boats.chest_cell(boat_id, place)
 		client.inventory_screen.open_chest(chest)
+
+
+## Sort: the bag sorted at once, as the server will (BagSort).
+func _on_sort_requested() -> void:
+	BagSort.sort(client.inventory)
+	client.transport.send(Msg.sort_bag())
 
 
 ## A click on the creative catalog.

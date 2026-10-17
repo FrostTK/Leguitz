@@ -45,6 +45,9 @@ const STEEL := Color("aab6c2")
 const SHADE := Color(0.035, 0.04, 0.05, 0.62)
 const RADIUS := 4
 const SMALL_RADIUS := 3
+## A screen opening: how long it takes to show and how far it rises.
+const APPEAR_SECONDS := 0.14
+const APPEAR_RISE := 6.0
 const BASE_FONT_SIZE := 8
 const TITLE_FONT_SIZE := 12
 const SMALL_FONT_SIZE := 7
@@ -153,6 +156,24 @@ static func halo() -> Texture2D:
 	return _halo
 
 
+## A screen opening (asked by the owner): it fades in, rising a little
+## into place (`control` a screen filling its parent; again while it
+## shows: from the start).
+static func appear(control: Control) -> void:
+	if control.has_meta("appearing"):
+		(control.get_meta("appearing") as Tween).kill()
+		control.position = control.get_meta("at")
+	control.set_meta("at", control.position)
+	var at := control.position
+	control.modulate.a = 0.0
+	control.position = at + Vector2(0.0, APPEAR_RISE)
+	var tween := control.create_tween().set_parallel()
+	tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	tween.tween_property(control, "modulate:a", 1.0, APPEAR_SECONDS)
+	tween.tween_property(control, "position", at, APPEAR_SECONDS)
+	control.set_meta("appearing", tween)
+
+
 ## The shade behind a screen (fills its parent).
 static func shade(color := SHADE) -> ColorRect:
 	var rect := ColorRect.new()
@@ -237,6 +258,7 @@ static func _buttons(theme: Theme) -> void:
 	# The main action: amber.
 	theme.set_type_variation("AccentButton", "Button")
 	_button_look(theme, "AccentButton", ACCENT, ACCENT_HOVER, ACCENT_PRESSED, ON_ACCENT)
+	_chips(theme)
 	theme.set_icon("arrow", "OptionButton", svg(_ARROW_DOWN))
 	theme.set_constant("arrow_margin", "OptionButton", 4)
 	theme.set_constant("h_separation", "Button", 4)
@@ -260,6 +282,36 @@ static func _button_look(
 	]:
 		theme.set_color(state, type, ink)
 	theme.set_color("font_disabled_color", type, Color(ink, 0.45))
+
+
+## Chips (ChipButton): small rounded pills a row of choices is made of (the
+## bag's filters, the catalog's tabs), amber when chosen.
+static func _chips(theme: Theme) -> void:
+	var type := "ChipButton"
+	theme.set_type_variation(type, "Button")
+	var looks := {
+		"normal": [SLOT, LINE],
+		"hover": [SLOT_HOVER, LINE_STRONG],
+		"pressed": [ACCENT, Color.TRANSPARENT],
+		"hover_pressed": [ACCENT_HOVER, Color.TRANSPARENT],
+		"disabled": [Color(SLOT, 0.45), LINE],
+	}
+	for state: String in looks:
+		var chip := box(looks[state][0], looks[state][1], 6, 0.0)
+		chip.content_margin_left = 4.0
+		chip.content_margin_right = 4.0
+		chip.content_margin_top = 1.0
+		chip.content_margin_bottom = 1.0
+		theme.set_stylebox(state, type, chip)
+	theme.set_stylebox("focus", type, StyleBoxEmpty.new())
+	for state in ["font_color", "font_hover_color", "font_focus_color"]:
+		theme.set_color(state, type, MUTED)
+	theme.set_color("font_hover_color", type, TEXT)
+	theme.set_color("font_pressed_color", type, ON_ACCENT)
+	theme.set_color("font_hover_pressed_color", type, ON_ACCENT)
+	theme.set_font_size("font_size", type, SMALL_FONT_SIZE)
+	theme.set_constant("icon_max_width", type, 10)
+	theme.set_constant("h_separation", type, 3)
 
 
 ## Check boxes and switches: no box around, their own icons.

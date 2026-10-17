@@ -1,32 +1,32 @@
 class_name InventoryScreen
 extends Control
-## The inventory (Tab; a workbench, a chest or a furnace used with E): the
-## crafting grid (3 x 3; a workbench's, 5 x 5, when
-## one is opened) and what it makes (or an open chest's slots, or a
-## furnace: what it cooks, its fire, its fuel, an arrow filling up as it
-## cooks and what it made; a factory furnace: its four lanes, each with
-## its progress, over its fire, how many times faster it burns, and its
-## three chests beside the panel: what is to cook and its fuel on the
-## left, what it made on the right), the
-## bag's 27 slots over the hotbar's 9, and the player's book set apart (it
-## stays there: a click opens it). Under the title, the armor worn (four
-## slots, each taking its own piece; a shield tells the protection), but
-## not beside a chest or a furnace. Clicks pick up, put down, split and swap
-## stacks (Inventory.click: the client shows its guess at once, the server
-## decides), a click on what the grid makes takes it (shift: as many as
-## possible); the stack held by the cursor follows the mouse, and dropped
-## outside the panel it is thrown away. Holding a button with a stack and
-## moving over slots (the bag, the hotbar, the crafting grid, a chest, a
-## furnace) works as in Minecraft: the right one puts one item into each
-## slot crossed, the left one shares the stack evenly between them (shown
-## as it goes, done when it is let go; let go on the slot it began on, a
-## plain click). A double click gathers on the cursor the same items as
-## its stack lying elsewhere (Inventory.collect). With empty hands, the name of the
-## item under the mouse shows beside it. In creative, the inventory shows
-## the catalog of every item over the bag instead of the crafting grid
-## (CreativeCatalog, in tabs; the wheel scrolls it), its search field and
-## tabs in the top, beside the armor. A boat's screen (a shipyard's)
-## shows its BoatPanel over the bag instead.
+## The inventory (Tab; a workbench, a kitchen counter, a chest, a furnace
+## or a boat used with E), in one panel (« Ardoise » layout, asked by the
+## owner): its title; on the left what the player wears (EquipmentCard:
+## the body turned by a drag, the armor's four slots, the protection); in
+## the middle the bag's 27 slots over the hotbar's 9 and the player's book
+## set apart (it stays there: a click opens it), filters over them
+## (ItemGroups.Filter chips: what they leave out fades) and Sort (BagSort,
+## the server too: Msg.SORT_BAG); on the right crafting (CraftCard: the
+## grid, 3 x 3 or a workbench's 5 x 5, and what it makes); along the
+## bottom what the item under the mouse is (ItemDetails). Over the bag
+## instead of the cards: an open chest's slots, a furnace (FurnaceParts; a
+## factory furnace's chests in panels beside the panel), a boat's screen
+## (BoatPanel); in creative, the catalog of every item (CreativeCatalog:
+## its search field and tabs, the wheel scrolls it) instead of crafting.
+## Clicks pick up, put down, split and swap stacks (Inventory.click: the
+## client shows its guess at once, the server decides), a click on what
+## the grid makes takes it (shift: as many as possible); the stack held by
+## the cursor follows the mouse, and dropped outside the panel it is
+## thrown away. Holding a button with a stack and moving over slots (the
+## bag, the hotbar, the crafting grid, a chest, a furnace) works as in
+## Minecraft: the right one puts one item into each slot crossed, the left
+## one shares the stack evenly between them (shown as it goes, done when it
+## is let go; let go on the slot it began on, a plain click). A double
+## click gathers on the cursor the same items as its stack lying elsewhere
+## (Inventory.collect). With empty hands, the name of the item under the
+## mouse shows beside it. It opens fading in and rising into place
+## (UiTheme.appear).
 
 signal slot_clicked(slot: int, right: bool, shift: bool)
 signal cursor_dropped(whole: bool)
@@ -49,11 +49,19 @@ signal catalog_clicked(item: int, right: bool, shift: bool)
 ## A click on a slot of the boat shown, a button of its screen.
 signal boat_clicked(slot: int, right: bool, shift: bool)
 signal boat_acted(act: int, place: int)
+## Sort was clicked: the bag is sorted (BagSort).
+signal sort_requested
 
-## The flame shown under what a furnace cooks: its rows' widths, from the
-## bottom; and its colors (embers to tip).
-const FLAME_ROWS: Array[int] = [8, 8, 8, 6, 6, 6, 4, 4, 2, 2]
-const FLAME_COLORS: Array[Color] = [Color("ee6420"), Color("ffa634"), Color("ffe27a")]
+## The bag's filters: their names and the items drawn on them.
+const FILTERS := {
+	ItemGroups.Filter.ALL: ["INVENTORY_FILTER_ALL", Items.Id.NONE],
+	ItemGroups.Filter.TOOLS: ["INVENTORY_FILTER_TOOLS", Items.Id.IRON_PICKAXE],
+	ItemGroups.Filter.BLOCKS: ["INVENTORY_FILTER_BLOCKS", Items.Id.BRICKS],
+	ItemGroups.Filter.FOOD: ["INVENTORY_FILTER_FOOD", Items.Id.BREAD],
+	ItemGroups.Filter.NATURE: ["INVENTORY_FILTER_NATURE", Items.Id.OAK_SAPLING],
+	ItemGroups.Filter.HOME: ["INVENTORY_FILTER_HOME", Items.Id.CHAIR],
+	ItemGroups.Filter.MATERIALS: ["INVENTORY_FILTER_MATERIALS", Items.Id.IRON_INGOT],
+}
 
 var inventory: Inventory
 var library: ItemLibrary
@@ -71,44 +79,25 @@ var book_shown := false
 var book_selected := false
 ## Creative: the inventory shows the catalog (set by GameModeView).
 var creative := false
+## What the bag shows plainly (ItemGroups.Filter; the rest fades).
+var filter := ItemGroups.Filter.ALL
 
 var _slots: Array[ItemSlot] = []
 var _book := ItemSlot.new()
 var _book_gap := Control.new()
-## What the crafting grid makes.
-var _result := ItemSlot.new()
-var _title := Label.new()
-## Over the crafting grid: crafting, or cooking at a kitchen counter.
-var _craft_label := Label.new()
-## The armor worn, and the protection it gives.
-var _armor_area := HBoxContainer.new()
-var _armor_slots: Array[ItemSlot] = []
-var _shield := Control.new()
-## The crafting grid's cells (all GRID x GRID, row by row; those past the
-## width in use hide).
-var _grid := GridContainer.new()
-var _cells: Array[ItemSlot] = []
-var _crafting_area: Control
+var _title := UiTheme.label("INVENTORY_TITLE", "TitleLabel")
+var _equipment := EquipmentCard.new()
+var _craft := CraftCard.new()
+var _details := ItemDetails.new()
+var _filters := ChipBar.new()
 var _chest_grid := GridContainer.new()
 var _chest_slots: Array[ItemSlot] = []
 var _catalog := CreativeCatalog.new()
-var _furnace_area: Control
+var _catalog_area := VBoxContainer.new()
+var _furnace: FurnaceParts
 var _boat_area := BoatPanel.new()
-var _furnace_slots: Array[ItemSlot] = []
-var _furnace_hint := Label.new()
-var _flame := Control.new()
-var _cooking := Control.new()
-## A factory furnace: its lanes and its fire in the panel, its chests in
-## panels on both sides; its slots by index (Furnace.FACTORY_SLOTS).
-var _factory_area: Control
-var _factory_slots: Array[ItemSlot] = []
-var _lane_bars: Array[Control] = []
-var _factory_flame := Control.new()
-var _burn_rate := Label.new()
-var _left_side := VBoxContainer.new()
-var _right_side := VBoxContainer.new()
 ## Over the bag when a chest is open: whose slots are whose.
-var _bag_label := Label.new()
+var _bag_label := UiTheme.label("INVENTORY_TITLE", "SectionLabel")
 ## Draws the cursor's stack (or the name of the item under the mouse) over
 ## the panel.
 var _cursor := Control.new()
@@ -134,6 +123,10 @@ var _spread: Array[Vector2i] = []
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	_furnace = FurnaceParts.new(library)
+	_furnace.clicked.connect(
+		func(at: int, right: bool, shift: bool) -> void: furnace_clicked.emit(at, right, shift)
+	)
 	# The panel, between a factory furnace's chests.
 	var row := HBoxContainer.new()
 	row.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
@@ -141,85 +134,27 @@ func _ready() -> void:
 	row.grow_vertical = Control.GROW_DIRECTION_BOTH
 	row.add_theme_constant_override("separation", 4)
 	add_child(row)
-	for i in Furnace.FACTORY_SLOTS:
-		var factory_slot := ItemSlot.new()
-		factory_slot.slot = i
-		factory_slot.library = library
-		factory_slot.clicked.connect(
-			func(at: int, right: bool, shift: bool) -> void: furnace_clicked.emit(at, right, shift)
-		)
-		_factory_slots.append(factory_slot)
-	_side(_left_side, "FURNACE_TO_COOK", Furnace.TO_COOK, Furnace.TO_COOK_SIZE)
-	_side(_left_side, "FURNACE_FUELS", Furnace.FUELS, Furnace.FUELS_SIZE)
-	row.add_child(_left_side)
+	row.add_child(_furnace.left)
 	var panel := PanelContainer.new()
 	row.add_child(panel)
-	_side(_right_side, "FURNACE_COOKED", Furnace.COOKED, Furnace.COOKED_SIZE)
-	row.add_child(_right_side)
+	row.add_child(_furnace.right)
 	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
 	panel.add_child(box)
-	var top := HBoxContainer.new()
-	box.add_child(top)
-	var heading := VBoxContainer.new()
-	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	heading.add_theme_constant_override("separation", 3)
-	top.add_child(heading)
-	_title.text = "INVENTORY_TITLE"
-	heading.add_child(_title)
-	heading.add_child(_armor())
-	_crafting_area = _crafting()
-	top.add_child(_crafting_area)
-	_furnace_area = _furnace()
-	top.add_child(_furnace_area)
-	_factory_area = _factory()
-	top.add_child(_factory_area)
-	_boat_area.library = library
-	_boat_area.clicked.connect(
-		func(at: int, right: bool, shift: bool) -> void: boat_clicked.emit(at, right, shift)
-	)
-	_boat_area.acted.connect(func(act: int, place: int) -> void: boat_acted.emit(act, place))
-	top.add_child(_boat_area)
-	_chest_grid.columns = Inventory.HOTBAR
-	_chest_grid.add_theme_constant_override("h_separation", 1)
-	_chest_grid.add_theme_constant_override("v_separation", 1)
-	box.add_child(_chest_grid)
-	for i in Inventory.CHEST:
-		var chest_slot := ItemSlot.new()
-		chest_slot.slot = i
-		chest_slot.library = library
-		chest_slot.clicked.connect(
-			func(at: int, right: bool, shift: bool) -> void: chest_clicked.emit(at, right, shift)
-		)
-		_chest_grid.add_child(chest_slot)
-		_chest_slots.append(chest_slot)
-	_catalog.library = library
-	_catalog.item_clicked.connect(
-		func(item: int, right: bool, shift: bool) -> void: catalog_clicked.emit(item, right, shift)
-	)
-	box.add_child(_catalog)
-	top.add_child(_catalog.head)
-	_bag_label.text = "INVENTORY_TITLE"
-	box.add_child(_bag_label)
-	var bag := GridContainer.new()
-	bag.columns = Inventory.HOTBAR
-	bag.add_theme_constant_override("h_separation", 1)
-	bag.add_theme_constant_override("v_separation", 1)
-	box.add_child(bag)
-	for i in Inventory.BAG:
-		bag.add_child(_new_slot(Inventory.HOTBAR + i))
-	var gap := Control.new()
-	gap.custom_minimum_size = Vector2(0, 3)
-	box.add_child(gap)
-	var hotbar := HBoxContainer.new()
-	hotbar.add_theme_constant_override("separation", 1)
-	box.add_child(hotbar)
-	for i in Inventory.HOTBAR:
-		hotbar.add_child(_new_slot(i))
-	_book_gap.custom_minimum_size.x = Hotbar.BOOK_GAP - 2.0
-	hotbar.add_child(_book_gap)
-	_book.library = library
-	_book.clicked.connect(_on_book_clicked.unbind(3))
-	hotbar.add_child(_book)
+	box.add_child(_title)
+	var body := HBoxContainer.new()
+	body.add_theme_constant_override("separation", 6)
+	box.add_child(body)
+	_equipment.build(_new_slot, library)
+	_equipment.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	body.add_child(_equipment)
+	body.add_child(_center())
+	_craft.build(_new_slot, library)
+	_craft.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_craft.craft_clicked.connect(func(shift: bool) -> void: craft_clicked.emit(shift))
+	body.add_child(_craft)
+	box.add_child(HSeparator.new())
+	box.add_child(_details)
 	_cursor.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_cursor.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_cursor.draw.connect(_draw_cursor)
@@ -230,9 +165,7 @@ func _ready() -> void:
 		slot.mouse_exited.connect(_on_slot_exited.bind(slot))
 	_drop_slots.append_array(_slots)
 	_drop_slots.append_array(_chest_slots)
-	_drop_slots.append(_furnace_slots[Furnace.INPUT])
-	_drop_slots.append(_furnace_slots[Furnace.FUEL])
-	_drop_slots.append_array(_factory_slots.slice(0, Furnace.COOKED))
+	_drop_slots.append_array(_furnace.drop_slots())
 	visible = false
 
 
@@ -240,83 +173,46 @@ func _ready() -> void:
 ## or a workbench's (Inventory.GRID); `cooking`: a kitchen counter's (its
 ## dishes). In creative the inventory shows the catalog instead.
 func open(width := Inventory.OWN_GRID, cooking := false) -> void:
-	chest = null
-	furnace = null
-	kitchen = cooking
 	var catalog := creative and width == Inventory.OWN_GRID and not cooking
-	_show_factory(false)
-	_furnace_area.visible = false
-	_boat_area.visible = false
-	_chest_grid.visible = false
-	_armor_area.visible = true
-	_catalog.visible = catalog
-	_bag_label.visible = catalog
-	_crafting_area.visible = not catalog
+	_show_parts(null, null, true, catalog)
+	kitchen = cooking
 	craft_width = width
+	_craft.visible = not catalog
+	_craft.set_width(width, cooking)
 	_title.text = "WORKBENCH_TITLE" if width > Inventory.OWN_GRID else "INVENTORY_TITLE"
 	if catalog:
 		_title.text = "CATALOG_TITLE"
 	elif cooking:
 		_title.text = "KITCHEN_TITLE"
-	_craft_label.text = "KITCHEN_COOK" if cooking else "CRAFTING_TITLE"
-	_grid.columns = width
-	for cell in _cells.size():
-		_cells[cell].visible = cell % Inventory.GRID < width and cell / Inventory.GRID < width
-	visible = true
+	_show()
 
 
 ## Opens with a chest's slots over the bag (`view`: what it holds, kept
 ## up to date by GameClient) instead of the crafting grid.
 func open_chest(view: Inventory) -> void:
-	chest = view
-	furnace = null
-	_show_factory(false)
-	_furnace_area.visible = false
-	_boat_area.visible = false
-	_catalog.visible = false
+	_show_parts(view, null, false, false)
 	_title.text = "CHEST_TITLE"
-	_armor_area.visible = false
-	_crafting_area.visible = false
 	_chest_grid.visible = true
-	_bag_label.visible = true
-	visible = true
+	_show()
 
 
 ## Opens with a furnace over the bag (`view`: kept up to date by
 ## GameClient) instead of the crafting grid.
 func open_furnace(view: Furnace) -> void:
-	furnace = view
-	chest = null
+	_show_parts(null, view, false, false)
 	var food := view.kind == Tiles.Block.FOOD_FURNACE
 	_title.text = "ITEM_FOOD_FURNACE" if food else "ITEM_FACTORY_FURNACE"
-	_furnace_hint.text = "FURNACE_FOOD_HINT" if food else "FURNACE_FACTORY_HINT"
-	_crafting_area.visible = false
-	_armor_area.visible = false
-	_chest_grid.visible = false
-	_catalog.visible = false
-	_furnace_area.visible = not view.is_factory()
-	_boat_area.visible = false
-	_show_factory(view.is_factory())
-	_bag_label.visible = true
-	visible = true
+	_show()
 
 
 ## Opens a boat's screen over the bag (BoatPanel; `boats`: as the client
 ## knows them, `id` the one shown, -1 none yet; `yard`: a shipyard's).
 func open_boat(boats: Dictionary, id: int, yard: bool) -> void:
-	chest = null
-	furnace = null
-	_show_factory(false)
-	_furnace_area.visible = false
-	_crafting_area.visible = false
-	_chest_grid.visible = false
-	_catalog.visible = false
-	_armor_area.visible = false
+	_show_parts(null, null, false, false)
 	_title.text = "ITEM_SHIPYARD" if yard else "BOAT_TITLE"
 	_boat_area.show_boat(boats, id, yard)
 	_boat_area.visible = true
-	_bag_label.visible = true
-	visible = true
+	_show()
 
 
 func close() -> void:
@@ -329,218 +225,107 @@ func close() -> void:
 		close_requested.emit()
 
 
-## The armor worn: a column of its four slots (the shapes of the pieces
-## while empty) and a shield with the protection points.
-func _armor() -> Control:
-	_armor_area.add_theme_constant_override("separation", 3)
-	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 1)
-	_armor_area.add_child(column)
-	for piece in Armor.PIECES:
-		var slot := _new_slot(Inventory.ARMOR + piece)
-		slot.hint = Armor.ITEMS.find_key([piece, Armor.Kind.HIDE])
-		_armor_slots.append(slot)
-		column.add_child(slot)
-	_shield.custom_minimum_size = Vector2(16.0, 0.0)
-	_shield.draw.connect(_draw_shield)
-	_armor_area.add_child(_shield)
-	return _armor_area
-
-
-## The protection worn: a steel shield, the points under it.
-func _draw_shield() -> void:
-	var points := Armor.defense(inventory) if inventory != null else 0
-	var at := Vector2(floorf((_shield.size.x - 7.0) * 0.5), 1.0)
-	VitalsBar.draw_shield(_shield, at, points > 0)
-	var font := _shield.get_theme_default_font()
-	var text := str(points)
-	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 6).x
-	var baseline := Vector2(floorf((_shield.size.x - width) * 0.5), 9.0 + font.get_ascent(6))
-	_shield.draw_string(font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, UiTheme.MUTED)
-
-
-## The crafting grid, an arrow and what the grid makes.
-func _crafting() -> Control:
-	var area := VBoxContainer.new()
-	area.add_theme_constant_override("separation", 2)
-	_craft_label.text = "CRAFTING_TITLE"
-	_craft_label.add_theme_color_override("font_color", UiTheme.MUTED)
-	area.add_child(_craft_label)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 3)
-	area.add_child(row)
-	_grid.add_theme_constant_override("h_separation", 1)
-	_grid.add_theme_constant_override("v_separation", 1)
-	row.add_child(_grid)
-	for cell in Inventory.GRID * Inventory.GRID:
-		var slot := _new_slot(Inventory.CRAFT + cell)
-		_cells.append(slot)
-		_grid.add_child(slot)
-	var arrow := Control.new()
-	arrow.custom_minimum_size = Vector2(12.0, 0.0)
-	arrow.draw.connect(_draw_arrow.bind(arrow))
-	row.add_child(arrow)
-	_result.library = library
-	_result.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	_result.clicked.connect(
-		func(_slot: int, _right: bool, shift: bool) -> void: craft_clicked.emit(shift)
+## The middle: the catalog, a chest, a furnace or a boat over the bag's
+## filters and Sort, the bag, the hotbar and the book.
+func _center() -> Control:
+	var center := VBoxContainer.new()
+	center.add_theme_constant_override("separation", 3)
+	_catalog.library = library
+	_catalog.item_clicked.connect(
+		func(item: int, right: bool, shift: bool) -> void: catalog_clicked.emit(item, right, shift)
 	)
-	row.add_child(_result)
-	return area
-
-
-## A furnace: what it cooks over its fire and its fuel, an arrow, what it
-## made; a word on what it is for under them.
-func _furnace() -> Control:
-	var area := VBoxContainer.new()
-	area.add_theme_constant_override("separation", 2)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 3)
-	area.add_child(row)
-	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 1)
-	row.add_child(column)
-	for i in Furnace.SLOTS:
-		var slot := ItemSlot.new()
-		slot.slot = i
-		slot.library = library
-		slot.clicked.connect(
-			func(at: int, right: bool, shift: bool) -> void: furnace_clicked.emit(at, right, shift)
+	_catalog_area.add_theme_constant_override("separation", 3)
+	_catalog_area.add_child(_catalog.head)
+	_catalog_area.add_child(_catalog)
+	center.add_child(_catalog_area)
+	_chest_grid.columns = Inventory.HOTBAR
+	_chest_grid.add_theme_constant_override("h_separation", 1)
+	_chest_grid.add_theme_constant_override("v_separation", 1)
+	center.add_child(_chest_grid)
+	for i in Inventory.CHEST:
+		var chest_slot := ItemSlot.new()
+		chest_slot.slot = i
+		chest_slot.library = library
+		chest_slot.clicked.connect(
+			func(at: int, right: bool, shift: bool) -> void: chest_clicked.emit(at, right, shift)
 		)
-		_furnace_slots.append(slot)
-	column.add_child(_furnace_slots[Furnace.INPUT])
-	_flame.custom_minimum_size = Vector2(ItemSlot.SIZE, FLAME_ROWS.size() + 2.0)
-	_flame.draw.connect(_draw_flame)
-	column.add_child(_flame)
-	column.add_child(_furnace_slots[Furnace.FUEL])
-	_cooking.custom_minimum_size = Vector2(24.0, 0.0)
-	_cooking.draw.connect(_draw_cooking)
-	row.add_child(_cooking)
-	var output := _furnace_slots[Furnace.OUTPUT]
-	output.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(output)
-	_furnace_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_furnace_hint.custom_minimum_size.x = 76.0
-	_furnace_hint.add_theme_color_override("font_color", UiTheme.MUTED)
-	_furnace_hint.add_theme_font_size_override("font_size", 6)
-	area.add_child(_furnace_hint)
-	return area
-
-
-## A factory furnace: its four lanes (what each cooks, a bar filling up
-## under it), its fire and how many times faster it burns, a word on it.
-func _factory() -> Control:
-	var area := VBoxContainer.new()
-	area.add_theme_constant_override("separation", 3)
-	area.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	area.size_flags_stretch_ratio = 3.0
-	var lanes := HBoxContainer.new()
-	lanes.alignment = BoxContainer.ALIGNMENT_CENTER
-	lanes.add_theme_constant_override("separation", 6)
-	area.add_child(lanes)
-	for lane in Furnace.LANE_COUNT:
-		var column := VBoxContainer.new()
-		column.add_theme_constant_override("separation", 1)
-		lanes.add_child(column)
-		column.add_child(_factory_slots[Furnace.LANES + lane])
-		var bar := Control.new()
-		bar.custom_minimum_size = Vector2(ItemSlot.SIZE, 5.0)
-		bar.draw.connect(_draw_lane.bind(bar, lane))
-		column.add_child(bar)
-		_lane_bars.append(bar)
-	var fire := HBoxContainer.new()
-	fire.alignment = BoxContainer.ALIGNMENT_CENTER
-	area.add_child(fire)
-	_factory_flame.custom_minimum_size = Vector2(ItemSlot.SIZE, FLAME_ROWS.size() + 2.0)
-	_factory_flame.draw.connect(_draw_flame.bind(_factory_flame))
-	fire.add_child(_factory_flame)
-	_burn_rate.add_theme_color_override("font_color", UiTheme.MUTED)
-	_burn_rate.add_theme_font_size_override("font_size", 6)
-	fire.add_child(_burn_rate)
-	var hint := Label.new()
-	hint.text = "FURNACE_FACTORY_LANES_HINT"
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hint.custom_minimum_size.x = 84.0
-	hint.add_theme_color_override("font_color", UiTheme.MUTED)
-	hint.add_theme_font_size_override("font_size", 6)
-	area.add_child(hint)
-	return area
-
-
-## One of a factory furnace's chests, titled, CHEST_COLUMNS across, in a
-## panel of `side`.
-func _side(side: VBoxContainer, title: String, first: int, count: int) -> void:
-	side.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	side.add_theme_constant_override("separation", 4)
-	var panel := PanelContainer.new()
-	side.add_child(panel)
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 2)
-	panel.add_child(box)
-	var label := Label.new()
-	label.text = title
-	box.add_child(label)
-	var grid := GridContainer.new()
-	grid.columns = Furnace.CHEST_COLUMNS
-	grid.add_theme_constant_override("h_separation", 1)
-	grid.add_theme_constant_override("v_separation", 1)
-	box.add_child(grid)
-	for i in count:
-		grid.add_child(_factory_slots[first + i])
-
-
-func _show_factory(shown: bool) -> void:
-	_factory_area.visible = shown
-	_left_side.visible = shown
-	_right_side.visible = shown
-
-
-## The fire: a flame burning down as its fuel goes (dim when out).
-func _draw_flame(on: Control = null) -> void:
-	if on == null:
-		on = _flame
-	var fire := furnace.fire if furnace != null else 0.0
-	var lit_rows := ceili(fire * FLAME_ROWS.size())
-	var bottom := on.size.y - 1.0
-	for row in FLAME_ROWS.size():
-		var width := float(FLAME_ROWS[row])
-		var rect := Rect2(floorf((on.size.x - width) * 0.5), bottom - row - 1.0, width, 1.0)
-		var color := UiTheme.LINE_STRONG
-		if row < lit_rows:
-			color = FLAME_COLORS[mini(row * FLAME_COLORS.size() / FLAME_ROWS.size(), 2)]
-		on.draw_rect(rect, color)
-
-
-## Under a factory furnace's lane: a bar filling up as it cooks.
-func _draw_lane(bar: Control, lane: int) -> void:
-	var progress := furnace.lane_progress[lane] if furnace != null else 0.0
-	UiTheme.draw_gauge(bar, Rect2(1.0, 1.0, bar.size.x - 2.0, 3.0), progress, UiTheme.ACCENT)
-
-
-## The arrow from the furnace to what it made, filling up as it cooks.
-func _draw_cooking() -> void:
-	var progress := furnace.progress if furnace != null else 0.0
-	var middle := floorf(_cooking.size.y * 0.5)
-	var length := _cooking.size.x - 3.0
-	var head := 7.0
-	for x in int(length):
-		var half := 1.0 if x < length - head else ceilf((length - x) * 5.0 / head)
-		var filled := x < progress * length
-		var color := UiTheme.ACCENT if filled else UiTheme.LINE_STRONG
-		_cooking.draw_rect(Rect2(1.0 + x, middle - half, 1.0, half * 2.0), color)
-
-
-## An arrow pointing from the grid to what it makes.
-func _draw_arrow(arrow: Control) -> void:
-	var middle := floorf(arrow.size.y * 0.5)
-	arrow.draw_rect(Rect2(1.0, middle - 1.0, 6.0, 2.0), UiTheme.MUTED)
-	arrow.draw_colored_polygon(
-		PackedVector2Array(
-			[Vector2(6.0, middle - 4.0), Vector2(11.0, middle), Vector2(6.0, middle + 4.0)]
-		),
-		UiTheme.MUTED
+		_chest_grid.add_child(chest_slot)
+		_chest_slots.append(chest_slot)
+	center.add_child(_furnace.area)
+	center.add_child(_furnace.factory_area)
+	_boat_area.library = library
+	_boat_area.clicked.connect(
+		func(at: int, right: bool, shift: bool) -> void: boat_clicked.emit(at, right, shift)
 	)
+	_boat_area.acted.connect(func(act: int, place: int) -> void: boat_acted.emit(act, place))
+	center.add_child(_boat_area)
+	_bag_label.uppercase = true
+	center.add_child(_bag_label)
+	center.add_child(_bag_tools())
+	var bag := GridContainer.new()
+	bag.columns = Inventory.HOTBAR
+	bag.add_theme_constant_override("h_separation", 1)
+	bag.add_theme_constant_override("v_separation", 1)
+	center.add_child(bag)
+	for i in Inventory.BAG:
+		bag.add_child(_new_slot(Inventory.HOTBAR + i))
+	var gap := Control.new()
+	gap.custom_minimum_size = Vector2(0, 2)
+	center.add_child(gap)
+	var hotbar := HBoxContainer.new()
+	hotbar.add_theme_constant_override("separation", 1)
+	center.add_child(hotbar)
+	for i in Inventory.HOTBAR:
+		hotbar.add_child(_new_slot(i))
+	_book_gap.custom_minimum_size.x = Hotbar.BOOK_GAP - 2.0
+	hotbar.add_child(_book_gap)
+	_book.library = library
+	_book.clicked.connect(_on_book_clicked.unbind(3))
+	hotbar.add_child(_book)
+	return center
+
+
+## Over the bag: its filters, and Sort.
+func _bag_tools() -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 4)
+	_filters.library = library
+	for each: int in FILTERS:
+		_filters.add_chip(each, FILTERS[each][0], FILTERS[each][1])
+	_filters.select(filter)
+	_filters.chosen.connect(func(which: int) -> void: filter = which as ItemGroups.Filter)
+	_filters.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(_filters)
+	var sort := Button.new()
+	sort.text = "INVENTORY_SORT"
+	sort.tooltip_text = "INVENTORY_SORT_HOW"
+	sort.theme_type_variation = "ChipButton"
+	sort.focus_mode = Control.FOCUS_NONE
+	sort.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	sort.pressed.connect(sort_requested.emit)
+	row.add_child(sort)
+	return row
+
+
+## Shows the parts of one screen: a chest or a furnace over the bag, the
+## cards (what is worn, crafting), the catalog.
+func _show_parts(view: Inventory, oven: Furnace, cards: bool, catalog: bool) -> void:
+	chest = view
+	furnace = oven
+	_furnace.show_furnace(oven)
+	_boat_area.visible = false
+	_chest_grid.visible = false
+	_equipment.visible = cards
+	_craft.visible = cards
+	_catalog_area.visible = catalog
+	_bag_label.visible = not cards or catalog
+
+
+## Shows the screen, fading in and rising into place when it was closed.
+func _show() -> void:
+	if not visible:
+		visible = true
+		UiTheme.appear(self)
 
 
 func _new_slot(index: int) -> ItemSlot:
@@ -560,34 +345,36 @@ func _process(_delta: float) -> void:
 	var selected := inventory.selected if not book_selected else Inventory.HOTBAR
 	for slot in _slots:
 		var at := slot.slot
-		slot.show_stack(
-			inventory.items[at], inventory.counts[at], at == selected, inventory.wear[at]
-		)
+		var item := inventory.items[at]
+		slot.show_stack(item, inventory.counts[at], at == selected, inventory.wear[at])
+		slot.faded = at < Inventory.SLOTS and not _shown_by_filter(item)
 	if chest != null:
 		for i in Inventory.CHEST:
 			_chest_slots[i].show_stack(chest.items[i], chest.counts[i], false, chest.wear[i])
-	if furnace != null and furnace.is_factory():
-		var kept := furnace.slots
-		for i in Furnace.FACTORY_SLOTS:
-			_factory_slots[i].show_stack(kept.items[i], kept.counts[i], false, kept.wear[i])
-		for bar in _lane_bars:
-			bar.queue_redraw()
-		_factory_flame.queue_redraw()
-		var cooking := furnace.lanes_cooking()
-		_burn_rate.text = "x%d" % cooking if cooking > 1 and furnace.burning() else ""
-	elif furnace != null:
-		var held := furnace.slots
-		for i in Furnace.SLOTS:
-			_furnace_slots[i].show_stack(held.items[i], held.counts[i], false, held.wear[i])
-		_flame.queue_redraw()
-		_cooking.queue_redraw()
-	_shield.queue_redraw()
-	var made := inventory.craft_result(craft_width, kitchen)
-	_result.show_stack(made.x, made.y)
+			_chest_slots[i].faded = not _shown_by_filter(chest.items[i])
+	_furnace.refresh()
+	if _equipment.visible:
+		var held := Items.Id.GUIDE_BOOK if book_selected else inventory.held()
+		_equipment.refresh(inventory, held)
+	_craft.show_result(inventory.craft_result(craft_width, kitchen))
 	_book.visible = book_shown
 	_book_gap.visible = book_shown
 	_book.show_stack(Items.Id.GUIDE_BOOK, 1, book_selected)
+	_details.show_item(_detailed(), _hovered.shown_wear() if _hovered != null else 0)
 	_cursor.queue_redraw()
+
+
+## Whether the bag's filter shows `item` plainly (an empty slot: always).
+func _shown_by_filter(item: int) -> bool:
+	return item == Items.Id.NONE or ItemGroups.matches(item, filter)
+
+
+## The item the bottom line tells about: under the mouse (none: the word
+## on clicks).
+func _detailed() -> int:
+	if _hovered == null or not _hovered.is_visible_in_tree() or _hovered.label != "":
+		return Items.Id.NONE
+	return _hovered.shown_item()
 
 
 ## The book never leaves its slot: a click opens it (with empty hands).
@@ -701,7 +488,7 @@ func _end_spread(click: bool) -> void:
 func _target_of(slot: ItemSlot) -> Vector2i:
 	if slot in _chest_slots:
 		return Vector2i(Inventory.Holder.CHEST, slot.slot)
-	if slot in _furnace_slots or slot in _factory_slots:
+	if _furnace.owns(slot):
 		return Vector2i(Inventory.Holder.FURNACE, slot.slot)
 	return Vector2i(Inventory.Holder.OWN, slot.slot)
 
@@ -715,9 +502,7 @@ func _holding() -> bool:
 func _over_a_slot() -> bool:
 	if _drop_slot_at(_pointer) != null:
 		return true
-	var given: Array[ItemSlot] = [_furnace_slots[Furnace.OUTPUT]]
-	given.append_array(_factory_slots.slice(Furnace.COOKED))
-	for slot in given:
+	for slot in _furnace.given_slots():
 		if slot.is_visible_in_tree() and slot.get_global_rect().has_point(_pointer):
 			return true
 	return false
@@ -735,7 +520,7 @@ func _drop_slot_at(point: Vector2) -> ItemSlot:
 func _click(slot: ItemSlot, right: bool) -> void:
 	if slot in _chest_slots:
 		chest_clicked.emit(slot.slot, right, false)
-	elif slot in _furnace_slots or slot in _factory_slots:
+	elif _furnace.owns(slot):
 		furnace_clicked.emit(slot.slot, right, false)
 	else:
 		slot_clicked.emit(slot.slot, right, false)
@@ -754,8 +539,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
+## The shade over the world (reaching under the screen as it rises into
+## place).
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, size), UiTheme.SHADE)
+	var reach := Vector2(0.0, UiTheme.APPEAR_RISE)
+	draw_rect(Rect2(-reach, size + reach * 2.0), UiTheme.SHADE)
 
 
 func _on_slot_entered(slot: ItemSlot) -> void:

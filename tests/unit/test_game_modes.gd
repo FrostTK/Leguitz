@@ -83,7 +83,7 @@ func test_the_catalog_gives_any_item_in_creative_only() -> void:
 	assert_eq([bag.items[0], bag.counts[0]], [Items.Id.IRON_AXE, 1], "shift: into the slots")
 	GameModes.take_from_catalog(bag, Items.Id.GUIDE_BOOK, false, true)
 	assert_eq(bag.items[1], Items.Id.NONE, "never the book")
-	var shown := CreativeCatalog.order()
+	var shown := ItemGroups.order()
 	assert_eq(shown.size(), Items.Id.size() - 2, "every item but the book")
 	assert_eq(shown[0], Items.Id.OAK_PLANKS, "building blocks first")
 	assert_true(shown.find(Items.Id.DIAMOND_SWORD) < shown.find(Items.Id.BOW), "after the tools")

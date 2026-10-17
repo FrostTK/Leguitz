@@ -161,7 +161,8 @@ Godot **4.7.2** (GDScript), rendu Forward+. 434 tests unitaires, lint propre.
 | M.3 Un serveur qui ne fait confiance à personne | Un serveur dédié **vérifie ce que disent les joueurs** (une partie solo fait confiance à son jeu). **Déplacements** : pas plus vite que la course (avec un plat SWIFT, 25 % de marge, une seconde d'élan au plus), pas à travers les murs ni les planchers, pas plus haut qu'un saut, pas en suspens en l'air ; sinon le joueur est **remis en place** (les déplacements envoyés avant la correction sont ignorés, et une correction ne redonne pas d'élan). Les **chutes** sont mesurées par le serveur (un jeu qui tait sa chute se blesse quand même). **Minage** : le jeu dit quand il commence un bloc, le serveur refuse qu'il casse plus vite que l'outil le permet. **Sièges et lits** : un joueur par siège et par lit (« Quelqu'un est déjà assis là »), les autres voient le serveur dire qui est assis ou couché. **Messages** : les messages incohérents sont ignorés (dont une case lointaine qui ferait générer des chunks), le chat trop rapide est freiné (« Tu parles trop vite »), les rafales sont coupées et un jeu qui inonde le serveur est **exclu** (« Exclu du serveur »). La **console du serveur** signale chaque triche (avec combien de fois). Essayé avec cinq joueurs honnêtes (course, sauts, nage, minage, forêts et rivières) sans fausse alerte | `9f4c03b` |
 | M.4 Comptes et administration | Sur un serveur dédié, **chaque pseudo appartient à son premier joueur** : il choisit un **mot de passe** la première fois (le jeu n'envoie qu'une empreinte, jamais le mot de passe ; le serveur garde une empreinte salée), puis seul ce mot de passe joue sous ce pseudo ; 5 essais faux en 10 minutes verrouillent le pseudo 10 minutes. L'écran « Rejoindre » a « Ton mot de passe » et « **Se souvenir de moi** » ; le menu pause, « **Changer mon mot de passe** ». **Rôles** : visiteur (se promène, ouvre portes et barrières, s'assoit, ne change rien d'autre), joueur, modérateur (expulse, voyage), admin (tout) ; la liste des joueurs (P) les montre. Commandes : **`/expulse`**, **`/bannis`** (un temps ou pour toujours, une raison, l'adresse IP si demandé ; `/bannis liste`), **`/gracie`**, **`/listeblanche`**, **`/role`**, **`/compte oublie`**, **`/sauvegarde`** ; un refus ou une exclusion dit pourquoi et pour combien de temps. **Sauvegardes de secours** : un zip du monde au démarrage, toutes les 6 heures et à la demande, les 10 plus récentes gardées ; la console sait les lister (`backups`) et en **remettre une** (`restore 2` : les joueurs partent, le monde actuel est d'abord sauvegardé, le serveur s'arrête). Nouveaux réglages de `server.cfg` : `accounts`, `default_role`, `backup_hours`, `backup_on_start`, `backups_kept` | `5d66e0b` |
 | I.1 Thème « Ardoise » | Toute l'interface passe au **nouveau style**, choisi par le propriétaire parmi trois maquettes : des **panneaux sombres** légèrement translucides aux **coins arrondis**, un filet clair, des **cases plates arrondies** (plus claires sous la souris, un **anneau ambre** autour de celle qu'on a en main), une seule couleur d'accent, l'**ambre**, pour l'action principale (Reprendre, Rejoindre, Se relever…), le texte blanc cassé et un gris pour le secondaire. Les **listes déroulantes**, **cases à cocher** et interrupteurs sont dessinés nets à toutes les tailles d'interface ; les titres de section du menu pause en petites capitales grises ; des **barres de défilement** fines. La **barre d'objets** est posée sur un panneau arrondi, les **jauges** de vitalité et de satiété dans des rails arrondis (le cristal et le pain restent), les **effets** en pastilles, l'**horloge** dans une pastille ; le **chat**, le catalogue créatif, l'écran de perte de connaissance, les noms au-dessus des têtes, la liste des joueurs, les fours (voies et flamme), l'arc et le bateau (jauges) suivent. Le **livre du joueur** garde son papier (c'est un objet du monde). Les dispositions ne changent pas encore (étapes 3 à 5) | `1cc2dd2` |
-| I.2 Affichage tête haute | La **barre d'objets** : un **anneau ambre glisse** d'une case à l'autre quand on change d'objet ; le nom de l'objet en main et les **annonces** dans une petite pastille. Les **jauges** se font face au-dessus : la vitalité à gauche (le cristal, rouge, la trace pâle d'une blessure), la satiété à droite (le pain, ambre, qui se vide vers lui), en **segments de deux points** ; l'armure et le souffle en fines jauges au-dessus, seulement quand ils comptent. Les **effets** en pastilles rondes, le temps restant en arc autour. L'**horloge** : un soleil ou une lune, « Printemps 3 » en gris et l'heure. Le **chat** en **bulles légères** à la largeur de chaque ligne. Le **viseur** : un point et quatre petits traits, cernés de sombre. La **liste des joueurs** (P) : une carte, le rôle sur une petite étiquette colorée, le ping en barres de signal. L'**écran F3** dans une pastille sombre, ses parties séparées par des points gris. Demandé par le propriétaire : un **léger halo** derrière les icônes très sombres (charbon, pierre, ardoise). Les icônes dont on a besoin (barre d'objets, écran ouvert) sont calculées **en premier** au démarrage | « HUD » |
+| I.2 Affichage tête haute | La **barre d'objets** : un **anneau ambre glisse** d'une case à l'autre quand on change d'objet ; le nom de l'objet en main et les **annonces** dans une petite pastille. Les **jauges** se font face au-dessus : la vitalité à gauche (le cristal, rouge, la trace pâle d'une blessure), la satiété à droite (le pain, ambre, qui se vide vers lui), en **segments de deux points** ; l'armure et le souffle en fines jauges au-dessus, seulement quand ils comptent. Les **effets** en pastilles rondes, le temps restant en arc autour. L'**horloge** : un soleil ou une lune, « Printemps 3 » en gris et l'heure. Le **chat** en **bulles légères** à la largeur de chaque ligne. Le **viseur** : un point et quatre petits traits, cernés de sombre. La **liste des joueurs** (P) : une carte, le rôle sur une petite étiquette colorée, le ping en barres de signal. L'**écran F3** dans une pastille sombre, ses parties séparées par des points gris. Demandé par le propriétaire : un **léger halo** derrière les icônes très sombres (charbon, pierre, ardoise). Les icônes dont on a besoin (barre d'objets, écran ouvert) sont calculées **en premier** au démarrage | `5b4aef9` |
+| I.3 Inventaire et créatif | **Nouvelle disposition de l'inventaire**, celle de la maquette : à gauche l'**équipement** (le **personnage en 3D** portant son armure et ce qu'il a en main, qu'on **tourne en le faisant glisser** à la souris, les quatre cases d'armure, la protection), au centre le **sac** avec des **filtres** en pastilles (Tout, outils et équipement, construction, nourriture, nature et ferme, maison, matériaux : ce qu'un filtre écarte s'estompe) et le bouton **« Ranger »** (regroupe les piles et les range dans l'ordre du catalogue ; le serveur le fait aussi : rien ne se perd), à droite la **fabrication** dans une carte (le nom de ce qu'on fabrique dessous : « 4 × Bâton »), en bas une **ligne de détails** sur l'objet survolé (« Pioche en fer · 188 / 250 · casse la pierre et les minerais », ce qu'un plat nourrit, ses effets, combien de temps brûle un combustible) ou un rappel des clics. Le **catalogue créatif** dans le même cadre, ses onglets en pastilles. Retenu par le propriétaire : **une petite animation à l'ouverture** (un fondu, l'écran monte un peu en place). L'établi, la cuisine, les coffres, les fours et le bateau gardent leur place en attendant l'étape 4 | « Inventory layout » |
 
 **Pas encore fait** (prévu) : nouveaux matériaux et décoration (phase 8),
 structures, menus de départ, sons, mode Arcade (en attente), mobile.
@@ -288,19 +289,18 @@ xvfb-run -a -s "-screen 0 960x540x24" godot --path . --audio-driver Dummy --reso
 
 ---
 
-## 5. Prochaine étape au « go » : Refonte de l'interface, étape 3 (inventaire et créatif)
+## 5. Prochaine étape au « go » : Refonte de l'interface, étape 4 (écrans des blocs)
 
 **Décision du propriétaire (octobre 2026)** : avant de continuer le multijoueur, **refondre le
 style de toute l'interface** (inventaires, menus, écrans des blocs, affichage tête haute) pour
 quelque chose de plus moderne et sobre, propre au jeu : le style **« Ardoise »**, la police
 d'aujourd'hui, la nouvelle disposition de l'inventaire (phase « Refonte de l'interface »,
 section 6). Ses **étapes 1** (le thème et les briques communes ; chaque écran passé au nouveau
-style) et **2** (l'affichage tête haute) sont faites ; au prochain « go », l'**étape 3** (la
-nouvelle disposition de l'inventaire : le personnage à gauche, le sac au centre avec ses filtres
-et « Ranger », la fabrication dans une carte, la ligne de détails ; le catalogue créatif dans le
-même cadre), avec la **petite animation à l'ouverture des écrans** que le propriétaire a
-retenue (elle servira ensuite aux écrans des étapes 4 et 5). Le multijoueur reprendra ensuite à
-son étape 5 (hébergement).
+style), **2** (l'affichage tête haute) et **3** (la nouvelle disposition de l'inventaire, avec
+l'animation d'ouverture) sont faites ; au prochain « go », l'**étape 4** (les écrans des blocs
+dans un même cadre : coffres et meubles de rangement, établi et cuisine, fours, machines,
+chantier naval et bateau, étagères ; ils reprennent l'animation d'ouverture). Le multijoueur
+reprendra ensuite à son étape 5 (hébergement).
 
 **Décision du propriétaire (octobre 2026)** : on passe tout de suite au **multijoueur et aux
 serveurs dédiés** (phase « Multijoueur et serveurs dédiés », section 6) ; la **phase 8** est en
@@ -884,11 +884,29 @@ Découpage (chaque étape montrée au propriétaire avant la suivante) :
    petite secousse des jauges quand on est blessé ou qu'on a faim ; l'horloge qui montre aussi
    le temps qu'il fait (pluie, neige) ; une boussole ou les coordonnées en option ; les noms
    au-dessus des têtes colorés selon le rôle.
-3. **Inventaire et créatif** : la nouvelle disposition (aperçu du personnage, filtres, « Ranger »
+3. ✅ **Inventaire et créatif** : la nouvelle disposition (aperçu du personnage, filtres, « Ranger »
    vérifié par le serveur, carte de fabrication, ligne de détails), le catalogue créatif dans le
    même cadre (onglets en pastilles, recherche). Avec la **petite animation à l'ouverture des
    écrans** retenue par le propriétaire (un fondu et un léger glissement, commune à tous les
    écrans : ceux des étapes 4 et 5 la reprennent).
+   **Fait** : l'équipement à gauche (le personnage en 3D dans son petit monde à lui, avec son
+   armure et ce qu'il tient, qu'on tourne à la souris ; les quatre cases d'armure ; la
+   protection), le sac au centre avec **sept filtres** en pastilles (« Tout » en mots, les autres
+   en icônes, leur nom en infobulle : la place manque pour des mots ; ce qu'un filtre écarte
+   s'estompe, dans le sac, la barre d'objets et un coffre) et **« Ranger »** (piles regroupées,
+   rangées dans l'ordre du catalogue : outils et équipement d'abord… ; le serveur range aussi,
+   le jeu montre le résultat tout de suite), la fabrication à droite (« 4 × Bâton » sous la
+   flèche ; l'établi y met sa grille 5 × 5), la **ligne de détails** en bas (nom, usure,
+   usage d'un outil, protection, satiété, effets, « rend malade », durée de combustion ; sans
+   rien sous la souris, un rappel des clics). Le catalogue créatif dans le même cadre (sa
+   recherche en haut, ses dix onglets en pastilles d'icônes, l'onglet en petites capitales).
+   **L'animation d'ouverture** (retenue par le propriétaire) : un fondu de 0,14 s, l'écran monte
+   de 6 points en place (UiTheme.appear, prête pour les autres écrans). Le classement des objets
+   passe côté serveur (ItemGroups). L'inventaire passe de 785 à 573 lignes (les fours à part).
+   **Pas fait (à proposer)** : un clic droit sur « Ranger » qui range aussi la barre d'objets ; des
+   filtres qui servent aussi au catalogue créatif ; afficher le personnage en mouvement (il
+   marche sur place, respire) ; montrer dans la ligne de détails la recette d'un objet (ce qu'il
+   faut pour le fabriquer) ; retenir le filtre choisi d'une partie à l'autre.
 4. **Écrans des blocs** : un même cadre partout (en-tête avec l'icône et le nom du bloc, la partie
    du bloc en haut, le sac du joueur toujours au même endroit en bas) : coffres et meubles de
    rangement, établi et cuisine, fours (alimentaire, d'usine avec ses voies et ses coffres),

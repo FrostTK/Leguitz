@@ -1,9 +1,9 @@
 class_name CreativeCatalog
 extends HBoxContainer
 ## The creative catalog (in the inventory screen, over the bag): every item
-## sorted into tabs (Tab: building blocks, stairs and roofs, nature, doors
-## and windows, furniture, decoration, the farm, food, tools and gear,
-## materials; `tab_of`), ROWS rows of the tab chosen at a time, scrolled by
+## sorted into tabs (ItemGroups.Tab: building blocks, stairs and roofs,
+## nature, doors and windows, furniture, decoration, the farm, food, tools
+## and gear, materials; ItemGroups.tab_of), ROWS rows of the tab chosen at a time, scrolled by
 ## the wheel or the bar beside them (a click or a drag on it). Its `head`
 ## (the inventory screen puts it in its top, beside the armor) holds a
 ## search field (a click or Ctrl+F; Esc, Enter or Tab lets it go): its words
@@ -14,135 +14,26 @@ extends HBoxContainer
 
 signal item_clicked(item: int, right: bool, shift: bool)
 
-enum Tab { BLOCKS, SHAPES, NATURE, OPENINGS, FURNITURE, DECOR, FARM, FOOD, TOOLS, MATERIALS }
-
 const ROWS := 5
 const BAR_WIDTH := 4.0
-const TAB_COLUMNS := 5
 const SEARCH_WIDTH := 104.0
 ## The search field's clearing cross (pixels).
 const CROSS := 5
 ## Each tab: its name's key and the item drawn on it.
 const TABS := {
-	Tab.BLOCKS: ["CATALOG_TAB_BLOCKS", Items.Id.BRICKS],
-	Tab.SHAPES: ["CATALOG_TAB_SHAPES", Items.Id.OAK_STAIRS],
-	Tab.NATURE: ["CATALOG_TAB_NATURE", Items.Id.FLOWER_RED],
-	Tab.OPENINGS: ["CATALOG_TAB_OPENINGS", Items.Id.OAK_DOOR],
-	Tab.FURNITURE: ["CATALOG_TAB_FURNITURE", Items.Id.CHAIR],
-	Tab.DECOR: ["CATALOG_TAB_DECOR", Items.Id.LANTERN],
-	Tab.FARM: ["CATALOG_TAB_FARM", Items.Id.WHEAT],
-	Tab.FOOD: ["CATALOG_TAB_FOOD", Items.Id.BREAD],
-	Tab.TOOLS: ["CATALOG_TAB_TOOLS", Items.Id.IRON_PICKAXE],
-	Tab.MATERIALS: ["CATALOG_TAB_MATERIALS", Items.Id.IRON_INGOT],
+	ItemGroups.Tab.BLOCKS: ["CATALOG_TAB_BLOCKS", Items.Id.BRICKS],
+	ItemGroups.Tab.SHAPES: ["CATALOG_TAB_SHAPES", Items.Id.OAK_STAIRS],
+	ItemGroups.Tab.NATURE: ["CATALOG_TAB_NATURE", Items.Id.FLOWER_RED],
+	ItemGroups.Tab.OPENINGS: ["CATALOG_TAB_OPENINGS", Items.Id.OAK_DOOR],
+	ItemGroups.Tab.FURNITURE: ["CATALOG_TAB_FURNITURE", Items.Id.CHAIR],
+	ItemGroups.Tab.DECOR: ["CATALOG_TAB_DECOR", Items.Id.LANTERN],
+	ItemGroups.Tab.FARM: ["CATALOG_TAB_FARM", Items.Id.WHEAT],
+	ItemGroups.Tab.FOOD: ["CATALOG_TAB_FOOD", Items.Id.BREAD],
+	ItemGroups.Tab.TOOLS: ["CATALOG_TAB_TOOLS", Items.Id.IRON_PICKAXE],
+	ItemGroups.Tab.MATERIALS: ["CATALOG_TAB_MATERIALS", Items.Id.IRON_INGOT],
 }
-## The tools' tab besides the tools, the armor and the pots of paint: the
-## bow, fishing, boats.
-const GEAR := {
-	Items.Id.BOW: true,
-	Items.Id.ARROW: true,
-	Items.Id.FISHING_ROD: true,
-	Items.Id.FISHING_NET: true,
-	Items.Id.WORM: true,
-	Items.Id.BAIT_BALL: true,
-	Items.Id.FISH_BAIT: true,
-	Items.Id.FISH_TRAP: true,
-	Items.Id.SHIPYARD: true,
-	Items.Id.BOAT_BOW: true,
-	Items.Id.BOAT_SECTION: true,
-	Items.Id.BOAT_STERN: true,
-	Items.Id.BOILER: true,
-	Items.Id.PROPELLER: true,
-	Items.Id.COAL_ENGINE: true,
-	Items.Id.BOAT_BENCH: true,
-}
-## The farm's gear and what it gives that is not food.
-const FARM_ITEMS := {
-	Items.Id.WHEAT: true,
-	Items.Id.FLAX: true,
-	Items.Id.WATERING_CAN: true,
-	Items.Id.SHEARS: true,
-	Items.Id.BUCKET: true,
-	Items.Id.LEAD: true,
-	Items.Id.COMPOST: true,
-	Items.Id.EGG: true,
-}
-## Wild plants (placing nothing), with nature.
-const WILD := {
-	Items.Id.FLOWER_RED: true,
-	Items.Id.FLOWER_YELLOW: true,
-	Items.Id.FLOWER_BLUE: true,
-	Items.Id.FLOWER_WHITE: true,
-	Items.Id.FLOWER_PINK: true,
-	Items.Id.FERN: true,
-	Items.Id.CACTUS: true,
-	Items.Id.LILY_PAD: true,
-}
-## The cubes the world is made of (the others are building blocks).
-const NATURAL_CUBES := {
-	Tiles.Block.STONE: true,
-	Tiles.Block.DEEPSLATE: true,
-	Tiles.Block.SANDSTONE: true,
-	Tiles.Block.PACKED_ICE: true,
-}
-## Doors and windows' tab besides doors, trapdoors, panes and windows, by
-## kind.
-const OPENING_KINDS := {
-	Tiles.Block.LADDER: true,
-	Tiles.Block.SHUTTERS: true,
-	Tiles.Block.IRON_BARS: true,
-	Tiles.Block.WOOD_RAILING: true,
-	Tiles.Block.IRON_RAILING: true,
-	Tiles.Block.FENCE: true,
-	Tiles.Block.GATE: true,
-	Tiles.Block.BIG_GATE: true,
-}
-## The farm's tab besides what is sown and saplings, by kind.
-const FARM_KINDS := {
-	Tiles.Block.PUMPKIN: true,
-	Tiles.Block.COMPOSTER: true,
-	Tiles.Block.TRELLIS: true,
-	Tiles.Block.SCARECROW: true,
-	Tiles.Block.BEEHIVE: true,
-	Tiles.Block.NEST_BOX: true,
-	Tiles.Block.TURTLE_EGGS: true,
-}
-## Decoration (the other things placed are furniture), by kind.
-const DECOR_KINDS := {
-	Tiles.Block.TORCH: true,
-	Tiles.Block.TORCH_BRACKET: true,
-	Tiles.Block.LANTERN: true,
-	Tiles.Block.CAMPFIRE: true,
-	Tiles.Block.CURTAINS: true,
-	Tiles.Block.CURTAINS_LONG: true,
-	Tiles.Block.CURTAINS_IRON: true,
-	Tiles.Block.CURTAINS_LONG_IRON: true,
-	Tiles.Block.RUG: true,
-	Tiles.Block.CANDLE: true,
-	Tiles.Block.CANDELABRA: true,
-	Tiles.Block.CHANDELIER: true,
-	Tiles.Block.BEDSIDE_LAMP: true,
-	Tiles.Block.WALL_SCONCE: true,
-	Tiles.Block.PAINTING: true,
-	Tiles.Block.PORTRAIT: true,
-	Tiles.Block.WALL_CLOCK: true,
-	Tiles.Block.MIRROR: true,
-	Tiles.Block.FRAMED_MAP: true,
-	Tiles.Block.DEER_TROPHY: true,
-	Tiles.Block.BEAR_TROPHY: true,
-	Tiles.Block.TAPESTRY: true,
-	Tiles.Block.SPICE_RACK: true,
-	Tiles.Block.COAT_RACK: true,
-	Tiles.Block.CUSHION: true,
-	Tiles.Block.FLOWER_POT: true,
-	Tiles.Block.WINDOW_BOX: true,
-	Tiles.Block.HOUSEPLANT: true,
-	Tiles.Block.FOLDING_SCREEN: true,
-}
-
-## Every tab's items (Items order within each; the tools' tab: tools, the
-## bow and arrows, armor, the rest); each item's names, plain,
-## in every language loaded (made when first searched).
-static var _tabs := _sort()
+## Each item's names, plain, in every language loaded (made when first
+## searched).
 static var _names: Dictionary[int, PackedStringArray] = {}
 
 var library: ItemLibrary
@@ -152,7 +43,7 @@ var slots: Array[ItemSlot] = []
 ## The search field, the tabs and what is shown (see the class).
 var head := VBoxContainer.new()
 ## The tab shown when nothing is searched.
-var tab: Tab = Tab.BLOCKS
+var tab: ItemGroups.Tab = ItemGroups.Tab.BLOCKS
 
 ## The items shown: the tab's, or what the search found.
 var _shown: Array[int] = []
@@ -161,59 +52,8 @@ var _first_row := 0
 var _grid := GridContainer.new()
 var _bar := Control.new()
 var _field := LineEdit.new()
-var _tab_slots: Array[ItemSlot] = []
-var _caption := Label.new()
-
-
-## Every item but the player's book, tab after tab.
-static func order() -> Array[int]:
-	var result: Array[int] = []
-	for each: int in Tab.values():
-		result.append_array(_tabs[each])
-	return result
-
-
-## The items of a tab.
-static func items_of(which: Tab) -> Array[int]:
-	return _tabs[which]
-
-
-## The tab an item is in (see the class).
-static func tab_of(item: int) -> Tab:
-	if Items.TOOLS.has(item) or Armor.is_armor(item) or GEAR.has(item) or item in Items.PAINTS:
-		return Tab.TOOLS
-	if Items.is_food(item):
-		return Tab.FOOD
-	if FARM_ITEMS.has(item):
-		return Tab.FARM
-	var voxel := Items.placed_voxel(item)
-	if voxel == Voxels.AIR:
-		return Tab.NATURE if WILD.has(item) else Tab.MATERIALS
-	var block := Voxels.block_of(voxel)
-	if block == Tiles.Block.AIR:
-		# A ground: dirt, sand, snow...
-		return Tab.NATURE
-	var kind := ObjectShapes.pair_of(ObjectShapes.base_kind(block))
-	if (
-		Tiles.is_shaped(block)
-		or RoofBlocks.is_dormer(block)
-		or BuildShapes.material_of(block) != Tiles.Block.AIR
-		or block == Tiles.Block.CHIMNEY
-	):
-		return Tab.SHAPES
-	if (
-		Glass.is_window(block)
-		or Glass.is_pane(block)
-		or Openings.is_door(block)
-		or Openings.is_trapdoor(block)
-		or OPENING_KINDS.has(kind)
-	):
-		return Tab.OPENINGS
-	if Tiles.is_cube(block):
-		return Tab.NATURE if NATURAL_CUBES.has(block) else Tab.BLOCKS
-	if Farming.SOWN.has(block) or Growth.SAPLINGS.has(block) or FARM_KINDS.has(kind):
-		return Tab.FARM
-	return Tab.DECOR if DECOR_KINDS.has(kind) else Tab.FURNITURE
+var _tabs := ChipBar.new()
+var _caption := UiTheme.label("", "SectionLabel")
 
 
 ## The items whose name holds every word of `text` (in any language
@@ -224,7 +64,7 @@ static func search(text: String) -> Array[int]:
 	var found: Array[Vector2i] = []
 	if words.is_empty():
 		return []
-	var every := order()
+	var every := ItemGroups.order()
 	for at in every.size():
 		var best := -1
 		for name in _names_of(every[at]):
@@ -238,31 +78,6 @@ static func search(text: String) -> Array[int]:
 	for hit in found:
 		result.append(every[hit.y])
 	return result
-
-
-static func _sort() -> Dictionary:
-	var tabs := {}
-	for each: int in Tab.values():
-		var items: Array[int] = []
-		tabs[each] = items
-	for item in range(Items.Id.NONE + 1, Items.Id.size()):
-		if item != Items.Id.GUIDE_BOOK:
-			(tabs[tab_of(item)] as Array[int]).append(item)
-	var gear: Array[int] = tabs[Tab.TOOLS]
-	gear.sort_custom(func(a: int, b: int) -> bool: return _gear_rank(a) < _gear_rank(b))
-	return tabs
-
-
-## Where an item of the tools' tab goes in it.
-static func _gear_rank(item: int) -> int:
-	var group := 3
-	if Items.TOOLS.has(item):
-		group = 0
-	elif item in [Items.Id.BOW, Items.Id.ARROW]:
-		group = 1
-	elif Armor.is_armor(item):
-		group = 2
-	return group * Items.Id.size() + item
 
 
 ## An item's names, plain: in every language loaded, and its own (its key).
@@ -312,37 +127,24 @@ func _ready() -> void:
 	_refresh()
 
 
-## The search field, the tabs (TAB_COLUMNS a row) and the caption.
+## The search field, the tabs (chips showing an item each, named by their
+## tooltip) and the caption (the tab shown, or what was found).
 func _build_head() -> void:
-	head.add_theme_constant_override("separation", 2)
+	head.add_theme_constant_override("separation", 3)
 	head.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	_field.placeholder_text = "CATALOG_SEARCH"
 	_field.custom_minimum_size.x = SEARCH_WIDTH
 	_field.clear_button_enabled = true
-	var frame := UiTheme.box(UiTheme.TRACK, UiTheme.LINE_STRONG, 2, 2.0)
-	_field.add_theme_stylebox_override("normal", frame)
-	_field.add_theme_stylebox_override(
-		"focus", UiTheme.box(Color.TRANSPARENT, UiTheme.ACCENT, 2, 2.0)
-	)
 	_field.add_theme_icon_override("clear", _cross())
 	_field.text_changed.connect(func(_text: String) -> void: _refresh())
 	head.add_child(_field)
-	var tabs := GridContainer.new()
-	tabs.columns = TAB_COLUMNS
-	tabs.add_theme_constant_override("h_separation", 1)
-	tabs.add_theme_constant_override("v_separation", 1)
-	head.add_child(tabs)
-	for each: int in Tab.values():
-		var button := ItemSlot.new()
-		button.slot = each
-		button.library = library
-		button.label = TABS[each][0]
-		button.clicked.connect(
-			func(which: int, _right: bool, _shift: bool) -> void: show_tab(which)
-		)
-		tabs.add_child(button)
-		_tab_slots.append(button)
-	_caption.add_theme_color_override("font_color", UiTheme.MUTED)
+	_tabs.library = library
+	for each: int in ItemGroups.Tab.values():
+		_tabs.add_chip(each, TABS[each][0], TABS[each][1])
+	_tabs.select(tab)
+	_tabs.chosen.connect(show_tab)
+	head.add_child(_tabs)
+	_caption.uppercase = true
 	head.add_child(_caption)
 
 
@@ -351,14 +153,12 @@ func _process(_delta: float) -> void:
 		return
 	for slot in slots:
 		slot.show_stack(item_at(slot.slot), 1)
-	var searching := _searching()
-	for button in _tab_slots:
-		button.show_stack(TABS[button.slot][1], 1, button.slot == tab and not searching)
+	_tabs.select(-1 if _searching() else tab)
 
 
 ## Shows a tab (what was searched is let go).
 func show_tab(which: int) -> void:
-	tab = which as Tab
+	tab = which as ItemGroups.Tab
 	_field.text = ""
 	_field.release_focus()
 	_refresh()
@@ -430,7 +230,7 @@ func _refresh() -> void:
 			tr("CATALOG_FOUND") % _shown.size() if not _shown.is_empty() else tr("CATALOG_NOTHING")
 		)
 	else:
-		_shown = _tabs[tab]
+		_shown = ItemGroups.items_of(tab)
 		_caption.text = tr(TABS[tab][0])
 	_bar.queue_redraw()
 

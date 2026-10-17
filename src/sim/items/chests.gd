@@ -6,10 +6,16 @@ extends RefCounted
 ## (Msg.OPEN_CHEST) and sees what it holds (Msg.CHEST) until they close it;
 ## their clicks, drags and double clicks (Msg.SLOT_CLICK, SLOT_SPREAD,
 ## SLOT_COLLECT, CHEST_CLICK) go to it and to the open furnace; everyone who
-## has a chest open sees it change.
+## has a chest open sees it change. Also a player's bag sorted (Msg.SORT_BAG,
+## BagSort).
 
 const MESSAGES: Array[String] = [
-	Msg.OPEN_CHEST, Msg.CHEST_CLICK, Msg.SLOT_CLICK, Msg.SLOT_SPREAD, Msg.SLOT_COLLECT
+	Msg.OPEN_CHEST,
+	Msg.CHEST_CLICK,
+	Msg.SLOT_CLICK,
+	Msg.SLOT_SPREAD,
+	Msg.SLOT_COLLECT,
+	Msg.SORT_BAG,
 ]
 
 
@@ -24,6 +30,9 @@ static func handle(
 	match message.get("t"):
 		Msg.OPEN_CHEST:
 			_open(server, session, message)
+		Msg.SORT_BAG:
+			BagSort.sort(session.inventory)
+			session.transport.send(Msg.inventory(session.inventory))
 		Msg.CHEST_CLICK:
 			var chest := opened(server, session)
 			if chest != null:

@@ -1408,3 +1408,27 @@ PASSWORD_DIFFER,The two new ones differ.,Les deux nouveaux sont différents.
 PASSWORD_WAIT,Asking the server...,Demande au serveur...
 PASSWORD_DONE,Password changed.,Mot de passe changé.
 REFUSED_ACCOUNT_LOCKED,Too many wrong passwords for that name: try again in %s.,Trop de mauvais mots de passe pour ce pseudo : réessaie dans %s.
+INVENTORY_WORN,Worn,Équipement
+INVENTORY_DEFENSE,%d protection,Protection %d
+INVENTORY_FILTER_ALL,All,Tout
+INVENTORY_FILTER_TOOLS,Tools and gear,Outils et équipement
+INVENTORY_FILTER_BLOCKS,Building,Construction
+INVENTORY_FILTER_FOOD,Food,Nourriture
+INVENTORY_FILTER_NATURE,Nature and farm,Nature et ferme
+INVENTORY_FILTER_HOME,Home,Maison
+INVENTORY_FILTER_MATERIALS,Materials,Matériaux
+INVENTORY_SORT,Sort,Ranger
+INVENTORY_SORT_HOW,Joins and sorts the bag's stacks (the hotbar stays as it is),Regroupe et range les piles du sac (la barre d'objets ne bouge pas)
+INVENTORY_HINT,Shift + click: to the other side · right click: half · double click: gather · drag: share out,Maj + clic : de l'autre côté · clic droit : la moitié · double clic : rassemble · glisser : répartit
+CRAFT_MAKES,%d × %s,%d × %s
+DETAILS_LEFT,%d / %d,%d / %d
+DETAILS_WATER,water %d / %d,eau %d / %d
+DETAILS_PICKAXE,breaks stone and ores,casse la pierre et les minerais
+DETAILS_AXE,fells trees and cuts wood,abat les arbres et coupe le bois
+DETAILS_SHOVEL,"digs earth, sand and gravel","creuse la terre, le sable et le gravier"
+DETAILS_SWORD,strikes hardest,frappe le plus fort
+DETAILS_HOE,tills grass and dirt,laboure l'herbe et la terre
+DETAILS_PROTECTION,+%d protection,+%d de protection
+DETAILS_FEEDS,feeds %d,nourrit de %d
+DETAILS_SICK,makes sick,rend malade
+DETAILS_BURNS,burns %d s in a furnace,brûle %d s dans un four
