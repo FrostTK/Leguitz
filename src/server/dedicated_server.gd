@@ -7,9 +7,12 @@ extends Node
 ## options), loads or makes its world (in worlds/), listens for players
 ## (NetServer, ENet over UDP) and runs the world at 20 ticks a second,
 ## READY printed once it listens (Pterodactyl waits for it). Its console
-## (ServerConsole) reads commands; `stop`, the file STOP_FILE appearing in
-## the data folder (a service's stop: systemd) or the engine quitting save
-## the world and let the players go. The world also saves every two minutes
+## (ServerConsole) reads commands, typed or dropped in CONSOLE_FOLDER (step 5:
+## leguitz-console); `stop`, the file STOP_FILE appearing in the data folder
+## (a service's or a container's stop: systemd, Docker) or the engine
+## quitting save the world and let the players go. Launched with --init it
+## only writes its settings' file (ServerConfig) and goes. Its connections
+## are encrypted (NetTls: its key in the data folder). The world also saves every two minutes
 ## (GameServer.AUTOSAVE_TICKS). Step 4: who may play (Access: accounts, the
 ## default role, from the config), backups (Backups: at start, every few
 ## hours, asked; `restore` from the console).
@@ -18,6 +21,8 @@ extends Node
 const READY := "Leguitz server ready"
 ## Created in the data folder, it stops the server (then goes).
 const STOP_FILE := "stop"
+## In the data folder: where commands are dropped (ServerConsole.folder).
+const CONSOLE_FOLDER := "console"
 ## The loop's pace (frames a second; the world ticks at its own).
 const FRAMES := 60
 const MAX_TICKS_PER_FRAME := 5
@@ -45,10 +50,17 @@ static func wanted() -> bool:
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	Engine.max_fps = FRAMES
-	config = ServerConfig.read(OS.get_cmdline_args() + OS.get_cmdline_user_args())
+	var args := OS.get_cmdline_args() + OS.get_cmdline_user_args()
+	config = ServerConfig.read(args)
 	TranslationServer.set_locale(config.language)
 	for problem in config.problems:
 		push_warning(problem)
+	var version: String = ProjectSettings.get_setting("application/config/version", "?")
+	print("Leguitz %s dedicated server, data in %s." % [version, _shown(config.data_dir)])
+	if "--init" in args:
+		print("Settings written in %s." % _shown(config.data_dir.path_join(ServerConfig.FILE)))
+		get_tree().quit()
+		return
 	var storage := WorldStorage.new(config.world_dir())
 	backups = Backups.new(config.data_dir, config.world_dir(), config.world)
 	backups.hours = config.backup_hours
@@ -74,8 +86,10 @@ func _ready() -> void:
 	server.backup_request = func() -> bool: return backups.make(server)
 	console = ServerConsole.new(server)
 	console.backups = backups
+	console.folder = config.data_dir.path_join(CONSOLE_FOLDER)
+	DirAccess.make_dir_recursive_absolute(console.folder)
 	var most := config.max_players + SPARE_CONNECTIONS
-	var error := net.listen(config.ip, config.port, most)
+	var error := net.listen(config.ip, config.port, most, NetTls.server_options(config.data_dir))
 	if error != OK:
 		printerr("Cannot listen on %s:%d (%s)." % [config.ip, config.port, error_string(error)])
 		get_tree().quit(1)
@@ -108,6 +122,7 @@ func _process(delta: float) -> void:
 		_tick_accumulator -= GameConst.TICK_DELTA
 		server.tick()
 	backups.update(server, delta)
+	console.poll_folder(delta)
 	for line in console.take_lines():
 		var act := console.run(line)
 		if act == ServerConsole.Act.STOP:
@@ -157,6 +172,11 @@ func restore(file: String) -> void:
 
 func _exit_tree() -> void:
 	_close()
+
+
+## A folder as the system writes it.
+static func _shown(path: String) -> String:
+	return ProjectSettings.globalize_path(path) if path.begins_with("user://") else path
 
 
 func _close(save := true) -> void:

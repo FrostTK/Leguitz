@@ -1,7 +1,8 @@
 class_name NetServer
 extends RefCounted
-## A dedicated server's listening end (ENet, UDP): `listen` on an address
-## ("*": every address of the machine) and a port; `service` (every frame)
+## A dedicated server's listening end (ENet, UDP, encrypted: DTLS, NetTls):
+## `listen` on an address ("*": every address of the machine) and a port;
+## `service` (every frame)
 ## makes a NetTransport for each player connecting (to hand to
 ## GameServer.connect_client), gives each what it received and marks those
 ## that went; `flush` sends what was sent.
@@ -10,12 +11,16 @@ var _host: ENetConnection
 var _peers: Dictionary[ENetPacketPeer, NetTransport] = {}
 
 
-## Listens for players (`most`: connections at once). An error: it could
-## not (the port taken...).
-func listen(address: String, port: int, most: int) -> Error:
+## Listens for players (`most`: connections at once), with the server's
+## key and certificate (`tls`: NetTls.server_options; null: made for this
+## run). An error: it could not (the port taken...).
+func listen(address: String, port: int, most: int, tls: TLSOptions = null) -> Error:
 	_host = ENetConnection.new()
 	var error := _host.create_host_bound(address, port, most, 1)
+	if error == OK:
+		error = _host.dtls_server_setup(tls if tls != null else NetTls.server_options())
 	if error != OK:
+		_host.destroy()
 		_host = null
 		return error
 	_host.compress(ENetConnection.COMPRESS_ZSTD)

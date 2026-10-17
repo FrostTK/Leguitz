@@ -1,0 +1,23 @@
+#!/bin/sh
+# Gives a command to a running Leguitz dedicated server, as if typed in its
+# console: leguitz-console say Hello everyone
+#   leguitz-console list          leguitz-console save
+#   leguitz-console kick Alex     leguitz-console help
+# The server reads it within a second and prints its answer in its log
+# (journalctl -u leguitz-server -f, or docker logs).
+# The data folder: LEGUITZ_DATA, else /srv/leguitz (Docker: /data).
+data="${LEGUITZ_DATA:-/srv/leguitz}"
+if [ "$#" -eq 0 ]; then
+	echo "Usage: leguitz-console COMMAND [WORDS...]   (help lists the commands)" >&2
+	exit 2
+fi
+folder="$data/console"
+if [ ! -d "$folder" ]; then
+	echo "No console folder in $data: is the server installed there and started?" >&2
+	exit 1
+fi
+name="$(date +%s%N 2>/dev/null || date +%s)-$$"
+# Written aside, then renamed: the server never reads half a command.
+printf '%s\n' "$*" > "$folder/$name.tmp"
+mv "$folder/$name.tmp" "$folder/$name.txt"
+echo "Sent to the server: $*"

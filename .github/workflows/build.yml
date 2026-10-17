@@ -32,6 +32,13 @@ jobs:
           gdlint src tests
           gdformat --check src tests
 
+      - name: Check the hosting scripts and the Pterodactyl egg
+        run: |
+          shellcheck deploy/*.sh deploy/linux/install.sh deploy/linux/stop-server.sh \
+            deploy/linux/leguitz-console deploy/docker/entrypoint.sh deploy/pterodactyl/install.sh
+          python3 tools/make_egg.py
+          git diff --exit-code deploy/pterodactyl/egg-leguitz.json
+
       - name: Cache Godot and export templates
         id: cache-godot
         uses: actions/cache@v4
@@ -67,7 +74,11 @@ jobs:
           test -s build/server/LeguitzServer.x86_64
           # Artifacts are zipped by GitHub and lose the executable bit.
           tar -czf build/Leguitz-linux.tar.gz -C build/linux Leguitz.x86_64
-          tar -czf build/LeguitzServer-linux.tar.gz -C build/server LeguitzServer.x86_64
+
+      - name: Package the dedicated server
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then version="$GITHUB_REF_NAME"; else version="dev-${GITHUB_SHA::7}"; fi
+          sh deploy/package.sh build/server/LeguitzServer.x86_64 "$version" build/release
 
       - name: The dedicated server starts and stops
         run: |
@@ -91,7 +102,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: LeguitzServer-linux
-          path: build/LeguitzServer-linux.tar.gz
+          path: build/release/
           retention-days: 30
 
       - uses: actions/upload-artifact@v4
@@ -99,3 +110,95 @@ jobs:
           name: Leguitz-macos
           path: build/macos/Leguitz.zip
           retention-days: 30
+
+  hosting:
+    name: Hosting (systemd, Docker, Pterodactyl)
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: LeguitzServer-linux
+          path: release
+
+      - name: Unpack the server's archive
+        run: |
+          ls -l release
+          (cd release && sha256sum -c ./*.sha256)
+          tar -xzf release/leguitz-server-*-linux-x86_64.tar.gz
+          ls -l leguitz-server
+
+      - name: Debian way (install.sh, systemd, leguitz-console, a clean stop)
+        run: |
+          sudo ./leguitz-server/install.sh --port=27431 --no-start
+          test -f /srv/leguitz/server.cfg
+          grep -q "^port=27431" /srv/leguitz/server.cfg
+          sudo systemctl start leguitz-server
+          for i in $(seq 120); do sudo journalctl -u leguitz-server | grep -q "Leguitz server ready" && break; sleep 1; done
+          sudo journalctl -u leguitz-server | grep "Leguitz server ready"
+          sudo leguitz-console list
+          for i in $(seq 20); do sudo journalctl -u leguitz-server | grep -q "players:" && break; sleep 1; done
+          sudo journalctl -u leguitz-server | grep "players:"
+          sudo systemctl stop leguitz-server
+          sudo journalctl -u leguitz-server | grep "Stopped."
+          sudo test -f /srv/leguitz/tls/server.key
+          sudo test -d /srv/leguitz/worlds/world
+
+      - name: Docker way (build, console, docker stop saves)
+        run: |
+          docker build -t leguitz-server leguitz-server
+          docker run -d --name leguitz -p 27432:27432/udp -v leguitz-data:/data leguitz-server --port=27432
+          for i in $(seq 120); do docker logs leguitz 2>&1 | grep -q "Leguitz server ready" && break; sleep 1; done
+          docker logs leguitz 2>&1 | grep "Leguitz server ready"
+          docker exec leguitz leguitz-console say Hello from the console
+          for i in $(seq 20); do docker logs leguitz 2>&1 | grep -q "Hello from the console" && break; sleep 1; done
+          docker logs leguitz 2>&1 | grep "<Server> Hello from the console"
+          docker stop -t 90 leguitz
+          docker logs leguitz 2>&1 | grep "Stopped."
+
+      - name: Pterodactyl way (the egg's install script and startup)
+        run: |
+          egg=leguitz-server/egg-leguitz.json
+          jq -r '.scripts.installation.script' "$egg" > egg-install.sh
+          mkdir -p ptero www
+          cp release/leguitz-server-*-linux-x86_64.tar.gz www/server.tar.gz
+          (cd www && python3 -m http.server 8765 --bind 127.0.0.1 >/dev/null 2>&1 &)
+          sleep 2
+          docker run --rm --network host -v "$PWD/ptero:/mnt/server" -v "$PWD/egg-install.sh:/install.sh:ro" \
+            -e SERVER_URL=http://127.0.0.1:8765/server.tar.gz ghcr.io/pterodactyl/installers:debian bash /install.sh
+          test -x ptero/LeguitzServer.x86_64
+          test -f ptero/server.cfg
+          sudo chown -R 988:988 ptero
+          startup="$(jq -r '.startup' "$egg")"
+          (sleep 75; echo stop) | docker run --rm -i --network host -e STARTUP="$startup" \
+            -e SERVER_PORT=27433 -e WORLD=world -e WORLD_SEED=42 -e GAME_MODE=survival \
+            -e MAX_PLAYERS=10 -e SERVER_PASSWORD= -e VIEW_DISTANCE=12 -e CONSOLE_LANGUAGE=fr \
+            -e ACCOUNTS=true -e DEFAULT_ROLE=player -v "$PWD/ptero:/home/container" \
+            ghcr.io/pterodactyl/yolks:debian | tee ptero-out.txt
+          grep -q "$(jq -r '.config.startup' "$egg" | jq -r '.done')" ptero-out.txt
+          grep -q "Stopped." ptero-out.txt
+
+  release:
+    name: Publish the release
+    needs: [build, hosting]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create the GitHub release with the server and the games
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp artifacts/Leguitz-windows/Leguitz.exe "Leguitz-$GITHUB_REF_NAME-windows.exe"
+          cp artifacts/Leguitz-linux/Leguitz-linux.tar.gz "Leguitz-$GITHUB_REF_NAME-linux.tar.gz"
+          cp artifacts/Leguitz-macos/Leguitz.zip "Leguitz-$GITHUB_REF_NAME-macos.zip"
+          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --title "Leguitz $GITHUB_REF_NAME" \
+            --generate-notes artifacts/LeguitzServer-linux/* Leguitz-"$GITHUB_REF_NAME"-*

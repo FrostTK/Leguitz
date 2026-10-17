@@ -186,3 +186,87 @@ func test_the_console() -> void:
 	alex.send(Msg.set_time(WorldClock.Mode.FROZEN, 6.0))
 	server.process_messages()
 	assert_almost(server.clock.time_of_day(), 18.0 * 3600.0, 60.0, "a player's ignored")
+
+
+## Multiplayer, step 5: a server's key and certificate are made once and
+## kept; nothing but an encrypted game is heard.
+func test_connections_are_encrypted() -> void:
+	var folder := "user://test_tls"
+	_remove(folder.path_join(NetTls.FOLDER))
+	var made := NetTls.server_options(folder)
+	assert_true(made != null, "made")
+	var key_path := folder.path_join(NetTls.FOLDER).path_join(NetTls.KEY_FILE)
+	var certificate_path := folder.path_join(NetTls.FOLDER).path_join(NetTls.CERTIFICATE_FILE)
+	assert_true(FileAccess.file_exists(key_path), "the key kept")
+	assert_true(FileAccess.file_exists(certificate_path), "the certificate kept")
+	var first := FileAccess.get_file_as_string(certificate_path)
+	NetTls.server_options(folder)
+	assert_eq(FileAccess.get_file_as_string(certificate_path), first, "the same the next time")
+	var server := _server()
+	var net := NetServer.new()
+	var port := 0
+	for attempt in 5:
+		port = 30000 + randi() % 20000
+		if net.listen("127.0.0.1", port, 4, made) == OK:
+			break
+		port = 0
+	assert_ne(port, 0, "listening")
+	# A game that does not encrypt is never heard.
+	var plain := ENetConnection.new()
+	plain.create_host(1, 1)
+	plain.compress(ENetConnection.COMPRESS_ZSTD)
+	var peer := plain.connect_to_host("127.0.0.1", port, 1)
+	var said := false
+	var deadline := Time.get_ticks_msec() + 2000
+	while Time.get_ticks_msec() < deadline:
+		var event := plain.service()
+		if event[0] == ENetConnection.EVENT_CONNECT and not said:
+			peer.send(0, var_to_bytes(Msg.hello("Eve", 2)), ENetPacketPeer.FLAG_RELIABLE)
+			said = true
+		for transport in net.service():
+			server.connect_client(transport)
+		server.process_messages()
+		net.flush()
+		OS.delay_msec(10)
+	assert_false(said, "no connection without encryption")
+	assert_true(server.sessions.is_empty(), "nobody joined")
+	plain.destroy()
+	net.close()
+	_remove(folder.path_join(NetTls.FOLDER))
+
+
+func _remove(folder: String) -> void:
+	if not DirAccess.dir_exists_absolute(folder):
+		return
+	for file in DirAccess.get_files_at(folder):
+		DirAccess.remove_absolute(folder.path_join(file))
+	DirAccess.remove_absolute(folder)
+
+
+## Commands dropped in the console's folder (leguitz-console) are run, the
+## files gone; one still being written waits.
+func test_commands_dropped_in_the_console_folder() -> void:
+	var server := _server()
+	var console := ServerConsole.new(server)
+	var printed: Array[String] = []
+	console.out = func(line: String) -> void: printed.append(line)
+	console.folder = "user://test_console"
+	DirAccess.make_dir_recursive_absolute(console.folder)
+	for file in DirAccess.get_files_at(console.folder):
+		DirAccess.remove_absolute(console.folder.path_join(file))
+	var dropped := FileAccess.open(console.folder.path_join("1-a.txt"), FileAccess.WRITE)
+	dropped.store_string("list\nsay Hello\n")
+	dropped.close()
+	var writing := FileAccess.open(console.folder.path_join("2-b.tmp"), FileAccess.WRITE)
+	writing.store_string("stop\n")
+	writing.close()
+	console.poll_folder(ServerConsole.FOLDER_SECONDS)
+	assert_eq(Array(console.take_lines()), ["list", "say Hello"], "in order, the file read")
+	assert_false(FileAccess.file_exists(console.folder.path_join("1-a.txt")), "and gone")
+	assert_true(
+		FileAccess.file_exists(console.folder.path_join("2-b.tmp")), "one being written waits"
+	)
+	console.poll_folder(0.1)
+	assert_true(console.take_lines().is_empty(), "looked into once a second")
+	DirAccess.remove_absolute(console.folder.path_join("2-b.tmp"))
+	DirAccess.remove_absolute(console.folder)

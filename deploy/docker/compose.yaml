@@ -1,0 +1,20 @@
+# A Leguitz dedicated server with Docker Compose (next to the Dockerfile of
+# an unpacked leguitz-server archive): docker compose up -d --build
+# Its settings, worlds and backups are in the volume (server.cfg there).
+# Commands: docker compose exec leguitz leguitz-console say Hello
+services:
+  leguitz:
+    build: .
+    image: leguitz-server
+    restart: unless-stopped
+    # A dedicated IP: "203.0.113.10:27420:27420/udp".
+    ports:
+      - "27420:27420/udp"
+    volumes:
+      - leguitz-data:/data
+    # Saving a large world can take a while.
+    stop_grace_period: 90s
+    # Options for the server (they take over server.cfg):
+    command: []
+volumes:
+  leguitz-data:

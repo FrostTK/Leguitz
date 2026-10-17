@@ -1,0 +1,41 @@
+# Leguitz dedicated server, as a systemd service (written by install.sh,
+# which fills in the @...@ values). Logs: journalctl -u leguitz-server -f
+# Commands: leguitz-console say Hello   (see the guide, docs/hebergement.md)
+
+[Unit]
+Description=Leguitz dedicated server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@USER@
+Group=@USER@
+WorkingDirectory=@DATA@
+Environment=HOME=@DATA@
+ExecStart=@PREFIX@/LeguitzServer.x86_64 --headless --data=@DATA@
+# A clean stop: the server saves the world and lets the players go when the
+# file "stop" appears in its data folder (it does not catch SIGTERM).
+ExecStop=@PREFIX@/stop-server.sh @DATA@ $MAINPID
+TimeoutStopSec=120
+KillMode=mixed
+Restart=on-failure
+RestartSec=10
+StandardInput=null
+StandardOutput=journal
+StandardError=journal
+
+# Hardening: the server only writes in its data folder.
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+ReadWritePaths=@DATA@
+
+[Install]
+WantedBy=multi-user.target

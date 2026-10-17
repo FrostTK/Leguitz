@@ -1,6 +1,7 @@
 class_name NetClient
 extends NetTransport
-## A player's end of a connection to a dedicated server (ENet, UDP):
+## A player's end of a connection to a dedicated server (ENet, UDP,
+## encrypted: DTLS, NetTls):
 ## `connect_to` an address (a name or an IP) and a port; what is sent before
 ## the connection is made waits for it; `poll` (every frame) services its
 ## own host. Closed, `ending` tells why: CONNECTION_UNREACHABLE (it never
@@ -32,6 +33,8 @@ func connect_to(address: String, port: int) -> Error:
 		_end("CONNECTION_UNREACHABLE")
 		return ERR_CANT_RESOLVE
 	var error := _host.create_host(1, 1)
+	if error == OK:
+		error = _host.dtls_client_setup(address, NetTls.client_options())
 	if error != OK:
 		_end("CONNECTION_UNREACHABLE")
 		return error

@@ -8,7 +8,7 @@ extends RefCounted
 const HELLO := "hello"
 ## The messages' version: a client and a server of different ones do not
 ## play together (Msg.REFUSED, REFUSED_VERSION). Raised when messages change.
-const PROTOCOL := 5
+const PROTOCOL := 6
 const PLAYER_MOVE := "player_move"
 ## The player changes their account's password (Access; old and new
 ## secrets: Access.secret_of).

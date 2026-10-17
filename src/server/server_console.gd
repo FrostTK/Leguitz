@@ -2,7 +2,10 @@ class_name ServerConsole
 extends RefCounted
 ## A dedicated server's console (DedicatedServer): lines typed on its
 ## standard input (read on a thread of their own, `start`; what Pterodactyl
-## and a terminal send) are run (`run`): stop (or quit: the world saved,
+## and a terminal send) and the files dropped in its `folder` (one command
+## a line; `poll_folder` reads and removes them in their names' order: the
+## helper leguitz-console writes them, where a service or a container has no
+## terminal; step 5) are run (`run`): stop (or quit: the world saved,
 ## the server stops), save, say TEXT (to every player), list (who plays),
 ## help, backups (the world's, newest first: Backups), restore BACKUP (its
 ## name or number: the server stops, the backup in place of the world; Act
@@ -35,6 +38,10 @@ const COMMANDS: Array[String] = [
 ]
 ## The console's name, as players read it.
 const NAME := "Server"
+## How often the folder is looked into (seconds); files still being written
+## end so and are left for later.
+const FOLDER_SECONDS := 1.0
+const WRITING := ".tmp"
 
 
 ## What the console prints (chat lines told to everyone, a command's
@@ -61,6 +68,8 @@ var backups: Backups
 var restoring := ""
 ## Prints a line (print; tests keep them).
 var out := func(line: String) -> void: print(line)
+## The folder commands are dropped in ("": none).
+var folder := ""
 ## The console as a player giving commands (an admin, never in the world).
 var session := GameServer.PlayerSession.new()
 
@@ -68,6 +77,7 @@ var _output := Output.new()
 var _thread := Thread.new()
 var _mutex := Mutex.new()
 var _lines: PackedStringArray = []
+var _folder_wait := 0.0
 
 
 func _init(game_server: GameServer) -> void:
@@ -92,6 +102,25 @@ func start() -> void:
 func finish() -> void:
 	if _thread.is_started() and not _thread.is_alive():
 		_thread.wait_to_finish()
+
+
+## Every FOLDER_SECONDS: the commands dropped in `folder` since (each
+## file's lines), the files removed.
+func poll_folder(delta: float) -> void:
+	_folder_wait -= delta
+	if folder == "" or _folder_wait > 0.0:
+		return
+	_folder_wait = FOLDER_SECONDS
+	var files := DirAccess.get_files_at(folder)
+	files.sort()
+	for file in files:
+		if file.ends_with(WRITING) or file.begins_with("."):
+			continue
+		var path := folder.path_join(file)
+		var text := FileAccess.get_file_as_string(path)
+		DirAccess.remove_absolute(path)
+		for line in text.split("\n", false):
+			_keep(line)
 
 
 ## The lines typed since the last call.

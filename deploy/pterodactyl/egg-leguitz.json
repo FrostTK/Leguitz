@@ -1,0 +1,162 @@
+{
+    "_comment": "DO NOT EDIT: made by tools/make_egg.py. Import it in Pterodactyl (Admin, Nests).",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2026-10-18T00:00:00+00:00",
+    "name": "Leguitz",
+    "author": "ego@gxitou.fr",
+    "description": "Serveur dédié Leguitz : un monde en voxels en pixel art, à rejoindre par IP depuis le jeu. Connexions chiffrées (DTLS), comptes par pseudo, sauvegardes de secours.",
+    "features": null,
+    "docker_images": {
+        "Debian": "ghcr.io/pterodactyl/yolks:debian"
+    },
+    "file_denylist": [],
+    "startup": "./LeguitzServer.x86_64 --headless --data=/home/container --ip=0.0.0.0 --port={{SERVER_PORT}} --world={{WORLD}} --seed=\"{{WORLD_SEED}}\" --game-mode={{GAME_MODE}} --max-players={{MAX_PLAYERS}} --password=\"{{SERVER_PASSWORD}}\" --view-distance={{VIEW_DISTANCE}} --language={{CONSOLE_LANGUAGE}} --accounts={{ACCOUNTS}} --default-role={{DEFAULT_ROLE}}",
+    "config": {
+        "files": "{}",
+        "startup": "{\"done\": \"Leguitz server ready\"}",
+        "logs": "{}",
+        "stop": "stop"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!/bin/bash\n# Pterodactyl's installation of a Leguitz dedicated server (the egg's\n# script, egg-leguitz.json; run in the installer container, the server's\n# files in /mnt/server). It downloads the server's archive from SERVER_URL,\n# else from the GitHub release SERVER_VERSION of GITHUB_REPO (GITHUB_TOKEN\n# for a private repository), and unpacks it. Running it again (Reinstall)\n# updates the server; the worlds and settings stay.\nset -euo pipefail\napt-get update -qq >/dev/null\napt-get install -y -qq curl jq ca-certificates tar >/dev/null\nmkdir -p /mnt/server\ncd /mnt/server\narchive=/tmp/leguitz-server.tar.gz\nauth=()\n[ -n \"${GITHUB_TOKEN:-}\" ] && auth=(-H \"Authorization: Bearer ${GITHUB_TOKEN}\")\nif [ -n \"${SERVER_URL:-}\" ]; then\n\techo \"Downloading ${SERVER_URL}\"\n\tcurl -fSL --retry 3 -o \"$archive\" \"${SERVER_URL}\"\nelse\n\trepo=\"${GITHUB_REPO:?GITHUB_REPO or SERVER_URL}\"\n\tversion=\"${SERVER_VERSION:-latest}\"\n\tapi=\"https://api.github.com/repos/${repo}/releases/latest\"\n\t[ \"$version\" != \"latest\" ] && api=\"https://api.github.com/repos/${repo}/releases/tags/${version}\"\n\techo \"Looking for the server in ${repo}'s release ${version}\"\n\trelease=\"$(curl -fsSL --retry 3 -H \"Accept: application/vnd.github+json\" \"${auth[@]}\" \"$api\")\" || {\n\t\techo \"No such release (a private repository needs GITHUB_TOKEN).\"\n\t\texit 1\n\t}\n\tasset=\"$(jq -r '[.assets[] | select(.name | test(\"^leguitz-server-.*-linux-x86_64\\\\.tar\\\\.gz$\"))][0].id // empty' <<<\"$release\")\"\n\tif [ -z \"$asset\" ]; then\n\t\techo \"That release holds no leguitz-server-*-linux-x86_64.tar.gz.\"\n\t\texit 1\n\tfi\n\tcurl -fSL --retry 3 -H \"Accept: application/octet-stream\" \"${auth[@]}\" \\\n\t\t-o \"$archive\" \"https://api.github.com/repos/${repo}/releases/assets/${asset}\"\n\techo \"Downloaded $(jq -r '.tag_name' <<<\"$release\").\"\nfi\ntar -xzf \"$archive\" -C /tmp\ncp /tmp/leguitz-server/LeguitzServer.x86_64 /mnt/server/\ncp /tmp/leguitz-server/VERSION /mnt/server/ 2>/dev/null || true\nchmod 755 /mnt/server/LeguitzServer.x86_64\nrm -rf \"$archive\" /tmp/leguitz-server\n# The settings' file, to be seen in the panel before the first start.\nif [ ! -f /mnt/server/server.cfg ]; then\n\tHOME=/mnt/server ./LeguitzServer.x86_64 --headless --data=/mnt/server --init || true\nfi\necho \"Leguitz server $(cat /mnt/server/VERSION 2>/dev/null || echo) installed.\"\n",
+            "container": "ghcr.io/pterodactyl/installers:debian",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Monde",
+            "description": "Le dossier du monde (dans worlds/). Un autre nom fait un autre monde.",
+            "env_variable": "WORLD",
+            "default_value": "world",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:40|regex:/^[A-Za-z0-9_-]+$/",
+            "field_type": "text"
+        },
+        {
+            "name": "Graine",
+            "description": "La graine d'un nouveau monde (vide : au hasard). Ne sert qu'à le créer.",
+            "env_variable": "WORLD_SEED",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:64",
+            "field_type": "text"
+        },
+        {
+            "name": "Mode de jeu",
+            "description": "survival, creative ou hardcore. Ne sert qu'à créer le monde.",
+            "env_variable": "GAME_MODE",
+            "default_value": "survival",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|in:survival,creative,hardcore",
+            "field_type": "text"
+        },
+        {
+            "name": "Joueurs au plus",
+            "description": "Combien de joueurs à la fois.",
+            "env_variable": "MAX_PLAYERS",
+            "default_value": "10",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|between:1,200",
+            "field_type": "text"
+        },
+        {
+            "name": "Mot de passe du serveur",
+            "description": "Ce que les joueurs tapent pour entrer (vide : personne ne le demande).",
+            "env_variable": "SERVER_PASSWORD",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:64",
+            "field_type": "text"
+        },
+        {
+            "name": "Distance de vue",
+            "description": "Jusqu'où les joueurs voient, en chunks (2 à 16).",
+            "env_variable": "VIEW_DISTANCE",
+            "default_value": "12",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|between:2,16",
+            "field_type": "text"
+        },
+        {
+            "name": "Langue de la console",
+            "description": "fr ou en.",
+            "env_variable": "CONSOLE_LANGUAGE",
+            "default_value": "fr",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|in:fr,en",
+            "field_type": "text"
+        },
+        {
+            "name": "Comptes",
+            "description": "true : chaque pseudo appartient à son premier joueur, protégé par son mot de passe.",
+            "env_variable": "ACCOUNTS",
+            "default_value": "true",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|in:true,false",
+            "field_type": "text"
+        },
+        {
+            "name": "Rôle des nouveaux venus",
+            "description": "player, ou visitor (ils regardent sans rien changer tant qu'un admin ne leur donne pas un rôle).",
+            "env_variable": "DEFAULT_ROLE",
+            "default_value": "player",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|in:player,visitor",
+            "field_type": "text"
+        },
+        {
+            "name": "Lien de l'archive du serveur",
+            "description": "Un lien direct vers leguitz-server-...-linux-x86_64.tar.gz (vide : la version GitHub ci-dessous). Sert à l'installation et à la réinstallation (mise à jour).",
+            "env_variable": "SERVER_URL",
+            "default_value": "",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "nullable|string|max:500",
+            "field_type": "text"
+        },
+        {
+            "name": "Dépôt GitHub",
+            "description": "Le dépôt dont les versions publient le serveur.",
+            "env_variable": "GITHUB_REPO",
+            "default_value": "FrostTK/Leguitz",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "nullable|string|max:100",
+            "field_type": "text"
+        },
+        {
+            "name": "Version",
+            "description": "La version à installer (v0.6.0...), ou latest : la dernière.",
+            "env_variable": "SERVER_VERSION",
+            "default_value": "latest",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|string|max:40",
+            "field_type": "text"
+        },
+        {
+            "name": "Jeton GitHub",
+            "description": "Pour un dépôt privé : un jeton « fine-grained » qui peut lire son contenu (vide : dépôt public).",
+            "env_variable": "GITHUB_TOKEN",
+            "default_value": "",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "nullable|string|max:200",
+            "field_type": "text"
+        }
+    ]
+}
