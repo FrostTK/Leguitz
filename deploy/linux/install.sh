@@ -97,7 +97,8 @@ chmod 755 /usr/local/bin/leguitz-console
 
 # The settings, written once (then yours to change): the address and port.
 if [ ! -f "$DATA/server.cfg" ]; then
-	runuser -u "$USER_NAME" -- env HOME="$DATA" "$PREFIX/LeguitzServer.x86_64" --headless --data="$DATA" --init
+	# From the data folder: Godot goes back to where it started, which that user may not read.
+	(cd "$DATA" && runuser -u "$USER_NAME" -- env HOME="$DATA" "$PREFIX/LeguitzServer.x86_64" --headless --data="$DATA" --init)
 fi
 [ -n "$IP" ] && sed -i "s|^ip=.*|ip=\"$IP\"|" "$DATA/server.cfg"
 [ -n "$PORT" ] && sed -i "s|^port=.*|port=$PORT|" "$DATA/server.cfg"

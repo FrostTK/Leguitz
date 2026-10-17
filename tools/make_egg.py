@@ -64,8 +64,7 @@ def main():
         "exported_at": "2026-10-18T00:00:00+00:00",
         "name": "Leguitz",
         "author": "ego@gxitou.fr",
-        "description": "Serveur dédié Leguitz : un monde en voxels en pixel art, à rejoindre par IP depuis le jeu."
-        " Connexions chiffrées (DTLS), comptes par pseudo, sauvegardes de secours.",
+        "description": "Serveur dédié Leguitz | Connexions chiffrées (DTLS), comptes par pseudo, sauvegardes de secours.",
         "features": None,
         "docker_images": {"Debian": "ghcr.io/pterodactyl/yolks:debian"},
         "file_denylist": [],
