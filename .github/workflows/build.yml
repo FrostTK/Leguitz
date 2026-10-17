@@ -151,6 +151,7 @@ jobs:
           sudo journalctl -u leguitz-server | grep "Stopped."
           sudo test -f /srv/leguitz/tls/server.key
           sudo test -d /srv/leguitz/worlds/world
+          if sudo journalctl -u leguitz-server | grep -i "could not\|cannot save"; then exit 1; fi
 
       - name: Docker way (build, console, docker stop saves)
         run: |
@@ -163,6 +164,9 @@ jobs:
           docker logs leguitz 2>&1 | grep "<Server> Hello from the console"
           docker stop -t 90 leguitz
           docker logs leguitz 2>&1 | grep "Stopped."
+          if docker logs leguitz 2>&1 | grep -i "could not\|cannot save"; then exit 1; fi
+          docker run --rm -v leguitz-data:/data --entrypoint test leguitz-server -d /data/worlds/world
+          docker run --rm -v leguitz-data:/data --entrypoint test leguitz-server -f /data/tls/server.key
 
       - name: Pterodactyl way (the egg's install script and startup)
         run: |
@@ -178,13 +182,16 @@ jobs:
           test -f ptero/server.cfg
           sudo chown -R 988:988 ptero
           startup="$(jq -r '.startup' "$egg")"
-          (sleep 75; echo stop) | docker run --rm -i --network host -e STARTUP="$startup" \
+          (sleep 75; echo stop) | docker run --rm -i --network host --user 988:988 -e STARTUP="$startup" \
             -e SERVER_PORT=27433 -e WORLD=world -e WORLD_SEED=42 -e GAME_MODE=survival \
             -e MAX_PLAYERS=10 -e SERVER_PASSWORD= -e VIEW_DISTANCE=12 -e CONSOLE_LANGUAGE=fr \
             -e ACCOUNTS=true -e DEFAULT_ROLE=player -v "$PWD/ptero:/home/container" \
             ghcr.io/pterodactyl/yolks:debian | tee ptero-out.txt
           grep -q "$(jq -r '.config.startup' "$egg" | jq -r '.done')" ptero-out.txt
           grep -q "Stopped." ptero-out.txt
+          if grep -i "could not\|cannot save\|failed to open" ptero-out.txt; then exit 1; fi
+          sudo test -d ptero/worlds/world
+          sudo test -f ptero/tls/server.key
 
       - name: What the servers said (on failure)
         if: failure()
