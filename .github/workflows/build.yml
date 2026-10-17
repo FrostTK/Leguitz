@@ -134,8 +134,8 @@ jobs:
       - name: Debian way (install.sh, systemd, leguitz-console, a clean stop)
         run: |
           sudo ./leguitz-server/install.sh --port=27431 --no-start
-          test -f /srv/leguitz/server.cfg
-          grep -q "^port=27431" /srv/leguitz/server.cfg
+          sudo test -f /srv/leguitz/server.cfg
+          sudo grep -q "^port=27431" /srv/leguitz/server.cfg
           sudo systemctl start leguitz-server
           for i in $(seq 120); do sudo journalctl -u leguitz-server | grep -q "Leguitz server ready" && break; sleep 1; done
           sudo journalctl -u leguitz-server | grep "Leguitz server ready"
