@@ -81,11 +81,16 @@ jobs:
           sh deploy/package.sh build/server/LeguitzServer.x86_64 "$version" build/release
 
       - name: The dedicated server starts and stops
+        # "stop" goes once "ready" was printed: the lines must come as they are
+        # printed (flush_stdout_on_print), or services and panels never see them.
         run: |
           mkdir -p build/server-check
-          (sleep 90; echo stop) | timeout 180 build/server/LeguitzServer.x86_64 --headless --data=build/server-check --port=27421 | tee build/server-check/out.txt
-          grep -q "Leguitz server ready" build/server-check/out.txt
-          grep -q "Stopped." build/server-check/out.txt
+          out=build/server-check/out.txt
+          (for i in $(seq 150); do grep -q "Leguitz server ready" "$out" 2>/dev/null && touch build/server-check/seen && break; sleep 1; done; echo stop) \
+            | timeout 240 build/server/LeguitzServer.x86_64 --headless --data=build/server-check --port=27421 > "$out"
+          cat "$out"
+          test -f build/server-check/seen
+          grep -q "Stopped." "$out"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -180,6 +185,13 @@ jobs:
             ghcr.io/pterodactyl/yolks:debian | tee ptero-out.txt
           grep -q "$(jq -r '.config.startup' "$egg" | jq -r '.done')" ptero-out.txt
           grep -q "Stopped." ptero-out.txt
+
+      - name: What the servers said (on failure)
+        if: failure()
+        run: |
+          sudo systemctl status leguitz-server --no-pager || true
+          sudo journalctl -u leguitz-server --no-pager | tail -n 100 || true
+          docker logs leguitz 2>&1 | tail -n 100 || true
 
   release:
     name: Publish the release
