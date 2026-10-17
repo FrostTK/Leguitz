@@ -29,11 +29,8 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	box.custom_minimum_size.x = WIDTH
 	panel.add_child(box)
-	var title := Label.new()
-	title.text = "PASSWORD_TITLE"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.theme_type_variation = "TitleLabel"
-	box.add_child(title)
+	box.add_theme_constant_override("separation", 5)
+	box.add_child(UiTheme.label("PASSWORD_TITLE", "TitleLabel"))
 	for row: Array in [["PASSWORD_OLD", _old], ["PASSWORD_NEW", _new], ["PASSWORD_AGAIN", _again]]:
 		var field: LineEdit = row[1]
 		field.secret = true
@@ -43,7 +40,7 @@ func _ready() -> void:
 	_problem.visible = false
 	box.add_child(_problem)
 	var buttons := HBoxContainer.new()
-	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
+	buttons.alignment = BoxContainer.ALIGNMENT_END
 	var back := Button.new()
 	back.text = "JOIN_BACK"
 	back.pressed.connect(close)
@@ -62,6 +59,7 @@ func open() -> void:
 	_problem.visible = false
 	visible = true
 	_old.grab_focus()
+	UiTheme.appear(self)
 
 
 func close() -> void:

@@ -42,6 +42,7 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Saisons (réglage du monde) : cultures de saison et serres, arbres qui roussissent puis se dénudent, neige l'hiver, le calendrier à l'horloge, /saison | ✅ |
 | Verre et vitres refaits : verre clair continu, verre ancien, verre au plomb, vitres fines qui se raccordent, 28 fenêtres (4 dessins, 6 bois et fer forgé), teinte par case au pot de peinture (le cadre à part), lavée à l'arrosoir ; le soleil à travers le verre teinté colore le sol ; palette de 16 couleurs douces | ✅ |
 | Rideaux qui se tirent et se nouent (tirés, la pièce devient sombre), longs jusqu'au sol, tringle en bois ou en fer, teints au pot de peinture ; tapis qui se raccordent en un grand tapis, teints, sous les meubles | ✅ |
+| Menus refaits : le menu pause en colonne avec ses pages (Monde, Paramètres, Multijoueur), les paramètres en onglets dont un onglet Commandes qui montre toutes les touches, « Rejoindre un serveur » en deux colonnes, la connexion, la perte de connaissance, le livre accordé au reste | ✅ |
 | Écrans des blocs dans un même cadre : l'icône et le vrai nom du bloc (« Armoire », « Établi », « Four d'usine »…), la partie du bloc dans une carte, le sac toujours dessous, des flammes et des barres de cuisson sobres | ✅ |
 | Nouvel inventaire : le personnage en 3D avec son armure (on le tourne à la souris), le sac avec des filtres et un bouton « Ranger » (vérifié par le serveur), la fabrication dans une carte, une ligne de détails sur l'objet survolé, le catalogue créatif dans le même cadre, une petite animation à l'ouverture | ✅ |
 | Affichage tête haute refait : anneau ambre qui glisse sur la barre d'objets, jauges de vitalité et de satiété face à face en segments, effets en pastilles rondes, horloge avec soleil ou lune, chat en bulles, viseur fin, liste des joueurs en carte, écran F3 sobre, halo derrière les icônes sombres | ✅ |
@@ -56,6 +57,8 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Nouveaux matériaux : pavés, pierre de taille, pierres moussues, plâtre qui se peint, colombages, torchis, parquets à lames et à chevrons, carrelage en damier, tomettes, terre cuite, ardoise polie, briques de grès ; leurs escaliers et dalles, quarts de bloc, murets, piliers, poutres | ✅ |
 | Toitures en tuiles, ardoises, bardeaux et chaume : pentes qui font leurs coins, faîtages en croupe et en croix, pentes douces, lucarnes, cheminée qui fume, neige en hiver | ✅ |
 | Portes de chaque bois, vitrée et en fer forgé (portes doubles), trappes, échelles où l'on grimpe, volets peints qui se ferment, barreaux et garde-corps qui se raccordent | ✅ |
+
+![Leguitz : le menu pause avant et après, les paramètres en onglets (Graphismes, Commandes) ; « Rejoindre un serveur » et le livre du joueur avant et après](docs/screenshots/interface-menus.png)
 
 ![Leguitz : les écrans des blocs avant et après : l'établi, puis une armoire (qui porte son nom) ; le four alimentaire, le four d'usine et le chantier naval dans le nouveau cadre](docs/screenshots/interface-blocs.png)
 
@@ -409,11 +412,11 @@ Pour le multijoueur, il suffira de brancher un transport réseau.
 9. Finitions PC (menus, sauvegardes, sons, options graphiques, Steam)
 10. Mobile (iOS, Android)
 
-En cours : la refonte de l'interface (style « Ardoise » : panneaux sombres et sobres, accent
-ambre ; le thème, l'affichage tête haute, le nouvel inventaire et les écrans des blocs sont
-faits ; à venir : les menus), avant de reprendre le multijoueur.
+Fait : la refonte de l'interface (style « Ardoise » : panneaux sombres et sobres, accent
+ambre ; le thème, l'affichage tête haute, le nouvel inventaire, les écrans des blocs et les
+menus).
 
-En pause : le multijoueur et les serveurs dédiés, qu'on rejoint par IP depuis le jeu,
+En cours : le multijoueur et les serveurs dédiés, qu'on rejoint par IP depuis le jeu,
 hébergeables sur un VPS Debian ou en egg Pterodactyl (réseau et serveur dédié, rejoindre et voir les
 autres, un serveur qui vérifie tout, comptes et administration faits ; à venir : hébergement,
 performances, finitions).

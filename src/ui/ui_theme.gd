@@ -174,12 +174,15 @@ static func appear(control: Control) -> void:
 	control.set_meta("appearing", tween)
 
 
-## The shade behind a screen (fills its parent).
+## The shade behind a screen (fills its parent, and the room the screen
+## rises through as it appears).
 static func shade(color := SHADE) -> ColorRect:
 	var rect := ColorRect.new()
 	rect.color = color
 	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	rect.offset_top = -APPEAR_RISE
+	rect.offset_bottom = APPEAR_RISE
 	return rect
 
 
@@ -259,6 +262,7 @@ static func _buttons(theme: Theme) -> void:
 	theme.set_type_variation("AccentButton", "Button")
 	_button_look(theme, "AccentButton", ACCENT, ACCENT_HOVER, ACCENT_PRESSED, ON_ACCENT)
 	_chips(theme)
+	_nav(theme)
 	theme.set_icon("arrow", "OptionButton", svg(_ARROW_DOWN))
 	theme.set_constant("arrow_margin", "OptionButton", 4)
 	theme.set_constant("h_separation", "Button", 4)
@@ -312,6 +316,32 @@ static func _chips(theme: Theme) -> void:
 	theme.set_font_size("font_size", type, SMALL_FONT_SIZE)
 	theme.set_constant("icon_max_width", type, 10)
 	theme.set_constant("h_separation", type, 3)
+
+
+## A menu's column of pages (NavButton): flat, grey; the page chosen
+## lighter, marked by an amber line on its left.
+static func _nav(theme: Theme) -> void:
+	var type := "NavButton"
+	theme.set_type_variation(type, "Button")
+	var looks := {
+		"normal": Color.TRANSPARENT,
+		"hover": SLOT,
+		"pressed": SLOT_HOVER,
+		"hover_pressed": SLOT_HOVER,
+		"disabled": Color.TRANSPARENT,
+	}
+	for state: String in looks:
+		var look := box(looks[state], Color.TRANSPARENT, SMALL_RADIUS, 4.0)
+		look.content_margin_left = 8.0
+		if state.ends_with("pressed"):
+			look.border_color = ACCENT
+			look.border_width_left = 2
+		theme.set_stylebox(state, type, look)
+	theme.set_stylebox("focus", type, StyleBoxEmpty.new())
+	theme.set_color("font_color", type, MUTED)
+	theme.set_color("font_focus_color", type, MUTED)
+	for state in ["font_hover_color", "font_pressed_color", "font_hover_pressed_color"]:
+		theme.set_color(state, type, TEXT)
 
 
 ## Check boxes and switches: no box around, their own icons.

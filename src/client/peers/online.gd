@@ -71,6 +71,7 @@ func play_on(address: String) -> void:
 	server = address
 	players.server = address
 	client.pause_menu.online = address != ""
+	client.pause_menu.server = address
 
 
 ## Who plays (Msg.PLAYERS): on a server, only its admins see the world's

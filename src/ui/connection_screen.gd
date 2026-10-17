@@ -5,8 +5,9 @@ extends Control
 ## (`show_refused`: Msg.REFUSED's reason) and when it is lost or was never
 ## made (`show_ended`: NetClient.ending). Ended, its buttons try the same
 ## server again, open the join screen for another, go back to the solo
-## world or quit the game; connecting, one goes back to solo. The world
-## takes no input while it shows (GameClient.screen_open).
+## world or quit the game; connecting, one goes back to solo. Over its
+## title, an amber arc turns while it connects; ended, a red sign. The
+## world takes no input while it shows (GameClient.screen_open).
 
 signal quit_requested
 signal retry_requested
@@ -15,6 +16,10 @@ signal solo_requested
 
 const SHADE := Color(UiTheme.SHADE, 0.85)
 const WIDTH := 220.0
+## The sign over the title: its size (UI units) and how fast the arc
+## turns (radians a second).
+const SIGN := 16.0
+const TURN_SPEED := 5.0
 
 var _title := Label.new()
 var _text := Label.new()
@@ -26,6 +31,8 @@ var _solo := Button.new()
 var _address := ""
 ## A refusal or an end was shown: what comes after keeps it.
 var _ended := false
+var _sign := Control.new()
+var _turn := 0.0
 
 
 func _ready() -> void:
@@ -38,7 +45,12 @@ func _ready() -> void:
 	add_child(panel)
 	var box := VBoxContainer.new()
 	box.custom_minimum_size.x = WIDTH
+	box.add_theme_constant_override("separation", 5)
 	panel.add_child(box)
+	_sign.custom_minimum_size = Vector2(SIGN, SIGN)
+	_sign.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_sign.draw.connect(_draw_sign)
+	box.add_child(_sign)
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_title.theme_type_variation = "TitleLabel"
 	box.add_child(_title)
@@ -75,7 +87,7 @@ func show_connecting(address: String) -> void:
 	_text.text = tr("CONNECTION_CONNECTING") % address
 	_show_buttons(false)
 	_solo.text = "CONNECTION_CANCEL"
-	visible = true
+	_appear()
 
 
 ## Joined: the screen goes.
@@ -114,8 +126,36 @@ func _show_end(title: String, text: String) -> void:
 	_text.text = text
 	_show_buttons(true)
 	_solo.text = "CONNECTION_SOLO"
-	visible = true
+	_appear()
+	_sign.queue_redraw()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
+## Shows the screen, fading in when it was hidden.
+func _appear() -> void:
+	if not visible:
+		visible = true
+		UiTheme.appear(self)
+
+
+func _process(delta: float) -> void:
+	if visible and not _ended:
+		_turn = fmod(_turn + delta * TURN_SPEED, TAU)
+		_sign.queue_redraw()
+
+
+## Connecting: an amber arc turning on a faint ring; ended: a red ring and
+## an exclamation mark.
+func _draw_sign() -> void:
+	var middle := _sign.size * 0.5
+	var radius := SIGN * 0.5 - 1.0
+	if not _ended:
+		_sign.draw_arc(middle, radius, 0.0, TAU, 32, UiTheme.LINE_STRONG, 2.0, true)
+		_sign.draw_arc(middle, radius, _turn, _turn + PI * 0.6, 16, UiTheme.ACCENT, 2.0, true)
+		return
+	_sign.draw_arc(middle, radius, 0.0, TAU, 32, UiTheme.DANGER, 2.0, true)
+	_sign.draw_rect(Rect2(middle + Vector2(-1.0, -4.5), Vector2(2.0, 5.0)), UiTheme.DANGER)
+	_sign.draw_rect(Rect2(middle + Vector2(-1.0, 2.0), Vector2(2.0, 2.0)), UiTheme.DANGER)
 
 
 ## Ended: every choice; connecting: back to solo only.
@@ -126,4 +166,5 @@ func _show_buttons(ended: bool) -> void:
 
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, size), SHADE)
+	var reach := Vector2(0.0, UiTheme.APPEAR_RISE)
+	draw_rect(Rect2(-reach, size + reach * 2.0), SHADE)

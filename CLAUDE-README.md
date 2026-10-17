@@ -163,7 +163,8 @@ Godot **4.7.2** (GDScript), rendu Forward+. 434 tests unitaires, lint propre.
 | I.1 Thème « Ardoise » | Toute l'interface passe au **nouveau style**, choisi par le propriétaire parmi trois maquettes : des **panneaux sombres** légèrement translucides aux **coins arrondis**, un filet clair, des **cases plates arrondies** (plus claires sous la souris, un **anneau ambre** autour de celle qu'on a en main), une seule couleur d'accent, l'**ambre**, pour l'action principale (Reprendre, Rejoindre, Se relever…), le texte blanc cassé et un gris pour le secondaire. Les **listes déroulantes**, **cases à cocher** et interrupteurs sont dessinés nets à toutes les tailles d'interface ; les titres de section du menu pause en petites capitales grises ; des **barres de défilement** fines. La **barre d'objets** est posée sur un panneau arrondi, les **jauges** de vitalité et de satiété dans des rails arrondis (le cristal et le pain restent), les **effets** en pastilles, l'**horloge** dans une pastille ; le **chat**, le catalogue créatif, l'écran de perte de connaissance, les noms au-dessus des têtes, la liste des joueurs, les fours (voies et flamme), l'arc et le bateau (jauges) suivent. Le **livre du joueur** garde son papier (c'est un objet du monde). Les dispositions ne changent pas encore (étapes 3 à 5) | `1cc2dd2` |
 | I.2 Affichage tête haute | La **barre d'objets** : un **anneau ambre glisse** d'une case à l'autre quand on change d'objet ; le nom de l'objet en main et les **annonces** dans une petite pastille. Les **jauges** se font face au-dessus : la vitalité à gauche (le cristal, rouge, la trace pâle d'une blessure), la satiété à droite (le pain, ambre, qui se vide vers lui), en **segments de deux points** ; l'armure et le souffle en fines jauges au-dessus, seulement quand ils comptent. Les **effets** en pastilles rondes, le temps restant en arc autour. L'**horloge** : un soleil ou une lune, « Printemps 3 » en gris et l'heure. Le **chat** en **bulles légères** à la largeur de chaque ligne. Le **viseur** : un point et quatre petits traits, cernés de sombre. La **liste des joueurs** (P) : une carte, le rôle sur une petite étiquette colorée, le ping en barres de signal. L'**écran F3** dans une pastille sombre, ses parties séparées par des points gris. Demandé par le propriétaire : un **léger halo** derrière les icônes très sombres (charbon, pierre, ardoise). Les icônes dont on a besoin (barre d'objets, écran ouvert) sont calculées **en premier** au démarrage | `5b4aef9` |
 | I.3 Inventaire et créatif | **Nouvelle disposition de l'inventaire**, celle de la maquette : à gauche l'**équipement** (le **personnage en 3D** portant son armure et ce qu'il a en main, qu'on **tourne en le faisant glisser** à la souris, les quatre cases d'armure, la protection), au centre le **sac** avec des **filtres** en pastilles (Tout, outils et équipement, construction, nourriture, nature et ferme, maison, matériaux : ce qu'un filtre écarte s'estompe) et le bouton **« Ranger »** (regroupe les piles et les range dans l'ordre du catalogue ; le serveur le fait aussi : rien ne se perd), à droite la **fabrication** dans une carte (le nom de ce qu'on fabrique dessous : « 4 × Bâton »), en bas une **ligne de détails** sur l'objet survolé (« Pioche en fer · 188 / 250 · casse la pierre et les minerais », ce qu'un plat nourrit, ses effets, combien de temps brûle un combustible) ou un rappel des clics. Le **catalogue créatif** dans le même cadre, ses onglets en pastilles. Retenu par le propriétaire : **une petite animation à l'ouverture** (un fondu, l'écran monte un peu en place). L'établi, la cuisine, les coffres, les fours et le bateau gardent leur place en attendant l'étape 4 | `28b0a30` |
-| I.4 Écrans des blocs | **Un même cadre pour les écrans des blocs** : l'**icône et le vrai nom du bloc** en en-tête (« Armoire », « Commode », « Bibliothèque »… au lieu de « Coffre » pour tous ; « Établi », « Plan de cuisine », « Four alimentaire », « Four d'usine », « Chantier naval »), la **partie du bloc dans une carte** en haut (les places du coffre, la grille de l'établi ou de la cuisine avec ce qu'elle fabrique, le four, le bateau) et **le sac toujours au même endroit en dessous**, avec ses filtres et « Ranger ». Les fours ont une **flamme sobre** qui se remplit par le bas tant que le combustible brûle et une **flèche de cuisson** en barre arrondie ; le four d'usine garde ses trois coffres de part et d'autre. Le chantier naval : boutons à l'ambre, rangées titrées. Chaque écran s'ouvre avec l'animation (fondu, l'écran monte en place). Les machines et les étagères n'ont pas d'écran (on s'en sert d'un clic) | « Block screens » |
+| I.4 Écrans des blocs | **Un même cadre pour les écrans des blocs** : l'**icône et le vrai nom du bloc** en en-tête (« Armoire », « Commode », « Bibliothèque »… au lieu de « Coffre » pour tous ; « Établi », « Plan de cuisine », « Four alimentaire », « Four d'usine », « Chantier naval »), la **partie du bloc dans une carte** en haut (les places du coffre, la grille de l'établi ou de la cuisine avec ce qu'elle fabrique, le four, le bateau) et **le sac toujours au même endroit en dessous**, avec ses filtres et « Ranger ». Les fours ont une **flamme sobre** qui se remplit par le bas tant que le combustible brûle et une **flèche de cuisson** en barre arrondie ; le four d'usine garde ses trois coffres de part et d'autre. Le chantier naval : boutons à l'ambre, rangées titrées. Chaque écran s'ouvre avec l'animation (fondu, l'écran monte en place). Les machines et les étagères n'ont pas d'écran (on s'en sert d'un clic) | `7aa38bf` |
+| I.5 Menus et écrans multijoueur | **Le menu pause en colonne** : à gauche le titre, « Reprendre » à l'ambre, les pages **Monde** (seulement pour qui peut changer le monde), **Paramètres** et **Multijoueur** (la page choisie marquée d'un filet ambre), « Sauvegarder et quitter » en bas ; la page s'affiche à droite. Les **paramètres en onglets** (Affichage, Graphismes, Jeu, **Commandes** : toutes les touches du clavier, de la souris et de la manette, sur de petites touches dessinées). La page Multijoueur dit où l'on joue (« Tu joues en solo… », « Tu joues sur … »). **« Rejoindre un serveur »** en deux colonnes : les serveurs récents en cartes à gauche (× pour en oublier un), le formulaire à droite, chaque champ nommé au-dessus, le port à côté de l'adresse. Le **mot de passe** dans le même style. La **connexion** : un arc ambre tourne pendant qu'elle se fait, un signal rouge si elle échoue. La **perte de connaissance** : un cristal de vie fêlé au-dessus du titre, le panneau monte en place. Le **livre** reste un livre de papier, mais sa couverture est en cuir ardoise filé d'ambre et ses onglets s'accordent au reste (le chapitre ouvert en ambre). Tous ces écrans s'ouvrent avec l'animation. **La refonte de l'interface est terminée** | « Menus » |
 
 **Pas encore fait** (prévu) : nouveaux matériaux et décoration (phase 8),
 structures, menus de départ, sons, mode Arcade (en attente), mobile.
@@ -290,19 +291,12 @@ xvfb-run -a -s "-screen 0 960x540x24" godot --path . --audio-driver Dummy --reso
 
 ---
 
-## 5. Prochaine étape au « go » : Refonte de l'interface, étape 5 (menus et écrans multijoueur)
+## 5. Prochaine étape au « go » : Multijoueur, étape 5 (hébergement)
 
-**Décision du propriétaire (octobre 2026)** : avant de continuer le multijoueur, **refondre le
-style de toute l'interface** (inventaires, menus, écrans des blocs, affichage tête haute) pour
-quelque chose de plus moderne et sobre, propre au jeu : le style **« Ardoise »**, la police
-d'aujourd'hui, la nouvelle disposition de l'inventaire (phase « Refonte de l'interface »,
-section 6). Ses **étapes 1** (le thème et les briques communes ; chaque écran passé au nouveau
-style), **2** (l'affichage tête haute), **3** (la nouvelle disposition de l'inventaire, avec
-l'animation d'ouverture) et **4** (les écrans des blocs dans un même cadre) sont faites ; au
-prochain « go », l'**étape 5**, la dernière : le menu pause en colonne, les paramètres en
-onglets, « Rejoindre un serveur », la connexion, le mot de passe, l'écran de perte de
-connaissance, les couleurs du livre (avec l'animation d'ouverture). Le multijoueur reprendra
-ensuite à son étape 5 (hébergement).
+**La refonte de l'interface est terminée** (octobre 2026 ; phase « Refonte de l'interface »,
+section 6) : le style **« Ardoise »** partout, en cinq étapes (le thème et les briques communes,
+l'affichage tête haute, le nouvel inventaire avec l'animation d'ouverture, les écrans des blocs
+dans un même cadre, les menus et les écrans multijoueur). Le multijoueur reprend.
 
 **Décision du propriétaire (octobre 2026)** : on passe tout de suite au **multijoueur et aux
 serveurs dédiés** (phase « Multijoueur et serveurs dédiés », section 6) ; la **phase 8** est en
@@ -828,7 +822,7 @@ pousse). Elle reprendra quand le propriétaire le dira.
 - Performance : maillage des chunks sur des fils parallèles, niveaux de détail du terrain,
   modèles plus légers au besoin ; menu pause défilant sur petites fenêtres.
 
-### Phase « Refonte de l'interface » (demandée par le propriétaire en octobre 2026 ; avant l'étape 5 du multijoueur)
+### Phase « Refonte de l'interface » ✅ (demandée par le propriétaire en octobre 2026 ; avant l'étape 5 du multijoueur ; lignes I.1 à I.5 de la section 3)
 
 Le propriétaire trouve l'interface trop proche de Minecraft (sa disposition : armure en colonne,
 grille 3×3 et flèche, sac 9×3, barre de 9) et veut un style **plus moderne et sobre, unique au
@@ -928,13 +922,29 @@ Découpage (chaque étape montrée au propriétaire avant la suivante) :
    restant) au lieu de tout faire au clic ; « Tout prendre » et « Tout déposer » dans les coffres ;
    le nom qu'on donne soi-même à un coffre ; dans le four d'usine, les coffres dans le cadre
    plutôt que de part et d'autre (sur un petit écran ils débordent).
-5. **Menus et écrans multijoueur** : le menu pause en colonne à gauche (Reprendre, Paramètres,
+5. ✅ **Menus et écrans multijoueur** : le menu pause en colonne à gauche (Reprendre, Paramètres,
    Multijoueur, Quitter), les paramètres en onglets (Affichage, Graphismes, Jeu, Commandes) au lieu
    d'une longue liste, « Rejoindre un serveur », la connexion, le mot de passe, l'écran de perte de
    connaissance ; le livre du joueur reste un livre (c'est un objet du monde) mais ses couleurs et
    ses onglets s'accordent au reste.
+   **Fait** : le menu pause en colonne (Pause, Reprendre à l'ambre, les pages Monde,
+   Paramètres et Multijoueur, Sauvegarder et quitter en bas), la page choisie à droite dans son
+   panneau (qui défile si la fenêtre est petite) ; « Monde » n'apparaît que pour qui peut changer
+   le monde (en solo, ou admin d'un serveur). Les paramètres en quatre onglets en pastilles ;
+   l'onglet **Commandes** liste toutes les touches (clavier et souris, puis manette) sur de
+   petites touches dessinées, selon la disposition du clavier (ZQSD en AZERTY). La page
+   Multijoueur dit où l'on joue. « Rejoindre un serveur » en deux colonnes (serveurs récents en
+   cartes, formulaire aux champs nommés au-dessus), le mot de passe dans le même style, la
+   connexion avec un arc qui tourne ou un signal rouge, la perte de connaissance avec un cristal
+   fêlé. Le livre : couverture ardoise filée d'ambre, onglets arrondis (le chapitre ouvert en
+   ambre), titres et numéros d'un ambre foncé, le papier gardé. Tous ces écrans s'ouvrent avec
+   l'animation (fondu, ils montent en place).
+   **Pas fait (à proposer)** : changer les touches (l'onglet Commandes les montre seulement) ; un
+   écran titre au lancement du jeu (choisir son monde, en créer un, rejoindre un serveur), qui
+   irait avec la phase 9 ; régler le volume quand il y aura des sons ; un aperçu de la taille de
+   l'interface avant de la choisir.
 
-### Phase « Multijoueur et serveurs dédiés » (demandée par le propriétaire en octobre 2026 ; en cours, avant la fin de la phase 8 ; en pause avant l'étape 5 pour la refonte de l'interface)
+### Phase « Multijoueur et serveurs dédiés » (demandée par le propriétaire en octobre 2026 ; en cours, avant la fin de la phase 8 ; reprend à l'étape 5 après la refonte de l'interface)
 
 Le propriétaire veut des serveurs dédiés que les joueurs rejoignent en tapant une IP dans le jeu,
 et pouvoir les héberger lui-même sur un **VPS Debian** ou en **egg Pterodactyl**, avec une **IP

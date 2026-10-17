@@ -1432,3 +1432,7 @@ DETAILS_PROTECTION,+%d protection,+%d de protection
 DETAILS_FEEDS,feeds %d,nourrit de %d
 DETAILS_SICK,makes sick,rend malade
 DETAILS_BURNS,burns %d s in a furnace,brûle %d s dans un four
+MENU_SETTINGS,Settings,Paramètres
+MENU_CONTROLS,Controls,Commandes
+MENU_PLAYING_ON,You are playing on %s.,Tu joues sur %s.
+MENU_PLAYING_SOLO,"You are playing solo, on this computer.","Tu joues en solo, sur cet ordinateur."

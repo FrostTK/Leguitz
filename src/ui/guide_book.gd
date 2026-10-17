@@ -60,6 +60,12 @@ const WILD_ICONS := {
 }
 
 
+## The controls (the keyboard and the mouse, then a gamepad), as the
+## pause menu's Controls tab lists them: their entries, titles first.
+static func controls() -> Array:
+	return _controls() + _gamepad()
+
+
 ## The entries of every chapter, in CHAPTERS order.
 static func chapters() -> Array[Array]:
 	return [

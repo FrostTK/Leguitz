@@ -1,16 +1,27 @@
 class_name SettingsPanel
 extends VBoxContainer
 ## The player's own settings in the pause menu (the Settings autoload; each
-## choice is applied and saved at once): display (window mode, screen,
-## window size, vertical sync, frame limit, frame counter), graphics
-## (extreme, with its warning sign telling its pros and cons; quality, HD,
-## zoom, how far one sees in first person, brightness: extreme sets the
-## first ones, shown greyed out at their most) and
-## game (language, interface size, first person's field of view and mouse
-## speed, first person in caves, the player's book).
+## choice is applied and saved at once), in tabs (chips, one page at a
+## time; step 5 of the redesign): display (window mode, screen, window
+## size, vertical sync, frame limit, frame counter), graphics (extreme,
+## with its warning sign telling its pros and cons; quality, HD, zoom, how
+## far one sees in first person, brightness: extreme sets the first ones,
+## shown greyed out at their most), game (language, interface size, first
+## person's field of view and mouse speed, first person in caves, the
+## player's book) and the controls (GuideBook.controls: the keyboard and
+## the mouse, then a gamepad; each control's keys on caps).
 
 ## Its rows were shown or hidden (the menu fits its height again).
 signal layout_changed
+
+enum Tab { DISPLAY, GRAPHICS, GAME, CONTROLS }
+
+const TAB_KEYS := {
+	Tab.DISPLAY: "MENU_DISPLAY_SETTINGS",
+	Tab.GRAPHICS: "MENU_GRAPHICS_SETTINGS",
+	Tab.GAME: "MENU_GAME_SETTINGS",
+	Tab.CONTROLS: "MENU_CONTROLS",
+}
 
 const LANGUAGE_CHOICES := ["auto", "fr", "en"]
 const LANGUAGE_KEYS := ["LANGUAGE_AUTO", "LANGUAGE_FR", "LANGUAGE_EN"]
@@ -41,21 +52,35 @@ var _resolution := OptionButton.new()
 ## The window sizes listed (the first: as the window is).
 var _sizes: Array[Vector2i] = []
 var _updating := false
+## The tabs, their pages, the page rows are added to (while making them).
+var _tabs := ChipBar.new()
+var _tab_pages := {}
+var _target: VBoxContainer
 
 
 func _ready() -> void:
-	add_child(_section("MENU_DISPLAY_SETTINGS"))
+	add_theme_constant_override("separation", 6)
+	add_child(UiTheme.label("MENU_SETTINGS", "TitleLabel"))
+	add_child(_tabs)
+	for each: int in TAB_KEYS:
+		_tabs.add_chip(each, TAB_KEYS[each])
+		var page := VBoxContainer.new()
+		page.add_theme_constant_override("separation", 4)
+		add_child(page)
+		_tab_pages[each] = page
+	_tabs.chosen.connect(show_tab)
+	_target = _tab_pages[Tab.DISPLAY]
 	_add_option(&"window_mode", [0, 1, 2], _keyed.bind(WINDOW_KEYS), "SETTING_WINDOW_MODE")
 	_screen.item_selected.connect(_on_screen_selected)
 	_screen_row = _row("SETTING_SCREEN", _screen)
-	add_child(_screen_row)
+	_target.add_child(_screen_row)
 	_resolution.item_selected.connect(_on_resolution_selected)
-	add_child(_row("SETTING_RESOLUTION", _resolution))
+	_target.add_child(_row("SETTING_RESOLUTION", _resolution))
 	_add_option(&"vsync", [0, 1, 2], _keyed.bind(VSYNC_KEYS), "SETTING_VSYNC")
 	_add_option(&"max_fps", Settings.FPS_CHOICES, _fps_text, "SETTING_MAX_FPS")
 	_add_toggle(&"show_fps", "SETTING_SHOW_FPS")
 
-	add_child(_section("MENU_GRAPHICS_SETTINGS"))
+	_target = _tab_pages[Tab.GRAPHICS]
 	_add_toggle(&"extreme", "SETTING_EXTREME")
 	var row: Control = _toggles[&"extreme"].get_parent()
 	var warning := WarningSign.new("SETTING_EXTREME", EXTREME_TIP)
@@ -67,7 +92,7 @@ func _ready() -> void:
 	_add_option(&"far_view", FAR_VIEW_CHOICES, _chunks_text, "SETTING_FAR_VIEW")
 	_add_option(&"brightness", BRIGHTNESS_CHOICES, _percent_text, "SETTING_BRIGHTNESS")
 
-	add_child(_section("MENU_GAME_SETTINGS"))
+	_target = _tab_pages[Tab.GAME]
 	_add_option(
 		&"language",
 		LANGUAGE_CHOICES,
@@ -79,7 +104,16 @@ func _ready() -> void:
 	_add_option(&"mouse_sensitivity", SENSITIVITY_CHOICES, _times_text, "SETTING_MOUSE")
 	_add_toggle(&"cave_first_person", "SETTING_CAVE_FIRST_PERSON")
 	_add_toggle(&"guide_book", "SETTING_GUIDE_BOOK")
+	show_tab(Tab.DISPLAY)
 	refresh()
+
+
+## Shows a tab's page.
+func show_tab(which: int) -> void:
+	_tabs.select(which)
+	for each: int in _tab_pages:
+		(_tab_pages[each] as Control).visible = each == which
+	layout_changed.emit()
 
 
 ## Shows the settings as they are (and the screens and window sizes now).
@@ -98,8 +132,10 @@ func refresh() -> void:
 	texts()
 
 
-## The texts that depend on the language or the screen.
+## The texts that depend on the language or the screen (the controls'
+## page too: its words and keys).
 func texts() -> void:
+	_fill_controls()
 	for key: StringName in _options:
 		var option: OptionButton = _options[key][0]
 		var choices: Array = _options[key][1]
@@ -121,14 +157,14 @@ func _add_option(key: StringName, choices: Array, text_of: Callable, label: Stri
 		option.add_item("")
 	option.item_selected.connect(_on_option_selected.bind(key))
 	_options[key] = [option, choices, text_of]
-	add_child(_row(label, option))
+	_target.add_child(_row(label, option))
 
 
 func _add_toggle(key: StringName, label: String) -> void:
 	var toggle := CheckButton.new()
 	toggle.toggled.connect(_on_toggled.bind(key))
 	_toggles[key] = toggle
-	add_child(_row(label, toggle))
+	_target.add_child(_row(label, toggle))
 
 
 func _on_option_selected(index: int, key: StringName) -> void:
@@ -249,18 +285,64 @@ func _times_text(value: float) -> String:
 	return "x%s" % str(snappedf(value, 0.01))
 
 
+## The controls' page: a title for the keyboard and the mouse, then the
+## gamepad; a row per control, its keys on caps or how it is done.
+func _fill_controls() -> void:
+	var page: VBoxContainer = _tab_pages[Tab.CONTROLS]
+	for child in page.get_children():
+		child.queue_free()
+	for entry: Dictionary in GuideBook.controls():
+		match entry["kind"]:
+			GuideBook.Kind.TITLE:
+				page.add_child(_section(entry["text"]))
+			GuideBook.Kind.KEYS:
+				var caps := HBoxContainer.new()
+				caps.add_theme_constant_override("separation", 2)
+				for key: String in entry["keys"]:
+					caps.add_child(_cap(key))
+				page.add_child(_row(entry["text"], caps, false))
+			GuideBook.Kind.COMBO:
+				var how := UiTheme.label(entry["how"], "HintLabel")
+				how.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+				how.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+				how.custom_minimum_size.x = CONTROL_WIDTH
+				page.add_child(_row(entry["text"], how))
+
+
+## A key's name on a cap.
+static func _cap(key: String) -> Control:
+	var cap := PanelContainer.new()
+	var look := UiTheme.box(UiTheme.SLOT, UiTheme.LINE_STRONG, 2, 0.0)
+	look.content_margin_left = 3.0
+	look.content_margin_right = 3.0
+	look.border_width_bottom = 2
+	cap.add_theme_stylebox_override("panel", look)
+	cap.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var name := Label.new()
+	name.text = key
+	name.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+	name.add_theme_font_size_override("font_size", UiTheme.SMALL_FONT_SIZE)
+	cap.add_child(name)
+	return cap
+
+
 func _section(key: String) -> Label:
 	var label := UiTheme.label(key, "SectionLabel")
 	label.uppercase = true
 	return label
 
 
-func _row(label_key: String, control: Control) -> HBoxContainer:
+## A setting's row: its name, then its control (CONTROL_WIDTH wide unless
+## not `sized`).
+func _row(label_key: String, control: Control, sized := true) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	var label := Label.new()
 	label.text = label_key
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.custom_minimum_size.x = 60.0
 	row.add_child(label)
-	control.custom_minimum_size.x = CONTROL_WIDTH
+	if sized:
+		control.custom_minimum_size.x = CONTROL_WIDTH
 	row.add_child(control)
 	return row

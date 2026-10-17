@@ -164,7 +164,7 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
 - Keep the GPU cool: Settings.max_fps (default 60, 15 in the background), the world SubViewport
   stops rendering while paused, and the client only asks for the chunks its view needs.
 - Player settings (Settings autoload, user://settings.cfg; the pause menu's SettingsPanel, in
-  sections Display, Graphics, Game, each choice applied and saved at once through
+  tabs Display, Graphics, Game, Controls, each choice applied and saved at once through
   `Settings.choose(key, value)`; new display keys in Settings.DISPLAY_KEYS): window mode
   (DisplayModes.Mode: windowed at `resolution`, centered, ZERO keeps the window's size;
   FULLSCREEN a borderless window at the screen's own resolution; EXCLUSIVE), `screen` (shown
@@ -1383,6 +1383,24 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   no screen (a click uses them). tests/unit/test_scripts.gd loads every script under src and
   checks it compiles: the other tests never load most of the interface (a Variant inferred from a
   ternary of two container types went unseen).
+- Interface redesign, step 5 (menus and the multiplayer screens; the redesign is done). PauseMenu:
+  a column (`_column`: the title, Resume, a NavButton per Page, WORLD hidden unless
+  `world_editable`, Save and quit at the bottom) and the page chosen (`show_page`) in a panel of
+  its own that scrolls (`_fit_height` on the page shown, again when a page's minimum size
+  changes: wrapped lines know their width late, give them a minimum width); the multiplayer
+  page tells where one plays (`server`, set by Online.play_on; MENU_PLAYING_ON / _SOLO).
+  UiTheme: NavButton (flat, grey, the chosen one lighter with an amber line on its left);
+  `shade` reaches APPEAR_RISE above and under its parent. SettingsPanel: tabs (a ChipBar, Tab,
+  TAB_KEYS; `show_tab`; `_target` the page rows go to while made) and the Controls page
+  (`_fill_controls` from GuideBook.controls(): the keyboard and mouse chapter and the gamepad's,
+  keys on caps, `_cap`; rebuilt with the texts). JoinScreen: two columns, the recent servers in
+  cards (a flat button over each takes the click) and the form, `field_row` names a field over
+  it (VBoxContainer; PasswordDialog's too), the port beside the address. ConnectionScreen: a sign
+  over the title (`_draw_sign`: an amber arc turning while connecting, a red ring and "!"
+  ended). DeathScreen: a cracked life crystal (SVG) over the title; its panel rises in
+  (UiTheme.appear) once the world has darkened. BookScreen: slate covers lined in amber, rounded
+  tabs (the chapter open in amber), a deeper amber for headings and numbers, paper kept; it
+  opens with UiTheme.appear like the pause menu, the join screen and the password dialog.
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made

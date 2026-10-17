@@ -1,13 +1,16 @@
 class_name BookScreen
 extends Control
 ## The player's book, open (what it says: GuideBook): two pages at a time
-## between leather covers, chapter tabs down its right edge (a thumb
-## index), a title page and
+## between covers of slate leather lined in amber, chapter tabs down its
+## right edge (a thumb index: rounded, the chapter open in amber; the
+## interface's colors, step 5 of the redesign; the pages stay paper), a
+## title page and
 ## the contents first, page numbers and arrows. Pages turn with the arrows,
 ## the wheel, the movement keys or a stick; LB/RB jump between chapters;
 ## Esc, Tab, E, the book's key (0) or a right click close it. The name of an
 ## item drawn (recipes, tools, fuels) shows beside the mouse over it. The
-## world goes on behind it. Drawn in UI units.
+## world goes on behind it. Drawn in UI units; it opens fading in
+## (UiTheme.appear).
 
 signal close_requested
 
@@ -37,17 +40,19 @@ const ICON := 16.0
 ## its next item.
 const RECIPE_CELL := 12.0
 const CYCLE_MSEC := 1000
-const LEATHER := Color("6e2b1c")
-const LEATHER_DARK := Color("47180e")
-const GOLD := Color("d8a640")
-const PAPER := Color("f4e4c0")
-const PAPER_SHADE := Color("dcc79d")
-const KEY_FILL := Color("fbf1da")
-## The book's own ink and wood (it stays a book, whatever the interface).
-const INK := Color("4a2410")
-const WOOD := Color("8a4b1f")
-const WOOD_DARK := Color("5b2c0f")
-const BUTTON := Color("e9b86a")
+## The covers (the interface's slate, lined in its amber), the paper.
+const LEATHER := Color("2a3038")
+const LEATHER_DARK := Color("181c21")
+const GOLD := UiTheme.ACCENT
+const PAPER := Color("f4e9d2")
+const PAPER_SHADE := Color("ddcfb2")
+const KEY_FILL := Color("fbf5e8")
+## The book's inks: the text, headings and page numbers (a deep amber),
+## lines and caps; and what the mouse is over.
+const INK := Color("2e2a26")
+const WOOD := Color("9a6418")
+const WOOD_DARK := Color("6b4a1c")
+const BUTTON := UiTheme.ACCENT_HOVER
 
 var library: ItemLibrary
 
@@ -104,6 +109,7 @@ func open() -> void:
 	_rebuild()
 	_hover = -1
 	visible = true
+	UiTheme.appear(self)
 
 
 func close() -> void:
@@ -267,13 +273,13 @@ func _text_area(side: int) -> Rect2:
 func _draw() -> void:
 	_hits.clear()
 	_named.clear()
-	draw_rect(Rect2(Vector2.ZERO, size), Color(0.0, 0.0, 0.0, 0.45))
+	var reach := Vector2(0.0, UiTheme.APPEAR_RISE)
+	draw_rect(Rect2(-reach, size + reach * 2.0), UiTheme.SHADE)
 	var font := get_theme_default_font()
 	var book := _book_rect()
 	_draw_tabs(font, book)
-	draw_rect(book.grow(1.0), LEATHER_DARK)
-	draw_rect(book, LEATHER)
-	draw_rect(book.grow(-2.0), GOLD, false, 1.0)
+	UiTheme.draw_box(self, book.grow(1.0), LEATHER, LEATHER_DARK, UiTheme.RADIUS)
+	UiTheme.draw_box(self, book.grow(-2.0), Color.TRANSPARENT, Color(GOLD, 0.7), 2)
 	draw_rect(
 		Rect2(book.get_center().x - SPINE * 0.5 - 1.0, book.position.y, SPINE + 2.0, book.size.y),
 		LEATHER_DARK
@@ -314,13 +320,15 @@ func _draw_tabs(font: Font, book: Rect2) -> void:
 		var rect := Rect2(book.end.x - 4.0, y, reach + 4.0, height)
 		y += height + 1.0
 		var hovered := _hit(rect, "chapter", i)
-		var fill := PAPER_SHADE.darkened(0.12)
+		var fill := UiTheme.PANEL_SOLID
+		var ink := UiTheme.MUTED
 		if i == shown:
-			fill = PAPER
+			fill = UiTheme.ACCENT
+			ink = UiTheme.ON_ACCENT
 		elif hovered:
-			fill = PAPER_SHADE
-		draw_rect(rect, fill)
-		draw_rect(rect, LEATHER_DARK, false, 1.0)
+			fill = UiTheme.SLOT_HOVER
+			ink = UiTheme.TEXT
+		UiTheme.draw_box(self, rect, fill, UiTheme.LINE_STRONG, UiTheme.SMALL_RADIUS)
 		var baseline := floorf(rect.get_center().y + font.get_ascent(SMALL_SIZE) * 0.5)
 		draw_string(
 			font,
@@ -329,7 +337,7 @@ func _draw_tabs(font: Font, book: Rect2) -> void:
 			HORIZONTAL_ALIGNMENT_CENTER,
 			reach,
 			SMALL_SIZE,
-			INK
+			ink
 		)
 
 
@@ -670,7 +678,7 @@ func _draw_close(book: Rect2) -> void:
 	var center := Vector2(book.end.x - 1.0, book.position.y + 1.0)
 	var color := GOLD
 	if _hit(Rect2(center - Vector2(6.0, 6.0), Vector2(12.0, 12.0)), "close", 0):
-		color = PAPER
-	draw_circle(center, 5.0, LEATHER_DARK)
+		color = UiTheme.TEXT
+	draw_circle(center, 5.0, LEATHER_DARK, true, -1.0, true)
 	draw_line(center + Vector2(-2.5, -2.5), center + Vector2(2.5, 2.5), color, 1.0)
 	draw_line(center + Vector2(-2.5, 2.5), center + Vector2(2.5, -2.5), color, 1.0)
