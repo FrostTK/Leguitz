@@ -1,8 +1,10 @@
 class_name FurnaceParts
 extends RefCounted
-## A furnace as the inventory screen shows it (moved out of it). The food
-## furnace (`area`): what it cooks over its fire and its fuel, an arrow
-## filling up as it cooks, what it made, a word on what it is for. The
+## A furnace as the inventory screen shows it (moved out of it), its fire a
+## flame filling up from the bottom as it burns, dim when out, and its
+## progress rounded bars (sober, step 4 of the redesign). The food furnace
+## (`area`): what it cooks over its fire and its fuel, an arrow filling up
+## as it cooks, what it made, a word on what it is for. The
 ## factory furnace: its four lanes (`factory_area`: what each cooks, a bar
 ## filling up under it), its fire and how many times faster it burns, a
 ## word on it; and its three chests beside the screen's panel (`left`:
@@ -11,10 +13,20 @@ extends RefCounted
 ## A slot of the furnace was clicked (its index in Furnace's slots).
 signal clicked(slot: int, right: bool, shift: bool)
 
-## The flame shown under what a furnace cooks: its rows' widths, from the
-## bottom; and its colors (embers to tip).
-const FLAME_ROWS: Array[int] = [8, 8, 8, 6, 6, 6, 4, 4, 2, 2]
-const FLAME_COLORS: Array[Color] = [Color("ee6420"), Color("ffa634"), Color("ffe27a")]
+## The flame (SVG, 10 x 12): lit in two colors, and out (dim).
+const FLAME := (
+	'<svg xmlns="http://www.w3.org/2000/svg" width="10" height="12">'
+	+ '<path d="M5 0.6C6.8 3 9.4 4.9 9.4 7.8A4.4 4.4 0 0 1 0.6 7.8C0.6 5.9 1.9 4.5 2.6 3.1'
+	+ 'C3.3 4.4 3.9 4.9 4.6 5.1C4.3 3.5 4.4 2 5 0.6Z" fill="%s"/>'
+	+ '<path d="M5.2 6.2C6.2 7.3 7 8.1 7 9.2A2 2 0 0 1 3 9.2C3 8.2 3.6 7.6 4.1 7'
+	+ 'C4.4 7.6 4.7 7.9 5 8C4.9 7.4 4.9 6.8 5.2 6.2Z" fill="%s"/></svg>'
+)
+const FLAME_SIZE := Vector2(10.0, 12.0)
+const FLAME_LIT: Array[String] = ["#e8792a", "#f6c453"]
+const FLAME_OUT := "#ffffff2e"
+## The cooking arrow's bar height and head length.
+const ARROW_BAR := 4.0
+const ARROW_HEAD := 6.0
 
 var area: Control
 var factory_area: Control
@@ -33,9 +45,13 @@ var _cooking := Control.new()
 var _lane_bars: Array[Control] = []
 var _factory_flame := Control.new()
 var _burn_rate := Label.new()
+var _flame_lit: Texture2D
+var _flame_out: Texture2D
 
 
 func _init(library: ItemLibrary) -> void:
+	_flame_lit = UiTheme.svg(FLAME % FLAME_LIT)
+	_flame_out = UiTheme.svg(FLAME % [FLAME_OUT, FLAME_OUT])
 	for i in Furnace.SLOTS:
 		slots.append(_slot(i, library))
 	for i in Furnace.FACTORY_SLOTS:
@@ -123,7 +139,7 @@ func _food_furnace() -> Control:
 	column.add_theme_constant_override("separation", 1)
 	row.add_child(column)
 	column.add_child(slots[Furnace.INPUT])
-	_flame.custom_minimum_size = Vector2(ItemSlot.SIZE, FLAME_ROWS.size() + 2.0)
+	_flame.custom_minimum_size = Vector2(ItemSlot.SIZE, FLAME_SIZE.y + 2.0)
 	_flame.draw.connect(_draw_flame.bind(_flame))
 	column.add_child(_flame)
 	column.add_child(slots[Furnace.FUEL])
@@ -163,7 +179,7 @@ func _factory() -> Control:
 	var fire := HBoxContainer.new()
 	fire.alignment = BoxContainer.ALIGNMENT_CENTER
 	box.add_child(fire)
-	_factory_flame.custom_minimum_size = Vector2(ItemSlot.SIZE, FLAME_ROWS.size() + 2.0)
+	_factory_flame.custom_minimum_size = Vector2(ItemSlot.SIZE, FLAME_SIZE.y + 2.0)
 	_factory_flame.draw.connect(_draw_flame.bind(_factory_flame))
 	fire.add_child(_factory_flame)
 	_burn_rate.theme_type_variation = "HintLabel"
@@ -199,18 +215,17 @@ func _side(side: VBoxContainer, title: String, first: int, count: int) -> void:
 		grid.add_child(factory_slots[first + i])
 
 
-## The fire: a flame burning down as its fuel goes (dim when out).
+## The fire: the flame lit from the bottom up to what is left of its fuel,
+## dim above (and all dim when out).
 func _draw_flame(on: Control) -> void:
-	var fire := furnace.fire if furnace != null else 0.0
-	var lit_rows := ceili(fire * FLAME_ROWS.size())
-	var bottom := on.size.y - 1.0
-	for row in FLAME_ROWS.size():
-		var width := float(FLAME_ROWS[row])
-		var rect := Rect2(floorf((on.size.x - width) * 0.5), bottom - row - 1.0, width, 1.0)
-		var color := UiTheme.LINE_STRONG
-		if row < lit_rows:
-			color = FLAME_COLORS[mini(row * FLAME_COLORS.size() / FLAME_ROWS.size(), 2)]
-		on.draw_rect(rect, color)
+	var fire := clampf(furnace.fire if furnace != null else 0.0, 0.0, 1.0)
+	var at := ((on.size - FLAME_SIZE) * 0.5).floor()
+	on.draw_texture_rect(_flame_out, Rect2(at, FLAME_SIZE), false)
+	if fire <= 0.0:
+		return
+	var lit := FLAME_SIZE.y * fire
+	var part := Rect2(0.0, FLAME_SIZE.y - lit, FLAME_SIZE.x, lit)
+	on.draw_texture_rect_region(_flame_lit, Rect2(at + part.position, part.size), part)
 
 
 ## Under a lane: a bar filling up as it cooks.
@@ -219,14 +234,16 @@ func _draw_lane(bar: Control, lane: int) -> void:
 	UiTheme.draw_gauge(bar, Rect2(1.0, 1.0, bar.size.x - 2.0, 3.0), progress, UiTheme.ACCENT)
 
 
-## The arrow from the furnace to what it made, filling up as it cooks.
+## The arrow from the furnace to what it made: a rounded bar filling up as
+## it cooks, its head lit when done.
 func _draw_cooking() -> void:
 	var progress := furnace.progress if furnace != null else 0.0
 	var middle := floorf(_cooking.size.y * 0.5)
-	var length := _cooking.size.x - 3.0
-	var head := 7.0
-	for x in int(length):
-		var half := 1.0 if x < length - head else ceilf((length - x) * 5.0 / head)
-		var filled := x < progress * length
-		var color := UiTheme.ACCENT if filled else UiTheme.LINE_STRONG
-		_cooking.draw_rect(Rect2(1.0 + x, middle - half, 1.0, half * 2.0), color)
+	var length := _cooking.size.x - ARROW_HEAD - 2.0
+	var bar := Rect2(1.0, middle - ARROW_BAR * 0.5, length, ARROW_BAR)
+	UiTheme.draw_gauge(_cooking, bar, progress, UiTheme.ACCENT)
+	var tip := Vector2(bar.end.x + ARROW_HEAD, middle)
+	var head := PackedVector2Array(
+		[Vector2(bar.end.x, middle - 4.0), tip, Vector2(bar.end.x, middle + 4.0)]
+	)
+	_cooking.draw_colored_polygon(head, UiTheme.ACCENT if progress >= 1.0 else UiTheme.SLOT_HOVER)

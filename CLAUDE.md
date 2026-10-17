@@ -1368,6 +1368,21 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   lays them from the bag's first slot by ItemGroups.place_of, fullest first, then by wear; the
   hotbar, cursor, grid and armor stay. Msg.SORT_BAG (Chests.handle: sorted, Msg.INVENTORY sent;
   the client sorts its copy at once, InventoryActions._on_sort_requested). Msg.PROTOCOL 5.
+- Interface redesign, step 4 (the blocks' screens in one frame). InventoryScreen.Mode (OWN,
+  CATALOG, BENCH, CHEST, FURNACE, BOAT; `_show_mode(mode, item)`): a block's screen has the
+  block's item's icon and name in its header (`_icon`, `_title`: a chest's or a storage
+  furniture's own name, InventoryActions.open_chest passes PickBlock.item_of of its cell; a boat
+  BOAT_TITLE with the bow's icon), the block's part in a CardPanel at the top of the middle
+  (`_block_card`/`_block_box`: a chest's slots, FurnaceParts' areas, BoatPanel, and for a
+  workbench or a kitchen counter the CraftCard itself, reparented there bare, `set_framed(false)`,
+  back on the right of `_body` for the inventory), and the bag's part (`_bag_area`, the bag's
+  width, centered) always under it; the equipment card only in OWN and CATALOG. FurnaceParts:
+  the fire an SVG flame (FLAME, lit FLAME_LIT from the bottom up to what is left, region drawn;
+  FLAME_OUT dim), the cooking arrow a rounded gauge with its head lit when done. BoatPanel: chip
+  Open buttons, AccentButton Launch, SectionLabel rows, HintLabel info. Machines and shelves have
+  no screen (a click uses them). tests/unit/test_scripts.gd loads every script under src and
+  checks it compiles: the other tests never load most of the interface (a Variant inferred from a
+  ternary of two container types went unseen).
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made

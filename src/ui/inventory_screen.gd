@@ -9,11 +9,14 @@ extends Control
 ## (ItemGroups.Filter chips: what they leave out fades) and Sort (BagSort,
 ## the server too: Msg.SORT_BAG); on the right crafting (CraftCard: the
 ## grid, 3 x 3 or a workbench's 5 x 5, and what it makes); along the
-## bottom what the item under the mouse is (ItemDetails). Over the bag
-## instead of the cards: an open chest's slots, a furnace (FurnaceParts; a
-## factory furnace's chests in panels beside the panel), a boat's screen
-## (BoatPanel); in creative, the catalog of every item (CreativeCatalog:
-## its search field and tabs, the wheel scrolls it) instead of crafting.
+## bottom what the item under the mouse is (ItemDetails); in creative, the
+## catalog of every item (CreativeCatalog: its search field and tabs, the
+## wheel scrolls it) over the bag instead of crafting. A block's screen
+## (step 4 of the redesign: one frame for all) has the block's icon and
+## name in its header, the block's part in a card at the top (a
+## workbench's or a kitchen counter's grid, a chest's slots, a furnace,
+## FurnaceParts, a factory furnace's chests in panels beside the panel, a
+## boat's screen, BoatPanel) and the player's bag always under it.
 ## Clicks pick up, put down, split and swap stacks (Inventory.click: the
 ## client shows its guess at once, the server decides), a click on what
 ## the grid makes takes it (shift: as many as possible); the stack held by
@@ -52,6 +55,10 @@ signal boat_acted(act: int, place: int)
 ## Sort was clicked: the bag is sorted (BagSort).
 signal sort_requested
 
+## What the screen shows: the inventory, the creative catalog, a
+## workbench's or a kitchen counter's grid, a chest, a furnace, a boat.
+enum Mode { OWN, CATALOG, BENCH, CHEST, FURNACE, BOAT }
+
 ## The bag's filters: their names and the items drawn on them.
 const FILTERS := {
 	ItemGroups.Filter.ALL: ["INVENTORY_FILTER_ALL", Items.Id.NONE],
@@ -86,6 +93,16 @@ var _slots: Array[ItemSlot] = []
 var _book := ItemSlot.new()
 var _book_gap := Control.new()
 var _title := UiTheme.label("INVENTORY_TITLE", "TitleLabel")
+## In a block's screen: the block's icon (its item's), and the card holding
+## the block's part.
+var _icon := TextureRect.new()
+var _icon_item := Items.Id.NONE
+var _block_card := PanelContainer.new()
+var _block_box := VBoxContainer.new()
+## The cards' row (what is worn, the middle, crafting) and the bag's part
+## of the middle (always under the block's part).
+var _body := HBoxContainer.new()
+var _bag_area := VBoxContainer.new()
 var _equipment := EquipmentCard.new()
 var _craft := CraftCard.new()
 var _details := ItemDetails.new()
@@ -141,18 +158,25 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	panel.add_child(box)
-	box.add_child(_title)
-	var body := HBoxContainer.new()
-	body.add_theme_constant_override("separation", 6)
-	box.add_child(body)
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 5)
+	_icon.custom_minimum_size = Vector2(14.0, 14.0)
+	_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	head.add_child(_icon)
+	head.add_child(_title)
+	box.add_child(head)
+	_body.add_theme_constant_override("separation", 6)
+	box.add_child(_body)
 	_equipment.build(_new_slot, library)
 	_equipment.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	body.add_child(_equipment)
-	body.add_child(_center())
+	_body.add_child(_equipment)
+	_body.add_child(_center())
 	_craft.build(_new_slot, library)
 	_craft.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	_craft.craft_clicked.connect(func(shift: bool) -> void: craft_clicked.emit(shift))
-	body.add_child(_craft)
+	_body.add_child(_craft)
 	box.add_child(HSeparator.new())
 	box.add_child(_details)
 	_cursor.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -174,44 +198,44 @@ func _ready() -> void:
 ## dishes). In creative the inventory shows the catalog instead.
 func open(width := Inventory.OWN_GRID, cooking := false) -> void:
 	var catalog := creative and width == Inventory.OWN_GRID and not cooking
-	_show_parts(null, null, true, catalog)
+	var bench := width > Inventory.OWN_GRID or cooking
 	kitchen = cooking
 	craft_width = width
-	_craft.visible = not catalog
 	_craft.set_width(width, cooking)
-	_title.text = "WORKBENCH_TITLE" if width > Inventory.OWN_GRID else "INVENTORY_TITLE"
-	if catalog:
-		_title.text = "CATALOG_TITLE"
-	elif cooking:
-		_title.text = "KITCHEN_TITLE"
+	if bench:
+		_show_mode(Mode.BENCH, Items.Id.KITCHEN if cooking else Items.Id.WORKBENCH)
+	else:
+		_show_mode(Mode.CATALOG if catalog else Mode.OWN)
+		_title.text = "CATALOG_TITLE" if catalog else "INVENTORY_TITLE"
 	_show()
 
 
 ## Opens with a chest's slots over the bag (`view`: what it holds, kept
-## up to date by GameClient) instead of the crafting grid.
-func open_chest(view: Inventory) -> void:
-	_show_parts(view, null, false, false)
-	_title.text = "CHEST_TITLE"
-	_chest_grid.visible = true
+## up to date by GameClient; `item`: the chest's or the furniture's, for
+## the header).
+func open_chest(view: Inventory, item := Items.Id.CHEST) -> void:
+	_show_mode(Mode.CHEST, item)
+	chest = view
 	_show()
 
 
 ## Opens with a furnace over the bag (`view`: kept up to date by
-## GameClient) instead of the crafting grid.
+## GameClient).
 func open_furnace(view: Furnace) -> void:
-	_show_parts(null, view, false, false)
 	var food := view.kind == Tiles.Block.FOOD_FURNACE
-	_title.text = "ITEM_FOOD_FURNACE" if food else "ITEM_FACTORY_FURNACE"
+	_show_mode(Mode.FURNACE, Items.Id.FOOD_FURNACE if food else Items.Id.FACTORY_FURNACE)
+	furnace = view
+	_furnace.show_furnace(view)
 	_show()
 
 
 ## Opens a boat's screen over the bag (BoatPanel; `boats`: as the client
 ## knows them, `id` the one shown, -1 none yet; `yard`: a shipyard's).
 func open_boat(boats: Dictionary, id: int, yard: bool) -> void:
-	_show_parts(null, null, false, false)
-	_title.text = "ITEM_SHIPYARD" if yard else "BOAT_TITLE"
+	_show_mode(Mode.BOAT, Items.Id.SHIPYARD if yard else Items.Id.BOAT_BOW)
+	if not yard:
+		_title.text = "BOAT_TITLE"
 	_boat_area.show_boat(boats, id, yard)
-	_boat_area.visible = true
 	_show()
 
 
@@ -225,8 +249,9 @@ func close() -> void:
 		close_requested.emit()
 
 
-## The middle: the catalog, a chest, a furnace or a boat over the bag's
-## filters and Sort, the bag, the hotbar and the book.
+## The middle: the catalog or a block's card (a chest, a furnace, a boat,
+## crafting brought in) over the bag's part: its filters and Sort, the
+## bag, the hotbar and the book.
 func _center() -> Control:
 	var center := VBoxContainer.new()
 	center.add_theme_constant_override("separation", 3)
@@ -238,10 +263,16 @@ func _center() -> Control:
 	_catalog_area.add_child(_catalog.head)
 	_catalog_area.add_child(_catalog)
 	center.add_child(_catalog_area)
+	_block_card.theme_type_variation = "CardPanel"
+	_block_box.add_theme_constant_override("separation", 3)
+	_block_box.alignment = BoxContainer.ALIGNMENT_CENTER
+	_block_card.add_child(_block_box)
+	center.add_child(_block_card)
 	_chest_grid.columns = Inventory.HOTBAR
 	_chest_grid.add_theme_constant_override("h_separation", 1)
 	_chest_grid.add_theme_constant_override("v_separation", 1)
-	center.add_child(_chest_grid)
+	_chest_grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_block_box.add_child(_chest_grid)
 	for i in Inventory.CHEST:
 		var chest_slot := ItemSlot.new()
 		chest_slot.slot = i
@@ -251,30 +282,35 @@ func _center() -> Control:
 		)
 		_chest_grid.add_child(chest_slot)
 		_chest_slots.append(chest_slot)
-	center.add_child(_furnace.area)
-	center.add_child(_furnace.factory_area)
+	_block_box.add_child(_furnace.area)
+	_block_box.add_child(_furnace.factory_area)
 	_boat_area.library = library
 	_boat_area.clicked.connect(
 		func(at: int, right: bool, shift: bool) -> void: boat_clicked.emit(at, right, shift)
 	)
 	_boat_area.acted.connect(func(act: int, place: int) -> void: boat_acted.emit(act, place))
-	center.add_child(_boat_area)
+	_boat_area.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_block_box.add_child(_boat_area)
+	# The bag's part, as wide as the bag, in the middle under the rest.
+	_bag_area.add_theme_constant_override("separation", 3)
+	_bag_area.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	center.add_child(_bag_area)
 	_bag_label.uppercase = true
-	center.add_child(_bag_label)
-	center.add_child(_bag_tools())
+	_bag_area.add_child(_bag_label)
+	_bag_area.add_child(_bag_tools())
 	var bag := GridContainer.new()
 	bag.columns = Inventory.HOTBAR
 	bag.add_theme_constant_override("h_separation", 1)
 	bag.add_theme_constant_override("v_separation", 1)
-	center.add_child(bag)
+	_bag_area.add_child(bag)
 	for i in Inventory.BAG:
 		bag.add_child(_new_slot(Inventory.HOTBAR + i))
 	var gap := Control.new()
 	gap.custom_minimum_size = Vector2(0, 2)
-	center.add_child(gap)
+	_bag_area.add_child(gap)
 	var hotbar := HBoxContainer.new()
 	hotbar.add_theme_constant_override("separation", 1)
-	center.add_child(hotbar)
+	_bag_area.add_child(hotbar)
 	for i in Inventory.HOTBAR:
 		hotbar.add_child(_new_slot(i))
 	_book_gap.custom_minimum_size.x = Hotbar.BOOK_GAP - 2.0
@@ -307,18 +343,30 @@ func _bag_tools() -> Control:
 	return row
 
 
-## Shows the parts of one screen: a chest or a furnace over the bag, the
-## cards (what is worn, crafting), the catalog.
-func _show_parts(view: Inventory, oven: Furnace, cards: bool, catalog: bool) -> void:
-	chest = view
-	furnace = oven
-	_furnace.show_furnace(oven)
-	_boat_area.visible = false
-	_chest_grid.visible = false
+## Shows the parts of a mode; a block's (`item`: its item) with its icon
+## and name in the header, its part in the card over the bag, crafting
+## brought into the card for a workbench or a kitchen counter.
+func _show_mode(mode: Mode, item := Items.Id.NONE) -> void:
+	chest = null
+	furnace = null
+	_furnace.show_furnace(null)
+	var cards := mode in [Mode.OWN, Mode.CATALOG]
 	_equipment.visible = cards
-	_craft.visible = cards
-	_catalog_area.visible = catalog
-	_bag_label.visible = not cards or catalog
+	_catalog_area.visible = mode == Mode.CATALOG
+	_block_card.visible = not cards
+	_chest_grid.visible = mode == Mode.CHEST
+	_boat_area.visible = mode == Mode.BOAT
+	_craft.visible = mode in [Mode.OWN, Mode.BENCH]
+	_bag_label.visible = mode != Mode.OWN
+	var parent: Container = _block_box if mode == Mode.BENCH else _body
+	if _craft.get_parent() != parent:
+		_craft.reparent(parent, false)
+	_craft.set_framed(mode != Mode.BENCH)
+	_icon_item = item
+	_icon.visible = item != Items.Id.NONE
+	_icon.texture = library.icon(item) if item != Items.Id.NONE else null
+	if item != Items.Id.NONE:
+		_title.text = Items.name_key(item)
 
 
 ## Shows the screen, fading in and rising into place when it was closed.
@@ -357,6 +405,8 @@ func _process(_delta: float) -> void:
 		var held := Items.Id.GUIDE_BOOK if book_selected else inventory.held()
 		_equipment.refresh(inventory, held)
 	_craft.show_result(inventory.craft_result(craft_width, kitchen))
+	if _icon.visible and _icon.texture == null:
+		_icon.texture = library.icon(_icon_item)
 	_book.visible = book_shown
 	_book_gap.visible = book_shown
 	_book.show_stack(Items.Id.GUIDE_BOOK, 1, book_selected)

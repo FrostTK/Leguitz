@@ -3,7 +3,9 @@ extends PanelContainer
 ## The inventory's right card: crafting. Its title (crafting, or cooking at
 ## a kitchen counter), the grid (the inventory's 3 x 3, a workbench's 5 x 5:
 ## the cells past the width in use hide), an arrow and what the grid makes,
-## its name and how many under them.
+## its name and how many under them. In a block's screen (a workbench, a
+## kitchen counter) it lies in the block's card, without a frame or a
+## title of its own (`set_framed`).
 
 ## What the grid makes was clicked (shift: as many as possible).
 signal craft_clicked(shift: bool)
@@ -28,6 +30,7 @@ func build(make_slot: Callable, library: ItemLibrary) -> void:
 	box.add_child(_title)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 3)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	box.add_child(row)
 	_grid.add_theme_constant_override("h_separation", 1)
 	_grid.add_theme_constant_override("v_separation", 1)
@@ -59,6 +62,15 @@ func set_width(width: int, cooking: bool) -> void:
 		cells[cell].visible = cell % Inventory.GRID < width and cell / Inventory.GRID < width
 	# The name under the grid wraps within it.
 	_made.custom_minimum_size.x = width * (ItemSlot.SIZE + 1.0) + 12.0 + ItemSlot.SIZE
+
+
+## In a card of its own (the inventory) or bare (a block's screen).
+func set_framed(framed: bool) -> void:
+	_title.visible = framed
+	if framed:
+		remove_theme_stylebox_override("panel")
+	else:
+		add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 
 
 ## What the grid makes now: [item, count].

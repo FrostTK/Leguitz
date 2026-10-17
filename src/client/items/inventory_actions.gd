@@ -76,7 +76,10 @@ func open_chest(cell: Vector3i) -> void:
 	chest = Inventory.new()
 	chest_cell = cell
 	client.transport.send(Msg.open_chest(cell))
-	client.inventory_screen.open_chest(chest)
+	var furniture := PickBlock.item_of(client.world.voxel_at(cell), false)
+	client.inventory_screen.open_chest(
+		chest, furniture if furniture != Items.Id.NONE else Items.Id.CHEST
+	)
 
 
 ## Opens the shipyard standing in `cell` (the screen opens when the server

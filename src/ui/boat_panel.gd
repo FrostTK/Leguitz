@@ -74,17 +74,17 @@ func _ready() -> void:
 		_deck.add_child(_slots[Boat.PLACE + place])
 		var open := Button.new()
 		open.text = "BOAT_OPEN_CHEST"
-		open.add_theme_font_size_override("font_size", 6)
+		open.theme_type_variation = "ChipButton"
 		open.pressed.connect(func() -> void: acted.emit(Boats.Act.OPEN_CHEST, place))
 		_deck.add_child(open)
 		_opens.append(open)
-	_info.add_theme_color_override("font_color", UiTheme.MUTED)
-	_info.add_theme_font_size_override("font_size", 6)
+	_info.theme_type_variation = "HintLabel"
 	_info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(_info)
 	var buttons := HBoxContainer.new()
 	buttons.add_theme_constant_override("separation", 4)
 	_launch.text = "BOAT_LAUNCH"
+	_launch.theme_type_variation = "AccentButton"
 	_launch.pressed.connect(func() -> void: acted.emit(Boats.Act.LAUNCH, -1))
 	buttons.add_child(_launch)
 	_dock.text = "BOAT_DOCK"
@@ -196,8 +196,8 @@ func _describe(boat: Boat) -> String:
 func _label(key: String) -> Label:
 	var label := Label.new()
 	label.text = key
-	label.add_theme_color_override("font_color", UiTheme.MUTED)
-	label.add_theme_font_size_override("font_size", 6)
+	label.theme_type_variation = "SectionLabel"
+	label.uppercase = true
 	label.custom_minimum_size.x = 34.0
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	return label
