@@ -26,8 +26,9 @@ var _screenshot_taken := false
 var _ready_frames := 0
 var _seen_chunks := 0
 var _dev_actions_started := false
-## The server joined last [address, port, name, password] (try again), and
-## whether it goes into the recent servers once it welcomes the player.
+## The server joined last [address, port, name, password, secret, keep]
+## (try again), and whether it goes into the recent servers once it
+## welcomes the player (with the account's secret if `keep`).
 var _joining := []
 var _remember := false
 
@@ -37,7 +38,8 @@ func _ready() -> void:
 	dev = DevOptions.parse(OS.get_cmdline_user_args())
 	_apply_dev_preferences()
 	if not dev.connect_address.is_empty():
-		join(dev.connect_address, dev.connect_port, dev.player_name, dev.password)
+		var secret := Access.secret_of(dev.player_name, dev.account_password)
+		join(dev.connect_address, dev.connect_port, dev.player_name, dev.password, secret)
 	else:
 		play_solo()
 
@@ -86,18 +88,26 @@ func play_solo() -> void:
 ## client alone, through the network. `remember`: into the recent servers
 ## once it welcomes the player.
 func join(
-	address: String, port: int, player_name: String, password: String, remember := false
+	address: String,
+	port: int,
+	player_name: String,
+	password: String,
+	secret := "",
+	remember := false,
+	keep := false
 ) -> void:
 	_leave()
-	_joining = [address, port, player_name, password]
+	_joining = [address, port, player_name, password, secret, keep]
 	_remember = remember
 	var net := NetClient.new()
 	net.connect_to(address, port)
-	_start_client(net, player_name, password, "%s:%d" % [address, port])
+	_start_client(net, player_name, password, "%s:%d" % [address, port], secret)
+	client.online.joined_as = [address, port, player_name, secret, keep]
+	client.online.join_screen.prefill(address, port, player_name, secret)
 
 
 func _start_client(
-	transport: Transport, player_name: String, password := "", address := ""
+	transport: Transport, player_name: String, password := "", address := "", secret := ""
 ) -> void:
 	client = (load(GAME_CLIENT_SCENE) as PackedScene).instantiate()
 	add_child(client)
@@ -108,7 +118,7 @@ func _start_client(
 	online.solo_requested.connect(play_solo, CONNECT_DEFERRED)
 	online.welcomed.connect(_on_welcomed)
 	online.play_on(address)
-	client.connect_to_server(transport, Settings.view_distance, player_name, password)
+	client.connect_to_server(transport, Settings.view_distance, player_name, password, secret)
 	if not address.is_empty():
 		client.connection.show_connecting(address)
 	client.world_viewport.set_orbit_degrees(dev.camera_angles.x, dev.camera_angles.y)
@@ -263,20 +273,25 @@ func _quit() -> void:
 	get_tree().quit()
 
 
-func _on_join_requested(address: String, port: int, player_name: String, password: String) -> void:
-	join(address, port, player_name, password, true)
+func _on_join_requested(
+	address: String, port: int, player_name: String, password: String, secret: String, keep: bool
+) -> void:
+	join(address, port, player_name, password, secret, true, keep)
 
 
 ## The same server again (its connection ended).
 func _retry() -> void:
 	if not _joining.is_empty():
-		join(_joining[0], _joining[1], _joining[2], _joining[3], _remember)
+		var at := _joining
+		join(at[0], at[1], at[2], at[3], at[4], _remember, at[5])
 
 
 func _on_welcomed() -> void:
 	if _remember and not _joining.is_empty():
 		_remember = false
-		client.online.join_screen.servers.remember(_joining[0], _joining[1], _joining[2])
+		var at := _joining
+		var kept: String = at[4] if at[5] else ""
+		client.online.join_screen.servers.remember(at[0], at[1], at[2], kept)
 
 
 ## Leaves the world played: the client goes, the integrated server saves.

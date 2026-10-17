@@ -170,6 +170,11 @@ var view_limit := GameConst.MAX_VIEW_DISTANCE
 ## What the dedicated server's console hears of what is told to everyone
 ## (null: none).
 var console: Transport
+## Who may play and do what (a dedicated server's: accounts, roles,
+## whitelist, bans), and how to make a backup (DedicatedServer's; an
+## invalid Callable: none).
+var access := Access.new()
+var backup_request := Callable()
 ## Tests move the guard's clock on (seconds; see now).
 var time_shift := 0.0
 ## Draws what breaks drop and where things fly.
@@ -200,6 +205,8 @@ func _init(world_settings: WorldSettings, world_clock: WorldClock = null, thread
 func use_storage(world_storage: WorldStorage, saved: Dictionary) -> void:
 	storage = world_storage
 	world.storage = world_storage
+	access.load_dict(world_storage.read_access())
+	access.load_accounts(world_storage.read_accounts())
 	if saved.is_empty():
 		save()
 		return
@@ -228,6 +235,8 @@ func save() -> bool:
 	var ok := storage.save_world(settings, clock, weather, lying)
 	ok = storage.save_creatures(creatures.to_save()) and ok
 	ok = storage.save_boats(boats.to_save()) and ok
+	ok = storage.save_access(access.to_dict()) and ok
+	ok = storage.save_accounts(access.accounts_dict()) and ok
 	for session in sessions:
 		if session.joined:
 			ok = storage.save_player(session.player_name, player_state(session)) and ok
@@ -454,24 +463,14 @@ func _handle_message(session: PlayerSession, message: Dictionary) -> void:
 				and not Hearths.handle(self, session, message)
 				and not Decor.handle(self, session, message)
 				and not Seats.handle(self, session, message)
+				and not Lobby.handle(self, session, message)
 			):
 				push_warning("Server: unknown message type %s" % other)
 
 
 func _on_hello(session: PlayerSession, message: Dictionary) -> void:
-	if session.joined:
+	if session.joined or not Lobby.admit(self, session, message):
 		return
-	var refusal := Lobby.refusal(self, session, message)
-	if refusal != "":
-		if console != null:
-			var name := str(message.get("name", ""))
-			console.send(
-				Msg.chat_notice("SERVER_REFUSED", [name, Chat.word(refusal)], Chat.Tone.INFO)
-			)
-		session.transport.send(Msg.refused(refusal))
-		session.transport.close()
-		return
-	Lobby.take_over(self, session, str(message.get("name", "")))
 	session.id = _next_player_id
 	_next_player_id += 1
 	session.player_name = str(message.get("name", "Player"))
@@ -959,6 +958,13 @@ func _unload_unused_chunks() -> void:
 			for dx in range(-radius, radius + 1):
 				needed[center + Vector2i(dx, dy)] = true
 	world.unload_unused(needed)
+
+
+## Writes who may play and do what (Access) at once.
+func keep_access() -> void:
+	if storage != null:
+		storage.save_access(access.to_dict())
+		storage.save_accounts(access.accounts_dict())
 
 
 ## Seconds of real time (the guard's clock: Guard, MoveCheck, Digging).

@@ -2,12 +2,17 @@ class_name JoinScreen
 extends Control
 ## Joining a dedicated server (multiplayer, step 2; opened from the pause
 ## menu): its address (an IP or a domain name; a port after ":" wins over
-## the port's field), the player's name (Lobby.NAME) and the server's
-## password; the servers joined lately (ServerList) fill them in a click,
-## × forgets one. Join (or Enter) asks the game to leave this world and go
-## (join_requested); Back (or Esc) closes it.
+## the port's field), the player's name (Lobby.NAME), the server's password
+## (if it has one) and the player's own (their account there, step 4: only
+## its secret leaves, Access.secret_of; "Remember me" keeps that secret in
+## ServerList for the next time, never the password); the servers joined
+## lately fill them in a click, × forgets one. Join (or Enter) asks the
+## game to leave this world and go (join_requested); Back (or Esc) closes
+## it. `prefill` puts back what was tried (after a refusal).
 
-signal join_requested(address: String, port: int, player_name: String, password: String)
+signal join_requested(
+	address: String, port: int, player_name: String, password: String, secret: String, keep: bool
+)
 
 const WIDTH := 250.0
 ## Recent servers shown at most.
@@ -19,6 +24,10 @@ var _address := LineEdit.new()
 var _port := LineEdit.new()
 var _name := LineEdit.new()
 var _password := LineEdit.new()
+var _account := LineEdit.new()
+var _keep := CheckBox.new()
+## The secret kept for the server picked (and the name it is for).
+var _kept := ["", ""]
 var _problem := Label.new()
 var _recent := VBoxContainer.new()
 var _recent_title := Label.new()
@@ -59,7 +68,13 @@ func _ready() -> void:
 	_password.secret = true
 	_password.placeholder_text = "JOIN_PASSWORD_HINT"
 	box.add_child(_row("JOIN_PASSWORD", _password))
-	for field: LineEdit in [_address, _port, _name, _password]:
+	_account.secret = true
+	_account.placeholder_text = "JOIN_ACCOUNT_HINT"
+	box.add_child(_row("JOIN_ACCOUNT", _account))
+	_keep.text = "JOIN_KEEP"
+	_keep.button_pressed = true
+	box.add_child(_keep)
+	for field: LineEdit in [_address, _port, _name, _password, _account]:
 		field.text_submitted.connect(_join.unbind(1))
 	_problem.add_theme_color_override("font_color", Color("c0392b"))
 	_problem.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -90,6 +105,15 @@ func open() -> void:
 
 func close() -> void:
 	visible = false
+
+
+## Puts back what was tried (the account's secret kept, if it was).
+func prefill(address: String, port: int, player_name: String, secret: String) -> void:
+	_address.text = address
+	_port.text = str(port)
+	_name.text = player_name
+	_kept = [secret, player_name]
+	_account.placeholder_text = "JOIN_ACCOUNT_KEPT" if secret != "" else "JOIN_ACCOUNT_HINT"
 
 
 ## [host, port] from what the player typed: an address, a port after ":"
@@ -124,7 +148,12 @@ func _join() -> void:
 		_problem.text = "REFUSED_NAME"
 	else:
 		visible = false
-		join_requested.emit(target[0], target[1], name, _password.text)
+		var secret := Access.secret_of(name, _account.text)
+		if _account.text.is_empty() and _kept[1] == name:
+			secret = _kept[0]
+		join_requested.emit(
+			target[0], target[1], name, _password.text, secret, _keep.button_pressed
+		)
 
 
 ## The servers joined lately: a click fills the fields, × forgets one.
@@ -152,9 +181,7 @@ func _show_recent() -> void:
 
 
 func _pick(server: Dictionary) -> void:
-	_address.text = server["address"]
-	_port.text = str(server["port"])
-	_name.text = server["name"]
+	prefill(server["address"], server["port"], server["name"], server.get("secret", ""))
 	_password.grab_focus()
 
 
@@ -164,6 +191,11 @@ func _forget(server: Dictionary) -> void:
 
 
 func _row(label_key: String, control: Control) -> HBoxContainer:
+	return field_row(label_key, control)
+
+
+## A field and its name before it (the join screen's, PasswordDialog's).
+static func field_row(label_key: String, control: Control) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	var label := Label.new()
 	label.text = label_key

@@ -45,11 +45,14 @@ static func tell(
 
 
 ## A notice in the reader's language: its key with its args, the words
-## among them ({"key": ...}) translated too (the chat, a server's console).
+## among them ({"key": ...}) translated too, durations ({"minutes": n})
+## told (the chat, a server's console, refusals).
 static func notice_text(message: Dictionary) -> String:
 	var args := []
 	for arg: Variant in message.get("args", []):
-		if arg is Dictionary:
+		if arg is Dictionary and arg.has("minutes"):
+			args.append(Access.duration_text(int(arg["minutes"])))
+		elif arg is Dictionary:
 			args.append(String(TranslationServer.translate(arg.get("key", ""))))
 		else:
 			args.append(arg)
@@ -69,7 +72,7 @@ static func on_join(server: GameServer, session: GameServer.PlayerSession) -> vo
 
 
 static func is_admin(server: GameServer, session: GameServer.PlayerSession) -> bool:
-	return session.console or session.player_name in server.settings.admins
+	return session.console or Access.is_admin_name(server, session.player_name)
 
 
 ## The player called `name` (ignoring case), null if none is here.

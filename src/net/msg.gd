@@ -8,8 +8,11 @@ extends RefCounted
 const HELLO := "hello"
 ## The messages' version: a client and a server of different ones do not
 ## play together (Msg.REFUSED, REFUSED_VERSION). Raised when messages change.
-const PROTOCOL := 3
+const PROTOCOL := 4
 const PLAYER_MOVE := "player_move"
+## The player changes their account's password (Access; old and new
+## secrets: Access.secret_of).
+const SET_PASSWORD := "set_password"
 ## The player starts breaking a block (Digging); sits down on a seat, gets
 ## up (Seats).
 const DIG := "dig"
@@ -133,6 +136,8 @@ const PLAYERS := "players"
 ## them away (`reason`: a translation key; the connection closes).
 const STAND_UP := "stand_up"
 const KICKED := "kicked"
+## Whether the password changed (Msg.SET_PASSWORD).
+const PASSWORD_SET := "password_set"
 
 
 ## The player hits the creature `id` with the hotbar slot `slot` in hand
@@ -612,22 +617,37 @@ static func save_request() -> Dictionary:
 
 
 ## The player joins (a dedicated server asks for its `password`).
-static func hello(player_name: String, view_distance: int, password := "") -> Dictionary:
+## `password`: the server's ("": none); `secret`: the player's account's
+## (Access.secret_of their password; "": none).
+static func hello(
+	player_name: String, view_distance: int, password := "", secret := ""
+) -> Dictionary:
 	return {
 		"t": HELLO,
 		"protocol": PROTOCOL,
 		"name": player_name,
 		"view_distance": view_distance,
 		"password": password,
+		"secret": secret,
 	}
 
 
-static func refused(reason: String) -> Dictionary:
-	return {"t": REFUSED, "reason": reason}
+## The server will not have the player: `reason` (a translation key) and its
+## args (as a chat notice's: Chat.notice_text).
+static func refused(reason: String, args := []) -> Dictionary:
+	return {"t": REFUSED, "reason": reason, "args": args}
 
 
-static func kicked(reason: String) -> Dictionary:
-	return {"t": KICKED, "reason": reason}
+static func kicked(reason: String, args := []) -> Dictionary:
+	return {"t": KICKED, "reason": reason, "args": args}
+
+
+static func set_password(old: String, new: String) -> Dictionary:
+	return {"t": SET_PASSWORD, "old": old, "new": new}
+
+
+static func password_set(done: bool) -> Dictionary:
+	return {"t": PASSWORD_SET, "done": done}
 
 
 static func dig(cell: Vector3i) -> Dictionary:

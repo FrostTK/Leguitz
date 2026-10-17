@@ -99,6 +99,8 @@ var connect_address := ""
 var connect_port := ServerConfig.DEFAULT_PORT
 var player_name := "Player"
 var password := ""
+## The account's password there (--account=; Access).
+var account_password := ""
 
 
 static func parse(args: PackedStringArray) -> DevOptions:
@@ -217,6 +219,8 @@ static func parse(args: PackedStringArray) -> DevOptions:
 				options.player_name = value
 			"password":
 				options.password = value
+			"account":
+				options.account_password = value
 			"place":
 				options.place_once = true
 			"camera":

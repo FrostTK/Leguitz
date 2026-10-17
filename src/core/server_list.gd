@@ -1,8 +1,10 @@
 class_name ServerList
 extends RefCounted
 ## The servers this player joined lately (multiplayer, step 2), newest
-## first, at most MOST: their address, port and the name played under,
-## kept in `path` (user://servers.cfg; never the password). The join screen
+## first, at most MOST: their address, port and the name played under, and
+## the account's secret when the player asked to be remembered (Access
+## .secret_of: never the password), kept in `path` (user://servers.cfg). The
+## join screen
 ## lists them (JoinScreen); Game remembers a server once it welcomed the
 ## player. Tests use a path of their own.
 
@@ -10,7 +12,8 @@ const PATH := "user://servers.cfg"
 const MOST := 8
 
 var path := PATH
-## {"address": String, "port": int, "name": String}, newest first.
+## {"address": String, "port": int, "name": String, "secret": String},
+## newest first.
 var servers: Array[Dictionary] = []
 
 
@@ -24,15 +27,27 @@ func load_list() -> void:
 		if entry is Dictionary and str(entry.get("address", "")) != "":
 			var address := str(entry["address"])
 			var port := int(entry.get("port", ServerConfig.DEFAULT_PORT))
-			servers.append({"address": address, "port": port, "name": str(entry.get("name", ""))})
+			var server := {"address": address, "port": port, "name": str(entry.get("name", ""))}
+			server["secret"] = str(entry.get("secret", ""))
+			servers.append(server)
 	servers = servers.slice(0, MOST)
 
 
-## A server joined: first in the list (once).
-func remember(address: String, port: int, player_name: String) -> void:
+## A server joined: first in the list (once), with the account's secret
+## ("": none kept).
+func remember(address: String, port: int, player_name: String, secret := "") -> void:
 	_drop(address, port)
-	servers.push_front({"address": address, "port": port, "name": player_name})
+	servers.push_front({"address": address, "port": port, "name": player_name, "secret": secret})
 	servers = servers.slice(0, MOST)
+	save_list()
+
+
+## The account's secret kept for a server changed (a new password).
+func update_secret(address: String, port: int, secret: String) -> void:
+	load_list()
+	for server in servers:
+		if server["address"] == address and server["port"] == port:
+			server["secret"] = secret
 	save_list()
 
 

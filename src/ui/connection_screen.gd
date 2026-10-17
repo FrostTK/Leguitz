@@ -81,14 +81,15 @@ func joined() -> void:
 		visible = false
 
 
-## The server refused the player (`reason`: a translation key).
-func show_refused(reason: String) -> void:
-	_show_end("CONNECTION_TITLE_REFUSED", tr(reason))
+## The server refused the player (`reason`: a translation key, with its
+## `args`: Chat.notice_text).
+func show_refused(reason: String, args := []) -> void:
+	_show_end("CONNECTION_TITLE_REFUSED", Chat.notice_text({"key": reason, "args": args}))
 
 
-## The server sent the player away (`reason`: a translation key).
-func show_kicked(reason: String) -> void:
-	_show_end("CONNECTION_TITLE_KICKED", tr(reason))
+## The server sent the player away (as show_refused).
+func show_kicked(reason: String, args := []) -> void:
+	_show_end("CONNECTION_TITLE_KICKED", Chat.notice_text({"key": reason, "args": args}))
 
 
 ## The connection ended (`why`: CONNECTION_LOST, CONNECTION_UNREACHABLE).

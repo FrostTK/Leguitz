@@ -323,7 +323,7 @@ static func _home() -> Array:
 		_icon(Items.Id.PEDESTAL_TABLE, _t("BOOK_HOME_TABLES")),
 		_icon(Items.Id.TABLE, _t("BOOK_HOME_FURNITURE")),
 		_heading("BOOK_HOME_AMBIANCE"),
-		_icon(Items.Id.CANDELABRA, _t("BOOK_HOME_LIGHTS")),
+		_icon(Items.Id.CANDELABRA, _t("BOOK_HOME_AMBIANCE_LIGHTS")),
 		_icon(Items.Id.FIREPLACE, _t("BOOK_HOME_HEARTH")),
 		_icon(Items.Id.STOVE, _t("BOOK_HOME_WARMTH")),
 		_icon(Items.Id.PAINTING, _t("BOOK_HOME_PICTURES")),
@@ -704,14 +704,14 @@ static func _modes() -> Array:
 	]
 
 
-## The chat's commands: those for everyone, then the admins' (how to
-## write each and what it does, Commands.LIST).
+## The chat's commands: those for everyone, then the moderators', then the
+## admins' (how to write each and what it does, Commands.LIST).
 static func _commands() -> Array:
 	var entries := [_title("BOOK_CHAPTER_COMMANDS"), _text("BOOK_COMMANDS_INTRO")]
-	for admin: bool in [false, true]:
-		entries.append(_heading("CHAT_FOR_ADMINS" if admin else "CHAT_FOR_EVERYONE"))
+	for role: int in Commands.WHO_KEYS:
+		entries.append(_heading(Commands.WHO_KEYS[role]))
 		for command in Commands.LIST:
-			if command["admin"] == admin:
+			if command["role"] == role:
 				entries.append(_combo(Commands.usage_key(command), Commands.help_key(command)))
 	return entries
 

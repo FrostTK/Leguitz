@@ -35,7 +35,7 @@ $G --path . --audio-driver Dummy --resolution 1280x720 -- --seed=42 --screenshot
 $G --headless --path . -- --server --data="$SCRATCH/srv" --seed=42     # "stop" on stdin, or a file "stop"
 $G --path . -- --connect=127.0.0.1 --name=Alex --screenshot-delay=120 --screenshot="$SCRATCH/s.png"
 LEGUITZ_SERIALIZE=1 $G --headless --path . -s res://tests/run_tests.gd  # messages as bytes, as on the network
-# More players: more games with --connect (--name=Bea --mine --aim=60,10, --jump, --run...); --players holds
+# More players: more games with --connect (--name=Bea --account=PASS --mine --aim=60,10, --jump, --run...); --players holds
 # the player list's key, --join-screen opens the join screen. Players' saves written beforehand in
 # <data>/worlds/world/players/ (WorldStorage.save_player) put them where and as wanted.
 ```
@@ -1261,6 +1261,33 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   server adds SEATED and DOWN from what it knows (Peers.state). Msg.PROTOCOL 3. Tested live with
   five honest players (running and jumping, swimming, walking into trees, mining) without a false
   alarm.
+- Multiplayer, step 4 (accounts and administration; src/sim/access, src/server/backups.gd).
+  `Access` (GameServer.access; WorldStorage access.cfg: roles, whitelist, bans; accounts.cfg; saved
+  at once by GameServer.keep_access and with the world; only on a dedicated server): Role VISITOR,
+  PLAYER, MODERATOR, ADMIN (admins stay WorldSettings.admins; `role_of`, `rank`: the console is
+  ADMIN, `set_role`, `default_role` from ServerConfig); accounts (`accounts_on`, ServerConfig
+  accounts): the game sends Msg.hello's `secret` (`secret_of`: sha256 of the name and the password,
+  never the password), the server keeps a salted PBKDF2-HMAC-SHA256 digest (`_derive`, ITERATIONS),
+  made on the first join (`joined`, Lobby.admit), checked in `refusal` (also bans by name, or by
+  address when asked: ban's "ip"; the whitelist; MOST_TRIES wrong in LOCK_SECONDS lock the name:
+  REFUSED_ACCOUNT_LOCKED), proven accounts take over their old connection (`proves`),
+  `change_password` (Msg.SET_PASSWORD / PASSWORD_SET; Lobby.handle), `forget_account`;
+  VISITORS_REFUSED (Guard.admits drops them for visitors, `_keep_out` tells the block and slots
+  again and HUD_VISITOR); `duration_text` / `minutes_in`. Refusals and kicks carry args (Msg.refused
+  / kicked(reason, args), shown through Chat.notice_text, which tells {"minutes"} durations).
+  Lobby.admit replaces GameServer's refusal code. Commands.LIST has a "role" each (EVERYONE,
+  MODERATORS, ADMINS; WHO_KEYS; CHAT_NOT_ALLOWED; the book groups by them); `AdminCommands`:
+  kick (moderators; `_outranks`), ban (time, "ip", reason; list), unban, whitelist, role, account
+  reset, backup (GameServer.backup_request). Peers.roster carries "role" (PlayerList tags it,
+  Online.role; `keeps_out` keeps a visitor's game from predicting what it may not do:
+  BlockInteraction.place / use_target / breaking). Client: JoinScreen's account field and
+  "Remember me" (ServerList keeps the secret, never the password; `prefill`, `field_row`),
+  PasswordDialog (pause menu, online), DevOptions --account. `Backups` (DedicatedServer): zips of the
+  world in <data>/backups (`make` on a worker after a save, `make_now`, every backup_hours,
+  backup_on_start, backups_kept), the console's backups and restore (Act.RESTORE: players kicked,
+  nothing saved, a backup of the world first, unpacked, the server stops). ServerConfig: accounts,
+  default_role, backup_hours, backup_on_start, backups_kept (`_yes`). tests/unit/test_translations
+  checks every CSV line has its three columns (a comma out of quotes cut a text) and no key twice.
 - Chests (ChestModel, one tile, CHEST/_WEST/_NORTH/_EAST): placed facing the player, opened with
   E (`Mining.opens`). What a chest holds is its own Inventory (first
   Inventory.CHEST = 27 slots) kept by the server in ChunkData.chests (WorldState.chest_at, made

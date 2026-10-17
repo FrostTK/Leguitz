@@ -67,7 +67,7 @@ Les questions de goût ou les choix lourds de conséquences sont posés avant de
 
 ## 3. État actuel : ce qui est fait
 
-Godot **4.7.2** (GDScript), rendu Forward+. 424 tests unitaires, lint propre.
+Godot **4.7.2** (GDScript), rendu Forward+. 434 tests unitaires, lint propre.
 
 | Phase | Contenu | Commits |
 |---|---|---|
@@ -158,7 +158,8 @@ Godot **4.7.2** (GDScript), rendu Forward+. 424 tests unitaires, lint propre.
 | Catalogue créatif | Demandé par le propriétaire (en créatif, tous les objets étaient mélangés : impossible de trouver ce qu'on voulait) : le catalogue est rangé en **dix onglets** à icônes (blocs de construction ; escaliers, dalles et toits ; nature ; portes, fenêtres et clôtures ; mobilier ; décoration et lumières ; ferme et jardin ; nourriture ; outils, armes et équipement ; matériaux), le nom de l'onglet au survol et sous les onglets, et un **champ de recherche** (clic ou Ctrl+F) qui trouve les objets par leur nom en **français ou en anglais** (et dans toute autre langue ajoutée plus tard), sans tenir compte des majuscules ni des accents, avec plusieurs mots (« porte chêne »), ceux dont le nom commence par le mot en premier | `1a7e995` |
 | M.1 Réseau et serveur dédié | Le jeu sait maintenant jouer **en réseau** (ENet, UDP) : un **serveur dédié**, le jeu lancé sans fenêtre (`--server`, ou la version « serveur » exportée pour Linux), avec ses **réglages** dans `server.cfg` (écrit la première fois avec ses explications : IP, port 27420, monde, graine, mode de jeu, joueurs au plus, mot de passe, distance de vue, langue) que les **options de lancement** remplacent (`--port=`...), son dossier de données au choix (`--data=`), une **console** (stop, save, say, list, help et les commandes d'administrateur du chat), une ligne « Leguitz server ready » quand il écoute, l'**arrêt propre** (la commande `stop`, ou un fichier `stop` posé dans son dossier) qui sauvegarde, et la sauvegarde toutes les deux minutes. On le **rejoint** avec `--connect=IP:port --name=Pseudo --password=...` ; un écran dit qu'on se connecte, qu'on est **refusé** (mot de passe, serveur plein, pseudo pris ou invalide, version différente), que la connexion est **perdue** ou le serveur **injoignable**. Le chat annonce les arrivées et les départs ; un joueur qui part est sauvegardé ; seuls les administrateurs changent l'heure, les saisons et le mode de jeu d'un serveur. La compilation automatique produit `LeguitzServer-linux` | `e5936da` |
 | M.2 Rejoindre et voir les autres | On **voit les autres joueurs** : leur corps en voxels, **leur nom au-dessus de la tête** (il s'efface au loin), ce qu'ils **tiennent en main** et l'**armure** qu'ils portent, leurs **gestes** (marcher, sauter, nager, piocher, frapper, manger, bander l'arc, lancer la ligne, ramer, s'asseoir, dormir ou être évanoui), leur **lanterne** la nuit ; leurs **mouvements sont lissés** (glissés d'une position à l'autre même quand le réseau les livre par paquets ; un saut de téléportation n'est pas glissé) et ils **apparaissent et disparaissent en fondu**. **P maintenu** : la **liste des joueurs** (le serveur, les noms, les admins, le ping de chacun). Le menu pause a une rubrique **Multijoueur** : « Rejoindre un serveur… » ouvre un **écran pour rejoindre** (adresse IP ou nom de domaine, port, pseudo, mot de passe ; les **serveurs rejoints récemment** se remplissent d'un clic, × les oublie ; jamais le mot de passe gardé) ; sur un serveur, « Quitter le serveur » ramène au monde solo, **sans relancer le jeu**. Connexion perdue ou refusée : **Réessayer**, **Autre serveur…**, **Jouer en solo**, Quitter. Un joueur dont le jeu s'est fermé brutalement **revient tout de suite** depuis la même machine (son ancienne connexion lui cède la place) ; un joueur silencieux est lâché en 10 s. Sur un serveur, seuls les admins voient les réglages du monde dans le menu pause | `20e73b7` |
-| M.3 Un serveur qui ne fait confiance à personne | Un serveur dédié **vérifie ce que disent les joueurs** (une partie solo fait confiance à son jeu). **Déplacements** : pas plus vite que la course (avec un plat SWIFT, 25 % de marge, une seconde d'élan au plus), pas à travers les murs ni les planchers, pas plus haut qu'un saut, pas en suspens en l'air ; sinon le joueur est **remis en place** (les déplacements envoyés avant la correction sont ignorés, et une correction ne redonne pas d'élan). Les **chutes** sont mesurées par le serveur (un jeu qui tait sa chute se blesse quand même). **Minage** : le jeu dit quand il commence un bloc, le serveur refuse qu'il casse plus vite que l'outil le permet. **Sièges et lits** : un joueur par siège et par lit (« Quelqu'un est déjà assis là »), les autres voient le serveur dire qui est assis ou couché. **Messages** : les messages incohérents sont ignorés (dont une case lointaine qui ferait générer des chunks), le chat trop rapide est freiné (« Tu parles trop vite »), les rafales sont coupées et un jeu qui inonde le serveur est **exclu** (« Exclu du serveur »). La **console du serveur** signale chaque triche (avec combien de fois). Essayé avec cinq joueurs honnêtes (course, sauts, nage, minage, forêts et rivières) sans fausse alerte | « A server that trusts nobody » |
+| M.3 Un serveur qui ne fait confiance à personne | Un serveur dédié **vérifie ce que disent les joueurs** (une partie solo fait confiance à son jeu). **Déplacements** : pas plus vite que la course (avec un plat SWIFT, 25 % de marge, une seconde d'élan au plus), pas à travers les murs ni les planchers, pas plus haut qu'un saut, pas en suspens en l'air ; sinon le joueur est **remis en place** (les déplacements envoyés avant la correction sont ignorés, et une correction ne redonne pas d'élan). Les **chutes** sont mesurées par le serveur (un jeu qui tait sa chute se blesse quand même). **Minage** : le jeu dit quand il commence un bloc, le serveur refuse qu'il casse plus vite que l'outil le permet. **Sièges et lits** : un joueur par siège et par lit (« Quelqu'un est déjà assis là »), les autres voient le serveur dire qui est assis ou couché. **Messages** : les messages incohérents sont ignorés (dont une case lointaine qui ferait générer des chunks), le chat trop rapide est freiné (« Tu parles trop vite »), les rafales sont coupées et un jeu qui inonde le serveur est **exclu** (« Exclu du serveur »). La **console du serveur** signale chaque triche (avec combien de fois). Essayé avec cinq joueurs honnêtes (course, sauts, nage, minage, forêts et rivières) sans fausse alerte | `9f4c03b` |
+| M.4 Comptes et administration | Sur un serveur dédié, **chaque pseudo appartient à son premier joueur** : il choisit un **mot de passe** la première fois (le jeu n'envoie qu'une empreinte, jamais le mot de passe ; le serveur garde une empreinte salée), puis seul ce mot de passe joue sous ce pseudo ; 5 essais faux en 10 minutes verrouillent le pseudo 10 minutes. L'écran « Rejoindre » a « Ton mot de passe » et « **Se souvenir de moi** » ; le menu pause, « **Changer mon mot de passe** ». **Rôles** : visiteur (se promène, ouvre portes et barrières, s'assoit, ne change rien d'autre), joueur, modérateur (expulse, voyage), admin (tout) ; la liste des joueurs (P) les montre. Commandes : **`/expulse`**, **`/bannis`** (un temps ou pour toujours, une raison, l'adresse IP si demandé ; `/bannis liste`), **`/gracie`**, **`/listeblanche`**, **`/role`**, **`/compte oublie`**, **`/sauvegarde`** ; un refus ou une exclusion dit pourquoi et pour combien de temps. **Sauvegardes de secours** : un zip du monde au démarrage, toutes les 6 heures et à la demande, les 10 plus récentes gardées ; la console sait les lister (`backups`) et en **remettre une** (`restore 2` : les joueurs partent, le monde actuel est d'abord sauvegardé, le serveur s'arrête). Nouveaux réglages de `server.cfg` : `accounts`, `default_role`, `backup_hours`, `backup_on_start`, `backups_kept` | « Accounts and administration » |
 
 **Pas encore fait** (prévu) : nouveaux matériaux et décoration (phase 8),
 structures, menus de départ, sons, mode Arcade (en attente), mobile.
@@ -285,18 +286,21 @@ xvfb-run -a -s "-screen 0 960x540x24" godot --path . --audio-driver Dummy --reso
 
 ---
 
-## 5. Prochaine étape au « go » : Multijoueur, étape 4 (comptes et administration)
+## 5. Prochaine étape au « go » : Multijoueur, étape 5 (hébergement)
 
 **Décision du propriétaire (octobre 2026)** : on passe tout de suite au **multijoueur et aux
 serveurs dédiés** (phase « Multijoueur et serveurs dédiés », section 6) ; la **phase 8** est en
 pause après son étape 8 et reprendra à son **étape 9** (extérieur : les allées de gravier, de
 dalles et de pas japonais, le lampadaire, le puits, la fontaine, la boîte aux lettres, le banc de
 jardin, la pergola, le nichoir, la girouette, et les arches laissées à l'étape 6 avec les ponts).
-Les étapes 1 (réseau et serveur dédié), 2 (rejoindre et voir les autres) et 3 (un serveur qui ne
-fait confiance à personne) du multijoueur sont faites ; au prochain « go », l'**étape 4** (comptes
-et administration : un mot de passe par joueur, liste blanche, `/expulse`, `/bannis`, rôles,
-sauvegardes de secours ; voir la section 6). Le propriétaire a demandé de **garder les
-propositions** faites en route : elles sont rassemblées dans l'étape 7 de la phase.
+Les étapes 1 (réseau et serveur dédié), 2 (rejoindre et voir les autres), 3 (un serveur qui ne
+fait confiance à personne) et 4 (comptes et administration) du multijoueur sont faites ; au
+prochain « go », l'**étape 5** (hébergement : Debian avec systemd, Docker, l'egg Pterodactyl, le
+guide d'installation en français ; voir la section 6, et décider d'où l'installation prend le
+serveur, le dépôt étant privé). Le propriétaire a demandé de **garder les propositions** faites
+en route : elles sont rassemblées dans l'étape 7 de la phase. Le propriétaire essaie déjà son
+propre serveur (gxitou.fr) : chaque étape change la version des messages (Msg.PROTOCOL), le
+serveur et les jeux doivent être mis à jour ensemble.
 
 **La phase 7 est terminée** (étapes 1 à 11 ci-dessous). La **phase 8, Construction et
 décoration**, a fait ses étapes 1 (escaliers et dalles), 2 (verre et vitres, la teinte par case),
@@ -879,9 +883,29 @@ serveur intégré). Découpage :
    vérifie la portée, pas la vue), cacher aux jeux les minerais enfouis (contre les tricheurs qui
    voient à travers la roche), vérifier le type de chaque champ de chaque message (seuls les
    champs communs le sont), exclure après trop de remises en place.
-4. **Comptes et administration** : un mot de passe par joueur (aujourd'hui un pseudo suffit à
-   prendre l'inventaire d'un autre) ou le compte Steam plus tard, liste blanche, `/expulse`,
-   `/bannis`, rôles, sauvegardes de secours et restauration.
+4. ✅ **Comptes et administration** (voir section 3, ligne M.4). Fait avec ces choix : comptes
+   activés par défaut sur un serveur dédié (`accounts` dans `server.cfg`) ; un mot de passe par
+   pseudo et par serveur, choisi à la première connexion (pas d'inscription à part) ; le jeu envoie
+   une empreinte du pseudo et du mot de passe (SHA-256), le serveur en garde une empreinte salée
+   (PBKDF2, 4096 tours) dans `accounts.cfg`, à part du reste ; « Se souvenir de moi » garde cette
+   empreinte (jamais le mot de passe) dans la liste des serveurs ; un compte prouvé reprend sa
+   place même depuis une autre machine ; 5 essais faux en 10 minutes verrouillent le pseudo 10
+   minutes ; les admins restent la liste du monde, les autres rôles sont dans `access.cfg` avec la
+   liste blanche et les bannissements ; les modérateurs expulsent et voyagent (`/tp`), seuls les
+   admins bannissent ; personne n'expulse un rôle égal ou plus haut (la console, si) ; le
+   bannissement vise le pseudo, l'adresse IP seulement si on le demande (une famille ou un réseau
+   mobile peut partager une adresse : l'essai l'a montré, tous mes joueurs d'essai venant de la même
+   machine furent bannis ensemble) ; activer la liste blanche y met ceux qui jouent ; les
+   nouveaux venus peuvent être visiteurs (`default_role="visitor"`) ; sauvegardes en zip dans
+   `backups/` (au démarrage, toutes les 6 h, à la demande ; 10 gardées), restauration seulement
+   depuis la console (elle arrête le serveur). En passant, un test vérifie maintenant le fichier
+   des traductions : il a trouvé une clé en double (`BOOK_HOME_LIGHTS` : le titre « Lumières » du
+   livre montrait le long texte de l'étape 8.8 ; corrigé). Pas fait (à proposer) : chiffrer la
+   connexion (DTLS d'ENet avec un certificat du serveur : aujourd'hui quelqu'un qui écoute le réseau
+   peut rejouer l'empreinte d'un joueur sur ce serveur, sans apprendre son mot de passe), réduire au
+   silence (`/silence`), un panneau d'administration en jeu (bannis, liste blanche, rôles, avec des
+   boutons), restaurer une sauvegarde depuis le jeu, sauvegarder aussi le monde solo, le compte
+   Steam plus tard, un journal des actions des modérateurs.
 5. **Hébergement** : sur **Debian** une archive à décompresser, un utilisateur dédié, un service
    systemd (redémarrage, arrêt propre), le port UDP à ouvrir dans le pare-feu, l'écoute sur l'IP
    dédiée ; une image Docker ; un **egg Pterodactyl** (image Debian, script d'installation qui
@@ -904,7 +928,10 @@ serveur intégré). Découpage :
    - **rejoindre** : un écran titre (solo ou serveur au lancement), la liste des serveurs avec leur
      nombre de joueurs avant d'entrer, la reconnexion automatique, le mot de passe gardé ;
    - **contre la triche** : ne pas miner ni frapper à travers un mur, cacher les minerais enfouis,
-     vérifier chaque champ de chaque message, exclure après trop de remises en place.
+     vérifier chaque champ de chaque message, exclure après trop de remises en place ;
+   - **comptes et administration** : chiffrer la connexion (DTLS ; avec l'étape 5), `/silence`,
+     un panneau d'administration en jeu, restaurer depuis le jeu, sauvegarder le monde solo, le
+     compte Steam, un journal des actions des modérateurs.
 
 ### Phase 10 — Mobile (iOS, Android)
 - Contrôles tactiles (stick virtuel, toucher pour miner/poser, deux doigts pour tourner la
@@ -917,7 +944,7 @@ serveur intégré). Découpage :
 - **Taille des fichiers** : `src/client/interaction/block_interaction.gd` fait 983 lignes (limite
   1000) : y sortir du code (par exemple ce que fait le clic droit sur les animaux, les machines,
   la récolte) avant d'y ajouter (985 après l'étape M.3) ; `src/client/game_client.gd` en fait 940,
-  `src/sim/game_server.gd` 982 (y sortir du code avant d'y ajouter : le multijoueur côté client est
+  `src/sim/game_server.gd` 988 (y sortir du code avant d'y ajouter : le multijoueur côté client est
   dans `src/client/peers/online.gd`, les vérifications du serveur dans `src/sim/guard/`) ; `object_shapes.gd` (922) et `mining.gd` (902) ont été allégés à l'étape 8.8 (les blocs
   d'un objet tourné se construisent par leur nom, les temps et outils vont par sorte), les
   recettes de la maison sont dans `home_recipes.gd`.

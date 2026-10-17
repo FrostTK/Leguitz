@@ -629,7 +629,6 @@ BOOK_ANIMALS_HONEY,"A full hive gives a jar of honey to a glass bottle (3 glass 
 CHAT_PLACEHOLDER,"Say something, or /help","Dis quelque chose, ou /aide"
 CHAT_HOW,"Type a command after /, or /help for the list.","Tape une commande après /, ou /aide pour la liste."
 CHAT_UNKNOWN,Unknown command: /%s. Type /help for the list.,Commande inconnue : /%s. Tape /aide pour la liste.
-CHAT_NOT_ADMIN,%s is for the world's admins.,%s est réservée aux admins du monde.
 CHAT_USAGE,How to write it: %s,Comment l'écrire : %s
 CHAT_HELP_TITLE,Commands (/help <command> for one):,Commandes (/aide <commande> pour le détail) :
 CHAT_HELP_LINE,%s — %s,%s — %s
@@ -1262,7 +1261,7 @@ EFFECT_WARM_HOW,the cold spares you and you heal faster,le froid t'épargne et t
 EFFECT_COLD,Cold,Froid
 EFFECT_COLD_HOW,hunger comes faster and you no longer heal,la faim vient plus vite et tu ne guéris plus
 BOOK_HOME_AMBIANCE,Ambiance,Ambiance
-BOOK_HOME_LIGHTS,"Lights: candles (string over honeycomb: four), a candelabra, a chandelier (it hangs from the ceiling over where you aim), a bedside lamp whose shade takes a pot of paint, a wall sconce. Candles, candelabras and lamps also stand on a table or any furniture. A right click (or {use}) puts them out or lights them.","Lumières : des bougies (de la ficelle sur un rayon de miel : quatre), un chandelier, un lustre (il pend au plafond au-dessus de là où tu vises), une lampe de chevet dont l'abat-jour prend un pot de peinture, une applique. Bougies, chandeliers et lampes se posent aussi sur une table ou un meuble. Un clic droit (ou {use}) les éteint ou les rallume."
+BOOK_HOME_AMBIANCE_LIGHTS,"Lights: candles (string over honeycomb: four), a candelabra, a chandelier (it hangs from the ceiling over where you aim), a bedside lamp whose shade takes a pot of paint, a wall sconce. Candles, candelabras and lamps also stand on a table or any furniture. A right click (or {use}) puts them out or lights them.","Lumières : des bougies (de la ficelle sur un rayon de miel : quatre), un chandelier, un lustre (il pend au plafond au-dessus de là où tu vises), une lampe de chevet dont l'abat-jour prend un pot de peinture, une applique. Bougies, chandeliers et lampes se posent aussi sur une table ou un meuble. Un clic droit (ou {use}) les éteint ou les rallume."
 BOOK_HOME_HEARTH,"Fireplace (two tiles) and wood stove: a right click with wood or coal in hand puts a log in and lights them; they burn a good while (eight times longer than in a furnace), then go out. The watering can puts them out. A chimney over them smokes.","Cheminée (deux cases) et poêle à bois : un clic droit avec du bois ou du charbon en main y met une bûche et les allume ; ils brûlent longtemps (huit fois plus que dans un four), puis s'éteignent. L'arrosoir les éteint. Une cheminée au-dessus fume."
 BOOK_HOME_WARMTH,"In winter, where it snows, the cold makes hunger come faster and you no longer heal. Indoors near a lit fireplace or stove, or near a campfire, you are warm: the cold spares you for a while after, and you heal faster.","En hiver, là où il neige, le froid fait venir la faim plus vite et tu ne guéris plus. Dans la maison près d'une cheminée ou d'un poêle allumés, ou près d'un feu de camp, tu es au chaud : le froid t'épargne un moment après, et tu guéris plus vite."
 BOOK_HOME_PICTURES,"On the walls: paintings (landscapes) and portraits; a right click shows the next picture. A mirror, a stag's or a bear's head, a tapestry that takes a pot of paint, a spice rack, a coat rack.","Aux murs : des tableaux (paysages) et des portraits ; un clic droit montre le tableau suivant. Un miroir, une tête de cerf ou d'ours, une tapisserie qui prend un pot de peinture, une étagère à épices, un portemanteau."
@@ -1313,7 +1312,7 @@ JOIN_ADDRESS,Address,Adresse
 JOIN_ADDRESS_HINT,IP or domain name,IP ou nom de domaine
 JOIN_PORT,Port,Port
 JOIN_NAME,Your name,Ton pseudo
-JOIN_PASSWORD,Password,Mot de passe
+JOIN_PASSWORD,Server's password,Mot de passe du serveur
 JOIN_PASSWORD_HINT,if the server has one,si le serveur en a un
 JOIN_BACK,Back,Retour
 JOIN_GO,Join,Rejoindre
@@ -1336,3 +1335,76 @@ GUARD_HOVERING,%s stayed in the air (×%d): put back on the ground.,%s est rest�
 GUARD_DIG,%s broke blocks faster than their tools allow (×%d): refused.,%s a cassé des blocs plus vite que ses outils le permettent (×%d) : refusé.
 GUARD_MALFORMED,%s sent messages that make no sense (×%d; the last: %s): dropped.,%s a envoyé des messages incohérents (×%d ; le dernier : %s) : ignorés.
 GUARD_KICKED,%s was sent away: %s,%s a été exclu : %s
+ROLE_VISITOR,visitor,visiteur
+ROLE_PLAYER,player,joueur
+ROLE_MODERATOR,moderator,modérateur
+ROLE_ADMIN,admin,admin
+PLAYERS_MODERATOR,(moderator),(modérateur)
+PLAYERS_VISITOR,(visitor),(visiteur)
+CHAT_FOR_MODERATORS,For moderators and admins,Pour les modérateurs et les admins
+CHAT_NOT_ALLOWED,%s is not yours to use (%s).,%s ne t'est pas permise (%s).
+HUD_VISITOR,You are a visitor here: you may look around and change nothing.,"Tu es visiteur ici : tu peux te promener, mais tu ne peux rien changer."
+REFUSED_BANNED,You are banned from this server. %s,Tu es banni de ce serveur. %s
+REFUSED_BANNED_FOR,You are banned from this server for %s more. %s,Tu es banni de ce serveur pour encore %s. %s
+REFUSED_NOT_LISTED,This server only lets in the players on its list.,Ce serveur n'accepte que les joueurs de sa liste.
+REFUSED_ACCOUNT_NEEDED,"This server keeps each name to its player: choose a password for yours in ""Your password"" (it is asked again next time).","Ce serveur garde chaque pseudo à son joueur : choisis un mot de passe pour le tien dans « Ton mot de passe » (il sera redemandé la prochaine fois)."
+REFUSED_ACCOUNT_PASSWORD,"That name has a password on this server: type it in ""Your password"".","Ce pseudo a un mot de passe sur ce serveur : tape-le dans « Ton mot de passe »."
+REFUSED_ACCOUNT_WRONG,Wrong password for that name.,Mauvais mot de passe pour ce pseudo.
+KICKED_BY,%s sent you away. %s,%s t'a exclu. %s
+KICKED_BANNED,%s banned you (%s). %s,%s t'a banni (%s). %s
+KICKED_RESTORING,The server puts back an older backup of the world and stops.,Le serveur remet une sauvegarde plus ancienne du monde et s'arrête.
+DURATION_DAYS,%d d %d h,%d j %d h
+DURATION_HOURS,%d h %d min,%d h %d min
+DURATION_MINUTES,%d min,%d min
+CMD_KICK_USAGE,/kick <player> [reason],/expulse <joueur> [raison]
+CMD_KICK_HELP,Sends a player away from the server (they may come back).,Fait sortir un joueur du serveur (il peut revenir).
+CMD_KICK_DONE,%s was sent away.,%s a été exclu.
+CMD_KICK_HIGHER,%s has a role as high as yours.,%s a un rôle aussi élevé que le tien.
+CMD_BAN_USAGE,/ban <player> [30m | 2h | 3d | 1w] [ip] [reason] | /ban list,/bannis <joueur> [30m | 2h | 3j | 1w] [adresse] [raison] | /bannis liste
+CMD_BAN_HELP,"Keeps a player off the server, for a while or for ever; sends them away if they play. With ip, the address they come from too (careful: a household or a mobile network may share one).","Interdit le serveur à un joueur, un temps ou pour toujours ; le fait sortir s'il joue. Avec adresse, aussi l'adresse d'où il vient (attention : une famille ou un réseau mobile peut en partager une)."
+CMD_BAN_DONE,%s is banned (%s).,%s est banni (%s).
+CMD_BAN_FOREVER,for ever,pour toujours
+CMD_BAN_LIST,Banned players: %d.,Joueurs bannis : %d.
+CMD_BAN_ENTRY,%s — %s. %s,%s — %s. %s
+CMD_UNBAN_USAGE,/unban <player>,/gracie <joueur>
+CMD_UNBAN_HELP,Lets a banned player come back.,Laisse revenir un joueur banni.
+CMD_UNBAN_DONE,%s may come back.,%s peut revenir.
+CMD_UNBAN_NOT,%s is not banned.,%s n'est pas banni.
+CMD_WHITELIST_USAGE,/whitelist on | off | add <player> | remove <player> | list,/listeblanche oui | non | ajoute <joueur> | retire <joueur> | liste
+CMD_WHITELIST_HELP,"On, only the players on the list may join (those playing are put on it).","Activée, seuls les joueurs de la liste peuvent entrer (ceux qui jouent y sont mis)."
+CMD_WHITELIST_ON,The whitelist is on.,La liste blanche est activée.
+CMD_WHITELIST_OFF,The whitelist is off.,La liste blanche est désactivée.
+CMD_WHITELIST_LIST,%s On it: %s,%s Dessus : %s
+CMD_WHITELIST_ADDED,%s is on the whitelist.,%s est sur la liste blanche.
+CMD_WHITELIST_REMOVED,%s is off the whitelist.,%s n'est plus sur la liste blanche.
+CMD_ROLE_USAGE,/role <player> [visitor | player | moderator | admin],/role <joueur> [visiteur | joueur | moderateur | admin]
+CMD_ROLE_HELP,"Visitors look around and change nothing; players play; moderators also send players away and travel; admins do everything.","Les visiteurs se promènent sans rien changer ; les joueurs jouent ; les modérateurs peuvent aussi exclure et voyager ; les admins font tout."
+CMD_ROLE_IS,%s is a %s.,%s est %s.
+CMD_ROLE_DONE,%s is now a %s.,%s est maintenant %s.
+CMD_ROLE_YOU,%s made you a %s.,%s t'a fait %s.
+CMD_ACCOUNT_USAGE,/account reset <player>,/compte oublie <joueur>
+CMD_ACCOUNT_HELP,Forgets a player's password: the next to come under that name chooses a new one.,Oublie le mot de passe d'un joueur : le prochain qui vient sous ce pseudo en choisit un nouveau.
+CMD_ACCOUNT_RESET,%s's password is forgotten: the next to come under that name chooses it.,Le mot de passe de %s est oublié : le prochain qui vient sous ce pseudo le choisit.
+CMD_ACCOUNT_NONE,%s has no password here.,%s n'a pas de mot de passe ici.
+CMD_BACKUP_USAGE,/backup,/sauvegarde
+CMD_BACKUP_HELP,Makes a backup of the world now (a dedicated server keeps the newest ones and makes one every few hours).,Fait tout de suite une sauvegarde de secours du monde (un serveur dédié garde les plus récentes et en fait une toutes les quelques heures).
+CMD_BACKUP_STARTED,The backup is being made...,La sauvegarde est en cours...
+CMD_BACKUP_BUSY,A backup is already being made.,Une sauvegarde est déjà en cours.
+CMD_BACKUP_DONE,Backup made: %s,Sauvegarde faite : %s
+CMD_BACKUP_NONE,Only a dedicated server makes backups.,Seul un serveur dédié fait des sauvegardes de secours.
+JOIN_ACCOUNT,Your password,Ton mot de passe
+JOIN_ACCOUNT_HINT,your name's on this server,celui de ton pseudo ici
+JOIN_ACCOUNT_KEPT,(remembered),(retenu)
+JOIN_KEEP,Remember me on this server,Se souvenir de moi sur ce serveur
+MENU_CHANGE_PASSWORD,Change my password…,Changer mon mot de passe…
+PASSWORD_TITLE,Change my password,Changer mon mot de passe
+PASSWORD_OLD,Current password,Mot de passe actuel
+PASSWORD_NEW,New password,Nouveau mot de passe
+PASSWORD_AGAIN,New one again,Encore le nouveau
+PASSWORD_CHANGE,Change,Changer
+PASSWORD_WRONG,The current password is wrong.,Le mot de passe actuel est faux.
+PASSWORD_EMPTY,Type a new password.,Tape un nouveau mot de passe.
+PASSWORD_DIFFER,The two new ones differ.,Les deux nouveaux sont différents.
+PASSWORD_WAIT,Asking the server...,Demande au serveur...
+PASSWORD_DONE,Password changed.,Mot de passe changé.
+REFUSED_ACCOUNT_LOCKED,Too many wrong passwords for that name: try again in %s.,Trop de mauvais mots de passe pour ce pseudo : réessaie dans %s.

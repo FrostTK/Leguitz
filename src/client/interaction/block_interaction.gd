@@ -103,6 +103,8 @@ func _process(delta: float) -> void:
 ## composter, picks what is ripe, takes a full hive's honey, loads or
 ## empties a kitchen machine. Returns whether there was something to use.
 func use_target() -> bool:
+	if target_boat < 0 and client.online.keeps_out(target):
+		return true
 	if target_boat >= 0:
 		client.actions.open_boat(target_boat)
 		return true
@@ -169,7 +171,7 @@ func usable_here() -> bool:
 ## aimed at something to use, uses it (use_target); the player's book in
 ## hand opens instead.
 func place() -> void:
-	if _tint_aimed():
+	if client.online.keeps_out(target) or _tint_aimed():
 		return
 	if usable_here():
 		use_target()
@@ -654,7 +656,7 @@ func _update_breaking(delta: float) -> void:
 		if breaking:
 			_hit_creature()
 		return
-	if not breaking or target == null:
+	if not breaking or target == null or client.online.keeps_out(null):
 		_reset_breaking()
 		return
 	if target.cell != _breaking_cell:

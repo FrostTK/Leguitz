@@ -73,8 +73,16 @@ func _fill() -> void:
 	for entry: Dictionary in roster:
 		var name := Label.new()
 		name.text = str(entry.get("name", ""))
+		var tag := {
+			Access.Role.ADMIN: "PLAYERS_ADMIN",
+			Access.Role.MODERATOR: "PLAYERS_MODERATOR",
+			Access.Role.VISITOR: "PLAYERS_VISITOR",
+		}
+		var role := int(entry.get("role", Access.Role.PLAYER))
 		if entry.get("admin", false):
-			name.text += "  " + tr("PLAYERS_ADMIN")
+			role = Access.Role.ADMIN
+		if tag.has(role):
+			name.text += "  " + tr(tag[role])
 		if entry.get("id") == player_id:
 			name.add_theme_color_override("font_color", UiTheme.WOOD)
 		name.size_flags_horizontal = Control.SIZE_EXPAND_FILL

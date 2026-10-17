@@ -19,6 +19,7 @@ signal seasons_requested(days: int)
 ## Multiplayer: the join screen; leaving the server for the solo world.
 signal join_screen_requested
 signal leave_server_requested
+signal password_requested
 
 const FROZEN_CHOICES := [
 	["FROZEN_SUNRISE", WorldClock.FROZEN_SUNRISE],
@@ -54,6 +55,7 @@ var _box := VBoxContainer.new()
 var _updating := false
 var _world_rows: Array[Control] = []
 var _multiplayer := Button.new()
+var _password := Button.new()
 
 
 func _ready() -> void:
@@ -125,6 +127,9 @@ func _ready() -> void:
 	box.add_child(_section("MENU_MULTIPLAYER"))
 	_multiplayer.pressed.connect(_on_multiplayer)
 	box.add_child(_multiplayer)
+	_password.text = "MENU_CHANGE_PASSWORD"
+	_password.pressed.connect(password_requested.emit)
+	box.add_child(_password)
 
 	_settings.layout_changed.connect(_fit_height.call_deferred)
 	box.add_child(_settings)
@@ -170,6 +175,7 @@ func refresh_from_state() -> void:
 	_seasons.select(_closest_seasons(clock.season_days))
 	_settings.refresh()
 	_multiplayer.text = "MENU_LEAVE_SERVER" if online else "MENU_JOIN_SERVER"
+	_password.visible = online
 	_updating = false
 	_refresh_dynamic_texts()
 

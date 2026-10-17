@@ -4,17 +4,34 @@ extends RefCounted
 ## standard input (read on a thread of their own, `start`; what Pterodactyl
 ## and a terminal send) are run (`run`): stop (or quit: the world saved,
 ## the server stops), save, say TEXT (to every player), list (who plays),
-## help, and the chat's commands an admin may give from here (COMMANDS,
-## with or without "/"; their answers printed). The console hears what is
-## told to everyone (GameServer.console: chat lines, arrivals and
-## departures) and prints it.
+## help, backups (the world's, newest first: Backups), restore BACKUP (its
+## name or number: the server stops, the backup in place of the world; Act
+## RESTORE, `restoring`), and the chat's commands an admin may give from
+## here (COMMANDS, with or without "/"; their answers printed). The console
+## hears what is told to everyone (GameServer.console: chat lines, arrivals
+## and departures, what the guard caught) and prints it.
 
-enum Act { NONE, STOP }
+enum Act { NONE, STOP, RESTORE }
 
 ## The chat's commands the console runs (the others need a player in the
 ## world).
 const COMMANDS: Array[String] = [
-	"help", "players", "msg", "seed", "time", "season", "weather", "gamemode", "admin"
+	"help",
+	"players",
+	"msg",
+	"seed",
+	"time",
+	"season",
+	"weather",
+	"gamemode",
+	"admin",
+	"kick",
+	"ban",
+	"unban",
+	"whitelist",
+	"role",
+	"account",
+	"backup",
 ]
 ## The console's name, as players read it.
 const NAME := "Server"
@@ -39,6 +56,9 @@ class Output:
 
 
 var server: GameServer
+## The world's backups (null: none), and the one to restore (Act.RESTORE).
+var backups: Backups
+var restoring := ""
 ## Prints a line (print; tests keep them).
 var out := func(line: String) -> void: print(line)
 ## The console as a player giving commands (an admin, never in the world).
@@ -102,7 +122,16 @@ func run(line: String) -> Act:
 		"list":
 			_list()
 		"help":
-			out.call("Console: stop, save, say TEXT, list, help. Commands: " + ", ".join(COMMANDS))
+			var own := "stop, save, say TEXT, list, backups, restore BACKUP, help"
+			out.call("Console: %s. Commands: %s" % [own, ", ".join(COMMANDS)])
+		"backups":
+			_list_backups()
+		"restore":
+			var which := text.substr(word.length()).strip_edges()
+			restoring = backups.find(which) if backups != null and which != "" else ""
+			if restoring != "":
+				return Act.RESTORE
+			out.call("Which backup? (backups lists them: restore 1 is the newest.)")
 		_:
 			var command := Commands.find(word)
 			if command.is_empty() or not command["name"] in COMMANDS:
@@ -114,6 +143,14 @@ func run(line: String) -> Act:
 
 func _print(line: String) -> void:
 	out.call(line)
+
+
+func _list_backups() -> void:
+	var files := backups.list() if backups != null else PackedStringArray()
+	if files.is_empty():
+		out.call("No backup yet.")
+	for i in files.size():
+		out.call("%d. %s" % [i + 1, files[i]])
 
 
 func _list() -> void:

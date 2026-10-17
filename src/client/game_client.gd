@@ -326,15 +326,20 @@ func _apply_quality() -> void:
 ## `min_view_distance` is the smallest radius (chunks) to load around the
 ## player; more is asked when the view needs it (see _update_view_distance).
 ## Joins the server at the other end of `server_transport` as
-## `player_name` (solo: always Player, the save's name).
+## `player_name` (solo: always Player, the save's name), with the server's
+## password and the account's secret (Access.secret_of).
 func connect_to_server(
-	server_transport: Transport, min_view_distance: int, player_name := "Player", password := ""
+	server_transport: Transport,
+	min_view_distance: int,
+	player_name := "Player",
+	password := "",
+	secret := ""
 ) -> void:
 	transport = server_transport
 	local_player.transport = server_transport
 	_min_view_distance = min_view_distance
 	view_distance = needed_view_distance()
-	transport.send(Msg.hello(player_name, view_distance, password))
+	transport.send(Msg.hello(player_name, view_distance, password, secret))
 
 
 ## Chunks needed around the player to fill the screen: the ground in view
@@ -790,7 +795,7 @@ func _cycle_hand(step: int) -> void:
 ## Whether a screen over the world takes the keys and the mouse: the
 ## inventory, the book, the chat while typing.
 func screen_open() -> bool:
-	var screens := [inventory_screen, book_screen, connection, online.join_screen]
+	var screens := [inventory_screen, book_screen, connection, online.join_screen, online.password]
 	return chat.typing or screens.any(func(screen: Control) -> bool: return screen.visible)
 
 

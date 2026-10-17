@@ -6,8 +6,10 @@ extends RefCounted
 ## another version of the messages (Msg.PROTOCOL), the password is wrong
 ## (GameServer.password), their name is not one (NAME: 2 to 16 letters,
 ## digits, - or _; it names their save) or is already playing, or the
-## server is full (GameServer.max_players). The same name from the same
-## machine (Transport.ip) is the player back after their connection broke,
+## server is full (GameServer.max_players); on a dedicated server Access
+## refuses the banned, those off the whitelist and a name's wrong password
+## (`admit`). The same name from the same machine (Transport.ip), or
+## proving its account, is the player back after their connection broke,
 ## before ENet noticed: their old session ends (`take_over`). A connection
 ## gone (its transport closed) ends their session (`leave`): off a boat,
 ## what they held open closed, saved, the others told (a dedicated
@@ -20,26 +22,74 @@ const NAME := "^[\\p{L}\\p{N}_-]{2,16}$"
 static var _name := _compile()
 
 
-## Why a player saying hello (on `session`) is refused ("": they are
-## welcome).
+## A player says hello (on `session`): refused (Msg.REFUSED with why,
+## the console told, the connection closed) or let in: their old
+## connection ends if they still play (`take_over`), their account is made
+## or noted (Access.joined, saved). Returns whether they are let in.
+static func admit(
+	server: GameServer, session: GameServer.PlayerSession, message: Dictionary
+) -> bool:
+	var refused := refusal(server, session, message)
+	var name := str(message.get("name", ""))
+	if not refused.is_empty():
+		if server.console != null:
+			var said := [name, Chat.word(refused[0])]
+			server.console.send(Msg.chat_notice("SERVER_REFUSED", said, Chat.Tone.INFO))
+		session.transport.send(Msg.refused(refused[0], refused[1]))
+		session.transport.close()
+		return false
+	take_over(server, session, name)
+	var secret := str(message.get("secret", ""))
+	if server.dedicated and server.access.joined(name, secret, session.transport.ip()):
+		server.keep_access()
+	return true
+
+
+## Why a player saying hello (on `session`) is refused: [key, args] ([]:
+## they are welcome). On a dedicated server also bans, the whitelist and
+## accounts (Access.refusal).
 static func refusal(
 	server: GameServer, session: GameServer.PlayerSession, message: Dictionary
-) -> String:
+) -> Array:
 	if int(message.get("protocol", -1)) != Msg.PROTOCOL:
-		return "REFUSED_VERSION"
+		return ["REFUSED_VERSION", []]
 	if server.password != "" and str(message.get("password", "")) != server.password:
-		return "REFUSED_PASSWORD"
+		return ["REFUSED_PASSWORD", []]
 	var name := str(message.get("name", ""))
 	if not is_name(name):
-		return "REFUSED_NAME"
+		return ["REFUSED_NAME", []]
+	var secret := str(message.get("secret", ""))
+	if server.dedicated:
+		var now := Time.get_unix_time_from_system()
+		var denied := server.access.refusal(name, secret, session.transport.ip(), now)
+		if not denied.is_empty():
+			return denied
 	var playing := Chat.find_player(server, name)
-	var back := playing != null and _same_machine(playing, session)
+	var back := (
+		playing != null and (_same_machine(playing, session) or server.access.proves(name, secret))
+	)
 	if playing != null and not back:
-		return "REFUSED_NAME_TAKEN"
+		return ["REFUSED_NAME_TAKEN", []]
 	var others := players(server) - (1 if back else 0)
 	if server.max_players > 0 and others >= server.max_players:
-		return "REFUSED_FULL"
-	return ""
+		return ["REFUSED_FULL", []]
+	return []
+
+
+## A player changes their account's password (Msg.SET_PASSWORD; answered
+## by Msg.PASSWORD_SET). Returns whether it handled the message.
+static func handle(
+	server: GameServer, session: GameServer.PlayerSession, message: Dictionary
+) -> bool:
+	if message.get("t") != Msg.SET_PASSWORD:
+		return false
+	var old := str(message.get("old", ""))
+	var new := str(message.get("new", ""))
+	var done := server.access.change_password(session.player_name, old, new)
+	if done:
+		server.keep_access()
+	session.transport.send(Msg.password_set(done))
+	return true
 
 
 ## A player welcome as `name` on `session`: if they still play on another

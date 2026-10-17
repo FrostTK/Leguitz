@@ -42,6 +42,7 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Saisons (réglage du monde) : cultures de saison et serres, arbres qui roussissent puis se dénudent, neige l'hiver, le calendrier à l'horloge, /saison | ✅ |
 | Verre et vitres refaits : verre clair continu, verre ancien, verre au plomb, vitres fines qui se raccordent, 28 fenêtres (4 dessins, 6 bois et fer forgé), teinte par case au pot de peinture (le cadre à part), lavée à l'arrosoir ; le soleil à travers le verre teinté colore le sol ; palette de 16 couleurs douces | ✅ |
 | Rideaux qui se tirent et se nouent (tirés, la pièce devient sombre), longs jusqu'au sol, tringle en bois ou en fer, teints au pot de peinture ; tapis qui se raccordent en un grand tapis, teints, sous les meubles | ✅ |
+| Multijoueur, étape 4 : comptes (un mot de passe par pseudo, « Se souvenir de moi », changer son mot de passe), rôles (visiteur, joueur, modérateur, admin), `/expulse`, `/bannis`, `/gracie`, liste blanche, sauvegardes de secours automatiques et restauration | ✅ |
 | Multijoueur, étape 3 : un serveur dédié qui vérifie tout (déplacements, chutes, durée du minage, sièges et lits, messages incohérents ou en rafale), remet les tricheurs en place, exclut les jeux qui l'inondent et le signale sur sa console | ✅ |
 | Multijoueur, étape 2 : on voit les autres joueurs (corps, nom au-dessus de la tête, objet en main, armure, gestes, lanterne), mouvements lissés, liste des joueurs (P), écran « Rejoindre un serveur » dans le menu pause avec les serveurs récents, retour au solo sans relancer, reconnexion | ✅ |
 | Multijoueur, étape 1 : serveur dédié (jeu lancé sans fenêtre, réglages dans server.cfg, console, arrêt propre, version Linux compilée), connexion par IP avec pseudo et mot de passe, écrans de connexion, de refus et de déconnexion | ✅ |
@@ -51,6 +52,8 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Nouveaux matériaux : pavés, pierre de taille, pierres moussues, plâtre qui se peint, colombages, torchis, parquets à lames et à chevrons, carrelage en damier, tomettes, terre cuite, ardoise polie, briques de grès ; leurs escaliers et dalles, quarts de bloc, murets, piliers, poutres | ✅ |
 | Toitures en tuiles, ardoises, bardeaux et chaume : pentes qui font leurs coins, faîtages en croupe et en croix, pentes douces, lucarnes, cheminée qui fume, neige en hiver | ✅ |
 | Portes de chaque bois, vitrée et en fer forgé (portes doubles), trappes, échelles où l'on grimpe, volets peints qui se ferment, barreaux et garde-corps qui se raccordent | ✅ |
+
+![Leguitz : multijoueur : l'écran « Rejoindre un serveur » avec « Ton mot de passe » retenu ; un visiteur qui ne peut rien changer, et la liste des joueurs avec leurs rôles ; un joueur banni pour deux heures ; la console du serveur : un pseudo sans mot de passe refusé, un bannissement, une sauvegarde de secours](docs/screenshots/multijoueur-comptes.png)
 
 ![Leguitz : multijoueur : un tricheur remis en place ; la console du serveur qui signale les triches ; le chat trop rapide freiné ; un jeu exclu pour avoir inondé le serveur](docs/screenshots/multijoueur-garde.png)
 
@@ -312,12 +315,15 @@ Le serveur est le jeu lancé sans fenêtre. Version compilée pour Linux : artef
 ```
 
 Au premier lancement, il écrit `server.cfg` dans son dossier de données (port 27420 en UDP, monde,
-graine, mode de jeu, joueurs au plus, mot de passe, distance de vue, langue de la console) : le
-modifier puis relancer. Les options de lancement passent par-dessus (`--port=27500`,
+graine, mode de jeu, joueurs au plus, mot de passe, distance de vue, langue de la console, comptes,
+rôle des nouveaux venus, sauvegardes de secours) : le modifier puis relancer. Les options de lancement passent par-dessus (`--port=27500`,
 `--password=secret`, `--max-players=6`...). Il écrit « Leguitz server ready » quand il écoute.
-Sa console comprend `stop` (sauvegarde et arrêt), `save`, `say message`, `list`, `help` et les
-commandes d'administrateur du chat ; un fichier `stop` posé dans son dossier l'arrête aussi
-proprement. Depuis les sources : `godot --headless --path . -- --server --data=DOSSIER`.
+Sa console comprend `stop` (sauvegarde et arrêt), `save`, `say message`, `list`, `backups` (les
+sauvegardes de secours), `restore 1` (remet la plus récente et arrête le serveur), `help` et les
+commandes d'administrateur du chat (`kick`, `ban`, `unban`, `whitelist`, `role`, `account`,
+`backup`...) ; un fichier `stop` posé dans son dossier l'arrête aussi proprement. Chaque pseudo
+appartient à son premier joueur, qui choisit son mot de passe en se connectant la première fois ;
+le premier joueur venu est admin. Depuis les sources : `godot --headless --path . -- --server --data=DOSSIER`.
 
 Pour le rejoindre : menu pause, **Multijoueur**, « Rejoindre un serveur… » (adresse, port, pseudo,
 mot de passe ; les serveurs rejoints récemment se remplissent d'un clic). Ou au lancement :
@@ -393,7 +399,7 @@ Pour le multijoueur, il suffira de brancher un transport réseau.
 
 En cours : le multijoueur et les serveurs dédiés, qu'on rejoint par IP depuis le jeu,
 hébergeables sur un VPS Debian ou en egg Pterodactyl (réseau et serveur dédié, rejoindre et voir les
-autres, un serveur qui vérifie tout faits ; à venir : comptes et administration, hébergement,
+autres, un serveur qui vérifie tout, comptes et administration faits ; à venir : hébergement,
 performances, finitions).
 
 En attente : le mode Arcade, scénario n°1 « Restauration » (restaurer une terre désolée avec

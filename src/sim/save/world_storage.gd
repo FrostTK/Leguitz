@@ -23,6 +23,9 @@ const COMPRESSION := FileAccess.COMPRESSION_ZSTD
 const WORLD_FILE := "world.cfg"
 const CREATURES_FILE := "creatures.cfg"
 const BOATS_FILE := "boats.cfg"
+## Who may play and do what (Access): roles, whitelist, bans; accounts.
+const ACCESS_FILE := "access.cfg"
+const ACCOUNTS_FILE := "accounts.cfg"
 
 var folder := ""
 ## Saved chunks of the regions read so far: region -> {chunk coord: data}.
@@ -110,6 +113,30 @@ func save_boats(state: Dictionary) -> bool:
 	var file := ConfigFile.new()
 	file.set_value("boats", "state", state)
 	return _save_config(file, BOATS_FILE)
+
+
+## The saved roles, whitelist and bans (Access.load_dict), empty if none.
+func read_access() -> Dictionary:
+	var file := _load_config(ACCESS_FILE)
+	return file.get_value("access", "state", {}) if file != null else {}
+
+
+func save_access(state: Dictionary) -> bool:
+	var file := ConfigFile.new()
+	file.set_value("access", "state", state)
+	return _save_config(file, ACCESS_FILE)
+
+
+## The saved accounts (Access.load_accounts), empty if none.
+func read_accounts() -> Dictionary:
+	var file := _load_config(ACCOUNTS_FILE)
+	return file.get_value("accounts", "state", {}) if file != null else {}
+
+
+func save_accounts(state: Dictionary) -> bool:
+	var file := ConfigFile.new()
+	file.set_value("accounts", "state", state)
+	return _save_config(file, ACCOUNTS_FILE)
 
 
 ## A player's saved state (see GameServer.player_state), empty if none.

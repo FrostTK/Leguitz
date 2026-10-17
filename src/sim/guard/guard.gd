@@ -11,7 +11,9 @@ extends RefCounted
 ## from their own as well (LIMITS: chat lines, blocks placed, digs, maps);
 ## the chat says so to whoever talks too fast (CHAT_TOO_FAST); KICK_DROPS
 ## dropped within DROP_WINDOW gets them kicked (`kick`: Msg.KICKED,
-## KICKED_FLOOD). `report` tells the console what it caught (once every
+## KICKED_FLOOD). A visitor's game may not send what would change the
+## world (Access.VISITORS_REFUSED: HUD_VISITOR now and then, the block and
+## the slots told again). `report` tells the console what it caught (once every
 ## REPORT_SECONDS for a player and a kind, with how many since). Each
 ## player's Watch (PlayerSession.guard) holds their buckets, reports,
 ## MoveCheck's track and Digging's.
@@ -100,6 +102,10 @@ static func admits(
 	if not well_formed(session, message):
 		report(server, session, "GUARD_MALFORMED", [str(kind)])
 		return false
+	if kind in Access.VISITORS_REFUSED:
+		if server.access.rank(server, session) == Access.Role.VISITOR:
+			_keep_out(server, session, message)
+			return false
 	return true
 
 
@@ -156,6 +162,23 @@ static func kick(server: GameServer, session: GameServer.PlayerSession, reason: 
 		var said := [session.player_name, Chat.word(reason)]
 		var line := Msg.chat_notice("GUARD_KICKED", said, Chat.Tone.INFO)
 		server.console.send(line)
+
+
+## A visitor's game tried to change something: it is told how things are
+## (the block, the slots) and the player, now and then, why.
+static func _keep_out(
+	server: GameServer, session: GameServer.PlayerSession, message: Dictionary
+) -> void:
+	var cell: Variant = message.get("cell")
+	if cell is Vector3i:
+		var voxel := server.world.loaded_voxel_at(cell)
+		if voxel != Voxels.UNKNOWN:
+			session.transport.send(Msg.block_changed(cell, voxel))
+	session.transport.send(Msg.inventory(session.inventory))
+	var told: Array = session.guard.reported.get("visitor", [-INF, 0])
+	if server.now() - float(told[0]) >= REPORT_SECONDS:
+		session.guard.reported["visitor"] = [server.now(), 0]
+		session.transport.send(Msg.notice("HUD_VISITOR"))
 
 
 static func _dropped(server: GameServer, session: GameServer.PlayerSession, now: float) -> void:

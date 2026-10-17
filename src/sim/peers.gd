@@ -85,7 +85,8 @@ static func sync(server: GameServer) -> void:
 		tell_roster(server)
 
 
-## Who plays: [{id, name, ping (ms), admin}], in the order they joined.
+## Who plays: [{id, name, ping (ms), admin, role (Access.Role)}], in the
+## order they joined.
 static func roster(server: GameServer) -> Array:
 	var players := []
 	for session in server.sessions:
@@ -96,6 +97,7 @@ static func roster(server: GameServer) -> Array:
 			"name": session.player_name,
 			"ping": session.transport.latency(),
 			"admin": Chat.is_admin(server, session),
+			"role": server.access.rank(server, session),
 		}
 		players.append(player)
 	return players

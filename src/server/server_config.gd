@@ -6,7 +6,9 @@ extends RefCounted
 ## "--" or not): --data=FOLDER (where FILE and the worlds are; the current
 ## folder by default), --ip=ADDRESS, --port=N, --world=NAME, --seed=TEXT,
 ## --game-mode=MODE, --max-players=N, --password=TEXT, --view-distance=N,
-## --language=CODE. The game mode and the seed only make a new world.
+## --language=CODE, --accounts=BOOL, --default-role=ROLE, --backup-hours=N,
+## --backups-kept=N, --backup-on-start=BOOL. The game mode and the seed only
+## make a new world.
 
 const FILE := "server.cfg"
 const SECTION := "server"
@@ -32,6 +34,17 @@ password=""
 view_distance=12
 ; The console's language: en or fr.
 language="en"
+; Each name is its first player's: they choose a password the first time
+; they come, and only it plays under that name (true or false).
+accounts=true
+; The role of newcomers: player, or visitor (they look around and change
+; nothing until an admin gives them a role: /role NAME player).
+default_role="player"
+; A backup of the world (a zip in backups/) every this many hours (0:
+; never), and when the server starts; how many are kept.
+backup_hours=6
+backup_on_start=true
+backups_kept=10
 """
 ## The game modes by their names in FILE and in the options.
 const MODES := {
@@ -50,6 +63,11 @@ var max_players := 10
 var password := ""
 var view_distance := 12
 var language := "en"
+var accounts := true
+var default_role: int = Access.Role.PLAYER
+var backup_hours := 6
+var backup_on_start := true
+var backups_kept := 10
 ## What was wrong in FILE or the options (told in the console).
 var problems: PackedStringArray = []
 
@@ -92,6 +110,15 @@ func take(saved: ConfigFile, options: Dictionary) -> void:
 	max_players = _number(values, "max_players", max_players, 1, 1000)
 	var view := _number(values, "view_distance", view_distance, 2, GameConst.MAX_VIEW_DISTANCE)
 	view_distance = clampi(view, GameConst.MIN_VIEW_DISTANCE, GameConst.MAX_VIEW_DISTANCE)
+	accounts = _yes(values, "accounts", accounts)
+	backup_on_start = _yes(values, "backup_on_start", backup_on_start)
+	backup_hours = _number(values, "backup_hours", backup_hours, 0, 24 * 7)
+	backups_kept = _number(values, "backups_kept", backups_kept, 1, 1000)
+	var role := str(values.get("default_role", "")).to_lower()
+	if role in ["player", "visitor"]:
+		default_role = Access.ROLE_NAMES[role]
+	elif not role.is_empty():
+		problems.append("default_role: %s is neither player nor visitor" % role)
 	var mode := str(values.get("game_mode", "")).to_lower()
 	if MODES.has(mode):
 		game_mode = MODES[mode]
@@ -113,6 +140,18 @@ static func _options(args: PackedStringArray) -> Dictionary:
 		var pair := arg.substr(2).split("=", true, 1)
 		options[pair[0]] = pair[1] if pair.size() > 1 else "true"
 	return options
+
+
+func _yes(values: Dictionary, key: String, fallback: bool) -> bool:
+	if not values.has(key):
+		return fallback
+	var text := str(values[key]).to_lower()
+	if text in ["true", "yes", "1", "on"]:
+		return true
+	if text in ["false", "no", "0", "off"]:
+		return false
+	problems.append("%s: %s is neither true nor false" % [key, text])
+	return fallback
 
 
 func _number(values: Dictionary, key: String, fallback: int, low: int, high: int) -> int:

@@ -76,7 +76,7 @@ func test_commands_answer_in_the_chat_and_admins_rule() -> void:
 	assert_eq(_keys(_type("/dance")), ["CHAT_UNKNOWN"])
 	assert_eq(_keys(_type("/")), ["CHAT_HOW"])
 	# Sam may use the commands for everyone, not the admins'.
-	assert_eq(_keys(_type("/tp random", 1)), ["CHAT_NOT_ADMIN"])
+	assert_eq(_keys(_type("/tp random", 1)), ["CHAT_NOT_ALLOWED"])
 	var help := _type("/aide", 1)
 	assert_eq(help.size(), 1 + Commands.available(_server, _session(1)).size())
 	assert_eq(help.size(), 7, "the six for everyone")
@@ -98,7 +98,7 @@ func test_commands_answer_in_the_chat_and_admins_rule() -> void:
 	var saved := WorldSettings.new()
 	saved.load_dict(_server.settings.to_dict())
 	assert_eq(saved.admins, ["Sam"], "saved with the world")
-	assert_eq(_keys(_type("/tp spawn", 0)), ["CHAT_NOT_ADMIN"], "Alex no longer")
+	assert_eq(_keys(_type("/tp spawn", 0)), ["CHAT_NOT_ALLOWED"], "Alex no longer")
 
 
 func test_tp_random_lands_far_away_on_dry_ground() -> void:
@@ -224,7 +224,7 @@ func test_clear_empties_the_inventory_or_one_item() -> void:
 	_type("/clear")
 	assert_eq(_held(Items.Id.OAK_PLANKS), 0)
 	assert_eq(bag.items[Inventory.ARMOR], Items.Id.NONE, "the armor worn too")
-	assert_eq(Commands.find("vide")["admin"], false, "for everyone")
+	assert_eq(Commands.find("vide")["role"], Access.Role.VISITOR, "for everyone")
 
 
 func test_tab_completes_commands_and_their_words() -> void:
