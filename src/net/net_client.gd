@@ -87,7 +87,9 @@ func _service() -> void:
 		if kind == ENetConnection.EVENT_NONE:
 			break
 		if kind == ENetConnection.EVENT_ERROR:
-			_end("CONNECTION_LOST")
+			# Before connecting too: on Linux a closed port's answer (ICMP)
+			# fails the DTLS handshake here.
+			_end("CONNECTION_LOST" if state == State.CONNECTED else "CONNECTION_UNREACHABLE")
 			return
 		match kind:
 			ENetConnection.EVENT_CONNECT:
