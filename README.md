@@ -47,6 +47,7 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Nouvel inventaire : le personnage en 3D avec son armure (on le tourne à la souris), le sac avec des filtres et un bouton « Ranger » (vérifié par le serveur), la fabrication dans une carte, une ligne de détails sur l'objet survolé, le catalogue créatif dans le même cadre, une petite animation à l'ouverture | ✅ |
 | Affichage tête haute refait : anneau ambre qui glisse sur la barre d'objets, jauges de vitalité et de satiété face à face en segments, effets en pastilles rondes, horloge avec soleil ou lune, chat en bulles, viseur fin, liste des joueurs en carte, écran F3 sobre, halo derrière les icônes sombres | ✅ |
 | Interface au style « Ardoise » : panneaux sombres aux coins arrondis, cases plates, une seule couleur d'accent (l'ambre), listes, cases à cocher et barres de défilement nettes, barre d'objets et jauges sobres (le livre du joueur garde son papier) | ✅ |
+| Multijoueur, étape 5 : héberger son serveur sur Debian (service systemd), avec Docker ou avec Pterodactyl (egg fourni), guide d'installation en français (`docs/hebergement.md`), connexions chiffrées, archive du serveur publiée à chaque version | ✅ |
 | Multijoueur, étape 4 : comptes (un mot de passe par pseudo, « Se souvenir de moi », changer son mot de passe), rôles (visiteur, joueur, modérateur, admin), `/expulse`, `/bannis`, `/gracie`, liste blanche, sauvegardes de secours automatiques et restauration | ✅ |
 | Multijoueur, étape 3 : un serveur dédié qui vérifie tout (déplacements, chutes, durée du minage, sièges et lits, messages incohérents ou en rafale), remet les tricheurs en place, exclut les jeux qui l'inondent et le signale sur sa console | ✅ |
 | Multijoueur, étape 2 : on voit les autres joueurs (corps, nom au-dessus de la tête, objet en main, armure, gestes, lanterne), mouvements lissés, liste des joueurs (P), écran « Rejoindre un serveur » dans le menu pause avec les serveurs récents, retour au solo sans relancer, reconnexion | ✅ |
@@ -57,6 +58,8 @@ les personnages et les plantes des sprites, avec de vraies ombres et lumières.
 | Nouveaux matériaux : pavés, pierre de taille, pierres moussues, plâtre qui se peint, colombages, torchis, parquets à lames et à chevrons, carrelage en damier, tomettes, terre cuite, ardoise polie, briques de grès ; leurs escaliers et dalles, quarts de bloc, murets, piliers, poutres | ✅ |
 | Toitures en tuiles, ardoises, bardeaux et chaume : pentes qui font leurs coins, faîtages en croupe et en croix, pentes douces, lucarnes, cheminée qui fume, neige en hiver | ✅ |
 | Portes de chaque bois, vitrée et en fer forgé (portes doubles), trappes, échelles où l'on grimpe, volets peints qui se ferment, barreaux et garde-corps qui se raccordent | ✅ |
+
+![Leguitz : héberger son serveur : un jeu qui a rejoint un serveur dédié chiffré ; ce que la CI voit sur une vraie machine Linux : l'installation sur Debian avec son service systemd (prêt, une commande par leguitz-console, l'arrêt propre), l'image Docker (une commande, l'arrêt qui sauvegarde le monde dans le volume) et l'egg Pterodactyl (l'installation qui télécharge le serveur, le démarrage dans l'image du panneau, la ligne « prêt », stop)](docs/screenshots/multijoueur-hebergement.png)
 
 ![Leguitz : le menu pause avant et après, les paramètres en onglets (Graphismes, Commandes) ; « Rejoindre un serveur » et le livre du joueur avant et après](docs/screenshots/interface-menus.png)
 
@@ -322,8 +325,12 @@ Les outils de debug seront réservés au mode Créatif quand les modes de jeu ar
 
 ### Serveur dédié (multijoueur, en cours)
 
-Le serveur est le jeu lancé sans fenêtre. Version compilée pour Linux : artefact
-`LeguitzServer-linux` (à décompresser), puis :
+**Pour l'héberger** (VPS Debian ou Ubuntu avec systemd, Docker, Pterodactyl) : le guide
+[`docs/hebergement.md`](docs/hebergement.md). Le serveur arrive en une archive
+`leguitz-server-VERSION-linux-x86_64.tar.gz` (Releases du dépôt à chaque version, ou artefact
+`LeguitzServer-linux` d'un build) qui contient aussi les scripts d'installation.
+
+Le serveur est le jeu lancé sans fenêtre. À la main :
 
 ```bash
 ./LeguitzServer.x86_64 --headless --data=/srv/leguitz
@@ -417,9 +424,9 @@ ambre ; le thème, l'affichage tête haute, le nouvel inventaire, les écrans de
 menus).
 
 En cours : le multijoueur et les serveurs dédiés, qu'on rejoint par IP depuis le jeu,
-hébergeables sur un VPS Debian ou en egg Pterodactyl (réseau et serveur dédié, rejoindre et voir les
-autres, un serveur qui vérifie tout, comptes et administration faits ; à venir : hébergement,
-performances, finitions).
+hébergeables sur un VPS Debian, avec Docker ou en egg Pterodactyl (réseau et serveur dédié,
+rejoindre et voir les autres, un serveur qui vérifie tout, comptes et administration, hébergement
+faits ; à venir : performances, finitions).
 
 En attente : le mode Arcade, scénario n°1 « Restauration » (restaurer une terre désolée avec
 éoliennes, irrigateurs et purificateurs, faire revenir forêts, rivières et animaux, puis recycler

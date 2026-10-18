@@ -67,7 +67,7 @@ Les questions de goût ou les choix lourds de conséquences sont posés avant de
 
 ## 3. État actuel : ce qui est fait
 
-Godot **4.7.2** (GDScript), rendu Forward+. 434 tests unitaires, lint propre.
+Godot **4.7.2** (GDScript), rendu Forward+. 439 tests unitaires, lint propre.
 
 | Phase | Contenu | Commits |
 |---|---|---|
@@ -164,7 +164,8 @@ Godot **4.7.2** (GDScript), rendu Forward+. 434 tests unitaires, lint propre.
 | I.2 Affichage tête haute | La **barre d'objets** : un **anneau ambre glisse** d'une case à l'autre quand on change d'objet ; le nom de l'objet en main et les **annonces** dans une petite pastille. Les **jauges** se font face au-dessus : la vitalité à gauche (le cristal, rouge, la trace pâle d'une blessure), la satiété à droite (le pain, ambre, qui se vide vers lui), en **segments de deux points** ; l'armure et le souffle en fines jauges au-dessus, seulement quand ils comptent. Les **effets** en pastilles rondes, le temps restant en arc autour. L'**horloge** : un soleil ou une lune, « Printemps 3 » en gris et l'heure. Le **chat** en **bulles légères** à la largeur de chaque ligne. Le **viseur** : un point et quatre petits traits, cernés de sombre. La **liste des joueurs** (P) : une carte, le rôle sur une petite étiquette colorée, le ping en barres de signal. L'**écran F3** dans une pastille sombre, ses parties séparées par des points gris. Demandé par le propriétaire : un **léger halo** derrière les icônes très sombres (charbon, pierre, ardoise). Les icônes dont on a besoin (barre d'objets, écran ouvert) sont calculées **en premier** au démarrage | `5b4aef9` |
 | I.3 Inventaire et créatif | **Nouvelle disposition de l'inventaire**, celle de la maquette : à gauche l'**équipement** (le **personnage en 3D** portant son armure et ce qu'il a en main, qu'on **tourne en le faisant glisser** à la souris, les quatre cases d'armure, la protection), au centre le **sac** avec des **filtres** en pastilles (Tout, outils et équipement, construction, nourriture, nature et ferme, maison, matériaux : ce qu'un filtre écarte s'estompe) et le bouton **« Ranger »** (regroupe les piles et les range dans l'ordre du catalogue ; le serveur le fait aussi : rien ne se perd), à droite la **fabrication** dans une carte (le nom de ce qu'on fabrique dessous : « 4 × Bâton »), en bas une **ligne de détails** sur l'objet survolé (« Pioche en fer · 188 / 250 · casse la pierre et les minerais », ce qu'un plat nourrit, ses effets, combien de temps brûle un combustible) ou un rappel des clics. Le **catalogue créatif** dans le même cadre, ses onglets en pastilles. Retenu par le propriétaire : **une petite animation à l'ouverture** (un fondu, l'écran monte un peu en place). L'établi, la cuisine, les coffres, les fours et le bateau gardent leur place en attendant l'étape 4 | `28b0a30` |
 | I.4 Écrans des blocs | **Un même cadre pour les écrans des blocs** : l'**icône et le vrai nom du bloc** en en-tête (« Armoire », « Commode », « Bibliothèque »… au lieu de « Coffre » pour tous ; « Établi », « Plan de cuisine », « Four alimentaire », « Four d'usine », « Chantier naval »), la **partie du bloc dans une carte** en haut (les places du coffre, la grille de l'établi ou de la cuisine avec ce qu'elle fabrique, le four, le bateau) et **le sac toujours au même endroit en dessous**, avec ses filtres et « Ranger ». Les fours ont une **flamme sobre** qui se remplit par le bas tant que le combustible brûle et une **flèche de cuisson** en barre arrondie ; le four d'usine garde ses trois coffres de part et d'autre. Le chantier naval : boutons à l'ambre, rangées titrées. Chaque écran s'ouvre avec l'animation (fondu, l'écran monte en place). Les machines et les étagères n'ont pas d'écran (on s'en sert d'un clic) | `7aa38bf` |
-| I.5 Menus et écrans multijoueur | **Le menu pause en colonne** : à gauche le titre, « Reprendre » à l'ambre, les pages **Monde** (seulement pour qui peut changer le monde), **Paramètres** et **Multijoueur** (la page choisie marquée d'un filet ambre), « Sauvegarder et quitter » en bas ; la page s'affiche à droite. Les **paramètres en onglets** (Affichage, Graphismes, Jeu, **Commandes** : toutes les touches du clavier, de la souris et de la manette, sur de petites touches dessinées). La page Multijoueur dit où l'on joue (« Tu joues en solo… », « Tu joues sur … »). **« Rejoindre un serveur »** en deux colonnes : les serveurs récents en cartes à gauche (× pour en oublier un), le formulaire à droite, chaque champ nommé au-dessus, le port à côté de l'adresse. Le **mot de passe** dans le même style. La **connexion** : un arc ambre tourne pendant qu'elle se fait, un signal rouge si elle échoue. La **perte de connaissance** : un cristal de vie fêlé au-dessus du titre, le panneau monte en place. Le **livre** reste un livre de papier, mais sa couverture est en cuir ardoise filé d'ambre et ses onglets s'accordent au reste (le chapitre ouvert en ambre). Tous ces écrans s'ouvrent avec l'animation. **La refonte de l'interface est terminée** | « Menus » |
+| I.5 Menus et écrans multijoueur | **Le menu pause en colonne** : à gauche le titre, « Reprendre » à l'ambre, les pages **Monde** (seulement pour qui peut changer le monde), **Paramètres** et **Multijoueur** (la page choisie marquée d'un filet ambre), « Sauvegarder et quitter » en bas ; la page s'affiche à droite. Les **paramètres en onglets** (Affichage, Graphismes, Jeu, **Commandes** : toutes les touches du clavier, de la souris et de la manette, sur de petites touches dessinées). La page Multijoueur dit où l'on joue (« Tu joues en solo… », « Tu joues sur … »). **« Rejoindre un serveur »** en deux colonnes : les serveurs récents en cartes à gauche (× pour en oublier un), le formulaire à droite, chaque champ nommé au-dessus, le port à côté de l'adresse. Le **mot de passe** dans le même style. La **connexion** : un arc ambre tourne pendant qu'elle se fait, un signal rouge si elle échoue. La **perte de connaissance** : un cristal de vie fêlé au-dessus du titre, le panneau monte en place. Le **livre** reste un livre de papier, mais sa couverture est en cuir ardoise filé d'ambre et ses onglets s'accordent au reste (le chapitre ouvert en ambre). Tous ces écrans s'ouvrent avec l'animation. **La refonte de l'interface est terminée** | `c3aad99` |
+| M.5 Hébergement | Le serveur dédié s'**héberge** de trois façons, chacune essayée par la CI sur une vraie machine Linux à chaque envoi : sur **Debian ou Ubuntu** (`install.sh` : un utilisateur à lui, le service **systemd** qui démarre avec la machine et redémarre s'il plante, l'**IP dédiée**, le port UDP ouvert dans le pare-feu, mise à jour en relançant le script), avec **Docker** (image, `compose.yaml`) et avec **Pterodactyl** (l'**egg** : ses variables, l'installation qui télécharge le serveur, `stop`, la ligne « prêt »). Le serveur arrive en une **archive** (`leguitz-server-VERSION-linux-x86_64.tar.gz`), **publiée dans les Releases à chaque tag de version** ; le dépôt étant privé, les scripts la prennent d'un lien direct, d'une Release avec un jeton GitHub en lecture seule, ou d'un fichier copié à la main. Les **connexions sont chiffrées** (DTLS : la clé du serveur créée au premier démarrage). Une **console par dossier** (`leguitz-console say Bonjour`) là où il n'y a pas de terminal, l'**arrêt propre** de systemd et de Docker (le monde sauvegardé), `--init` qui écrit `server.cfg`. Un **guide d'installation en français** : `docs/hebergement.md` (aussi dans l'archive) | « Hosting » |
 
 **Pas encore fait** (prévu) : nouveaux matériaux et décoration (phase 8),
 structures, menus de départ, sons, mode Arcade (en attente), mobile.
@@ -291,12 +292,13 @@ xvfb-run -a -s "-screen 0 960x540x24" godot --path . --audio-driver Dummy --reso
 
 ---
 
-## 5. Prochaine étape au « go » : Multijoueur, étape 5 (hébergement)
+## 5. Prochaine étape au « go » : Multijoueur, étape 6 (performances)
 
 **La refonte de l'interface est terminée** (octobre 2026 ; phase « Refonte de l'interface »,
 section 6) : le style **« Ardoise »** partout, en cinq étapes (le thème et les briques communes,
 l'affichage tête haute, le nouvel inventaire avec l'animation d'ouverture, les écrans des blocs
-dans un même cadre, les menus et les écrans multijoueur). Le multijoueur reprend.
+dans un même cadre, les menus et les écrans multijoueur). Le multijoueur a repris : son étape 5
+(l'hébergement) est faite.
 
 **Décision du propriétaire (octobre 2026)** : on passe tout de suite au **multijoueur et aux
 serveurs dédiés** (phase « Multijoueur et serveurs dédiés », section 6) ; la **phase 8** est en
@@ -304,10 +306,11 @@ pause après son étape 8 et reprendra à son **étape 9** (extérieur : les all
 dalles et de pas japonais, le lampadaire, le puits, la fontaine, la boîte aux lettres, le banc de
 jardin, la pergola, le nichoir, la girouette, et les arches laissées à l'étape 6 avec les ponts).
 Les étapes 1 (réseau et serveur dédié), 2 (rejoindre et voir les autres), 3 (un serveur qui ne
-fait confiance à personne) et 4 (comptes et administration) du multijoueur sont faites ; au
-prochain « go », l'**étape 5** (hébergement : Debian avec systemd, Docker, l'egg Pterodactyl, le
-guide d'installation en français ; voir la section 6, et décider d'où l'installation prend le
-serveur, le dépôt étant privé). Le propriétaire a demandé de **garder les propositions** faites
+fait confiance à personne), 4 (comptes et administration) et 5 (hébergement : Debian et systemd,
+Docker, Pterodactyl, le guide `docs/hebergement.md`, les connexions chiffrées) du multijoueur
+sont faites ; au prochain « go », l'**étape 6** (performances : plusieurs joueurs loin les uns
+des autres, mesurés sur un petit VPS, pour dire quelle machine il faut selon le nombre de
+joueurs). Le propriétaire a demandé de **garder les propositions** faites
 en route : elles sont rassemblées dans l'étape 7 de la phase. Le propriétaire essaie déjà son
 propre serveur (gxitou.fr) : chaque étape change la version des messages (Msg.PROTOCOL), le
 serveur et les jeux doivent être mis à jour ensemble.
@@ -819,6 +822,11 @@ pousse). Elle reprendra quand le propriétaire le dira.
 - Écran titre, création et chargement de mondes (graine, mode, réglages du temps), sauvegardes
   complètes (si pas déjà faites en phase 3), sons et musiques, réglages complets (touches,
   graphismes, audio), succès, intégration Steam.
+- **Retenu par le propriétaire** (octobre 2026, après la refonte de l'interface) : **changer les
+  touches** dans l'onglet Commandes des paramètres (aujourd'hui il les montre seulement) ; **un
+  écran titre** au lancement (choisir son monde, en créer un, rejoindre un serveur) ; **le
+  réglage du volume** quand il y aura des sons ; **un aperçu de la taille de l'interface** avant
+  de la choisir.
 - Performance : maillage des chunks sur des fils parallèles, niveaux de détail du terrain,
   modèles plus légers au besoin ; menu pause défilant sur petites fenêtres.
 
@@ -939,10 +947,10 @@ Découpage (chaque étape montrée au propriétaire avant la suivante) :
    fêlé. Le livre : couverture ardoise filée d'ambre, onglets arrondis (le chapitre ouvert en
    ambre), titres et numéros d'un ambre foncé, le papier gardé. Tous ces écrans s'ouvrent avec
    l'animation (fondu, ils montent en place).
-   **Pas fait (à proposer)** : changer les touches (l'onglet Commandes les montre seulement) ; un
-   écran titre au lancement du jeu (choisir son monde, en créer un, rejoindre un serveur), qui
-   irait avec la phase 9 ; régler le volume quand il y aura des sons ; un aperçu de la taille de
-   l'interface avant de la choisir.
+   **Retenu par le propriétaire** (à faire, avec la phase 9) : changer les touches (l'onglet
+   Commandes les montre seulement) ; un écran titre au lancement du jeu (choisir son monde, en
+   créer un, rejoindre un serveur) ; régler le volume quand il y aura des sons ; un aperçu de la
+   taille de l'interface avant de la choisir.
 
 ### Phase « Multijoueur et serveurs dédiés » (demandée par le propriétaire en octobre 2026 ; en cours, avant la fin de la phase 8 ; reprend à l'étape 5 après la refonte de l'interface)
 
@@ -1038,20 +1046,34 @@ serveur intégré). Découpage :
    silence (`/silence`), un panneau d'administration en jeu (bannis, liste blanche, rôles, avec des
    boutons), restaurer une sauvegarde depuis le jeu, sauvegarder aussi le monde solo, le compte
    Steam plus tard, un journal des actions des modérateurs.
-5. **Hébergement** : sur **Debian** une archive à décompresser, un utilisateur dédié, un service
-   systemd (redémarrage, arrêt propre), le port UDP à ouvrir dans le pare-feu, l'écoute sur l'IP
-   dédiée ; une image Docker ; un **egg Pterodactyl** (image Debian, script d'installation qui
-   télécharge la version du serveur, variables : port, monde, graine, mode, joueurs au plus, mot
-   de passe ; commande d'arrêt `stop`, ligne « prêt ») ; un guide d'installation en français. À
-   décider : où le script d'installation prend le serveur (le dépôt est privé : des versions du
-   serveur publiées à part, ou un jeton d'accès).
+5. ✅ **Hébergement** (voir section 3, ligne M.5) : sur **Debian** une archive à décompresser, un
+   utilisateur dédié, un service systemd (redémarrage, arrêt propre), le port UDP à ouvrir dans le
+   pare-feu, l'écoute sur l'IP dédiée ; une image Docker ; un **egg Pterodactyl** ; un guide
+   d'installation en français. **Fait** : `deploy/` (Debian et systemd : `install.sh`, le service
+   durci qui n'écrit que dans `/srv/leguitz`, `leguitz-console` ; Docker : l'image, son point
+   d'entrée, `compose.yaml` ; Pterodactyl : l'egg fait par `tools/make_egg.py`, l'image
+   `yolks:debian`, l'installation dans `debian:bookworm-slim` (celle de Pterodactyl, en Debian 11, ne trouve plus ses paquets), 9 variables de jeu et 4
+   d'installation) et `docs/hebergement.md`. **Où l'installation prend le serveur** (c'était à
+   décider) : les trois à la fois, au choix de l'hébergeur : une archive copiée à la main, un lien
+   direct (`--url`, `SERVER_URL` : par exemple le site du propriétaire), ou les **Releases du
+   dépôt** avec un **jeton GitHub en lecture seule** (`--github --token`, `GITHUB_TOKEN`) ; la
+   CI publie une Release (le serveur et les jeux) **à chaque tag `v…`**. Avec l'étape, deux
+   propositions gardées : **les connexions chiffrées** (DTLS, la clé du serveur à lui ; il ne
+   prouve pas encore qui il est) et **l'arrêt propre** de systemd et de Docker (Godot ne capte pas
+   SIGTERM : le fichier `stop`). Aussi : une **console par dossier** (systemd et Docker n'ont pas
+   de terminal), `--init`, le serveur dit sa version au démarrage. Trouvé par la CI : le serveur exporté gardait ses lignes en mémoire quand il n'écrit pas dans un terminal (le journal, Docker et Pterodactyl ne voyaient jamais « prêt ») : elles partent maintenant tout de suite. Testé par la CI sur Linux (les
+   trois façons : prêt, une commande, un arrêt propre qui sauvegarde) et ici sous Windows (un jeu
+   qui rejoint le serveur chiffré, la console par dossier, l'arrêt par `stop`). **Pas fait (à
+   proposer)** : publier une première version (un tag `v0.6.0` : la CI fait la Release) ; une
+   image Docker toute prête sur GitHub (ghcr.io) ; que le jeu vérifie la clé du serveur (la
+   retenir à la première connexion et prévenir si elle change) ; un serveur qui démarre plus vite.
 6. **Performances** : plusieurs joueurs loin les uns des autres (génération, mémoire, débit),
    mesurées sur un petit VPS, pour dire quelle machine il faut selon le nombre de joueurs.
 7. **Finitions : les propositions gardées** (le propriétaire a demandé de les garder ; certaines
    iront plus naturellement avec l'étape 5 ou 6) :
    - **serveur** : un démarrage plus rapide (~20 s et ~250 Mo aujourd'hui : la compilation des
-     scripts, la même au lancement solo ; avec l'étape 6), un arrêt propre sur le signal SIGTERM
-     (avec l'étape 5), un message du jour, le nom et la description du serveur affichés avant
+     scripts, la même au lancement solo ; avec l'étape 6), ~~un arrêt propre sur le signal
+     SIGTERM~~ (fait à l'étape 5 : systemd et Docker), un message du jour, le nom et la description du serveur affichés avant
      d'entrer, un canal non fiable pour les mouvements (moins de latence quand des paquets se
      perdent), l'IPv6, les pings sur la console ;
    - **les autres joueurs** : des apparences différentes (couleurs, tenues), la tête qui suit le
@@ -1061,7 +1083,8 @@ serveur intégré). Découpage :
      nombre de joueurs avant d'entrer, la reconnexion automatique, le mot de passe gardé ;
    - **contre la triche** : ne pas miner ni frapper à travers un mur, cacher les minerais enfouis,
      vérifier chaque champ de chaque message, exclure après trop de remises en place ;
-   - **comptes et administration** : chiffrer la connexion (DTLS ; avec l'étape 5), `/silence`,
+   - **comptes et administration** : ~~chiffrer la connexion~~ (fait à l'étape 5 ; reste : que le
+     jeu vérifie la clé du serveur), `/silence`,
      un panneau d'administration en jeu, restaurer depuis le jeu, sauvegarder le monde solo, le
      compte Steam, un journal des actions des modérateurs.
 
@@ -1076,8 +1099,8 @@ serveur intégré). Découpage :
 - **Taille des fichiers** : `src/client/interaction/block_interaction.gd` fait 987 lignes (limite
   1000) : y sortir du code (par exemple ce que fait le clic droit sur les animaux, les machines,
   la récolte) avant d'y ajouter ; `src/client/game_client.gd` en fait 945,
-  `src/ui/inventory_screen.gd` 785 (l'étape 3 de la refonte de l'interface le refait : le
-  découper alors, par exemple les fours et les coffres à part),
+  `src/ui/inventory_screen.gd` 623 (découpé à la refonte de l'interface : l'équipement, la
+  fabrication, les détails et les fours dans leurs fichiers),
   `src/sim/game_server.gd` 988 (y sortir du code avant d'y ajouter : le multijoueur côté client est
   dans `src/client/peers/online.gd`, les vérifications du serveur dans `src/sim/guard/`) ; `object_shapes.gd` (922) et `mining.gd` (902) ont été allégés à l'étape 8.8 (les blocs
   d'un objet tourné se construisent par leur nom, les temps et outils vont par sorte), les

@@ -34,6 +34,8 @@ $G --path . --audio-driver Dummy --resolution 1280x720 -- --seed=42 --screenshot
 # A dedicated server (data in a scratch folder, never the owner's), and a game joining it:
 $G --headless --path . -- --server --data="$SCRATCH/srv" --seed=42     # "stop" on stdin, or a file "stop"
 $G --path . -- --connect=127.0.0.1 --name=Alex --screenshot-delay=120 --screenshot="$SCRATCH/s.png"
+# Hosting (deploy/: Debian and systemd, Docker, Pterodactyl; docs/hebergement.md, in French): CI
+# packages the server (deploy/package.sh), tests the three ways on Linux and publishes v* tags.
 LEGUITZ_SERIALIZE=1 $G --headless --path . -s res://tests/run_tests.gd  # messages as bytes, as on the network
 # More players: more games with --connect (--name=Bea --account=PASS --mine --aim=60,10, --jump, --run...); --players holds
 # the player list's key, --join-screen opens the join screen. Players' saves written beforehand in
@@ -1288,6 +1290,38 @@ gdformat writes CRLF line endings on Windows: convert the files it touched back 
   nothing saved, a backup of the world first, unpacked, the server stops). ServerConfig: accounts,
   default_role, backup_hours, backup_on_start, backups_kept (`_yes`). tests/unit/test_translations
   checks every CSV line has its three columns (a comma out of quotes cut a text) and no key twice.
+- Multiplayer, step 5 (hosting). Connections are encrypted: `NetTls` (src/net) gives the server
+  its own key and self-signed certificate (made once, kept in <data>/tls, FOLDER; for tests made
+  per run) for ENetConnection.dtls_server_setup (NetServer.listen's `tls`), and the games
+  TLSOptions.client_unsafe for dtls_client_setup (NetClient.connect_to): nothing can be read on
+  the way (the account's secret, the chat), but the server proves nothing yet; a game without
+  DTLS is never heard (tested); Msg.PROTOCOL 6. DedicatedServer: prints its version and data
+  folder, `--init` writes server.cfg and quits (the installers), CONSOLE_FOLDER (<data>/console):
+  ServerConsole.poll_folder runs the lines of every file dropped there (FOLDER_SECONDS, name
+  order, removed; `.tmp` waits) where a service or a container has no terminal (systemd's stdin
+  is /dev/null). project.godot's `application/run/flush_stdout_on_print` must stay on: a release
+  build kept its lines while stdout was no terminal, so journald, Docker and Pterodactyl never
+  saw READY until it stopped (CI's server check sends stop only once READY came). Godot never
+  catches SIGTERM: the services drop STOP_FILE instead
+  (deploy/linux/stop-server.sh, the unit's ExecStop; Docker's entrypoint traps TERM). deploy/:
+  `fetch-server.sh` (an archive from --url, or a GitHub release's asset, --github, --version,
+  --token for the private repository), `linux/install.sh` (Debian or Ubuntu as root: a system
+  user, /opt/leguitz-server, /srv/leguitz, `--init` then ip and port set, the systemd unit
+  `leguitz-server.service` hardened, ReadWritePaths the data only, `/usr/local/bin/leguitz-console`,
+  ufw or firewalld with --open-port; again: an update), `linux/leguitz-console` (a command as a
+  file, written aside then renamed), `docker/` (Dockerfile on debian:bookworm-slim, uid 1000,
+  VOLUME /data; entrypoint.sh; compose.yaml), `pterodactyl/install.sh` and the egg
+  `egg-leguitz.json` made from it by tools/make_egg.py (variables, yolks:debian, done on READY,
+  stop "stop"; --ip=0.0.0.0: the yolks entrypoint echoes the startup unquoted, a "*" would
+  glob; installed in debian:bookworm-slim: Pterodactyl's installers:debian is Debian 11, its
+  packages are gone from the mirrors),
+  `package.sh` (leguitz-server-VERSION-linux-x86_64.tar.gz: the server, VERSION, these files and
+  the guide as HEBERGEMENT.md; its .sha256). CI: shellcheck and the egg kept in step with its
+  script; the archive as the LeguitzServer-linux artifact; a `hosting` job installing it with
+  install.sh and systemd, building and stopping the Docker image, running the egg's script in
+  the egg's installer image and its startup in yolks:debian as user 988, as Wings runs it (each:
+  ready, a console command, a clean stop, the world and the key written, nothing failing to);
+  on a v* tag a `release` job publishes the server and the games (gh release create).
 - Interface redesign, step 1 (the « Ardoise » theme; asked by the owner: modern, sober, the game's
   own, not Minecraft's; before multiplayer step 5): `UiTheme` holds every color (PANEL, PANEL_SOLID,
   CARD, SLOT, SLOT_HOVER, TRACK; LINE, LINE_STRONG; TEXT, MUTED, FAINT; ACCENT amber, its hover and
